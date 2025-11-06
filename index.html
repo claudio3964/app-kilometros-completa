@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Kilómetros - Registro y Control</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 15px;
+            background-color: #f5f5f5;
+            line-height: 1.4;
+        }
+        .container {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        input, button {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+            font-weight: bold;
+            min-height: 44px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #registros {
+            margin-top: 20px;
+        }
+        .registro-item {
+            background: #f8f9fa;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            font-size: 14px;
+        }
+
+        /* Mejoras para móvil */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 12px;
+            }
+            h1 {
+                font-size: 1.3rem;
+            }
+            input, button {
+                padding: 14px;
+            }
+        }
+
+        /* Mejor scroll en móvil */
+        #lista-registros {
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚗 App Kilómetros</h1>
+        <p>Registro y control de kilómetros recorridos</p>
+        
+        <div class="form-group">
+            <label for="fecha">Fecha:</label>
+            <input type="date" id="fecha">
+        </div>
+        
+        <div class="form-group">
+            <label for="kilometros">Kilómetros recorridos:</label>
+            <input type="number" id="kilometros" placeholder="Ingrese los km">
+        </div>
+        
+        <div class="form-group">
+            <label for="notas">Notas (opcional):</label>
+            <input type="text" id="notas" placeholder="Descripción del viaje">
+        </div>
+        
+        <button onclick="agregarRegistro()">➕ Agregar Registro</button>
+        
+        <div id="registros">
+            <h3>📊 Registros Guardados:</h3>
+            <div id="lista-registros"></div>
+        </div>
+    </div>
+
+    <script>
+        // Cargar registros existentes
+        let registros = JSON.parse(localStorage.getItem('registrosKilometros')) || [];
+        
+        function agregarRegistro() {
+            const fecha = document.getElementById('fecha').value;
+            const kilometros = document.getElementById('kilometros').value;
+            const notas = document.getElementById('notas').value;
+            
+            if (!fecha || !kilometros) {
+                alert('Por favor complete fecha y kilómetros');
+                return;
+            }
+            
+            const nuevoRegistro = {
+                fecha: fecha,
+                kilometros: parseFloat(kilometros),
+                notas: notas
+            };
+            
+            registros.push(nuevoRegistro);
+            localStorage.setItem('registrosKilometros', JSON.stringify(registros));
+            
+            // Limpiar formulario
+            document.getElementById('fecha').value = '';
+            document.getElementById('kilometros').value = '';
+            document.getElementById('notas').value = '';
+            
+            actualizarLista();
+        }
+        
+        function actualizarLista() {
+            const lista = document.getElementById('lista-registros');
+            lista.innerHTML = '';
+            
+            if (registros.length === 0) {
+                lista.innerHTML = '<p>No hay registros guardados</p>';
+                return;
+            }
+            
+            registros.forEach((registro, index) => {
+                const div = document.createElement('div');
+                div.className = 'registro-item';
+                div.innerHTML = `
+                    <strong>${registro.fecha}</strong> - 
+                    ${registro.kilometros} km
+                    ${registro.notas ? `<br><em>${registro.notas}</em>` : ''}
+                `;
+                lista.appendChild(div);
+            });
+        }
+        
+        // Inicializar
+        actualizarLista();
+    </script>
+</body>
+</html>

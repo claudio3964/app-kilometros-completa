@@ -1,0 +1,12 @@
+{
+  "name": "App Kilómetros - Registro y Control",
+  "short_name": "App Kilómetros",
+  "description": "Aplicación para registro y control de kilómetros recorridos",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "orientation": "portrait",
+  "icons": [],
+  "categories": ["productivity", "utilities"]
+}
