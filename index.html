@@ -309,7 +309,8 @@ function addTravel() {
     
     if (fechaInput) {
         // Si el usuario seleccionó una fecha manualmente
-        fechaViaje = new Date(fechaInput).toLocaleDateString('es-ES');
+        const [año, mes, dia] = fechaInput.split('-');
+fechaViaje = `${dia}/${mes}/${año}`;
     } else {
         // Si no hay fecha seleccionada, usar fecha actual
         fechaViaje = new Date().toLocaleDateString('es-ES');
@@ -709,4 +710,5 @@ document.addEventListener('DOMContentLoaded', function() {
     </script>
 </body>
 </html>
+
 
