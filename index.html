@@ -304,17 +304,18 @@ function addTravel() {
     const arrivalTime = document.getElementById('arrivalTime').value;
     
     // Obtener fecha del campo de fecha (nuevo)
-    const fechaInput = document.getElementById('fechaViaje').value;
-    let fechaViaje;
-    
-    if (fechaInput) {
-        // Si el usuario seleccionó una fecha manualmente
-        const [año, mes, dia] = fechaInput.split('-');
-fechaViaje = `${dia}/${mes}/${año}`;
-    } else {
-        // Si no hay fecha seleccionada, usar fecha actual
-        fechaViaje = new Date().toLocaleDateString('es-ES');
-    }
+const fechaInput = document.getElementById('fechaViaje').value;
+let fechaViaje;
+
+if (fechaInput) {
+    // SOLUCIÓN: Crear fecha en UTC para evitar problemas de zona horaria
+    const [year, month, day] = fechaInput.split('-');
+    const fechaUTC = new Date(Date.UTC(year, month - 1, day));
+    fechaViaje = fechaUTC.toLocaleDateString('es-ES');
+} else {
+    // Si no hay fecha seleccionada, usar fecha actual
+    fechaViaje = new Date().toLocaleDateString('es-ES');
+}
 
     if (!orderNumber || !origin || !destination || !km) {
         alert('Por favor completa todos los campos obligatorios');
@@ -710,5 +711,6 @@ document.addEventListener('DOMContentLoaded', function() {
     </script>
 </body>
 </html>
+
 
 
