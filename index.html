@@ -222,6 +222,1725 @@
         <!-- SECCIÓN GUARDIAS -->
         <div class="section">
             <h2>⏰ Registrar Guardia</h2>
+            
+
+Get App
+Seguimos con la aplicacion
+¡Perfecto! Sigamos construyendo la aplicación. Para continuar de manera ordenada, me gustaría saber:
+
+¿En qué parte te gustaría que profundicemos?
+
+Teniendo en cuenta lo que hemos discutido hasta ahora, estas son algunas opciones:
+
+🚀 Próximos Pasos Posibles:
+1. Estructura de Datos y Estado
+Definir el schema de la base de datos
+
+Diseñar los modelos de datos (Usuarios, Tareas, Proyectos, etc.)
+
+Configurar el estado global de la aplicación
+
+2. Backend y API
+Configurar Express.js y rutas principales
+
+Implementar autenticación JWT
+
+Crear endpoints para CRUD de tareas/proyectos
+
+3. Frontend y Componentes
+Diseñar el sistema de componentes de React
+
+Crear las páginas principales (Login, Dashboard, etc.)
+
+Implementar routing con React Router
+
+4. Base de Datos y ORM
+Configurar Prisma con PostgreSQL
+
+Crear migrations iniciales
+
+Definir relaciones entre modelos
+
+5. Diseño y UI/UX
+Desarrollar el sistema de diseño
+
+Crear componentes reutilizables
+
+Implementar tema claro/oscuro
+
+6. Arquitectura y Configuración
+Configurar Docker para desarrollo
+
+Establecer variables de entorno
+
+Configurar scripts de build y desarrollo
+
+¿Cuál de estas áreas te gustaría abordar primero? O si prefieres, podemos empezar con algo específico que tengas en mente.
+
+¡Estoy listo para seguir! 🎯
+
+Bien sabes que en github estuvimos tratando de hacer unos cambios, con el tema de que no registraba el primer día del mes, bueno se ve que el código se daño en algún lado y ahora no registra nada
+¡Ah, entiendo! Estás teniendo problemas con el código de registro de días/pagos que dejó de funcionar, especialmente con el primer día del mes. Vamos a revisar y solucionar ese issue.
+
+Primero, necesito que me compartas:
+
+El código actual que tienes para el registro de días/pagos
+
+El error específico que estás viendo (si hay mensajes de error en consola)
+
+Cómo estás probando la funcionalidad
+
+Mientras tanto, te doy algunas causas comunes de este tipo de problemas:
+
+🔍 Posibles Causas:
+Manejo de fechas: Problemas con timezones o formato de fechas
+
+Lógica condicional: Errores en las condiciones que verifican el primer día del mes
+
+Estado de la aplicación: El estado no se está actualizando correctamente
+
+Problemas con async/await: Operaciones asíncronas que no se completan
+
+🛠️ Solución Temporal - Código Base para Registro de Días:
+javascript
+// Función para verificar si es primer día del mes
+const esPrimerDiaDelMes = (fecha = new Date()) => {
+  const hoy = new Date(fecha);
+  return hoy.getDate() === 1;
+};
+
+// Función para registrar día/pago
+const registrarDia = async (usuarioId, monto, fecha = new Date()) => {
+  try {
+    const esPrimerDia = esPrimerDiaDelMes(fecha);
+    
+    // Aquí tu lógica de base de datos
+    const registro = await prisma.registroDias.create({
+      data: {
+        usuarioId,
+        monto,
+        fecha: fecha,
+        esPrimerDia: esPrimerDia,
+        registradoEl: new Date()
+      }
+    });
+    
+    console.log('Registro exitoso:', registro);
+    return registro;
+  } catch (error) {
+    console.error('Error al registrar día:', error);
+    throw error;
+  }
+};
+Por favor, comparte el código actual para poder ayudarte específicamente con el problema. ¿Puedes pegar el código del componente/service que maneja el registro de días?
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COT - Control de Kilómetros</title>
+    <style>
+        :root {
+            --primary: #0055A4;      /* Azul COT */
+            --primary-dark: #003B76; /* Azul COT oscuro */
+            --secondary: #E4002B;    /* Rojo COT */
+            --accent: #FF6B00;       /* Naranja para contrastes */
+            --success: #00A650;      /* Verde éxito */
+            --light-bg: #F5F5F5;     /* Fondo gris COT */
+            --text-dark: #333333;    /* Texto oscuro */
+        }
+
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0055A4 0%, #003B76 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin: 0 auto;
+            max-width: 800px;
+        }
+
+        h1, h2 { 
+            color: var(--text-dark);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .section { 
+            margin-bottom: 25px; 
+            padding: 20px; 
+            border: none; 
+            border-radius: 10px;
+            background: var(--light-bg);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .form-group { 
+            margin-bottom: 15px; 
+        }
+
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        input, select, button { 
+            width: 100%; 
+            padding: 12px; 
+            margin-bottom: 12px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 8px; 
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 85, 164, 0.1);
+        }
+
+        button { 
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            font-size: 16px; 
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 85, 164, 0.3);
+        }
+
+        button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 85, 164, 0.4);
+        }
+
+        .summary { 
+            background: linear-gradient(135deg, #dbeafe, #e0f2fe);
+            border-left: 4px solid var(--primary);
+            padding: 20px; 
+            border-radius: 10px;
+        }
+
+        .travel-item, .guard-item { 
+            background: white;
+            padding: 15px; 
+            margin: 10px 0; 
+            border-left: 4px solid var(--accent);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s ease;
+        }
+
+        .travel-item:hover, .guard-item:hover {
+            transform: translateX(5px);
+        }
+
+        .delete-btn { 
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            width: auto; 
+            padding: 8px 15px; 
+            font-size: 12px; 
+            margin-top: 5px;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .delete-btn:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-1px);
+        }
+
+        .time-group { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 15px; 
+        }
+
+        .time-group input { 
+            flex: 1; 
+        }
+        /* ESTILOS PARA BOTONES DE FECHA RÁPIDA */
+.btn-fecha {
+    padding: 10px 15px;
+    background: linear-gradient(135deg, #0055A4, #003B76);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    flex: 1;
+}
+
+.btn-fecha:hover {
+    background: linear-gradient(135deg, #003B76, #002a5c);
+    transform: translateY(-2px);
+}
+
+.time-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="background: linear-gradient(135deg, #0055A4, #E4002B); color: white; padding: 20px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                <div style="font-size: 2em; font-weight: bold; margin-bottom: 5px;">COT</div>
+                <div style="font-size: 1.3em;">Control de Kilómetros</div>
+            </div>
+        </div>
+        
+        <!-- SECCIÓN VIAJES -->
+<div class="section">
+    <h2>📝 Registrar Viaje</h2>
+    
+    <!-- BOTONES DE FECHA RÁPIDA - NUEVO -->
+    <div class="form-group">
+        <label>Fecha del Viaje:</label>
+        <div class="time-group">
+            <button type="button" class="btn-fecha" data-dias="0">Hoy</button>
+            <button type="button" class="btn-fecha" data-dias="-1">Ayer</button>
+            <button type="button" class="btn-fecha" data-dias="-2">Hace 2 días</button>
+        </div>
+        <input type="date" id="fechaViaje" style="margin-top: 10px;">
+    </div>
+
+    <div class="form-group">
+        <label>Número de Orden:</label>
+        <input type="number" id="orderNumber" placeholder="Ej: 123">
+    </div>
+            <div class="form-group">
+                <label>Origen:</label>
+                <input type="text" id="origin" placeholder="Ej: Montevideo">
+            </div>
+            <div class="form-group">
+                <label>Destino:</label>
+                <input type="text" id="destination" placeholder="Ej: Punta del Este">
+            </div>
+            <div class="form-group">
+                <label>Kilómetros:</label>
+                <input type="number" id="km" placeholder="Ej: 140" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Horarios:</label>
+                <div class="time-group">
+                    <input type="time" id="departureTime" placeholder="Hora salida">
+                    <input type="time" id="arrivalTime" placeholder="Hora llegada">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Tipo:</label>
+                <select id="travelType">
+                    <option value="working">Trabajando</option>
+                    <option value="passenger">De Pasajero</option>
+                </select>
+            </div>
+            <button onclick="addTravel()">➕ Agregar Viaje</button>
+        </div>
+
+        <!-- SECCIÓN GUARDIAS -->
+        <div class="section">
+            <h2>⏰ Registrar Guardia</h2>
+            <div class="form-group">
+                <label>Tipo de Guardia:</label>
+                <select id="guardType">
+                    <option value="common">Guardia Común (30 km/h)</option>
+                    <option value="special">Guardia Especial (40 km/h)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Horario de Guardia:</label>
+                <div class="time-group">
+                    <input type="time" id="guardStart" placeholder="Hora inicio">
+                    <input type="time" id="guardEnd" placeholder="Hora fin">
+                </div>
+            </div>
+            <button onclick="addGuard()">➕ Agregar Guardia</button>
+        </div>
+
+        <!-- RESUMEN -->
+        <div class="section summary">
+            <h2>📊 Resumen del Mes</h2>
+            <div id="summaryContent">
+                <p>Km Trabajando: <span id="totalWorking">0</span> km</p>
+                <p>Km de Pasajero: <span id="totalPassenger">0</span> km</p>
+                <p>Km por Guardias: <span id="totalGuards">0</span> km</p>
+                <p><strong>TOTAL KM: <span id="totalAll">0</span> km</strong></p>
+                <p><strong>TOTAL A COBRAR: $<span id="totalMoney">0</span></strong></p>
+            </div>
+            <button onclick="exportData()">📄 Exportar Resumen</button>
+            <button onclick="clearMonth()" class="delete-btn">🗑️ Reiniciar Mes</button>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button onclick="mostrarReporteHoy()" style="flex: 1;">📅 Ver Hoy</button>
+                <button onclick="mostrarReporteMes()" style="flex: 1;">📈 Ver Mes</button>
+            </div>
+        </div>
+
+        <!-- LISTA DE VIAJES -->
+        <div class="section">
+            <h2>📋 Viajes Registrados</h2>
+            <div id="travelsList"></div>
+        </div>
+
+        <!-- LISTA DE GUARDIAS -->
+        <div class="section">
+            <h2>⏰ Guardias Registradas</h2>
+            <div id="guardsList"></div>
+        </div>
+
+        <!-- SECCIÓN REPORTES -->
+        <div class="section" id="reportesSection" style="display: none;">
+            <h2>📊 Reportes</h2>
+            <button onclick="cerrarReportes()" class="delete-btn" style="margin-bottom: 10px;">❌ Cerrar</button>
+            <div id="reportesContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Precio por kilómetro
+        const PRICE_PER_KM = 7.60;
+        
+        // Datos en localStorage
+        let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
+        let guards = JSON.parse(localStorage.getItem('bus_guards')) || [];
+
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSummary();
+            renderTravels();
+            renderGuards();
+        });
+
+        // Agregar viaje
+   // Agregar viaje (VERSIÓN MEJORADA CON FECHA)
+function addTravel() {
+    const orderNumber = document.getElementById('orderNumber').value;
+    const origin = document.getElementById('origin').value;
+    const destination = document.getElementById('destination').value;
+    const km = parseFloat(document.getElementById('km').value);
+    const travelType = document.getElementById('travelType').value;
+    const departureTime = document.getElementById('departureTime').value;
+    const arrivalTime = document.getElementById('arrivalTime').value;
+
+// Obtener fecha del campo de fecha (nuevo)
+const fechaInput = document.getElementById('fechaViaje').value;
+let fechaViaje;
+
+if (fechaInput) {
+    // CORRECCIÓN: Convertir directamente YYYY-MM-DD a DD/MM/YYYY
+    const [año, mes, dia] = fechaInput.split('-');
+    fechaViaje = `${dia}/${mes}/${año}`;
+} else {
+    // Si no hay fecha seleccionada, usar fecha actual
+    fechaViaje = new Date().toLocaleDateString('es-ES');
+}
+
+    // Si no hay fecha seleccionada, usar fecha actual
+    fechaViaje = new Date().toLocaleDateString('es-ES');
+}
+
+    if (!orderNumber || !origin || !destination || !km) {
+        alert('Por favor completa todos los campos obligatorios');
+        return;
+    }
+
+    const travel = {
+        id: Date.now(),
+        orderNumber,
+        origin,
+        destination,
+        km,
+        type: travelType,
+        departureTime,
+        arrivalTime,
+        date: fechaViaje,  // Usar la fecha seleccionada
+        timestamp: new Date().toISOString()
+    };
+
+    travels.push(travel);
+    localStorage.setItem('bus_travels', JSON.stringify(travels));
+    
+    // Limpiar formulario (mantener fecha)
+    document.getElementById('orderNumber').value = '';
+    document.getElementById('origin').value = '';
+    document.getElementById('destination').value = '';
+    document.getElementById('km').value = '';
+    document.getElementById('departureTime').value = '';
+    document.getElementById('arrivalTime').value = '';
+    // NO limpiar el campo de fecha
+    
+    updateSummary();
+    renderTravels();
+}
+
+        // Agregar guardia
+        function addGuard() {
+            const guardType = document.getElementById('guardType').value;
+            const guardStart = document.getElementById('guardStart').value;
+            const guardEnd = document.getElementById('guardEnd').value;
+
+            if (!guardStart || !guardEnd) {
+                alert('Por favor ingresa horario de inicio y fin');
+                return;
+            }
+
+            // Calcular horas trabajadas
+            const start = new Date(`2000-01-01T${guardStart}`);
+            const end = new Date(`2000-01-01T${guardEnd}`);
+            
+            // Si la hora fin es menor que inicio, asumimos que pasa de medianoche
+            let hoursWorked = (end - start) / (1000 * 60 * 60);
+            if (hoursWorked < 0) {
+                hoursWorked += 24; // Sumar 24 horas si pasa de medianoche
+            }
+
+            if (hoursWorked <= 0) {
+                alert('La hora de fin debe ser posterior a la hora de inicio');
+                return;
+            }
+
+            // Calcular km según tipo de guardia
+            const kmPerHour = guardType === 'common' ? 30 : 40;
+            const totalKm = hoursWorked * kmPerHour;
+
+            const guard = {
+                id: Date.now(),
+                type: guardType,
+                startTime: guardStart,
+                endTime: guardEnd,
+                hours: hoursWorked.toFixed(2),
+                km: totalKm.toFixed(1),
+                date: new Date().toLocaleDateString('es-ES')
+            };
+
+            guards.push(guard);
+            localStorage.setItem('bus_guards', JSON.stringify(guards));
+            
+            // Limpiar formulario
+            document.getElementById('guardStart').value = '';
+            document.getElementById('guardEnd').value = '';
+            
+            updateSummary();
+            renderGuards();
+        }
+
+        // Mostrar viajes
+        function renderTravels() {
+            const travelsList = document.getElementById('travelsList');
+            travelsList.innerHTML = '';
+
+            if (travels.length === 0) {
+                travelsList.innerHTML = '<p>No hay viajes registrados</p>';
+                return;
+            }
+
+            // Ordenar por fecha (más reciente primero)
+            const sortedTravels = [...travels].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            sortedTravels.forEach(travel => {
+                const travelItem = document.createElement('div');
+                travelItem.className = 'travel-item';
+                
+                let timeInfo = '';
+                if (travel.departureTime || travel.arrivalTime) {
+                    timeInfo = `<br>${travel.departureTime ? `Salida: ${travel.departureTime}` : ''} ${travel.arrivalTime ? `Llegada: ${travel.arrivalTime}` : ''}`;
+                }
+                
+                travelItem.innerHTML = `
+                    <strong>Orden #${travel.orderNumber}</strong> - ${travel.date}<br>
+                    ${travel.origin} → ${travel.destination}<br>
+                    ${travel.km} km (${travel.type === 'working' ? 'Trabajando' : 'Pasajero'})${timeInfo}
+                    <button onclick="deleteTravel(${travel.id})" class="delete-btn">Eliminar</button>
+                `;
+                travelsList.appendChild(travelItem);
+            });
+        }
+
+        // Mostrar guardias
+        function renderGuards() {
+            const guardsList = document.getElementById('guardsList');
+            guardsList.innerHTML = '';
+
+            if (guards.length === 0) {
+                guardsList.innerHTML = '<p>No hay guardias registradas</p>';
+                return;
+            }
+
+            guards.forEach(guard => {
+                const guardItem = document.createElement('div');
+                guardItem.className = 'guard-item';
+                guardItem.innerHTML = `
+                    <strong>Guardia ${guard.type === 'common' ? 'Común' : 'Especial'}</strong><br>
+                    ${guard.startTime} - ${guard.endTime} (${guard.hours} horas)<br>
+                    ${guard.km} km<br>
+                    <small>${guard.date}</small>
+                    <button onclick="deleteGuard(${guard.id})" class="delete-btn">Eliminar</button>
+                `;
+                guardsList.appendChild(guardItem);
+            });
+        }
+
+        // Eliminar viaje
+        function deleteTravel(id) {
+            if (confirm('¿Estás seguro de eliminar este viaje?')) {
+                travels = travels.filter(travel => travel.id !== id);
+                localStorage.setItem('bus_travels', JSON.stringify(travels));
+                updateSummary();
+                renderTravels();
+            }
+        }
+
+        // Eliminar guardia
+        function deleteGuard(id) {
+            if (confirm('¿Estás seguro de eliminar esta guardia?')) {
+                guards = guards.filter(guard => guard.id !== id);
+                localStorage.setItem('bus_guards', JSON.stringify(guards));
+                updateSummary();
+                renderGuards();
+            }
+        }
+
+        // Actualizar resumen
+        function updateSummary() {
+            const totalWorking = travels
+                .filter(travel => travel.type === 'working')
+                .reduce((sum, travel) => sum + travel.km, 0);
+                
+            const totalPassenger = travels
+                .filter(travel => travel.type === 'passenger')
+                .reduce((sum, travel) => sum + travel.km, 0);
+                
+            const totalGuards = guards.reduce((sum, guard) => sum + parseFloat(guard.km), 0);
+            
+            const totalAll = totalWorking + totalPassenger + totalGuards;
+            const totalMoney = totalAll * PRICE_PER_KM;
+
+            document.getElementById('totalWorking').textContent = totalWorking.toFixed(1);
+            document.getElementById('totalPassenger').textContent = totalPassenger.toFixed(1);
+            document.getElementById('totalGuards').textContent = totalGuards.toFixed(1);
+            document.getElementById('totalAll').textContent = totalAll.toFixed(1);
+            document.getElementById('totalMoney').textContent = totalMoney.toFixed(2);
+        }
+
+        // Función para mostrar reporte del día actual
+        function mostrarReporteHoy() {
+            const hoy = new Date().toLocaleDateString('es-ES');
+            
+            // Filtrar viajes y guardias de hoy
+            const viajesHoy = travels.filter(t => t.date === hoy);
+            const guardiasHoy = guards.filter(g => g.date === hoy);
+            
+            let contenido = `
+                <h3>📅 Reporte del Día: ${hoy}</h3>
+                <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+                    <div style="flex: 1; background: #e3f2fd; padding: 15px; border-radius: 5px;">
+                        <h4>🚌 Viajes Hoy</h4>
+                        <p><strong>Cantidad:</strong> ${viajesHoy.length}</p>
+                        <p><strong>Total KM:</strong> ${viajesHoy.reduce((sum, v) => sum + v.km, 0).toFixed(1)} km</p>
+                    </div>
+                    <div style="flex: 1; background: #e8f5e8; padding: 15px; border-radius: 5px;">
+                        <h4>⏰ Guardias Hoy</h4>
+                        <p><strong>Cantidad:</strong> ${guardiasHoy.length}</p>
+                        <p><strong>Total KM:</strong> ${guardiasHoy.reduce((sum, g) => sum + parseFloat(g.km), 0).toFixed(1)} km</p>
+                    </div>
+                </div>
+            `;
+            
+            // Detalles de viajes
+            if (viajesHoy.length > 0) {
+                contenido += `<h4>📋 Detalle de Viajes:</h4>`;
+                viajesHoy.forEach(viaje => {
+                    contenido += `
+                        <div class="travel-item">
+                            <strong>Orden #${viaje.orderNumber}</strong><br>
+                            ${viaje.origin} → ${viaje.destination}<br>
+                            ${viaje.km} km (${viaje.type === 'working' ? 'Trabajando' : 'Pasajero'})
+                        </div>
+                    `;
+                });
+            }
+            
+            // Detalles de guardias
+            if (guardiasHoy.length > 0) {
+                contenido += `<h4>⏰ Detalle de Guardias:</h4>`;
+                guardiasHoy.forEach(guardia => {
+                    contenido += `
+                        <div class="guard-item">
+                            <strong>Guardia ${guardia.type === 'common' ? 'Común' : 'Especial'}</strong><br>
+                            ${guardia.startTime} - ${guardia.endTime} (${guardia.hours} horas)<br>
+                            ${guardia.km} km
+                        </div>
+                    `;
+                });
+            }
+            
+            if (viajesHoy.length === 0 && guardiasHoy.length === 0) {
+                contenido += `<p>No hay registros para hoy.</p>`;
+            }
+            
+            document.getElementById('reportesContent').innerHTML = contenido;
+            document.getElementById('reportesSection').style.display = 'block';
+        }
+
+        // Función para mostrar reporte del mes
+        function mostrarReporteMes() {
+            const hoy = new Date();
+            const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+            
+            let contenido = `<h3>📈 Progreso del Mes: ${hoy.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}</h3>`;
+            
+            // Agrupar por día
+            const registrosPorDia = {};
+            
+            // Procesar viajes del mes
+            travels.forEach(viaje => {
+                const fechaViaje = new Date(viaje.date.split('/').reverse().join('-'));
+                if (fechaViaje >= primerDiaMes) {
+                    if (!registrosPorDia[viaje.date]) {
+                        registrosPorDia[viaje.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
+                    }
+                    registrosPorDia[viaje.date].viajes++;
+                    registrosPorDia[viaje.date].kmViajes += viaje.km;
+                }
+            });
+            
+            // Procesar guardias del mes
+            guards.forEach(guardia => {
+                const fechaGuardia = new Date(guardia.date.split('/').reverse().join('-'));
+                if (fechaGuardia >= primerDiaMes) {
+                    if (!registrosPorDia[guardia.date]) {
+                        registrosPorDia[guardia.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
+                    }
+                    registrosPorDia[guardia.date].guardias++;
+                    registrosPorDia[guardia.date].kmGuardias += parseFloat(guardia.km);
+                }
+            });
+            
+            // Ordenar días
+            const diasOrdenados = Object.keys(registrosPorDia).sort((a, b) => 
+                new Date(a.split('/').reverse().join('-')) - new Date(b.split('/').reverse().join('-'))
+            );
+            
+            if (diasOrdenados.length > 0) {
+                contenido += `
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                            <thead>
+                                <tr style="background: #007bff; color: white;">
+                                    <th style="padding: 10px; text-align: left;">Fecha</th>
+                                    <th style="padding: 10px; text-align: center;">Viajes</th>
+                                    <th style="padding: 10px; text-align: center;">KM Viajes</th>
+                                    <th style="padding: 10px; text-align: center;">Guardias</th>
+                                    <th style="padding: 10px; text-align: center;">KM Guardias</th>
+                                    <th style="padding: 10px; text-align: center;">Total KM</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                diasOrdenados.forEach(dia => {
+                    const datos = registrosPorDia[dia];
+                    const totalDia = datos.kmViajes + datos.kmGuardias;
+                    
+                    contenido += `
+                        <tr style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 8px;">${dia}</td>
+                            <td style="padding: 8px; text-align: center;">${datos.viajes}</td>
+                            <td style="padding: 8px; text-align: center;">${datos.kmViajes.toFixed(1)} km</td>
+                            <td style="padding: 8px; text-align: center;">${datos.guardias}</td>
+                            <td style="padding: 8px; text-align: center;">${datos.kmGuardias.toFixed(1)} km</td>
+                            <td style="padding: 8px; text-align: center; font-weight: bold;">${totalDia.toFixed(1)} km</td>
+                        </tr>
+                    `;
+                });
+                
+                contenido += `</tbody></table></div>`;
+            } else {
+                contenido += `<p>No hay registros para este mes.</p>`;
+            }
+            
+            document.getElementById('reportesContent').innerHTML = contenido;
+            document.getElementById('reportesSection').style.display = 'block';
+        }
+
+        // Función para cerrar reportes
+        function cerrarReportes() {
+            document.getElementById('reportesSection').style.display = 'none';
+        }
+
+        // Exportar datos
+        function exportData() {
+            const summary = `
+RESUMEN DE KILÓMETROS - ${new Date().toLocaleDateString('es-ES')}
+
+Km Trabajando: ${document.getElementById('totalWorking').textContent} km
+Km de Pasajero: ${document.getElementById('totalPassenger').textContent} km
+Km por Guardias: ${document.getElementById('totalGuards').textContent} km
+TOTAL KM: ${document.getElementById('totalAll').textContent} km
+TOTAL A COBRAR: $${document.getElementById('totalMoney').textContent}
+
+VIAJES REGISTRADOS: ${travels.length}
+${travels.map(t => `- Orden #${t.orderNumber}: ${t.origin} → ${t.destination} (${t.km} km)`).join('\n')}
+
+GUARDIAS REGISTRADAS: ${guards.length}
+${guards.map(g => `- ${g.type === 'common' ? 'Común' : 'Especial'}: ${g.hours} horas = ${g.km} km`).join('\n')}
+            `;
+            
+            // Crear archivo descargable
+            const blob = new Blob([summary], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `resumen_kilometros_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('Resumen exportado correctamente');
+        }
+
+        // Reiniciar mes
+        function clearMonth() {
+            if (confirm('¿Estás seguro de reiniciar todo el mes? Esto borrará todos los datos.')) {
+                travels = [];
+                guards = [];
+                localStorage.removeItem('bus_travels');
+                localStorage.removeItem('bus_guards');
+                updateSummary();
+                renderTravels();
+                renderGuards();
+                alert('Mes reiniciado correctamente');
+            }
+        }
+        // LÓGICA PARA BOTONES DE FECHA RÁPIDA
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar fecha actual por defecto
+    const hoy = new Date().toISOString().split('T')[0];
+    document.getElementById('fechaViaje').value = hoy;
+    
+    // Event listeners para botones de fecha rápida
+    document.querySelectorAll('.btn-fecha').forEach(boton => {
+        boton.addEventListener('click', function() {
+            const dias = parseInt(this.getAttribute('data-dias'));
+            const fecha = new Date();
+            fecha.setDate(fecha.getDate() + dias);
+            const fechaFormateada = fecha.toISOString().split('T')[0];
+            document.getElementById('fechaViaje').value = fechaFormateada;
+        });
+    });
+
+});
+    </script>
+</body>
+</html>
+¡Perfecto! Ahora veo el código completo. El problema está en la función addTravel(). Hay un error de sintaxis y lógica en el manejo de fechas.
+
+🔧 Problemas Identificados:
+Error 1: Llave cerrada demasiado pronto
+En la función addTravel(), hay una llave } que cierra la función antes de tiempo.
+
+Error 2: Lógica duplicada de fecha
+Tienes dos asignaciones de fechaViaje una después de la otra.
+
+Aquí está la corrección:
+javascript
+// Agregar viaje (VERSIÓN CORREGIDA)
+function addTravel() {
+    const orderNumber = document.getElementById('orderNumber').value;
+    const origin = document.getElementById('origin').value;
+    const destination = document.getElementById('destination').value;
+    const km = parseFloat(document.getElementById('km').value);
+    const travelType = document.getElementById('travelType').value;
+    const departureTime = document.getElementById('departureTime').value;
+    const arrivalTime = document.getElementById('arrivalTime').value;
+
+    // Obtener fecha del campo de fecha (CORREGIDO)
+    const fechaInput = document.getElementById('fechaViaje').value;
+    let fechaViaje;
+
+    if (fechaInput) {
+        // CORRECCIÓN: Convertir directamente YYYY-MM-DD a DD/MM/YYYY
+        const [año, mes, dia] = fechaInput.split('-');
+        fechaViaje = `${dia}/${mes}/${año}`;
+    } else {
+        // Si no hay fecha seleccionada, usar fecha actual
+        fechaViaje = new Date().toLocaleDateString('es-ES');
+    }
+
+    // VALIDACIÓN (esta parte estaba fuera de la función por el error de llave)
+    if (!orderNumber || !origin || !destination || !km) {
+        alert('Por favor completa todos los campos obligatorios');
+        return;
+    }
+
+    const travel = {
+        id: Date.now(),
+        orderNumber,
+        origin,
+        destination,
+        km,
+        type: travelType,
+        departureTime,
+        arrivalTime,
+        date: fechaViaje,  // Usar la fecha seleccionada
+        timestamp: new Date().toISOString()
+    };
+
+    travels.push(travel);
+    localStorage.setItem('bus_travels', JSON.stringify(travels));
+    
+    // Limpiar formulario (mantener fecha)
+    document.getElementById('orderNumber').value = '';
+    document.getElementById('origin').value = '';
+    document.getElementById('destination').value = '';
+    document.getElementById('km').value = '';
+    document.getElementById('departureTime').value = '';
+    document.getElementById('arrivalTime').value = '';
+    // NO limpiar el campo de fecha
+    
+    updateSummary();
+    renderTravels();
+}
+Cambios Principales:
+Eliminé la llave } extraña que estaba en la línea 41 del HTML
+
+Quité la duplicación de la asignación de fechaViaje
+
+Mantuve la lógica correcta de conversión de fecha
+
+También mejora esta parte del reporte mensual:
+En la función mostrarReporteMes(), cambia el filtro por fecha:
+
+javascript
+// En mostrarReporteMes() - MEJORAR FILTRADO
+travels.forEach(viaje => {
+    // Convertir fecha DD/MM/YYYY a objeto Date
+    const [dia, mes, año] = viaje.date.split('/');
+    const fechaViaje = new Date(año, mes - 1, dia);
+    
+    if (fechaViaje >= primerDiaMes) {
+        if (!registrosPorDia[viaje.date]) {
+            registrosPorDia[viaje.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
+        }
+        registrosPorDia[viaje.date].viajes++;
+        registrosPorDia[viaje.date].kmViajes += viaje.km;
+    }
+});
+¿Podrías reemplazar la función addTravel() completa con la versión corregida y probar si ahora registra correctamente?
+
+El problema principal era que la función se cortaba a la mitad por un error de sintaxis con las llaves.
+
+OK, ayúdame primero con la función adtravel, vamos por partes así no cometemos errores porque estoy al celu y no en la pc OK, cual seria el primer paso para corregir el código?
+¡Perfecto! Vamos paso a paso desde el celular. Es más seguro así.
+
+🔍 PRIMER PASO: Identificar el problema exacto
+En tu código, la función addTravel() tiene este error:
+
+El problema está en estas líneas (aproximadamente línea 40-50):
+
+javascript
+// Obtener fecha del campo de fecha (nuevo)
+const fechaInput = document.getElementById('fechaViaje').value;
+let fechaViaje;
+
+if (fechaInput) {
+    // CORRECCIÓN: Convertir directamente YYYY-MM-DD a DD/MM/YYYY
+    const [año, mes, dia] = fechaInput.split('-');
+    fechaViaje = `${dia}/${mes}/${año}`;
+} else {
+    // Si no hay fecha seleccionada, usar fecha actual
+    fechaViaje = new Date().toLocaleDateString('es-ES');
+}
+
+    // ⚠️ AQUÍ HAY UNA LLAVE } EXTRA QUE CIERRA LA FUNCIÓN DEMASIADO PRONTO!
+    // Y LUEGO SE REPITE EL CÓDIGO...
+🛠️ SEGUNDO PASO: La corrección
+Busca en tu código la función addTravel() completa y reemplázala por esta versión CORREGIDA:
+
+javascript
+// Agregar viaje (VERSIÓN CORREGIDA - COPIAR COMPLETA)
+function addTravel() {
+    const orderNumber = document.getElementById('orderNumber').value;
+    const origin = document.getElementById('origin').value;
+    const destination = document.getElementById('destination').value;
+    const km = parseFloat(document.getElementById('km').value);
+    const travelType = document.getElementById('travelType').value;
+    const departureTime = document.getElementById('departureTime').value;
+    const arrivalTime = document.getElementById('arrivalTime').value;
+
+    // Obtener fecha del campo de fecha (CORREGIDO)
+    const fechaInput = document.getElementById('fechaViaje').value;
+    let fechaViaje;
+
+    if (fechaInput) {
+        // Convertir YYYY-MM-DD a DD/MM/YYYY
+        const [año, mes, dia] = fechaInput.split('-');
+        fechaViaje = `${dia}/${mes}/${año}`;
+    } else {
+        // Si no hay fecha seleccionada, usar fecha actual
+        fechaViaje = new Date().toLocaleDateString('es-ES');
+    }
+
+    if (!orderNumber || !origin || !destination || !km) {
+        alert('Por favor completa todos los campos obligatorios');
+        return;
+    }
+
+    const travel = {
+        id: Date.now(),
+        orderNumber,
+        origin,
+        destination,
+        km,
+        type: travelType,
+        departureTime,
+        arrivalTime,
+        date: fechaViaje,
+        timestamp: new Date().toISOString()
+    };
+
+    travels.push(travel);
+    localStorage.setItem('bus_travels', JSON.stringify(travels));
+    
+    // Limpiar formulario (mantener fecha)
+    document.getElementById('orderNumber').value = '';
+    document.getElementById('origin').value = '';
+    document.getElementById('destination').value = '';
+    document.getElementById('km').value = '';
+    document.getElementById('departureTime').value = '';
+    document.getElementById('arrivalTime').value = '';
+    
+    updateSummary();
+    renderTravels();
+}
+📱 PARA COPIAR DESDE EL CELULAR:
+Busca la función addTravel() original en tu código
+
+Bórrala completa desde function addTravel() { hasta la última }
+
+Pega la nueva versión que te acabo de enviar
+
+Guarda y prueba
+
+¿Quieres que te ayude con algún paso específico para encontrar la función en el código?
+
+Bien borre y quedo así, sin pegar aún el código que enviaste, indicame desde donde pego el código que enviaste coreegido
+Perfecto! Ahora te indico exactamente dónde pegar el código corregido.
+
+Busca en tu código esta línea (aproximadamente línea 180):
+
+javascript
+// Agregar viaje (VERSIÓN MEJORADA CON FECHA)
+function addTravel() {
+Y borra DESDE esa línea hasta donde termina la función (aproximadamente línea 220), deberías borrar todo este bloque:
+
+javascript
+// Agregar viaje (VERSIÓN MEJORADA CON FECHA)
+function addTravel() {
+    const orderNumber = document.getElementById('orderNumber').value;
+    const origin = document.getElementById('origin').value;
+    const destination = document.getElementById('destination').value;
+    const km = parseFloat(document.getElementById('km').value);
+    const travelType = document.getElementById('travelType').value;
+    const departureTime = document.getElementById('departureTime').value;
+    const arrivalTime = document.getElementById('arrivalTime').value;
+
+// Obtener fecha del campo de fecha (nuevo)
+const fechaInput = document.getElementById('fechaViaje').value;
+let fechaViaje;
+
+if (fechaInput) {
+    // CORRECCIÓN: Convertir directamente YYYY-MM-DD a DD/MM/YYYY
+    const [año, mes, dia] = fechaInput.split('-');
+    fechaViaje = `${dia}/${mes}/${año}`;
+} else {
+    // Si no hay fecha seleccionada, usar fecha actual
+    fechaViaje = new Date().toLocaleDateString('es-ES');
+}
+
+    // Si no hay fecha seleccionada, usar fecha actual
+    fechaViaje = new Date().toLocaleDateString('es-ES');
+}
+
+    if (!orderNumber || !origin || !destination || !km) {
+        alert('Por favor completa todos los campos obligatorios');
+        return;
+    }
+
+    const travel = {
+        id: Date.now(),
+        orderNumber,
+        origin,
+        destination,
+        km,
+        type: travelType,
+        departureTime,
+        arrivalTime,
+        date: fechaViaje,  // Usar la fecha seleccionada
+        timestamp: new Date().toISOString
+No te envié el código para que veas
+¡Entiendo! Necesitas que te ayude a identificar exactamente dónde empieza y termina la función addTravel() en tu código actual.
+
+Para encontrarlo, busca esto en tu código:
+
+Busca la línea que dice:
+
+javascript
+// Agregar viaje
+function addTravel() {
+Desde ahí, busca hacia abajo hasta encontrar la línea que dice:
+
+javascript
+// Agregar guardia
+function addGuard() {
+La función addTravel() está ENTRE esos dos comentarios.
+
+¿Podrías copiarme y pegarme SOLO la función addTravel() completa que tienes ahora? Así veo exactamente cómo la tienes y te digo desde qué línea hasta qué línea borrar.
+
+O si prefieres, dime:
+
+¿Qué ves justo ANTES de la función addTravel()?
+
+¿Qué ves justo DESPUÉS de la función addTravel()?
+
+Así te indico exactamente desde dónde hasta dónde borrar antes de pegar la versión corregida.
+
+Así quedo luego de borrar por completo la función adtravel.                                     / Datos en localStorage
+        let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
+        let guards = JSON.parse(localStorage.getItem('bus_guards')) || [];
+
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            
+
+        origin').value = '';
+    document.getElementById('destination').value = '';
+    document.getElementById('km').value = '';
+    document.getElementById('depar
+¡Perfecto! Veo que borraste la función pero quedaron algunos fragmentos sueltos.
+
+Ahora necesitas borrar estos fragmentos que quedaron y luego pegar la función completa.
+
+🗑️ Borra estos fragmentos que quedaron:
+Estas líneas sueltas:
+
+javascript
+    origin').value = '';
+    document.getElementById('destination').value = '';
+    document.getElementById('km').value = '';
+    document.getElementById('depar
+Y asegúrate de que quede limpio hasta aquí:
+
+javascript
+        let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
+        let guards = JSON.parse(localStorage.getItem('bus_guards')) || [];
+
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSummary();
+            renderTravels();
+            renderGuards();
+        });
+📋 Ahora pega la FUNCIÓN COMPLETA aquí:
+Pega ESTE código completo JUSTO DESPUÉS del }); del DOMContentLoaded:
+
+javascript
+        // Agregar viaje (VERSIÓN CORREGIDA)
+        function addTravel() {
+            const orderNumber = document.getElementById('orderNumber').value;
+            const origin = document.getElementById('origin').value;
+            const destination = document.getElementById('destination').value;
+            const km = parseFloat(document.getElementById('km').value);
+            const travelType = document.getElementById('travelType').value;
+            const departureTime = document.getElementById('departureTime').value;
+            const arrivalTime = document.getElementById('arrivalTime').value;
+
+            // Obtener fecha del campo de fecha (CORREGIDO)
+            const fechaInput = document.getElementById('fechaViaje').value;
+            let fechaViaje;
+
+            if (fechaInput) {
+                // Convertir YYYY-MM-DD a DD/MM/YYYY
+                const [año, mes, dia] = fechaInput.split('-');
+                fechaViaje = `${dia}/${mes}/${año}`;
+            } else {
+                // Si no hay fecha seleccionada, usar fecha actual
+                fechaViaje = new Date().toLocaleDateString('es-ES');
+            }
+
+            if (!orderNumber || !origin || !destination || !km) {
+                alert('Por favor completa todos los campos obligatorios');
+                return;
+            }
+
+            const travel = {
+                id: Date.now(),
+                orderNumber,
+                origin,
+                destination,
+                km,
+                type: travelType,
+                departureTime,
+                arrivalTime,
+                date: fechaViaje,
+                timestamp: new Date().toISOString()
+            };
+
+            travels.push(travel);
+            localStorage.setItem('bus_travels', JSON.stringify(travels));
+            
+            // Limpiar formulario (mantener fecha)
+            document.getElementById('orderNumber').value = '';
+            document.getElementById('origin').value = '';
+            document.getElementById('destination').value = '';
+            document.getElementById('km').value = '';
+            document.getElementById('departureTime').value = '';
+            document.getElementById('arrivalTime').value = '';
+            
+            updateSummary();
+            renderTravels();
+        }
+¿Queda claro? Primero borra los fragmentos sueltos, luego pega la función completa en ese espacio.
+
+!-- SECCIÓN REPORTES -->
+        <div class="section" id="reportesSection" style="display: none;">
+            <h2>📊 Reportes</h2>
+            <button onclick="cerrarReportes()" class="delete-btn" style="margin-bottom: 10px;">❌ Cerrar</button>
+            <div id="reportesContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Precio por kilómetro
+        const PRICE_PER_KM = 7.60;
+¡Perfecto! Ahora veo exactamente dónde estás.
+
+Tienes que pegar la función addTravel() COMPLETA justo después de esta parte:
+
+javascript
+    <script>
+        // Precio por kilómetro
+        const PRICE_PER_KM = 7.60;
+        
+        // Datos en localStorage
+        let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
+        let guards = JSON.parse(localStorage.getItem('bus_guards')) || [];
+
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSummary();
+            renderTravels();
+            renderGuards();
+        });
+📋 PEGA ESTE CÓDIGO JUSTO DESPUÉS:
+javascript
+        // Agregar viaje (VERSIÓN CORREGIDA)
+        function addTravel() {
+            const orderNumber = document.getElementById('orderNumber').value;
+            const origin = document.getElementById('origin').value;
+            const destination = document.getElementById('destination').value;
+            const km = parseFloat(document.getElementById('km').value);
+            const travelType = document.getElementById('travelType').value;
+            const departureTime = document.getElementById('departureTime').value;
+            const arrivalTime = document.getElementById('arrivalTime').value;
+
+            // Obtener fecha del campo de fecha (CORREGIDO)
+            const fechaInput = document.getElementById('fechaViaje').value;
+            let fechaViaje;
+
+            if (fechaInput) {
+                // Convertir YYYY-MM-DD a DD/MM/YYYY
+                const [año, mes, dia] = fechaInput.split('-');
+                fechaViaje = `${dia}/${mes}/${año}`;
+            } else {
+                // Si no hay fecha seleccionada, usar fecha actual
+                fechaViaje = new Date().toLocaleDateString('es-ES');
+            }
+
+            if (!orderNumber || !origin || !destination || !km) {
+                alert('Por favor completa todos los campos obligatorios');
+                return;
+            }
+
+            const travel = {
+                id: Date.now(),
+                orderNumber,
+                origin,
+                destination,
+                km,
+                type: travelType,
+                departureTime,
+                arrivalTime,
+                date: fechaViaje,
+                timestamp: new Date().toISOString()
+            };
+
+            travels.push(travel);
+            localStorage.setItem('bus_travels', JSON.stringify(travels));
+            
+            // Limpiar formulario (mantener fecha)
+            document.getElementById('orderNumber').value = '';
+            document.getElementById('origin').value = '';
+            document.getElementById('destination').value = '';
+            document.getElementById('km').value = '';
+            document.getElementById('departureTime').value = '';
+            document.getElementById('arrivalTime').value = '';
+            
+            updateSummary();
+            renderTravels();
+        }
+Luego de pegar esto, debería continuar con la función addGuard().
+
+¿Ves dónde pegar ahora? Es justo después del DOMContentLoaded y antes de que empiece cualquier otra función.
+
+Me aparece así en github no como haces referencia en el chat
+// Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            
+
+        origin').value = '';
+    document.getElementById('destination').value = '';
+    document.getElementById('km').value = '';
+    document.getElementById('departureTime').value = '';
+    document.getElementById('arrivalTime').value = '';
+    // NO limpiar el campo de fecha
+    
+    updateSummary();
+    renderTravels();
+}
+¡Ah! Entiendo el problema. Tienes código roto que quedó después de borrar.
+
+Primero necesitas LIMPIAR ese código dañado, luego pegar la función completa.
+
+🗑️ BORRA ESTAS LÍNEAS DAÑADAS:
+javascript
+// Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            
+
+        origin').value = '';
+    document.getElementById('destination').value = '';
+    document.getElementById('km').value = '';
+    document.getElementById('departureTime').value = '';
+    document.getElementById('arrivalTime').value = '';
+    // NO limpiar el campo de fecha
+    
+    updateSummary();
+    renderTravels();
+}
+🎯 DEBERÍA QUEDAR ASÍ:
+javascript
+    <script>
+        // Precio por kilómetro
+        const PRICE_PER_KM = 7.60;
+        
+        // Datos en localStorage
+        let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
+        let guards = JSON.parse(localStorage.getItem('bus_guards')) || [];
+
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSummary();
+            renderTravels();
+            renderGuards();
+        });
+📋 LUEGO PEGA LA FUNCIÓN COMPLETA:
+Justo después del }); del DOMContentLoaded, pega ESTO:
+
+javascript
+        // Agregar viaje (VERSIÓN CORREGIDA)
+        function addTravel() {
+            const orderNumber = document.getElementById('orderNumber').value;
+            const origin = document.getElementById('origin').value;
+            const destination = document.getElementById('destination').value;
+            const km = parseFloat(document.getElementById('km').value);
+            const travelType = document.getElementById('travelType').value;
+            const departureTime = document.getElementById('departureTime').value;
+            const arrivalTime = document.getElementById('arrivalTime').value;
+
+            // Obtener fecha del campo de fecha (CORREGIDO)
+            const fechaInput = document.getElementById('fechaViaje').value;
+            let fechaViaje;
+
+            if (fechaInput) {
+                // Convertir YYYY-MM-DD a DD/MM/YYYY
+                const [año, mes, dia] = fechaInput.split('-');
+                fechaViaje = `${dia}/${mes}/${año}`;
+            } else {
+                // Si no hay fecha seleccionada, usar fecha actual
+                fechaViaje = new Date().toLocaleDateString('es-ES');
+            }
+
+            if (!orderNumber || !origin || !destination || !km) {
+                alert('Por favor completa todos los campos obligatorios');
+                return;
+            }
+
+            const travel = {
+                id: Date.now(),
+                orderNumber,
+                origin,
+                destination,
+                km,
+                type: travelType,
+                departureTime,
+                arrivalTime,
+                date: fechaViaje,
+                timestamp: new Date().toISOString()
+            };
+
+            travels.push(travel);
+            localStorage.setItem('bus_travels', JSON.stringify(travels));
+            
+            // Limpiar formulario (mantener fecha)
+            document.getElementById('orderNumber').value = '';
+            document.getElementById('origin').value = '';
+            document.getElementById('destination').value = '';
+            document.getElementById('km').value = '';
+            document.getElementById('departureTime').value = '';
+            document.getElementById('arrivalTime').value = '';
+            
+            updateSummary();
+            renderTravels();
+        }
+¿Puedes borrar primero esas líneas dañadas y luego pegar la función completa?
+
+Bien, reemplace por completo la función adtravel por el código que enviaste, confirma ahora con el código que voy a enviarte,              // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSummary();
+            renderTravels();
+            renderGuards();
+        });
+
+        
+        // Agregar viaje (VERSIÓN CORREGIDA)
+        function addTravel() {
+            const orderNumber = document.getElementById('orderNumber').value;
+            const origin = document.getElementById('origin').value;
+            const destination = document.getElementById('destination').value;
+            const km = parseFloat(document.getElementById('km').value);
+            const travelType = document.getElementById('travelType').value;
+            const departureTime = document.getElementById('departureTime').value;
+            const arrivalTime = document.getElementById('arrivalTime').value;
+
+            // Obtener fecha del campo de fecha (CORREGIDO)
+            const fechaInput = document.getElementById('fechaViaje').value;
+            let fechaViaje;
+
+            if (fechaInput) {
+                // Convertir YYYY-MM-DD a DD/MM/YYYY
+                const [año, mes, dia] = fechaInput.split('-');
+                fechaViaje = `${dia}/${mes}/${año}`;
+            } else {
+                // Si no hay fecha seleccionada, usar fecha actual
+                fechaViaje = new Date().toLocaleDateString('es-ES');
+            }
+
+            if (!orderNumber || !origin || !destination || !km) {
+                alert('Por favor completa todos los campos obligatorios');
+                return;
+            }
+
+            const travel = {
+                id: Date.now(),
+                orderNumber,
+                origin,
+                destination,
+                km,
+                type: travelType,
+                departureTime,
+                arrivalTime,
+                date: fechaViaje,
+                timestamp: new Date().toISOString()
+            };
+
+            travels.push(travel);
+            localStorage.setItem('bus_travels', JSON.stringify(travels));
+            
+            // Limpiar formulario (mantener fecha)
+            document.getElementById('orderNumber').value = '';
+            document.getElementById('origin').value = '';
+            document.getElementById('destination').value = '';
+            document.getElementById('km').value = '';
+            document.getElementById('departureTime').value = '';
+            document.getElementById('
+¡Excelente! 👏 El código de la función addTravel() está CORRECTO y bien estructurado.
+
+Sin embargo, veo que se cortó al final. Necesitas completar el final de la función.
+
+📝 Completa el final de la función:
+Donde se corta tu código, agrega estas líneas que faltan:
+
+javascript
+            document.getElementById('arrivalTime').value = '';
+            
+            updateSummary();
+            renderTravels();
+        }
+✅ Tu función completa debería terminar así:
+javascript
+            travels.push(travel);
+            localStorage.setItem('bus_travels', JSON.stringify(travels));
+            
+            // Limpiar formulario (mantener fecha)
+            document.getElementById('orderNumber').value = '';
+            document.getElementById('origin').value = '';
+            document.getElementById('destination').value = '';
+            document.getElementById('km').value = '';
+            document.getElementById('departureTime').value = '';
+            document.getElementById('arrivalTime').value = '';
+            
+            updateSummary();
+            renderTravels();
+        }
+¿Puedes verificar que el final de tu función addTravel() tenga esas líneas? Si no las tiene, agrégalas para que la función quede completa.
+
+Una vez que esté completa, guarda el archivo y prueba si ahora registra correctamente los viajes. 🚀
+
+Si esta completa así justo como lo enviaste, quizá el pegado qué hice no estaba completo, la idea de enviarte el pegado anterior fue para mostrarte entre cuales funciones las pegue nada más
+¡Perfecto! Entonces ya tienes la función addTravel() completa y correctamente ubicada entre:
+
+Antes: DOMContentLoaded
+
+Después: La función addGuard() (que viene después)
+
+✅ Estado actual:
+✅ Función addTravel() corregida
+
+✅ Sin errores de sintaxis
+
+✅ Manejo correcto de fechas
+
+✅ Ubicación correcta en el código
+
+🚀 Ahora puedes probar:
+Abrir la aplicación en el navegador
+
+Probar registrar un viaje con diferentes fechas
+
+Verificar que se guarde correctamente en la lista
+
+Probar los botones de fecha rápida (Hoy, Ayer, etc.)
+
+¿La aplicación ya está funcionando correctamente? ¿O necesitas ayuda con alguna otra parte?
+
+Si todo funciona bien, podríamos luego mejorar otras funciones como los reportes mensuales o la exportación de datos. 😊
+
+Dame un segúndo que pruebo
+¡Perfecto! Tómate tu tiempo para probar.
+
+Estoy aquí cuando me necesites.
+
+Mientras pruebas, verifica esto:
+
+✅ Que registre viajes con fecha de hoy
+
+✅ Que funcione con los botones de fecha rápida
+
+✅ Que se muestren en la lista de viajes
+
+✅ Que el resumen se actualice
+
+✅ Que los datos persistan al recargar la página
+
+Cuando termines de probar, me cuentas:
+
+¿Qué funciona bien?
+
+¿Qué encontraste que no funciona?
+
+¡Suerte con las pruebas! 🧪🚀
+
+OK volvió todo a la normalidad, aunque sigue el problema de que en el reporte mensual no aparece el primer día del mes
+¡Excelente que ya funciona el registro! 🎉
+
+Ahora vamos a solucionar el problema del primer día del mes en los reportes.
+
+🔍 El problema está en esta parte del código:
+En la función mostrarReporteMes(), hay un error en cómo se filtran las fechas.
+
+🛠️ CORRECCIÓN para el reporte mensual:
+Busca esta parte en tu código (aproximadamente línea 350-370):
+
+javascript
+// Procesar viajes del mes
+travels.forEach(viaje => {
+    const fechaViaje = new Date(viaje.date.split('/').reverse().join('-'));
+    if (fechaViaje >= primerDiaMes) {
+        // ... resto del código
+    }
+});
+Y reemplázala por ESTA VERSIÓN CORREGIDA:
+
+javascript
+// Procesar viajes del mes (VERSIÓN CORREGIDA)
+travels.forEach(viaje => {
+    // CORRECCIÓN: Convertir fecha DD/MM/YYYY correctamente
+    const [dia, mes, año] = viaje.date.split('/');
+    const fechaViaje = new Date(año, mes - 1, dia); // mes - 1 porque en JS los meses van de 0-11
+    
+    if (fechaViaje >= primerDiaMes) {
+        if (!registrosPorDia[viaje.date]) {
+            registrosPorDia[viaje.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
+        }
+        registrosPorDia[viaje.date].viajes++;
+        registrosPorDia[viaje.date].kmViajes += viaje.km;
+    }
+});
+
+// Procesar guardias del mes (VERSIÓN CORREGIDA)
+guards.forEach(guardia => {
+    // CORRECCIÓN: Convertir fecha DD/MM/YYYY correctamente
+    const [dia, mes, año] = guardia.date.split('/');
+    const fechaGuardia = new Date(año, mes - 1, dia);
+    
+    if (fechaGuardia >= primerDiaMes) {
+        if (!registrosPorDia[guardia.date]) {
+            registrosPorDia[guardia.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
+        }
+        registrosPorDia[guardia.date].guardias++;
+        registrosPorDia[guardia.date].kmGuardias += parseFloat(guardia.km);
+    }
+});
+📋 ¿Quieres que te ayude a encontrar exactamente dónde hacer este cambio?
+O prefieres que te envíe la función mostrarReporteMes() completa y corregida?
+
+Bien vamos primero con procesar viajes del mes, paso a paso
+Perfecto! Vamos paso a paso.
+
+🔍 PRIMER PASO: Encontrar la sección a modificar
+Busca en tu código esta parte (aproximadamente línea 350):
+
+javascript
+// Procesar viajes del mes
+travels.forEach(viaje => {
+    const fechaViaje = new Date(viaje.date.split('/').reverse().join('-'));
+    if (fechaViaje >= primerDiaMes) {
+        if (!registrosPorDia[viaje.date]) {
+            registrosPorDia[viaje.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
+        }
+        registrosPorDia[viaje.date].viajes++;
+        registrosPorDia[viaje.date].kmViajes += viaje.km;
+    }
+});
+🛠️ SEGUNDO PASO: Reemplazar SOLO esa sección
+Borra desde // Procesar viajes del mes hasta el }); de esa sección, y pega esto:
+
+javascript
+// Procesar viajes del mes (VERSIÓN CORREGIDA)
+travels.forEach(viaje => {
+    // CORRECCIÓN: Convertir fecha DD/MM/YYYY correctamente
+    const [dia, mes, año] = viaje.date.split('/');
+    const fechaViaje = new Date(año, mes - 1, dia); // mes - 1 porque en JS los meses van de 0-11
+    
+    if (fechaViaje >= primerDiaMes) {
+        if (!registrosPorDia[viaje.date]) {
+            registrosPorDia[viaje.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
+        }
+        registrosPorDia[viaje.date].viajes++;
+        registrosPorDia[viaje.date].kmViajes += viaje.km;
+    }
+});
+¿Podrías confirmarme si encontraste esa sección en tu código? Así continuamos con el siguiente paso.
+
+Así quedo pegado
+// Procesar viajes del mes (VERSIÓN CORREGIDA)
+travels.forEach(viaje => {
+    // CORRECCIÓN: Convertir fecha DD/MM/YYYY correctamente
+    const [dia, mes, año] = viaje.date.split('/');
+    const fechaViaje = new Date(año, mes - 1, dia); // mes - 1 porque en JS los meses van de 0-11
+    
+    if (fechaViaje >= primerDiaMes) {
+        if (!registrosPorDia[viaje.date]) {
+            registrosPorDia[viaje.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
+        }
+        registrosPorDia[viaje.date].viajes++;
+        registrosPorDia[viaje.date].kmViajes += viaje.km;
+    }
+});
+¡Perfecto! ✅ Ya tienes la primera parte corregida.
+
+🛠️ TERCER PASO: Ahora vamos con la segunda parte
+Ahora busca esta sección (justo después de la que acabamos de corregir):
+
+javascript
+// Procesar guardias del mes
+guards.forEach(guardia => {
+    const fechaGuardia = new Date(guardia.date.split('/').reverse().join('-'));
+    if (fechaGuardia >= primerDiaMes) {
+        if (!registrosPorDia[guardia.date]) {
+            registrosPorDia[guardia.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
+        }
+        registrosPorDia[guardia.date].guardias++;
+        registrosPorDia[guardia.date].kmGuardias += parseFloat(guardia.km);
+    }
+});
+Borra esa sección completa y pega esta versión corregida:
+
+javascript
+// Procesar guardias del mes (VERSIÓN CORREGIDA)
+guards.forEach(guardia => {
+    // CORRECCIÓN: Convertir fecha DD/MM/YYYY correctamente
+    const [dia, mes, año] = guardia.date.split('/');
+    const fechaGuardia = new Date(año, mes - 1, dia);
+    
+    if (fechaGuardia >= primerDiaMes) {
+        if (!registrosPorDia[guardia.date]) {
+            registrosPorDia[guardia.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
+        }
+        registrosPorDia[guardia.date].guardias++;
+        registrosPorDia[guardia.date].kmGuardias += parseFloat(guardia.km);
+    }
+});
+¿Podrías hacer este segundo reemplazo? Así quedan ambas partes corregidas y el reporte mensual debería mostrar correctamente el primer día del mes. 🎯
+
+Antes de modificar las guardias me gustaría poner también una opción para guardias de días anteriores, seleccionando fecha manual como en los viajes
+¡Excelente idea! Vamos a agregar fecha a las guardias también.
+
+🛠️ PRIMERO: Modificar el HTML de Guardias
+Encuentra la sección de guardias (aproximadamente línea 100) y agrega el selector de fecha:
+
+html
+<!-- SECCIÓN GUARDIAS -->
+<div class="section">
+    <h2>⏰ Registrar Guardia</h2>
+    
+    <!-- AGREGAR ESTO: Selector de fecha para guardias -->
+    <div class="form-group">
+        <label>Fecha de la Guardia:</label>
+        <div class="time-group">
+            <button type="button" class="btn-fecha" data-dias="0">Hoy</button>
+            <button type="button" class="btn-fecha" data-dias="-1">Ayer</button>
+            <button type="button" class="btn-fecha" data-dias="-2">Hace 2 días</button>
+        </div>
+        <input type="date" id="fechaGuardia" style="margin-top: 10px;">
+    </div>
+
+    <div class="form-group">
+        <label>Tipo de Guardia:</label>
+        <select id="guardType">
+            <option value="common">Guardia Común (30 km/h)</option>
+            <option value="special">Guardia Especial (40 km/h)</option>
+        </select>
+    </div>
             <div class="form-group">
                 <label>Tipo de Guardia:</label>
                 <select id="guardType">
@@ -349,56 +2068,69 @@
             renderTravels();
         }
         // Agregar guardia
-        function addGuard() {
-            const guardType = document.getElementById('guardType').value;
-            const guardStart = document.getElementById('guardStart').value;
-            const guardEnd = document.getElementById('guardEnd').value;
+        
+// Agregar guardia (VERSIÓN CON FECHA)
+function addGuard() {
+    const guardType = document.getElementById('guardType').value;
+    const guardStart = document.getElementById('guardStart').value;
+    const guardEnd = document.getElementById('guardEnd').value;
 
-            if (!guardStart || !guardEnd) {
-                alert('Por favor ingresa horario de inicio y fin');
-                return;
-            }
+    // Obtener fecha del campo de fecha (NUEVO)
+    const fechaInput = document.getElementById('fechaGuardia').value;
+    let fechaGuardia;
 
-            // Calcular horas trabajadas
-            const start = new Date(`2000-01-01T${guardStart}`);
-            const end = new Date(`2000-01-01T${guardEnd}`);
-            
-            // Si la hora fin es menor que inicio, asumimos que pasa de medianoche
-            let hoursWorked = (end - start) / (1000 * 60 * 60);
-            if (hoursWorked < 0) {
-                hoursWorked += 24; // Sumar 24 horas si pasa de medianoche
-            }
+    if (fechaInput) {
+        // Convertir YYYY-MM-DD a DD/MM/YYYY
+        const [año, mes, dia] = fechaInput.split('-');
+        fechaGuardia = `${dia}/${mes}/${año}`;
+    } else {
+        // Si no hay fecha seleccionada, usar fecha actual
+        fechaGuardia = new Date().toLocaleDateString('es-ES');
+    }
 
-            if (hoursWorked <= 0) {
-                alert('La hora de fin debe ser posterior a la hora de inicio');
-                return;
-            }
+    if (!guardStart || !guardEnd) {
+        alert('Por favor ingresa horario de inicio y fin');
+        return;
+    }
 
-            // Calcular km según tipo de guardia
-            const kmPerHour = guardType === 'common' ? 30 : 40;
-            const totalKm = hoursWorked * kmPerHour;
+    // Calcular horas trabajadas
+    const start = new Date(`2000-01-01T${guardStart}`);
+    const end = new Date(`2000-01-01T${guardEnd}`);
+    
+    let hoursWorked = (end - start) / (1000 * 60 * 60);
+    if (hoursWorked < 0) {
+        hoursWorked += 24;
+    }
 
-            const guard = {
-                id: Date.now(),
-                type: guardType,
-                startTime: guardStart,
-                endTime: guardEnd,
-                hours: hoursWorked.toFixed(2),
-                km: totalKm.toFixed(1),
-                date: new Date().toLocaleDateString('es-ES')
-            };
+    if (hoursWorked <= 0) {
+        alert('La hora de fin debe ser posterior a la hora de inicio');
+        return;
+    }
 
-            guards.push(guard);
-            localStorage.setItem('bus_guards', JSON.stringify(guards));
-            
-            // Limpiar formulario
-            document.getElementById('guardStart').value = '';
-            document.getElementById('guardEnd').value = '';
-            
-            updateSummary();
-            renderGuards();
-        }
+    // Calcular km según tipo de guardia
+    const kmPerHour = guardType === 'common' ? 30 : 40;
+    const totalKm = hoursWorked * kmPerHour;
 
+    const guard = {
+        id: Date.now(),
+        type: guardType,
+        startTime: guardStart,
+        endTime: guardEnd,
+        hours: hoursWorked.toFixed(2),
+        km: totalKm.toFixed(1),
+        date: fechaGuardia  // Usar la fecha seleccionada
+    };
+
+    guards.push(guard);
+    localStorage.setItem('bus_guards', JSON.stringify(guards));
+    
+    // Limpiar formulario (mantener fecha)
+    document.getElementById('guardStart').value = '';
+    document.getElementById('guardEnd').value = '';
+    
+    updateSummary();
+    renderGuards();
+}
         // Mostrar viajes
         function renderTravels() {
             const travelsList = document.getElementById('travelsList');
@@ -710,6 +2442,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </script>
 </body>
 </html>
+
 
 
 
