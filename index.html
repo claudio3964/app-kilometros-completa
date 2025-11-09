@@ -309,30 +309,6 @@ const esPrimerDiaDelMes = (fecha = new Date()) => {
   return hoy.getDate() === 1;
 };
 
-// Función para registrar día/pago
-const registrarDia = async (usuarioId, monto, fecha = new Date()) => {
-  try {
-    const esPrimerDia = esPrimerDiaDelMes(fecha);
-    
-    // Aquí tu lógica de base de datos
-    const registro = await prisma.registroDias.create({
-      data: {
-        usuarioId,
-        monto,
-        fecha: fecha,
-        esPrimerDia: esPrimerDia,
-        registradoEl: new Date()
-      }
-    });
-    
-    console.log('Registro exitoso:', registro);
-    return registro;
-  } catch (error) {
-    console.error('Error al registrar día:', error);
-    throw error;
-  }
-};
-Por favor, comparte el código actual para poder ayudarte específicamente con el problema. ¿Puedes pegar el código del componente/service que maneja el registro de días?
 
 <!DOCTYPE html>
 <html lang="es">
@@ -2442,6 +2418,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </script>
 </body>
 </html>
+
 
 
 
