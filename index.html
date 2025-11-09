@@ -294,66 +294,61 @@
 
         // Agregar viaje
    // Agregar viaje (VERSIÓN MEJORADA CON FECHA)
-function addTravel() {
-    const orderNumber = document.getElementById('orderNumber').value;
-    const origin = document.getElementById('origin').value;
-    const destination = document.getElementById('destination').value;
-    const km = parseFloat(document.getElementById('km').value);
-    const travelType = document.getElementById('travelType').value;
-    const departureTime = document.getElementById('departureTime').value;
-    const arrivalTime = document.getElementById('arrivalTime').value;
+        // Agregar viaje (VERSIÓN CORREGIDA)
+        function addTravel() {
+            const orderNumber = document.getElementById('orderNumber').value;
+            const origin = document.getElementById('origin').value;
+            const destination = document.getElementById('destination').value;
+            const km = parseFloat(document.getElementById('km').value);
+            const travelType = document.getElementById('travelType').value;
+            const departureTime = document.getElementById('departureTime').value;
+            const arrivalTime = document.getElementById('arrivalTime').value;
 
-// Obtener fecha del campo de fecha (nuevo)
-const fechaInput = document.getElementById('fechaViaje').value;
-let fechaViaje;
+            // Obtener fecha del campo de fecha (CORREGIDO)
+            const fechaInput = document.getElementById('fechaViaje').value;
+            let fechaViaje;
 
-if (fechaInput) {
-    // CORRECCIÓN: Convertir directamente YYYY-MM-DD a DD/MM/YYYY
-    const [año, mes, dia] = fechaInput.split('-');
-    fechaViaje = `${dia}/${mes}/${año}`;
-} else {
-    // Si no hay fecha seleccionada, usar fecha actual
-    fechaViaje = new Date().toLocaleDateString('es-ES');
-}
+            if (fechaInput) {
+                // Convertir YYYY-MM-DD a DD/MM/YYYY
+                const [año, mes, dia] = fechaInput.split('-');
+                fechaViaje = `${dia}/${mes}/${año}`;
+            } else {
+                // Si no hay fecha seleccionada, usar fecha actual
+                fechaViaje = new Date().toLocaleDateString('es-ES');
+            }
 
-    // Si no hay fecha seleccionada, usar fecha actual
-    fechaViaje = new Date().toLocaleDateString('es-ES');
-}
+            if (!orderNumber || !origin || !destination || !km) {
+                alert('Por favor completa todos los campos obligatorios');
+                return;
+            }
 
-    if (!orderNumber || !origin || !destination || !km) {
-        alert('Por favor completa todos los campos obligatorios');
-        return;
-    }
+            const travel = {
+                id: Date.now(),
+                orderNumber,
+                origin,
+                destination,
+                km,
+                type: travelType,
+                departureTime,
+                arrivalTime,
+                date: fechaViaje,
+                timestamp: new Date().toISOString()
+            };
 
-    const travel = {
-        id: Date.now(),
-        orderNumber,
-        origin,
-        destination,
-        km,
-        type: travelType,
-        departureTime,
-        arrivalTime,
-        date: fechaViaje,  // Usar la fecha seleccionada
-        timestamp: new Date().toISOString()
-    };
-
-    travels.push(travel);
-    localStorage.setItem('bus_travels', JSON.stringify(travels));
-    
-    // Limpiar formulario (mantener fecha)
-    document.getElementById('orderNumber').value = '';
-    document.getElementById('origin').value = '';
-    document.getElementById('destination').value = '';
-    document.getElementById('km').value = '';
-    document.getElementById('departureTime').value = '';
-    document.getElementById('arrivalTime').value = '';
-    // NO limpiar el campo de fecha
-    
-    updateSummary();
-    renderTravels();
-}
-
+            travels.push(travel);
+            localStorage.setItem('bus_travels', JSON.stringify(travels));
+            
+            // Limpiar formulario (mantener fecha)
+            document.getElementById('orderNumber').value = '';
+            document.getElementById('origin').value = '';
+            document.getElementById('destination').value = '';
+            document.getElementById('km').value = '';
+            document.getElementById('departureTime').value = '';
+            document.getElementById('arrivalTime').value = '';
+            
+            updateSummary();
+            renderTravels();
+        }
         // Agregar guardia
         function addGuard() {
             const guardType = document.getElementById('guardType').value;
@@ -714,6 +709,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </script>
 </body>
 </html>
+
 
 
 
