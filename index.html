@@ -567,18 +567,20 @@
             // Agrupar por día
             const registrosPorDia = {};
             
-            // Procesar viajes del mes
-            travels.forEach(viaje => {
-                const fechaViaje = new Date(viaje.date.split('/').reverse().join('-'));
-                if (fechaViaje >= primerDiaMes) {
-                    if (!registrosPorDia[viaje.date]) {
-                        registrosPorDia[viaje.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
-                    }
-                    registrosPorDia[viaje.date].viajes++;
-                    registrosPorDia[viaje.date].kmViajes += viaje.km;
-                }
-            });
-            
+            // Procesar viajes del mes (VERSIÓN CORREGIDA)
+travels.forEach(viaje => {
+    // CORRECCIÓN: Convertir fecha DD/MM/YYYY correctamente
+    const [dia, mes, año] = viaje.date.split('/');
+    const fechaViaje = new Date(año, mes - 1, dia); // mes - 1 porque en JS los meses van de 0-11
+    
+    if (fechaViaje >= primerDiaMes) {
+        if (!registrosPorDia[viaje.date]) {
+            registrosPorDia[viaje.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
+        }
+        registrosPorDia[viaje.date].viajes++;
+        registrosPorDia[viaje.date].kmViajes += viaje.km;
+    }
+});
             // Procesar guardias del mes
             guards.forEach(guardia => {
                 const fechaGuardia = new Date(guardia.date.split('/').reverse().join('-'));
@@ -708,6 +710,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </script>
 </body>
 </html>
+
 
 
 
