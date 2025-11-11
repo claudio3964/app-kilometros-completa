@@ -7,30 +7,14 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            /* PALETA CREMA - OCRE - MARRÓN */
             --crema: #FFF8E1;
             --crema-oscuro: #F5E6CA;
             --amarillo-ocre: #D4A017;
             --ocre-dorado: #B8860B;
             --marron-claro: #8B4513;
             --marron: #654321;
-            --marron-oscuro: #3E2723;
             --texto-oscuro: #2D1B08;
             --texto-claro: #5D4037;
-            
-            /* GRADIENTES */
-            --gradient-crema: linear-gradient(135deg, var(--crema) 0%, var(--crema-oscuro) 100%);
-            --gradient-ocre: linear-gradient(135deg, var(--amarillo-ocre) 0%, var(--ocre-dorado) 100%);
-            --gradient-marron: linear-gradient(135deg, var(--marron-claro) 0%, var(--marron) 100%);
-            --gradient-completo: linear-gradient(135deg, var(--crema) 0%, var(--amarillo-ocre) 50%, var(--marron-claro) 100%);
-            
-            /* SOMBRAS */
-            --shadow-suave: 0 4px 15px rgba(141, 101, 19, 0.1);
-            --shadow-media: 0 6px 20px rgba(141, 101, 19, 0.15);
-            --shadow-fuerte: 0 10px 30px rgba(141, 101, 19, 0.2);
-            
-            --border-radius: 12px;
-            --border-radius-lg: 20px;
         }
 
         * {
@@ -41,140 +25,74 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--gradient-completo);
+            background: linear-gradient(135deg, var(--crema) 0%, var(--amarillo-ocre) 100%);
             min-height: 100vh;
             color: var(--texto-oscuro);
-            line-height: 1.6;
-            overflow: hidden;
-        }
-
-        .app-container {
-            width: 100%;
-            height: 100vh;
-            position: relative;
-        }
-
-        /* PANTALLAS */
-        .screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--crema);
-            transition: all 0.4s ease;
-            opacity: 0;
-            pointer-events: none;
-            overflow-y: auto;
             padding: 20px;
         }
 
-        .screen.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-            display: none; /* IMPORTANTE: Esto oculta completamente las pantallas */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
         }
 
         /* PANTALLA PRINCIPAL */
-        #mainScreen.active {
-            background: 
-                radial-gradient(circle at 20% 80%, rgba(212, 160, 23, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(139, 69, 19, 0.08) 0%, transparent 50%),
-                var(--gradient-crema);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+        #mainScreen {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             text-align: center;
+            margin-top: 20px;
         }
 
         .logo-container {
             background: var(--crema);
-            padding: 35px 45px;
-            border-radius: var(--border-radius-lg);
-            box-shadow: var(--shadow-fuerte);
-            margin-bottom: 40px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
             border: 3px solid var(--amarillo-ocre);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .logo-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 5px;
-            background: var(--gradient-ocre);
         }
 
         .logo-title {
-            font-size: 3.5em;
+            font-size: 3em;
             font-weight: 800;
-            background: var(--gradient-ocre);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--amarillo-ocre);
             margin-bottom: 10px;
         }
 
         .logo-subtitle {
-            font-size: 1.3em;
+            font-size: 1.2em;
             color: var(--marron);
-            font-weight: 700;
-            letter-spacing: 1px;
+            font-weight: 600;
         }
 
         .stats-bar {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin: 30px 0;
-            width: 100%;
-            max-width: 600px;
+            gap: 15px;
+            margin: 25px 0;
         }
 
         .stat-card {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 25px 20px;
-            border-radius: var(--border-radius);
+            background: var(--crema);
+            padding: 20px;
+            border-radius: 10px;
             text-align: center;
-            box-shadow: var(--shadow-suave);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
             border-top: 4px solid var(--amarillo-ocre);
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-media);
-        }
-
-        .stat-card:nth-child(2) {
-            border-top-color: var(--ocre-dorado);
-        }
-
-        .stat-card:nth-child(3) {
-            border-top-color: var(--marron-claro);
         }
 
         .stat-value {
-            font-size: 2.2em;
+            font-size: 1.8em;
             font-weight: 800;
-            margin-bottom: 8px;
+            color: var(--marron);
+            margin-bottom: 5px;
         }
 
-        .stat-card:nth-child(1) .stat-value { color: var(--amarillo-ocre); }
-        .stat-card:nth-child(2) .stat-value { color: var(--ocre-dorado); }
-        .stat-card:nth-child(3) .stat-value { color: var(--marron-claro); }
-
         .stat-label {
-            font-size: 0.9em;
+            font-size: 0.8em;
             color: var(--texto-claro);
             font-weight: 600;
         }
@@ -182,93 +100,208 @@
         .menu-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            width: 100%;
-            max-width: 600px;
+            gap: 15px;
+            margin-top: 30px;
         }
 
         .menu-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: var(--border-radius-lg);
-            padding: 25px 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: var(--shadow-suave);
-            border: 2px solid transparent;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .menu-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: var(--gradient-ocre);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 2px solid var(--crema-oscuro);
         }
 
         .menu-card:hover {
             transform: translateY(-5px);
-            box-shadow: var(--shadow-fuerte);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
             border-color: var(--amarillo-ocre);
         }
 
-        .menu-card:nth-child(even)::before {
-            background: var(--gradient-marron);
-        }
-
         .menu-icon {
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 15px;
-            font-size: 24px;
-            background: var(--gradient-ocre);
+            margin: 0 auto 10px;
+            font-size: 20px;
+            background: var(--amarillo-ocre);
             color: white;
-            box-shadow: var(--shadow-media);
-        }
-
-        .menu-card:nth-child(even) .menu-icon {
-            background: var(--gradient-marron);
         }
 
         .menu-title {
-            font-size: 1.1em;
+            font-size: 1em;
             font-weight: 700;
             color: var(--marron);
-            margin-bottom: 8px;
+            margin-bottom: 5px;
         }
 
         .menu-desc {
-            font-size: 0.85em;
+            font-size: 0.8em;
             color: var(--texto-claro);
-            line-height: 1.4;
         }
 
-        /* RESPONSIVE */
+        /* PANTALLAS SECUNDARIAS */
+        .screen {
+            display: none;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--crema-oscuro);
+        }
+
+        .back-btn {
+            background: var(--amarillo-ocre);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .header-title h1 {
+            color: var(--marron);
+            font-size: 1.4em;
+        }
+
+        .header-title p {
+            color: var(--texto-claro);
+            font-size: 0.9em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--marron);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--crema-oscuro);
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--amarillo-ocre);
+        }
+
+        .time-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .time-group input {
+            flex: 1;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn-date {
+            flex: 1;
+            padding: 10px;
+            background: var(--amarillo-ocre);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button {
+            background: var(--amarillo-ocre);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: var(--ocre-dorado);
+        }
+
+        .btn-danger {
+            background: var(--marron-claro);
+        }
+
+        .list-item {
+            background: var(--crema);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid var(--amarillo-ocre);
+        }
+
+        .list-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .list-item-title {
+            font-weight: bold;
+            color: var(--marron);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            width: auto;
+        }
+
         @media (max-width: 768px) {
             .menu-grid {
                 grid-template-columns: 1fr;
             }
-            
             .stats-bar {
                 grid-template-columns: 1fr;
-            }
-            
-            .screen {
-                padding: 15px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
+    <div class="container">
         <!-- PANTALLA PRINCIPAL -->
         <div id="mainScreen" class="screen active">
             <div class="logo-container">
@@ -342,27 +375,195 @@
             </div>
         </div>
 
-        <!-- LAS OTRAS PANTALLAS SE MANTIENEN IGUAL -->
-        <!-- [Resto del código igual] -->
-        
+        <!-- PANTALLA REGISTRAR VIAJE -->
+        <div id="travelScreen" class="screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('mainScreen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="header-title">
+                    <h1>Registrar Viaje</h1>
+                    <p>Complete los datos del nuevo servicio</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Fecha del Viaje:</label>
+                <div class="btn-group">
+                    <button type="button" class="btn-date" onclick="setFecha('fechaViaje', 0)">Hoy</button>
+                    <button type="button" class="btn-date" onclick="setFecha('fechaViaje', -1)">Ayer</button>
+                    <button type="button" class="btn-date" onclick="setFecha('fechaViaje', -2)">Hace 2 días</button>
+                </div>
+                <input type="date" id="fechaViaje">
+            </div>
+
+            <div class="form-group">
+                <label>Número de Orden:</label>
+                <input type="number" id="orderNumber" placeholder="Ej: 123">
+            </div>
+
+            <div class="form-group">
+                <label>Origen:</label>
+                <input type="text" id="origin" placeholder="Ej: Montevideo">
+            </div>
+
+            <div class="form-group">
+                <label>Destino:</label>
+                <input type="text" id="destination" placeholder="Ej: Punta del Este">
+            </div>
+
+            <div class="form-group">
+                <label>Kilómetros:</label>
+                <input type="number" id="km" placeholder="Ej: 140" step="0.1">
+            </div>
+
+            <div class="form-group">
+                <label>Horarios:</label>
+                <div class="time-group">
+                    <input type="time" id="departureTime">
+                    <input type="time" id="arrivalTime">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Tipo:</label>
+                <select id="travelType">
+                    <option value="working">Trabajando</option>
+                    <option value="passenger">De Pasajero</option>
+                </select>
+            </div>
+
+            <button onclick="addTravel()">Agregar Viaje</button>
+        </div>
+
+        <!-- PANTALLA REGISTRAR GUARDIA -->
+        <div id="guardScreen" class="screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('mainScreen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="header-title">
+                    <h1>Registrar Guardia</h1>
+                    <p>Complete los datos de la guardia</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Fecha de la Guardia:</label>
+                <div class="btn-group">
+                    <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', 0)">Hoy</button>
+                    <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', -1)">Ayer</button>
+                    <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', -2)">Hace 2 días</button>
+                </div>
+                <input type="date" id="fechaGuardia">
+            </div>
+
+            <div class="form-group">
+                <label>Tipo de Guardia:</label>
+                <select id="guardType">
+                    <option value="common">Guardia Común (30 km/h)</option>
+                    <option value="special">Guardia Especial (40 km/h)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Horario de Guardia:</label>
+                <div class="time-group">
+                    <input type="time" id="guardStart">
+                    <input type="time" id="guardEnd">
+                </div>
+            </div>
+
+            <button onclick="addGuard()">Agregar Guardia</button>
+        </div>
+
+        <!-- PANTALLA RESUMEN GENERAL -->
+        <div id="summaryScreen" class="screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('mainScreen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="header-title">
+                    <h1>Resumen General</h1>
+                    <p>Estadísticas completas del mes</p>
+                </div>
+            </div>
+
+            <div id="summaryContent">
+                <p>Km Trabajando: <span id="totalWorking">0</span> km</p>
+                <p>Km de Pasajero: <span id="totalPassenger">0</span> km</p>
+                <p>Km por Guardias: <span id="totalGuards">0</span> km</p>
+                <p><strong>TOTAL KM: <span id="totalAll">0</span> km</strong></p>
+                <p><strong>TOTAL A COBRAR: $<span id="totalMoney">0</span></strong></p>
+            </div>
+
+            <button onclick="exportData()">Exportar Resumen</button>
+            <button onclick="clearMonth()" class="btn-danger">Reiniciar Mes</button>
+        </div>
+
+        <!-- PANTALLA LISTA DE VIAJES -->
+        <div id="travelsListScreen" class="screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('mainScreen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="header-title">
+                    <h1>Lista de Viajes</h1>
+                    <p>Gestionar viajes registrados</p>
+                </div>
+            </div>
+            <div id="travelsList"></div>
+        </div>
+
+        <!-- PANTALLA LISTA DE GUARDIAS -->
+        <div id="guardsListScreen" class="screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('mainScreen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="header-title">
+                    <h1>Lista de Guardias</h1>
+                    <p>Gestionar guardias registradas</p>
+                </div>
+            </div>
+            <div id="guardsList"></div>
+        </div>
+
+        <!-- PANTALLA REPORTES -->
+        <div id="reportsScreen" class="screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('mainScreen')">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="header-title">
+                    <h1>Reportes</h1>
+                    <p>Análisis detallados de actividad</p>
+                </div>
+            </div>
+            
+            <button onclick="mostrarReporteHoy()" style="margin-bottom: 10px;">Ver Reporte de Hoy</button>
+            <button onclick="mostrarReporteMes()">Ver Reporte del Mes</button>
+            
+            <div id="reportesContent" style="margin-top: 20px;"></div>
+        </div>
     </div>
 
     <script>
-        // [Todo el JavaScript se mantiene igual]
         const PRICE_PER_KM = 7.60;
         let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
         let guards = JSON.parse(localStorage.getItem('bus_guards')) || [];
 
+        // FUNCIÓN SIMPLE PARA MOSTRAR PANTALLAS
         function showScreen(screenId) {
+            // Ocultar todas las pantallas
             document.querySelectorAll('.screen').forEach(screen => {
                 screen.classList.remove('active');
-                screen.classList.add('hidden');
             });
             
-            const targetScreen = document.getElementById(screenId);
-            targetScreen.classList.remove('hidden');
-            targetScreen.classList.add('active');
+            // Mostrar la pantalla seleccionada
+            document.getElementById(screenId).classList.add('active');
             
+            // Actualizar datos si es necesario
             if (screenId === 'mainScreen') {
                 updateMainStats();
             } else if (screenId === 'summaryScreen') {
@@ -374,10 +575,108 @@
             }
         }
 
-        // [Resto de las funciones JavaScript igual]
+        function setFecha(elementId, dias) {
+            const fecha = new Date();
+            fecha.setDate(fecha.getDate() + dias);
+            const fechaFormateada = fecha.toISOString().split('T')[0];
+            document.getElementById(elementId).value = fechaFormateada;
+        }
+
+        // CONFIGURACIÓN INICIAL
+        document.addEventListener('DOMContentLoaded', function() {
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fechaViaje').value = hoy;
+            document.getElementById('fechaGuardia').value = hoy;
+            
+            updateMainStats();
+            updateSummary();
+            
+            // Mostrar solo la pantalla principal
+            showScreen('mainScreen');
+        });
+
+        // [RESTANTE DEL JAVASCRIPT IGUAL - addTravel, addGuard, updateSummary, etc.]
+        function addTravel() {
+            const orderNumber = document.getElementById('orderNumber').value;
+            const origin = document.getElementById('origin').value;
+            const destination = document.getElementById('destination').value;
+            const km = parseFloat(document.getElementById('km').value);
+            const travelType = document.getElementById('travelType').value;
+            const departureTime = document.getElementById('departureTime').value;
+            const arrivalTime = document.getElementById('arrivalTime').value;
+            const fechaInput = document.getElementById('fechaViaje').value;
+
+            if (!orderNumber || !origin || !destination || !km) {
+                alert('Por favor completa todos los campos obligatorios');
+                return;
+            }
+
+            let fechaViaje;
+            if (fechaInput) {
+                const [año, mes, dia] = fechaInput.split('-');
+                fechaViaje = `${dia}/${mes}/${año}`;
+            } else {
+                fechaViaje = new Date().toLocaleDateString('es-ES');
+            }
+
+            const travel = {
+                id: Date.now(),
+                orderNumber,
+                origin,
+                destination,
+                km,
+                type: travelType,
+                departureTime,
+                arrivalTime,
+                date: fechaViaje,
+                timestamp: new Date().toISOString()
+            };
+
+            travels.push(travel);
+            localStorage.setItem('bus_travels', JSON.stringify(travels));
+            
+            document.getElementById('orderNumber').value = '';
+            document.getElementById('origin').value = '';
+            document.getElementById('destination').value = '';
+            document.getElementById('km').value = '';
+            
+            updateMainStats();
+            updateSummary();
+            alert('✅ Viaje agregado correctamente!');
+            showScreen('mainScreen');
+        }
+
+        function updateMainStats() {
+            const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
+            const totalPassenger = travels.filter(t => t.type === 'passenger').reduce((sum, t) => sum + t.km, 0);
+            const totalGuards = guards.reduce((sum, g) => sum + parseFloat(g.km), 0);
+            const totalAll = totalWorking + totalPassenger + totalGuards;
+            const totalMoney = totalAll * PRICE_PER_KM;
+
+            document.getElementById('mainTotalKm').textContent = totalAll.toFixed(0);
+            document.getElementById('mainTotalMoney').textContent = `$${totalMoney.toFixed(0)}`;
+            document.getElementById('mainTotalTravels').textContent = travels.length;
+        }
+
+        function updateSummary() {
+            const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
+            const totalPassenger = travels.filter(t => t.type === 'passenger').reduce((sum, t) => sum + t.km, 0);
+            const totalGuards = guards.reduce((sum, g) => sum + parseFloat(g.km), 0);
+            const totalAll = totalWorking + totalPassenger + totalGuards;
+            const totalMoney = totalAll * PRICE_PER_KM;
+
+            document.getElementById('totalWorking').textContent = totalWorking.toFixed(1);
+            document.getElementById('totalPassenger').textContent = totalPassenger.toFixed(1);
+            document.getElementById('totalGuards').textContent = totalGuards.toFixed(1);
+            document.getElementById('totalAll').textContent = totalAll.toFixed(1);
+            document.getElementById('totalMoney').textContent = totalMoney.toFixed(2);
+        }
+
+        // [Resto de funciones JavaScript...]
     </script>
 </body>
 </html>
+
 
 
 
