@@ -222,11 +222,6 @@
         <!-- SECCIÓN GUARDIAS -->
         <div class="section">
             <h2>⏰ Registrar Guardia</h2>
-            
-
-
-
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1033,11 +1028,7 @@ javascript
             updateSummary();
             renderTravels();
         }
-Luego de pegar esto, debería continuar con la función addGuard().
 
-¿Ves dónde pegar ahora? Es justo después del DOMContentLoaded y antes de que empiece cualquier otra función.
-
-Me aparece así en github no como haces referencia en el chat
 // Cargar datos al iniciar
         document.addEventListener('DOMContentLoaded', function() {
             
@@ -1052,11 +1043,7 @@ Me aparece así en github no como haces referencia en el chat
     updateSummary();
     renderTravels();
 }
-¡Ah! Entiendo el problema. Tienes código roto que quedó después de borrar.
 
-Primero necesitas LIMPIAR ese código dañado, luego pegar la función completa.
-
-🗑️ BORRA ESTAS LÍNEAS DAÑADAS:
 javascript
 // Cargar datos al iniciar
         document.addEventListener('DOMContentLoaded', function() {
@@ -1210,129 +1197,7 @@ Bien, reemplace por completo la función adtravel por el código que enviaste, c
             document.getElementById('
 
 
-javascript
-// Procesar viajes del mes (VERSIÓN CORREGIDA)
-travels.forEach(viaje => {
-    // CORRECCIÓN: Convertir fecha DD/MM/YYYY correctamente
-    const [dia, mes, año] = viaje.date.split('/');
-    const fechaViaje = new Date(año, mes - 1, dia); // mes - 1 porque en JS los meses van de 0-11
-    
-    if (fechaViaje >= primerDiaMes) {
-        if (!registrosPorDia[viaje.date]) {
-            registrosPorDia[viaje.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
-        }
-        registrosPorDia[viaje.date].viajes++;
-        registrosPorDia[viaje.date].kmViajes += viaje.km;
-    }
-});
 
-// Procesar guardias del mes (VERSIÓN CORREGIDA)
-guards.forEach(guardia => {
-    // CORRECCIÓN: Convertir fecha DD/MM/YYYY correctamente
-    const [dia, mes, año] = guardia.date.split('/');
-    const fechaGuardia = new Date(año, mes - 1, dia);
-    
-    if (fechaGuardia >= primerDiaMes) {
-        if (!registrosPorDia[guardia.date]) {
-            registrosPorDia[guardia.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
-        }
-        registrosPorDia[guardia.date].guardias++;
-        registrosPorDia[guardia.date].kmGuardias += parseFloat(guardia.km);
-    }
-});
-📋 ¿Quieres que te ayude a encontrar exactamente dónde hacer este cambio?
-O prefieres que te envíe la función mostrarReporteMes() completa y corregida?
-
-Bien vamos primero con procesar viajes del mes, paso a paso
-Perfecto! Vamos paso a paso.
-
-🔍 PRIMER PASO: Encontrar la sección a modificar
-Busca en tu código esta parte (aproximadamente línea 350):
-
-javascript
-// Procesar viajes del mes
-travels.forEach(viaje => {
-    const fechaViaje = new Date(viaje.date.split('/').reverse().join('-'));
-    if (fechaViaje >= primerDiaMes) {
-        if (!registrosPorDia[viaje.date]) {
-            registrosPorDia[viaje.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
-        }
-        registrosPorDia[viaje.date].viajes++;
-        registrosPorDia[viaje.date].kmViajes += viaje.km;
-    }
-});
-🛠️ SEGUNDO PASO: Reemplazar SOLO esa sección
-Borra desde // Procesar viajes del mes hasta el }); de esa sección, y pega esto:
-
-javascript
-// Procesar viajes del mes (VERSIÓN CORREGIDA)
-travels.forEach(viaje => {
-    // CORRECCIÓN: Convertir fecha DD/MM/YYYY correctamente
-    const [dia, mes, año] = viaje.date.split('/');
-    const fechaViaje = new Date(año, mes - 1, dia); // mes - 1 porque en JS los meses van de 0-11
-    
-    if (fechaViaje >= primerDiaMes) {
-        if (!registrosPorDia[viaje.date]) {
-            registrosPorDia[viaje.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
-        }
-        registrosPorDia[viaje.date].viajes++;
-        registrosPorDia[viaje.date].kmViajes += viaje.km;
-    }
-});
-¿Podrías confirmarme si encontraste esa sección en tu código? Así continuamos con el siguiente paso.
-
-Así quedo pegado
-// Procesar viajes del mes (VERSIÓN CORREGIDA)
-travels.forEach(viaje => {
-    // CORRECCIÓN: Convertir fecha DD/MM/YYYY correctamente
-    const [dia, mes, año] = viaje.date.split('/');
-    const fechaViaje = new Date(año, mes - 1, dia); // mes - 1 porque en JS los meses van de 0-11
-    
-    if (fechaViaje >= primerDiaMes) {
-        if (!registrosPorDia[viaje.date]) {
-            registrosPorDia[viaje.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
-        }
-        registrosPorDia[viaje.date].viajes++;
-        registrosPorDia[viaje.date].kmViajes += viaje.km;
-    }
-});
-¡Perfecto! ✅ Ya tienes la primera parte corregida.
-
-🛠️ TERCER PASO: Ahora vamos con la segunda parte
-Ahora busca esta sección (justo después de la que acabamos de corregir):
-
-javascript
-// Procesar guardias del mes
-guards.forEach(guardia => {
-    const fechaGuardia = new Date(guardia.date.split('/').reverse().join('-'));
-    if (fechaGuardia >= primerDiaMes) {
-        if (!registrosPorDia[guardia.date]) {
-            registrosPorDia[guardia.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
-        }
-        registrosPorDia[guardia.date].guardias++;
-        registrosPorDia[guardia.date].kmGuardias += parseFloat(guardia.km);
-    }
-});
-Borra esa sección completa y pega esta versión corregida:
-
-javascript
-// Procesar guardias del mes (VERSIÓN CORREGIDA)
-guards.forEach(guardia => {
-    // CORRECCIÓN: Convertir fecha DD/MM/YYYY correctamente
-    const [dia, mes, año] = guardia.date.split('/');
-    const fechaGuardia = new Date(año, mes - 1, dia);
-    
-    if (fechaGuardia >= primerDiaMes) {
-        if (!registrosPorDia[guardia.date]) {
-            registrosPorDia[guardia.date] = { viajes: 0, guardias: 0, kmViajes: 0, kmGuardias: 0 };
-        }
-        registrosPorDia[guardia.date].guardias++;
-        registrosPorDia[guardia.date].kmGuardias += parseFloat(guardia.km);
-    }
-});
-
-
-html
 <!-- SECCIÓN GUARDIAS -->
 <div class="section">
     <h2>⏰ Registrar Guardia</h2>
@@ -1856,6 +1721,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </script>
 </body>
 </html>
+
 
 
 
