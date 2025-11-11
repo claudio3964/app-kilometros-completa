@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -23,14 +22,9 @@
         .screen.active { display: block; }
         
         /* PANTALLA PRINCIPAL */
-        .logo-container { text-align: center; margin-bottom: 30px; }
+        .logo-container { text-align: center; margin-bottom: 40px; }
         .logo-title { font-size: 3em; font-weight: bold; color: var(--ocre); margin-bottom: 10px; }
         .logo-subtitle { font-size: 1.2em; color: var(--marron); font-weight: 600; }
-        
-        .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 25px 0; }
-        .stat-card { background: var(--crema); padding: 20px; border-radius: 10px; text-align: center; border-top: 4px solid var(--ocre); }
-        .stat-value { font-size: 1.8em; font-weight: 800; color: var(--marron); }
-        .stat-label { font-size: 0.8em; color: #666; font-weight: 600; }
         
         .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
         .menu-card { background: white; padding: 20px; border-radius: 10px; text-align: center; cursor: pointer; border: 2px solid var(--crema); transition: all 0.3s; }
@@ -63,7 +57,7 @@
         .btn-sm { padding: 8px 12px; font-size: 12px; width: auto; }
         
         @media (max-width: 768px) {
-            .menu-grid, .stats-bar { grid-template-columns: 1fr; }
+            .menu-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -75,6 +69,7 @@
                 <div class="logo-title">COT</div>
                 <div class="logo-subtitle">CONTROL DE KILÓMETROS</div>
             </div>
+
             <div class="menu-grid">
                 <div class="menu-card" onclick="showScreen('travelScreen')">
                     <div class="menu-icon">🚌</div>
@@ -213,6 +208,7 @@
                 <p>Km de Pasajero: <span id="totalPassenger">0</span> km</p>
                 <p>Km por Guardias: <span id="totalGuards">0</span> km</p>
                 <p><strong>TOTAL KM: <span id="totalAll">0</span> km</strong></p>
+                <p>Viáticos Generados: <span id="totalViaticos">0</span> viáticos</p>
                 <p><strong>TOTAL A COBRAR: $<span id="totalMoney">0</span></strong></p>
             </div>
             <button onclick="exportData()">Exportar Resumen</button>
@@ -260,6 +256,7 @@
 
     <script>
         const PRICE_PER_KM = 7.60;
+        const PRICE_VIATICO = 455;
         let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
         let guards = JSON.parse(localStorage.getItem('bus_guards')) || [];
 
@@ -288,6 +285,28 @@
             updateSummary();
         });
 
+        // CALCULAR VIÁTICOS PARA VIAJE
+        function calcularViaticosViaje(arrivalTime) {
+            let viaticos = 0;
+            if (!arrivalTime) return viaticos;
+            
+            const [hours, minutes] = arrivalTime.split(':').map(Number);
+            const totalMinutes = hours * 60 + minutes;
+            
+            // Viático 1: Termina después de las 14:00 (840 minutos)
+            if (totalMinutes > 14 * 60) viaticos++;
+            
+            // Viático 2: Termina después de las 23:00 (1380 minutos)
+            if (totalMinutes > 23 * 60) viaticos++;
+            
+            return viaticos;
+        }
+
+        // CALCULAR VIÁTICOS PARA GUARDIA
+        function calcularViaticosGuardia(hoursWorked) {
+            return hoursWorked >= 9 ? 1 : 0;
+        }
+
         // AGREGAR VIAJE
         function addTravel() {
             const orderNumber = document.getElementById('orderNumber').value;
@@ -312,10 +331,13 @@
                 fechaViaje = new Date().toLocaleDateString('es-ES');
             }
 
+            const viaticos = calcularViaticosViaje(arrivalTime);
+
             const travel = {
                 id: Date.now(),
                 orderNumber, origin, destination, km, type: travelType,
                 departureTime, arrivalTime, date: fechaViaje,
+                viaticos: viaticos,
                 timestamp: new Date().toISOString()
             };
 
@@ -326,10 +348,12 @@
             document.getElementById('origin').value = '';
             document.getElementById('destination').value = '';
             document.getElementById('km').value = '';
+            document.getElementById('departureTime').value = '';
+            document.getElementById('arrivalTime').value = '';
             
             updateMainStats();
             updateSummary();
-            alert('✅ Viaje agregado!');
+            alert(`✅ Viaje agregado! ${viaticos > 0 ? `(+${viaticos} viático${viaticos > 1 ? 's' : ''})` : ''}`);
             showScreen('mainScreen');
         }
 
@@ -364,11 +388,13 @@
 
             const kmPerHour = guardType === 'common' ? 30 : 40;
             const totalKm = hoursWorked * kmPerHour;
+            const viaticos = calcularViaticosGuardia(hoursWorked);
 
             const guard = {
                 id: Date.now(),
                 type: guardType, startTime: guardStart, endTime: guardEnd,
-                hours: hoursWorked.toFixed(2), km: totalKm.toFixed(1), date: fechaGuardia
+                hours: hoursWorked.toFixed(2), km: totalKm.toFixed(1), 
+                date: fechaGuardia, viaticos: viaticos
             };
 
             guards.push(guard);
@@ -379,21 +405,13 @@
             
             updateMainStats();
             updateSummary();
-            alert('✅ Guardia agregada!');
+            alert(`✅ Guardia agregada! ${viaticos > 0 ? '(+1 viático)' : ''}`);
             showScreen('mainScreen');
         }
 
         // ACTUALIZAR ESTADÍSTICAS
         function updateMainStats() {
-            const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
-            const totalPassenger = travels.filter(t => t.type === 'passenger').reduce((sum, t) => sum + t.km, 0);
-            const totalGuards = guards.reduce((sum, g) => sum + parseFloat(g.km), 0);
-            const totalAll = totalWorking + totalPassenger + totalGuards;
-            const totalMoney = totalAll * PRICE_PER_KM;
-
-            document.getElementById('mainTotalKm').textContent = totalAll.toFixed(0);
-            document.getElementById('mainTotalMoney').textContent = `$${totalMoney.toFixed(0)}`;
-            document.getElementById('mainTotalTravels').textContent = travels.length;
+            // Función vacía por ahora
         }
 
         function updateSummary() {
@@ -401,12 +419,20 @@
             const totalPassenger = travels.filter(t => t.type === 'passenger').reduce((sum, t) => sum + t.km, 0);
             const totalGuards = guards.reduce((sum, g) => sum + parseFloat(g.km), 0);
             const totalAll = totalWorking + totalPassenger + totalGuards;
-            const totalMoney = totalAll * PRICE_PER_KM;
+            
+            const totalViaticosTravels = travels.reduce((sum, t) => sum + (t.viaticos || 0), 0);
+            const totalViaticosGuards = guards.reduce((sum, g) => sum + (g.viaticos || 0), 0);
+            const totalViaticos = totalViaticosTravels + totalViaticosGuards;
+            
+            const totalMoneyKm = totalAll * PRICE_PER_KM;
+            const totalMoneyViaticos = totalViaticos * PRICE_VIATICO;
+            const totalMoney = totalMoneyKm + totalMoneyViaticos;
 
             document.getElementById('totalWorking').textContent = totalWorking.toFixed(1);
             document.getElementById('totalPassenger').textContent = totalPassenger.toFixed(1);
             document.getElementById('totalGuards').textContent = totalGuards.toFixed(1);
             document.getElementById('totalAll').textContent = totalAll.toFixed(1);
+            document.getElementById('totalViaticos').textContent = totalViaticos;
             document.getElementById('totalMoney').textContent = totalMoney.toFixed(2);
         }
 
@@ -423,6 +449,10 @@
             travels.forEach(travel => {
                 const travelItem = document.createElement('div');
                 travelItem.className = 'list-item';
+                let viaticosInfo = '';
+                if (travel.viaticos > 0) {
+                    viaticosInfo = `<p><small>💰 ${travel.viaticos} viático${travel.viaticos > 1 ? 's' : ''}</small></p>`;
+                }
                 travelItem.innerHTML = `
                     <div class="list-item-header">
                         <div class="list-item-title">Orden #${travel.orderNumber}</div>
@@ -431,6 +461,7 @@
                     <p>${travel.origin} → ${travel.destination}</p>
                     <p>${travel.km} km - ${travel.date}</p>
                     <p><small>${travel.type === 'working' ? 'Trabajando' : 'Pasajero'}</small></p>
+                    ${viaticosInfo}
                 `;
                 travelsList.appendChild(travelItem);
             });
@@ -448,6 +479,10 @@
             guards.forEach(guard => {
                 const guardItem = document.createElement('div');
                 guardItem.className = 'list-item';
+                let viaticosInfo = '';
+                if (guard.viaticos > 0) {
+                    viaticosInfo = `<p><small>💰 1 viático</small></p>`;
+                }
                 guardItem.innerHTML = `
                     <div class="list-item-header">
                         <div class="list-item-title">Guardia ${guard.type === 'common' ? 'Común' : 'Especial'}</div>
@@ -455,6 +490,7 @@
                     </div>
                     <p>${guard.startTime} - ${guard.endTime} (${guard.hours} horas)</p>
                     <p>${guard.km} km - ${guard.date}</p>
+                    ${viaticosInfo}
                 `;
                 guardsList.appendChild(guardItem);
             });
@@ -487,9 +523,13 @@
             const viajesHoy = travels.filter(t => t.date === hoy);
             const guardiasHoy = guards.filter(g => g.date === hoy);
             
+            const viaticosViajesHoy = viajesHoy.reduce((sum, v) => sum + (v.viaticos || 0), 0);
+            const viaticosGuardiasHoy = guardiasHoy.reduce((sum, g) => sum + (g.viaticos || 0), 0);
+            const totalViaticosHoy = viaticosViajesHoy + viaticosGuardiasHoy;
+            
             let contenido = `
                 <h3>📅 Reporte del Día: ${hoy}</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin: 20px 0;">
                     <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; text-align: center;">
                         <h4>🚌 Viajes Hoy</h4>
                         <p><strong>Cantidad:</strong> ${viajesHoy.length}</p>
@@ -499,6 +539,11 @@
                         <h4>⏰ Guardias Hoy</h4>
                         <p><strong>Cantidad:</strong> ${guardiasHoy.length}</p>
                         <p><strong>Total KM:</strong> ${guardiasHoy.reduce((sum, g) => sum + parseFloat(g.km), 0).toFixed(1)} km</p>
+                    </div>
+                    <div style="background: #fff8f0; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h4>💰 Viáticos Hoy</h4>
+                        <p><strong>Total:</strong> ${totalViaticosHoy}</p>
+                        <p><strong>Valor:</strong> $${(totalViaticosHoy * PRICE_VIATICO).toFixed(2)}</p>
                     </div>
                 </div>
             `;
@@ -523,9 +568,13 @@
                 return fechaGuardia >= primerDiaMes;
             });
             
+            const viaticosViajesMes = viajesMes.reduce((sum, v) => sum + (v.viaticos || 0), 0);
+            const viaticosGuardiasMes = guardiasMes.reduce((sum, g) => sum + (g.viaticos || 0), 0);
+            const totalViaticosMes = viaticosViajesMes + viaticosGuardiasMes;
+            
             let contenido = `
                 <h3>📈 Reporte del Mes: ${nombreMes}</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin: 20px 0;">
                     <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; text-align: center;">
                         <h4>🚌 Viajes del Mes</h4>
                         <p><strong>Cantidad:</strong> ${viajesMes.length}</p>
@@ -535,6 +584,11 @@
                         <h4>⏰ Guardias del Mes</h4>
                         <p><strong>Cantidad:</strong> ${guardiasMes.length}</p>
                         <p><strong>Total KM:</strong> ${guardiasMes.reduce((sum, g) => sum + parseFloat(g.km), 0).toFixed(1)} km</p>
+                    </div>
+                    <div style="background: #fff8f0; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h4>💰 Viáticos del Mes</h4>
+                        <p><strong>Total:</strong> ${totalViaticosMes}</p>
+                        <p><strong>Valor:</strong> $${(totalViaticosMes * PRICE_VIATICO).toFixed(2)}</p>
                     </div>
                 </div>
             `;
