@@ -6,7 +6,6 @@
     <title>COT - Control de Kilómetros</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* [Todo el CSS anterior se mantiene igual] */
         :root {
             --cot-azul: #0055A4;
             --cot-azul-oscuro: #003B76;
@@ -16,12 +15,8 @@
             --cot-gris: #666666;
             --cot-texto: #333333;
             --gradient-cot: linear-gradient(135deg, var(--cot-azul) 0%, var(--cot-azul-oscuro) 100%);
-            --gradient-cot-horizontal: linear-gradient(90deg, var(--cot-azul) 0%, var(--cot-azul-oscuro) 100%);
-            --gradient-cot-red: linear-gradient(135deg, var(--cot-azul) 0%, var(--cot-rojo) 100%);
             --shadow-cot: 0 4px 12px rgba(0, 85, 164, 0.15);
-            --shadow-cot-hover: 0 8px 25px rgba(0, 85, 164, 0.25);
             --border-radius: 10px;
-            --border-radius-lg: 20px;
         }
 
         * {
@@ -36,239 +31,444 @@
             min-height: 100vh;
             color: var(--cot-texto);
             line-height: 1.6;
-        }
-
-        .app-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            min-height: 100vh;
+            padding: 20px;
         }
 
         .screen {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--cot-gris-claro);
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow-y: auto;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            background: var(--cot-blanco);
+            border-radius: 15px;
             padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
             opacity: 0;
+            transform: scale(0.9);
             pointer-events: none;
+            overflow-y: auto;
         }
 
         .screen.active {
             opacity: 1;
+            transform: scale(1);
             pointer-events: all;
-            transform: translateX(0);
         }
 
         .screen.hidden {
-            transform: translateX(100%);
+            opacity: 0;
+            transform: scale(0.9);
+            pointer-events: none;
         }
 
-        /* [Todo el resto del CSS se mantiene igual] */
-        /* ... */
+        /* PANTALLA PRINCIPAL */
+        #mainScreen.active {
+            background: var(--gradient-cot);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
 
+        .logo-container {
+            background: var(--cot-blanco);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-cot);
+            margin-bottom: 30px;
+        }
+
+        .logo-title {
+            font-size: 3em;
+            font-weight: bold;
+            color: var(--cot-azul);
+            margin-bottom: 10px;
+        }
+
+        .logo-subtitle {
+            font-size: 1.2em;
+            color: var(--cot-rojo);
+            font-weight: 600;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .menu-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-cot);
+        }
+
+        .menu-card:hover {
+            transform: translateY(-5px);
+            background: var(--cot-blanco);
+        }
+
+        .menu-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: var(--cot-azul);
+        }
+
+        .menu-title {
+            font-weight: 600;
+            color: var(--cot-texto);
+            margin-bottom: 5px;
+        }
+
+        /* HEADER PARA OTRAS PANTALLAS */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--cot-gris-claro);
+        }
+
+        .back-btn {
+            background: var(--cot-azul);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .header-title {
+            flex: 1;
+        }
+
+        .header-title h1 {
+            color: var(--cot-azul);
+            margin-bottom: 5px;
+        }
+
+        /* FORMULARIOS */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--cot-texto);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--cot-azul);
+        }
+
+        .time-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .time-group input {
+            flex: 1;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn-date {
+            flex: 1;
+            padding: 10px;
+            background: var(--cot-azul);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button {
+            background: var(--gradient-cot);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .btn-danger {
+            background: var(--cot-rojo);
+        }
+
+        /* LISTAS */
+        .list-item {
+            background: var(--cot-gris-claro);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid var(--cot-azul);
+        }
+
+        .list-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .list-item-title {
+            font-weight: bold;
+            color: var(--cot-texto);
+        }
+
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 12px;
+            width: auto;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            body {
+                padding: 10px;
+            }
+            
+            .screen {
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                bottom: 10px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- PANTALLA PRINCIPAL -->
-        <div id="mainScreen" class="screen active">
-            <!-- [Contenido de la pantalla principal] -->
+    <!-- PANTALLA PRINCIPAL -->
+    <div id="mainScreen" class="screen active">
+        <div class="logo-container">
+            <div class="logo-title">COT</div>
+            <div class="logo-subtitle">Control de Kilómetros</div>
         </div>
-
-        <!-- PANTALLA REGISTRAR VIAJE -->
-        <div id="travelScreen" class="screen hidden">
-            <!-- [Contenido ya existente] -->
-        </div>
-
-        <!-- PANTALLA REGISTRAR GUARDIA (FALTABA) -->
-        <div id="guardScreen" class="screen hidden">
-            <div class="app-header">
-                <div class="header-content">
-                    <button class="back-btn" onclick="showScreen('mainScreen')">
-                        <i class="fas fa-arrow-left"></i>
-                    </button>
-                    <div class="header-title">
-                        <h1><i class="fas fa-user-clock"></i> Registrar Guardia</h1>
-                        <p>Complete los datos de la guardia</p>
-                    </div>
-                </div>
+        
+        <div class="menu-grid">
+            <div class="menu-card" onclick="showScreen('travelScreen')">
+                <div class="menu-icon">🚌</div>
+                <div class="menu-title">Registrar Viaje</div>
             </div>
+            <div class="menu-card" onclick="showScreen('guardScreen')">
+                <div class="menu-icon">⏰</div>
+                <div class="menu-title">Registrar Guardia</div>
+            </div>
+            <div class="menu-card" onclick="showScreen('summaryScreen')">
+                <div class="menu-icon">📊</div>
+                <div class="menu-title">Resumen General</div>
+            </div>
+            <div class="menu-card" onclick="showScreen('reportsScreen')">
+                <div class="menu-icon">📈</div>
+                <div class="menu-title">Ver Reportes</div>
+            </div>
+            <div class="menu-card" onclick="showScreen('travelsListScreen')">
+                <div class="menu-icon">📋</div>
+                <div class="menu-title">Lista de Viajes</div>
+            </div>
+            <div class="menu-card" onclick="showScreen('guardsListScreen')">
+                <div class="menu-icon">🕒</div>
+                <div class="menu-title">Lista de Guardias</div>
+            </div>
+        </div>
+    </div>
 
-            <div class="form-container fade-in-up">
-                <div class="form-group">
-                    <label class="form-label">Fecha de la Guardia</label>
-                    <div class="btn-group">
-                        <button type="button" class="btn-date" data-dias="0" data-target="fechaGuardia">
-                            <i class="fas fa-calendar-day"></i> Hoy
-                        </button>
-                        <button type="button" class="btn-date" data-dias="-1" data-target="fechaGuardia">
-                            <i class="fas fa-calendar-minus"></i> Ayer
-                        </button>
-                        <button type="button" class="btn-date" data-dias="-2" data-target="fechaGuardia">
-                            <i class="fas fa-calendar-week"></i> Hace 2 días
-                        </button>
-                    </div>
-                    <input type="date" id="fechaGuardia" class="form-input">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Tipo de Guardia</label>
-                    <select id="guardType" class="form-select">
-                        <option value="common">🕒 Guardia Común (30 km/h)</option>
-                        <option value="special">⭐ Guardia Especial (40 km/h)</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Horario de Guardia</label>
-                    <div class="time-group">
-                        <input type="time" id="guardStart" class="form-input" placeholder="Hora inicio">
-                        <input type="time" id="guardEnd" class="form-input" placeholder="Hora fin">
-                    </div>
-                </div>
-
-                <button class="btn btn-primary" onclick="addGuard()" style="width: 100%;">
-                    <i class="fas fa-plus-circle"></i> Agregar Guardia
-                </button>
+    <!-- PANTALLA REGISTRAR VIAJE -->
+    <div id="travelScreen" class="screen hidden">
+        <div class="header">
+            <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
+            <div class="header-title">
+                <h1>Registrar Viaje</h1>
             </div>
         </div>
 
-        <!-- PANTALLA RESUMEN GENERAL (FALTABA) -->
-        <div id="summaryScreen" class="screen hidden">
-            <div class="app-header">
-                <div class="header-content">
-                    <button class="back-btn" onclick="showScreen('mainScreen')">
-                        <i class="fas fa-arrow-left"></i>
-                    </button>
-                    <div class="header-title">
-                        <h1><i class="fas fa-chart-pie"></i> Resumen General</h1>
-                        <p>Estadísticas completas del mes</p>
-                    </div>
-                </div>
+        <div class="form-group">
+            <label>Fecha del Viaje:</label>
+            <div class="btn-group">
+                <button type="button" class="btn-date" onclick="setFecha('fechaViaje', 0)">Hoy</button>
+                <button type="button" class="btn-date" onclick="setFecha('fechaViaje', -1)">Ayer</button>
+                <button type="button" class="btn-date" onclick="setFecha('fechaViaje', -2)">Hace 2 días</button>
             </div>
+            <input type="date" id="fechaViaje">
+        </div>
 
-            <div class="form-container fade-in-up">
-                <div class="summary-grid">
-                    <div class="summary-card primary">
-                        <div class="summary-value" id="totalWorking">0</div>
-                        <div class="summary-label">KM Trabajando</div>
-                    </div>
-                    <div class="summary-card success">
-                        <div class="summary-value" id="totalPassenger">0</div>
-                        <div class="summary-label">KM Pasajero</div>
-                    </div>
-                    <div class="summary-card warning">
-                        <div class="summary-value" id="totalGuards">0</div>
-                        <div class="summary-label">KM Guardias</div>
-                    </div>
-                </div>
+        <div class="form-group">
+            <label>Número de Orden:</label>
+            <input type="number" id="orderNumber" placeholder="Ej: 123">
+        </div>
 
-                <div style="text-align: center; margin: 30px 0;">
-                    <div style="font-size: 2.5em; font-weight: 800; color: var(--cot-azul);" id="totalAll">0</div>
-                    <div style="color: var(--cot-gris); font-weight: 600;">TOTAL KILÓMETROS</div>
-                </div>
+        <div class="form-group">
+            <label>Origen:</label>
+            <input type="text" id="origin" placeholder="Ej: Montevideo">
+        </div>
 
-                <div style="text-align: center; margin: 30px 0; padding: 20px; background: var(--gradient-cot); border-radius: var(--border-radius); color: white;">
-                    <div style="font-size: 2em; font-weight: 800;" id="totalMoney">$0</div>
-                    <div style="font-weight: 600;">TOTAL A COBRAR</div>
-                </div>
+        <div class="form-group">
+            <label>Destino:</label>
+            <input type="text" id="destination" placeholder="Ej: Punta del Este">
+        </div>
 
-                <div style="display: flex; gap: 15px; margin-top: 20px;">
-                    <button class="btn btn-primary" onclick="exportData()" style="flex: 1;">
-                        <i class="fas fa-file-export"></i> Exportar
-                    </button>
-                    <button class="btn btn-danger" onclick="clearMonth()" style="flex: 1;">
-                        <i class="fas fa-trash"></i> Reiniciar Mes
-                    </button>
-                </div>
+        <div class="form-group">
+            <label>Kilómetros:</label>
+            <input type="number" id="km" placeholder="Ej: 140" step="0.1">
+        </div>
+
+        <div class="form-group">
+            <label>Horarios:</label>
+            <div class="time-group">
+                <input type="time" id="departureTime">
+                <input type="time" id="arrivalTime">
             </div>
         </div>
 
-        <!-- PANTALLA REPORTES (FALTABA) -->
-        <div id="reportsScreen" class="screen hidden">
-            <div class="app-header">
-                <div class="header-content">
-                    <button class="back-btn" onclick="showScreen('mainScreen')">
-                        <i class="fas fa-arrow-left"></i>
-                    </button>
-                    <div class="header-title">
-                        <h1><i class="fas fa-file-alt"></i> Reportes</h1>
-                        <p>Análisis detallados de actividad</p>
-                    </div>
-                </div>
-            </div>
+        <div class="form-group">
+            <label>Tipo:</label>
+            <select id="travelType">
+                <option value="working">Trabajando</option>
+                <option value="passenger">De Pasajero</option>
+            </select>
+        </div>
 
-            <div class="form-container fade-in-up">
-                <div style="display: flex; gap: 15px; margin-bottom: 25px;">
-                    <button class="btn btn-primary" onclick="mostrarReporteHoy()" style="flex: 1;">
-                        <i class="fas fa-calendar-day"></i> Reporte de Hoy
-                    </button>
-                    <button class="btn btn-primary" onclick="mostrarReporteMes()" style="flex: 1;">
-                        <i class="fas fa-calendar-month"></i> Reporte del Mes
-                    </button>
-                </div>
+        <button onclick="addTravel()">Agregar Viaje</button>
+    </div>
 
-                <div id="reportesContent">
-                    <div style="text-align: center; padding: 40px; color: var(--cot-gris);">
-                        <i class="fas fa-chart-bar" style="font-size: 3em; margin-bottom: 15px;"></i>
-                        <p>Selecciona un tipo de reporte para ver los datos</p>
-                    </div>
-                </div>
+    <!-- PANTALLA REGISTRAR GUARDIA -->
+    <div id="guardScreen" class="screen hidden">
+        <div class="header">
+            <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
+            <div class="header-title">
+                <h1>Registrar Guardia</h1>
             </div>
         </div>
 
-        <!-- PANTALLA LISTA DE VIAJES (FALTABA) -->
-        <div id="travelsListScreen" class="screen hidden">
-            <div class="app-header">
-                <div class="header-content">
-                    <button class="back-btn" onclick="showScreen('mainScreen')">
-                        <i class="fas fa-arrow-left"></i>
-                    </button>
-                    <div class="header-title">
-                        <h1><i class="fas fa-list-ol"></i> Lista de Viajes</h1>
-                        <p>Gestionar viajes registrados</p>
-                    </div>
-                </div>
+        <div class="form-group">
+            <label>Fecha de la Guardia:</label>
+            <div class="btn-group">
+                <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', 0)">Hoy</button>
+                <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', -1)">Ayer</button>
+                <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', -2)">Hace 2 días</button>
             </div>
+            <input type="date" id="fechaGuardia">
+        </div>
 
-            <div class="form-container fade-in-up">
-                <div id="travelsList">
-                    <div style="text-align: center; padding: 40px; color: var(--cot-gris);">
-                        <i class="fas fa-route" style="font-size: 3em; margin-bottom: 15px;"></i>
-                        <p>No hay viajes registrados</p>
-                    </div>
-                </div>
+        <div class="form-group">
+            <label>Tipo de Guardia:</label>
+            <select id="guardType">
+                <option value="common">Guardia Común (30 km/h)</option>
+                <option value="special">Guardia Especial (40 km/h)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Horario de Guardia:</label>
+            <div class="time-group">
+                <input type="time" id="guardStart">
+                <input type="time" id="guardEnd">
             </div>
         </div>
 
-        <!-- PANTALLA LISTA DE GUARDIAS (FALTABA) -->
-        <div id="guardsListScreen" class="screen hidden">
-            <div class="app-header">
-                <div class="header-content">
-                    <button class="back-btn" onclick="showScreen('mainScreen')">
-                        <i class="fas fa-arrow-left"></i>
-                    </button>
-                    <div class="header-title">
-                        <h1><i class="fas fa-clipboard-list"></i> Lista de Guardias</h1>
-                        <p>Gestionar guardias registradas</p>
-                    </div>
-                </div>
-            </div>
+        <button onclick="addGuard()">Agregar Guardia</button>
+    </div>
 
-            <div class="form-container fade-in-up">
-                <div id="guardsList">
-                    <div style="text-align: center; padding: 40px; color: var(--cot-gris);">
-                        <i class="fas fa-user-clock" style="font-size: 3em; margin-bottom: 15px;"></i>
-                        <p>No hay guardias registradas</p>
-                    </div>
-                </div>
+    <!-- PANTALLA RESUMEN GENERAL -->
+    <div id="summaryScreen" class="screen hidden">
+        <div class="header">
+            <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
+            <div class="header-title">
+                <h1>Resumen General</h1>
             </div>
         </div>
+
+        <div id="summaryContent">
+            <p>Km Trabajando: <span id="totalWorking">0</span> km</p>
+            <p>Km de Pasajero: <span id="totalPassenger">0</span> km</p>
+            <p>Km por Guardias: <span id="totalGuards">0</span> km</p>
+            <p><strong>TOTAL KM: <span id="totalAll">0</span> km</strong></p>
+            <p><strong>TOTAL A COBRAR: $<span id="totalMoney">0</span></strong></p>
+        </div>
+
+        <button onclick="exportData()">Exportar Resumen</button>
+        <button onclick="clearMonth()" class="btn-danger">Reiniciar Mes</button>
+    </div>
+
+    <!-- PANTALLA LISTA DE VIAJES -->
+    <div id="travelsListScreen" class="screen hidden">
+        <div class="header">
+            <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
+            <div class="header-title">
+                <h1>Lista de Viajes</h1>
+            </div>
+        </div>
+        <div id="travelsList"></div>
+    </div>
+
+    <!-- PANTALLA LISTA DE GUARDIAS -->
+    <div id="guardsListScreen" class="screen hidden">
+        <div class="header">
+            <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
+            <div class="header-title">
+                <h1>Lista de Guardias</h1>
+            </div>
+        </div>
+        <div id="guardsList"></div>
+    </div>
+
+    <!-- PANTALLA REPORTES -->
+    <div id="reportsScreen" class="screen hidden">
+        <div class="header">
+            <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
+            <div class="header-title">
+                <h1>Reportes</h1>
+            </div>
+        </div>
+        
+        <button onclick="mostrarReporteHoy()" style="margin-bottom: 10px;">Ver Reporte de Hoy</button>
+        <button onclick="mostrarReporteMes()">Ver Reporte del Mes</button>
+        
+        <div id="reportesContent" style="margin-top: 20px;"></div>
     </div>
 
     <script>
@@ -279,8 +479,10 @@
         let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
         let guards = JSON.parse(localStorage.getItem('bus_guards')) || [];
 
-        // NAVEGACIÓN ENTRE PANTALLAS
+        // FUNCIÓN PARA MOSTRAR PANTALLAS
         function showScreen(screenId) {
+            console.log('Mostrando pantalla:', screenId);
+            
             // Ocultar todas las pantallas
             document.querySelectorAll('.screen').forEach(screen => {
                 screen.classList.remove('active');
@@ -289,81 +491,42 @@
             
             // Mostrar la pantalla seleccionada
             const targetScreen = document.getElementById(screenId);
-            targetScreen.classList.remove('hidden');
-            targetScreen.classList.add('active');
-            
-            // Actualizar datos si es necesario
-            if (screenId === 'mainScreen') {
-                updateMainStats();
+            if (targetScreen) {
+                targetScreen.classList.remove('hidden');
+                targetScreen.classList.add('active');
+                
+                // Actualizar datos si es necesario
+                if (screenId === 'summaryScreen') {
+                    updateSummary();
+                } else if (screenId === 'travelsListScreen') {
+                    renderTravels();
+                } else if (screenId === 'guardsListScreen') {
+                    renderGuards();
+                }
+            } else {
+                console.error('Pantalla no encontrada:', screenId);
             }
-            if (screenId === 'summaryScreen') {
-                updateSummary();
-            }
-            if (screenId === 'travelsListScreen') {
-                renderTravels();
-            }
-            if (screenId === 'guardsListScreen') {
-                renderGuards();
-            }
+        }
+
+        // FUNCIÓN PARA ESTABLecer FECHA
+        function setFecha(elementId, dias) {
+            const fecha = new Date();
+            fecha.setDate(fecha.getDate() + dias);
+            const fechaFormateada = fecha.toISOString().split('T')[0];
+            document.getElementById(elementId).value = fechaFormateada;
         }
 
         // CONFIGURACIÓN INICIAL
         document.addEventListener('DOMContentLoaded', function() {
-            updateMainStats();
-            updateSummary();
+            console.log('Aplicación iniciada');
             
             // Configurar fecha actual por defecto
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('fechaViaje').value = hoy;
             document.getElementById('fechaGuardia').value = hoy;
             
-            // Event listeners para botones de fecha rápida
-            document.querySelectorAll('.btn-date').forEach(boton => {
-                boton.addEventListener('click', function() {
-                    const dias = parseInt(this.getAttribute('data-dias'));
-                    const target = this.getAttribute('data-target');
-                    const fecha = new Date();
-                    fecha.setDate(fecha.getDate() + dias);
-                    const fechaFormateada = fecha.toISOString().split('T')[0];
-                    document.getElementById(target).value = fechaFormateada;
-                });
-            });
+            updateSummary();
         });
-
-        // FUNCIÓN PARA ACTUALIZAR ESTADÍSTICAS PRINCIPALES
-        function updateMainStats() {
-            const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
-            const totalPassenger = travels.filter(t => t.type === 'passenger').reduce((sum, t) => sum + t.km, 0);
-            const totalGuards = guards.reduce((sum, g) => sum + parseFloat(g.km), 0);
-            const totalAll = totalWorking + totalPassenger + totalGuards;
-            const totalMoney = totalAll * PRICE_PER_KM;
-
-            document.getElementById('mainTotalKm').textContent = totalAll.toFixed(0);
-            document.getElementById('mainTotalMoney').textContent = `$${totalMoney.toFixed(0)}`;
-            document.getElementById('mainTotalTravels').textContent = travels.length;
-        }
-
-        // FUNCIÓN PARA ACTUALIZAR RESUMEN
-        function updateSummary() {
-            const totalWorking = travels
-                .filter(travel => travel.type === 'working')
-                .reduce((sum, travel) => sum + travel.km, 0);
-                
-            const totalPassenger = travels
-                .filter(travel => travel.type === 'passenger')
-                .reduce((sum, travel) => sum + travel.km, 0);
-                
-            const totalGuards = guards.reduce((sum, guard) => sum + parseFloat(guard.km), 0);
-            
-            const totalAll = totalWorking + totalPassenger + totalGuards;
-            const totalMoney = totalAll * PRICE_PER_KM;
-
-            document.getElementById('totalWorking').textContent = totalWorking.toFixed(1);
-            document.getElementById('totalPassenger').textContent = totalPassenger.toFixed(1);
-            document.getElementById('totalGuards').textContent = totalGuards.toFixed(1);
-            document.getElementById('totalAll').textContent = totalAll.toFixed(1);
-            document.getElementById('totalMoney').textContent = totalMoney.toFixed(2);
-        }
 
         // FUNCIÓN AGREGAR VIAJE
         function addTravel() {
@@ -374,10 +537,9 @@
             const travelType = document.getElementById('travelType').value;
             const departureTime = document.getElementById('departureTime').value;
             const arrivalTime = document.getElementById('arrivalTime').value;
-
             const fechaInput = document.getElementById('fechaViaje').value;
-            let fechaViaje;
 
+            let fechaViaje;
             if (fechaInput) {
                 const [año, mes, dia] = fechaInput.split('-');
                 fechaViaje = `${dia}/${mes}/${año}`;
@@ -411,12 +573,10 @@
             document.getElementById('origin').value = '';
             document.getElementById('destination').value = '';
             document.getElementById('km').value = '';
-            document.getElementById('departureTime').value = '';
-            document.getElementById('arrivalTime').value = '';
             
-            updateMainStats();
             updateSummary();
             alert('✅ Viaje agregado correctamente!');
+            showScreen('mainScreen');
         }
 
         // FUNCIÓN AGREGAR GUARDIA
@@ -424,10 +584,9 @@
             const guardType = document.getElementById('guardType').value;
             const guardStart = document.getElementById('guardStart').value;
             const guardEnd = document.getElementById('guardEnd').value;
-
             const fechaInput = document.getElementById('fechaGuardia').value;
-            let fechaGuardia;
 
+            let fechaGuardia;
             if (fechaInput) {
                 const [año, mes, dia] = fechaInput.split('-');
                 fechaGuardia = `${dia}/${mes}/${año}`;
@@ -472,9 +631,31 @@
             document.getElementById('guardStart').value = '';
             document.getElementById('guardEnd').value = '';
             
-            updateMainStats();
             updateSummary();
             alert('✅ Guardia agregada correctamente!');
+            showScreen('mainScreen');
+        }
+
+        // FUNCIÓN ACTUALIZAR RESUMEN
+        function updateSummary() {
+            const totalWorking = travels
+                .filter(travel => travel.type === 'working')
+                .reduce((sum, travel) => sum + travel.km, 0);
+                
+            const totalPassenger = travels
+                .filter(travel => travel.type === 'passenger')
+                .reduce((sum, travel) => sum + travel.km, 0);
+                
+            const totalGuards = guards.reduce((sum, guard) => sum + parseFloat(guard.km), 0);
+            
+            const totalAll = totalWorking + totalPassenger + totalGuards;
+            const totalMoney = totalAll * PRICE_PER_KM;
+
+            document.getElementById('totalWorking').textContent = totalWorking.toFixed(1);
+            document.getElementById('totalPassenger').textContent = totalPassenger.toFixed(1);
+            document.getElementById('totalGuards').textContent = totalGuards.toFixed(1);
+            document.getElementById('totalAll').textContent = totalAll.toFixed(1);
+            document.getElementById('totalMoney').textContent = totalMoney.toFixed(2);
         }
 
         // FUNCIÓN MOSTRAR VIAJES
@@ -483,45 +664,22 @@
             travelsList.innerHTML = '';
 
             if (travels.length === 0) {
-                travelsList.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: var(--cot-gris);">
-                        <i class="fas fa-route" style="font-size: 3em; margin-bottom: 15px;"></i>
-                        <p>No hay viajes registrados</p>
-                    </div>
-                `;
+                travelsList.innerHTML = '<p>No hay viajes registrados</p>';
                 return;
             }
 
-            const sortedTravels = [...travels].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            sortedTravels.forEach(travel => {
+            travels.forEach(travel => {
                 const travelItem = document.createElement('div');
                 travelItem.className = 'list-item';
-                travelItem.style.borderLeftColor = travel.type === 'working' ? 'var(--cot-azul)' : 'var(--cot-rojo)';
-                
-                let timeInfo = '';
-                if (travel.departureTime || travel.arrivalTime) {
-                    timeInfo = `<br><small>${travel.departureTime ? `🕒 Salida: ${travel.departureTime}` : ''} ${travel.arrivalTime ? `Llegada: ${travel.arrivalTime}` : ''}</small>`;
-                }
                 
                 travelItem.innerHTML = `
                     <div class="list-item-header">
-                        <div class="list-item-title">
-                            🚌 Orden #${travel.orderNumber} - ${travel.date}
-                        </div>
-                        <div class="list-item-actions">
-                            <button onclick="deleteTravel(${travel.id})" class="btn btn-danger btn-sm">
-                                <i class="fas fa-trash"></i> Eliminar
-                            </button>
-                        </div>
+                        <div class="list-item-title">Orden #${travel.orderNumber}</div>
+                        <button onclick="deleteTravel(${travel.id})" class="btn-danger btn-sm">Eliminar</button>
                     </div>
-                    <div style="color: var(--cot-gris); margin-bottom: 8px;">
-                        📍 ${travel.origin} → ${travel.destination}
-                    </div>
-                    <div style="font-weight: 600; color: var(--cot-azul);">
-                        ${travel.km} km • ${travel.type === 'working' ? '🚚 Trabajando' : '👥 Pasajero'}
-                    </div>
-                    ${timeInfo}
+                    <p>${travel.origin} → ${travel.destination}</p>
+                    <p>${travel.km} km - ${travel.date}</p>
+                    <p><small>${travel.type === 'working' ? 'Trabajando' : 'Pasajero'}</small></p>
                 `;
                 travelsList.appendChild(travelItem);
             });
@@ -533,48 +691,72 @@
             guardsList.innerHTML = '';
 
             if (guards.length === 0) {
-                guardsList.innerHTML = `
-                    <div style="text-align: center; padding: 40px; color: var(--cot-gris);">
-                        <i class="fas fa-user-clock" style="font-size: 3em; margin-bottom: 15px;"></i>
-                        <p>No hay guardias registradas</p>
-                    </div>
-                `;
+                guardsList.innerHTML = '<p>No hay guardias registradas</p>';
                 return;
             }
 
             guards.forEach(guard => {
                 const guardItem = document.createElement('div');
                 guardItem.className = 'list-item';
-                guardItem.style.borderLeftColor = guard.type === 'common' ? 'var(--cot-azul)' : 'var(--cot-rojo)';
                 
                 guardItem.innerHTML = `
                     <div class="list-item-header">
-                        <div class="list-item-title">
-                            ⏰ ${guard.type === 'common' ? 'Guardia Común' : 'Guardia Especial'} - ${guard.date}
-                        </div>
-                        <div class="list-item-actions">
-                            <button onclick="deleteGuard(${guard.id})" class="btn btn-danger btn-sm">
-                                <i class="fas fa-trash"></i> Eliminar
-                            </button>
-                        </div>
+                        <div class="list-item-title">Guardia ${guard.type === 'common' ? 'Común' : 'Especial'}</div>
+                        <button onclick="deleteGuard(${guard.id})" class="btn-danger btn-sm">Eliminar</button>
                     </div>
-                    <div style="color: var(--cot-gris); margin-bottom: 8px;">
-                        🕒 ${guard.startTime} - ${guard.endTime} (${guard.hours} horas)
-                    </div>
-                    <div style="font-weight: 600; color: var(--cot-azul);">
-                        ${guard.km} km calculados
-                    </div>
+                    <p>${guard.startTime} - ${guard.endTime} (${guard.hours} horas)</p>
+                    <p>${guard.km} km - ${guard.date}</p>
                 `;
                 guardsList.appendChild(guardItem);
             });
         }
 
-        // [RESTANTE DE LAS FUNCIONES: deleteTravel, deleteGuard, mostrarReporteHoy, mostrarReporteMes, exportData, clearMonth]
-        // Estas funciones se mantienen igual que en el código anterior
+        // FUNCIONES BÁSICAS (simplificadas para que funcione)
+        function deleteTravel(id) {
+            if (confirm('¿Eliminar este viaje?')) {
+                travels = travels.filter(travel => travel.id !== id);
+                localStorage.setItem('bus_travels', JSON.stringify(travels));
+                renderTravels();
+                updateSummary();
+            }
+        }
 
+        function deleteGuard(id) {
+            if (confirm('¿Eliminar esta guardia?')) {
+                guards = guards.filter(guard => guard.id !== id);
+                localStorage.setItem('bus_guards', JSON.stringify(guards));
+                renderGuards();
+                updateSummary();
+            }
+        }
+
+        function mostrarReporteHoy() {
+            document.getElementById('reportesContent').innerHTML = '<p>Reporte de hoy - Funcionalidad básica</p>';
+        }
+
+        function mostrarReporteMes() {
+            document.getElementById('reportesContent').innerHTML = '<p>Reporte del mes - Funcionalidad básica</p>';
+        }
+
+        function exportData() {
+            alert('Funcionalidad de exportación - Próximamente');
+        }
+
+        function clearMonth() {
+            if (confirm('¿Reiniciar todos los datos?')) {
+                travels = [];
+                guards = [];
+                localStorage.removeItem('bus_travels');
+                localStorage.removeItem('bus_guards');
+                updateSummary();
+                alert('Datos reiniciados');
+            }
+        }
     </script>
 </body>
 </html>
+
+
 
 
 
