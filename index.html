@@ -285,19 +285,26 @@
             updateSummary();
         });
 
-        // CALCULAR VIÁTICOS PARA VIAJE
-        function calcularViaticosViaje(arrivalTime) {
+               // CALCULAR VIÁTICOS PARA VIAJE - REGLAS CORRECTAS
+        function calcularViaticosViaje(departureTime, arrivalTime) {
             let viaticos = 0;
-            if (!arrivalTime) return viaticos;
+            if (!departureTime || !arrivalTime) return viaticos;
             
-            const [hours, minutes] = arrivalTime.split(':').map(Number);
-            const totalMinutes = hours * 60 + minutes;
+            const [depHours, depMinutes] = departureTime.split(':').map(Number);
+            const [arrHours, arrMinutes] = arrivalTime.split(':').map(Number);
             
-            // Viático 1: Termina después de las 14:00 (840 minutos)
-            if (totalMinutes > 14 * 60) viaticos++;
+            const depTotalMinutes = depHours * 60 + depMinutes;
+            const arrTotalMinutes = arrHours * 60 + arrMinutes;
             
-            // Viático 2: Termina después de las 23:00 (1380 minutos)
-            if (totalMinutes > 23 * 60) viaticos++;
+            // VIÁTICO MAÑANA: Sale antes de las 12:00 Y termina después de las 14:00
+            if (depTotalMinutes < 12 * 60 && arrTotalMinutes > 14 * 60) {
+                viaticos++;
+            }
+            
+            // VIÁTICO TARDE: Sale después de las 12:00 Y termina después de las 23:00
+            if (depTotalMinutes > 12 * 60 && arrTotalMinutes > 23 * 60) {
+                viaticos++;
+            }
             
             return viaticos;
         }
@@ -331,7 +338,7 @@
                 fechaViaje = new Date().toLocaleDateString('es-ES');
             }
 
-            const viaticos = calcularViaticosViaje(arrivalTime);
+                        const viaticos = calcularViaticosViaje(departureTime, arrivalTime);
 
             const travel = {
                 id: Date.now(),
@@ -617,6 +624,7 @@
     </script>
 </body>
 </html>
+
 
 
 
