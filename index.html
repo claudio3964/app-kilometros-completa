@@ -45,43 +45,37 @@
             min-height: 100vh;
             color: var(--texto-oscuro);
             line-height: 1.6;
+            overflow: hidden;
         }
 
         .app-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            min-height: 100vh;
-            padding: 20px;
+            width: 100%;
+            height: 100vh;
+            position: relative;
         }
 
         /* PANTALLAS */
         .screen {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            bottom: 20px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: var(--crema);
-            border-radius: var(--border-radius-lg);
-            padding: 25px;
-            box-shadow: var(--shadow-fuerte);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.4s ease;
             opacity: 0;
-            transform: translateY(20px);
             pointer-events: none;
             overflow-y: auto;
-            border: 2px solid var(--crema-oscuro);
+            padding: 20px;
         }
 
         .screen.active {
             opacity: 1;
-            transform: translateY(0);
             pointer-events: all;
         }
 
         .screen.hidden {
             opacity: 0;
-            transform: translateY(20px);
             pointer-events: none;
         }
 
@@ -127,7 +121,6 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .logo-subtitle {
@@ -154,7 +147,6 @@
             box-shadow: var(--shadow-suave);
             border-top: 4px solid var(--amarillo-ocre);
             transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
         }
 
         .stat-card:hover {
@@ -184,8 +176,6 @@
             font-size: 0.9em;
             color: var(--texto-claro);
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .menu-grid {
@@ -199,7 +189,7 @@
         .menu-card {
             background: rgba(255, 255, 255, 0.95);
             border-radius: var(--border-radius-lg);
-            padding: 30px 25px;
+            padding: 25px 20px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -207,7 +197,6 @@
             border: 2px solid transparent;
             position: relative;
             overflow: hidden;
-            backdrop-filter: blur(10px);
         }
 
         .menu-card::before {
@@ -221,7 +210,7 @@
         }
 
         .menu-card:hover {
-            transform: translateY(-8px);
+            transform: translateY(-5px);
             box-shadow: var(--shadow-fuerte);
             border-color: var(--amarillo-ocre);
         }
@@ -231,14 +220,14 @@
         }
 
         .menu-icon {
-            width: 70px;
-            height: 70px;
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 28px;
+            margin: 0 auto 15px;
+            font-size: 24px;
             background: var(--gradient-ocre);
             color: white;
             box-shadow: var(--shadow-media);
@@ -249,69 +238,53 @@
         }
 
         .menu-title {
-            font-size: 1.2em;
+            font-size: 1.1em;
             font-weight: 700;
             color: var(--marron);
-            margin-bottom: 12px;
-        }
-
-        .menu-card:nth-child(even) .menu-title {
-            color: var(--marron-oscuro);
+            margin-bottom: 8px;
         }
 
         .menu-desc {
-            font-size: 0.9em;
+            font-size: 0.85em;
             color: var(--texto-claro);
-            line-height: 1.5;
+            line-height: 1.4;
         }
 
         /* HEADER PARA PANTALLAS SECUNDARIAS */
         .app-header {
             background: var(--crema);
-            padding: 25px;
+            padding: 20px;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow-suave);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             position: relative;
             border-left: 5px solid var(--amarillo-ocre);
-            border-bottom: 2px solid var(--crema-oscuro);
-        }
-
-        .app-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: var(--gradient-ocre);
         }
 
         .header-content {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
         }
 
         .back-btn {
             background: var(--gradient-ocre);
             color: white;
             border: none;
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 18px;
             transition: all 0.3s ease;
             box-shadow: var(--shadow-media);
         }
 
         .back-btn:hover {
             transform: translateX(-3px);
-            box-shadow: var(--shadow-fuerte);
         }
 
         .header-title {
@@ -320,43 +293,40 @@
 
         .header-title h1 {
             color: var(--marron);
-            font-size: 1.8em;
+            font-size: 1.5em;
             margin-bottom: 5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
 
         .header-title p {
             color: var(--texto-claro);
-            font-size: 1em;
+            font-size: 0.9em;
         }
 
         /* FORMULARIOS */
         .form-container {
             background: var(--crema);
             border-radius: var(--border-radius);
-            padding: 30px;
+            padding: 25px;
             box-shadow: var(--shadow-suave);
             margin-bottom: 20px;
             border: 1px solid var(--crema-oscuro);
         }
 
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .form-label {
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-weight: 600;
             color: var(--marron);
-            font-size: 1em;
+            font-size: 0.95em;
         }
 
         .form-input, .form-select {
             width: 100%;
-            padding: 15px 18px;
+            padding: 12px 15px;
             border: 2px solid var(--crema-oscuro);
             border-radius: var(--border-radius);
             font-size: 16px;
@@ -373,7 +343,7 @@
 
         .time-group {
             display: flex;
-            gap: 15px;
+            gap: 12px;
         }
 
         .time-group .form-input {
@@ -382,13 +352,13 @@
 
         .btn-group {
             display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 15px;
         }
 
         .btn-date {
             flex: 1;
-            padding: 14px;
+            padding: 12px;
             background: var(--gradient-ocre);
             color: white;
             border: none;
@@ -397,10 +367,6 @@
             font-size: 14px;
             font-weight: 600;
             transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
         }
 
         .btn-date:hover {
@@ -410,18 +376,17 @@
 
         /* BOTONES */
         .btn {
-            padding: 18px 28px;
+            padding: 15px 20px;
             border: none;
             border-radius: var(--border-radius);
             font-size: 16px;
-            font-weight: 700;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            text-decoration: none;
+            gap: 8px;
         }
 
         .btn-primary {
@@ -431,7 +396,7 @@
         }
 
         .btn-primary:hover {
-            transform: translateY(-3px);
+            transform: translateY(-2px);
             box-shadow: var(--shadow-fuerte);
         }
 
@@ -444,8 +409,8 @@
         /* LISTAS */
         .list-item {
             background: white;
-            padding: 20px;
-            margin-bottom: 15px;
+            padding: 18px;
+            margin-bottom: 12px;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow-suave);
             border-left: 4px solid var(--amarillo-ocre);
@@ -461,7 +426,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .list-item-title {
@@ -476,7 +441,7 @@
         }
 
         .btn-sm {
-            padding: 8px 16px;
+            padding: 8px 12px;
             font-size: 12px;
             border-radius: 6px;
             width: auto;
@@ -495,59 +460,16 @@
             .header-content {
                 flex-direction: column;
                 text-align: center;
-                gap: 15px;
+                gap: 10px;
             }
             
             .back-btn {
                 align-self: flex-start;
             }
             
-            .app-container {
-                padding: 10px;
-            }
-            
             .screen {
-                top: 10px;
-                left: 10px;
-                right: 10px;
-                bottom: 10px;
-                padding: 20px;
+                padding: 15px;
             }
-        }
-
-        /* ANIMACIONES */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .fade-in-up {
-            animation: fadeInUp 0.6s ease-out;
-        }
-
-        /* SCROLLBAR */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--crema-oscuro);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--amarillo-ocre);
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--ocre-dorado);
         }
     </style>
 </head>
@@ -561,67 +483,67 @@
             </div>
 
             <div class="stats-bar">
-                <div class="stat-card fade-in-up">
+                <div class="stat-card">
                     <div class="stat-value" id="mainTotalKm">0</div>
-                    <div class="stat-label">Kilómetros Totales</div>
+                    <div class="stat-label">KM TOTALES</div>
                 </div>
-                <div class="stat-card fade-in-up">
+                <div class="stat-card">
                     <div class="stat-value" id="mainTotalMoney">$0</div>
-                    <div class="stat-label">Total a Cobrar</div>
+                    <div class="stat-label">TOTAL A COBRAR</div>
                 </div>
-                <div class="stat-card fade-in-up">
+                <div class="stat-card">
                     <div class="stat-value" id="mainTotalTravels">0</div>
-                    <div class="stat-label">Viajes Registrados</div>
+                    <div class="stat-label">VIAJES</div>
                 </div>
             </div>
 
             <div class="menu-grid">
-                <div class="menu-card fade-in-up" onclick="showScreen('travelScreen')">
+                <div class="menu-card" onclick="showScreen('travelScreen')">
                     <div class="menu-icon">
                         <i class="fas fa-bus-alt"></i>
                     </div>
                     <div class="menu-title">Registrar Viaje</div>
-                    <div class="menu-desc">Agregar nuevo recorrido con detalles completos</div>
+                    <div class="menu-desc">Agregar nuevo recorrido</div>
                 </div>
 
-                <div class="menu-card fade-in-up" onclick="showScreen('guardScreen')">
+                <div class="menu-card" onclick="showScreen('guardScreen')">
                     <div class="menu-icon">
                         <i class="fas fa-user-clock"></i>
                     </div>
                     <div class="menu-title">Registrar Guardia</div>
-                    <div class="menu-desc">Control de guardias y horas de servicio</div>
+                    <div class="menu-desc">Control de guardias</div>
                 </div>
 
-                <div class="menu-card fade-in-up" onclick="showScreen('summaryScreen')">
+                <div class="menu-card" onclick="showScreen('summaryScreen')">
                     <div class="menu-icon">
                         <i class="fas fa-chart-pie"></i>
                     </div>
                     <div class="menu-title">Resumen General</div>
-                    <div class="menu-desc">Estadísticas y totales acumulados</div>
+                    <div class="menu-desc">Estadísticas del mes</div>
                 </div>
 
-                <div class="menu-card fade-in-up" onclick="showScreen('reportsScreen')">
+                <div class="menu-card" onclick="showScreen('reportsScreen')">
                     <div class="menu-icon">
                         <i class="fas fa-file-alt"></i>
                     </div>
                     <div class="menu-title">Reportes</div>
-                    <div class="menu-desc">Análisis detallados por período</div>
+                    <div class="menu-desc">Análisis detallados</div>
                 </div>
 
-                <div class="menu-card fade-in-up" onclick="showScreen('travelsListScreen')">
+                <div class="menu-card" onclick="showScreen('travelsListScreen')">
                     <div class="menu-icon">
                         <i class="fas fa-list-ol"></i>
                     </div>
                     <div class="menu-title">Lista de Viajes</div>
-                    <div class="menu-desc">Ver y gestionar viajes registrados</div>
+                    <div class="menu-desc">Ver viajes registrados</div>
                 </div>
 
-                <div class="menu-card fade-in-up" onclick="showScreen('guardsListScreen')">
+                <div class="menu-card" onclick="showScreen('guardsListScreen')">
                     <div class="menu-icon">
                         <i class="fas fa-clipboard-list"></i>
                     </div>
                     <div class="menu-title">Lista de Guardias</div>
-                    <div class="menu-desc">Revisar y administrar guardias</div>
+                    <div class="menu-desc">Ver guardias registradas</div>
                 </div>
             </div>
         </div>
@@ -640,7 +562,7 @@
                 </div>
             </div>
 
-            <div class="form-container fade-in-up">
+            <div class="form-container">
                 <div class="form-group">
                     <label class="form-label">Fecha del Viaje</label>
                     <div class="btn-group">
@@ -662,15 +584,14 @@
                     <input type="number" id="orderNumber" class="form-input" placeholder="Ej: 12345">
                 </div>
 
-                <div class="time-group">
-                    <div class="form-group" style="flex: 1;">
-                        <label class="form-label">Origen</label>
-                        <input type="text" id="origin" class="form-input" placeholder="Ej: Montevideo">
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label class="form-label">Destino</label>
-                        <input type="text" id="destination" class="form-input" placeholder="Ej: Punta del Este">
-                    </div>
+                <div class="form-group">
+                    <label class="form-label">Origen</label>
+                    <input type="text" id="origin" class="form-input" placeholder="Ej: Montevideo">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Destino</label>
+                    <input type="text" id="destination" class="form-input" placeholder="Ej: Punta del Este">
                 </div>
 
                 <div class="form-group">
@@ -681,8 +602,8 @@
                 <div class="form-group">
                     <label class="form-label">Horarios del Servicio</label>
                     <div class="time-group">
-                        <input type="time" id="departureTime" class="form-input" placeholder="Hora salida">
-                        <input type="time" id="arrivalTime" class="form-input" placeholder="Hora llegada">
+                        <input type="time" id="departureTime" class="form-input">
+                        <input type="time" id="arrivalTime" class="form-input">
                     </div>
                 </div>
 
@@ -696,59 +617,6 @@
 
                 <button class="btn btn-primary" onclick="addTravel()" style="width: 100%;">
                     <i class="fas fa-plus-circle"></i> Agregar Viaje
-                </button>
-            </div>
-        </div>
-
-        <!-- PANTALLA REGISTRAR GUARDIA -->
-        <div id="guardScreen" class="screen hidden">
-            <div class="app-header">
-                <div class="header-content">
-                    <button class="back-btn" onclick="showScreen('mainScreen')">
-                        <i class="fas fa-arrow-left"></i>
-                    </button>
-                    <div class="header-title">
-                        <h1><i class="fas fa-user-clock"></i> Registrar Guardia</h1>
-                        <p>Complete los datos de la guardia</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-container fade-in-up">
-                <div class="form-group">
-                    <label class="form-label">Fecha de la Guardia</label>
-                    <div class="btn-group">
-                        <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', 0)">
-                            <i class="fas fa-calendar-day"></i> Hoy
-                        </button>
-                        <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', -1)">
-                            <i class="fas fa-calendar-minus"></i> Ayer
-                        </button>
-                        <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', -2)">
-                            <i class="fas fa-calendar-week"></i> Hace 2 días
-                        </button>
-                    </div>
-                    <input type="date" id="fechaGuardia" class="form-input">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Tipo de Guardia</label>
-                    <select id="guardType" class="form-select">
-                        <option value="common">🕒 Guardia Común (30 km/h)</option>
-                        <option value="special">⭐ Guardia Especial (40 km/h)</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Horario de Guardia</label>
-                    <div class="time-group">
-                        <input type="time" id="guardStart" class="form-input" placeholder="Hora inicio">
-                        <input type="time" id="guardEnd" class="form-input" placeholder="Hora fin">
-                    </div>
-                </div>
-
-                <button class="btn btn-primary" onclick="addGuard()" style="width: 100%;">
-                    <i class="fas fa-plus-circle"></i> Agregar Guardia
                 </button>
             </div>
         </div>
@@ -767,72 +635,39 @@
                 </div>
             </div>
 
-            <div class="form-container fade-in-up">
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px;">
+            <div class="form-container">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px;">
                     <div style="background: white; padding: 20px; border-radius: var(--border-radius); text-align: center; box-shadow: var(--shadow-suave); border-top: 4px solid var(--amarillo-ocre);">
-                        <div style="font-size: 2em; font-weight: 800; color: var(--amarillo-ocre);" id="totalWorking">0</div>
+                        <div style="font-size: 1.8em; font-weight: 800; color: var(--amarillo-ocre);" id="totalWorking">0</div>
                         <div style="color: var(--texto-claro); font-weight: 600;">KM Trabajando</div>
                     </div>
                     <div style="background: white; padding: 20px; border-radius: var(--border-radius); text-align: center; box-shadow: var(--shadow-suave); border-top: 4px solid var(--ocre-dorado);">
-                        <div style="font-size: 2em; font-weight: 800; color: var(--ocre-dorado);" id="totalPassenger">0</div>
+                        <div style="font-size: 1.8em; font-weight: 800; color: var(--ocre-dorado);" id="totalPassenger">0</div>
                         <div style="color: var(--texto-claro); font-weight: 600;">KM Pasajero</div>
                     </div>
                     <div style="background: white; padding: 20px; border-radius: var(--border-radius); text-align: center; box-shadow: var(--shadow-suave); border-top: 4px solid var(--marron-claro);">
-                        <div style="font-size: 2em; font-weight: 800; color: var(--marron-claro);" id="totalGuards">0</div>
+                        <div style="font-size: 1.8em; font-weight: 800; color: var(--marron-claro);" id="totalGuards">0</div>
                         <div style="color: var(--texto-claro); font-weight: 600;">KM Guardias</div>
                     </div>
                 </div>
 
-                <div style="text-align: center; margin: 30px 0; padding: 25px; background: var(--gradient-ocre); border-radius: var(--border-radius); color: white; box-shadow: var(--shadow-media);">
-                    <div style="font-size: 2.5em; font-weight: 800;" id="totalAll">0</div>
-                    <div style="font-weight: 600; font-size: 1.1em;">TOTAL KILÓMETROS</div>
+                <div style="text-align: center; margin: 25px 0; padding: 20px; background: var(--gradient-ocre); border-radius: var(--border-radius); color: white; box-shadow: var(--shadow-media);">
+                    <div style="font-size: 2em; font-weight: 800;" id="totalAll">0</div>
+                    <div style="font-weight: 600;">TOTAL KILÓMETROS</div>
                 </div>
 
-                <div style="text-align: center; margin: 30px 0; padding: 25px; background: var(--gradient-marron); border-radius: var(--border-radius); color: white; box-shadow: var(--shadow-media);">
-                    <div style="font-size: 2.2em; font-weight: 800;" id="totalMoney">$0</div>
-                    <div style="font-weight: 600; font-size: 1.1em;">TOTAL A COBRAR</div>
+                <div style="text-align: center; margin: 25px 0; padding: 20px; background: var(--gradient-marron); border-radius: var(--border-radius); color: white; box-shadow: var(--shadow-media);">
+                    <div style="font-size: 1.8em; font-weight: 800;" id="totalMoney">$0</div>
+                    <div style="font-weight: 600;">TOTAL A COBRAR</div>
                 </div>
 
-                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                <div style="display: flex; gap: 12px; margin-top: 20px;">
                     <button class="btn btn-primary" onclick="exportData()" style="flex: 1;">
                         <i class="fas fa-file-export"></i> Exportar
                     </button>
                     <button class="btn btn-danger" onclick="clearMonth()" style="flex: 1;">
-                        <i class="fas fa-trash"></i> Reiniciar Mes
+                        <i class="fas fa-trash"></i> Reiniciar
                     </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- PANTALLA REPORTES -->
-        <div id="reportsScreen" class="screen hidden">
-            <div class="app-header">
-                <div class="header-content">
-                    <button class="back-btn" onclick="showScreen('mainScreen')">
-                        <i class="fas fa-arrow-left"></i>
-                    </button>
-                    <div class="header-title">
-                        <h1><i class="fas fa-file-alt"></i> Reportes</h1>
-                        <p>Análisis detallados de actividad</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-container fade-in-up">
-                <div style="display: flex; gap: 15px; margin-bottom: 25px;">
-                    <button class="btn btn-primary" onclick="mostrarReporteHoy()" style="flex: 1;">
-                        <i class="fas fa-calendar-day"></i> Reporte de Hoy
-                    </button>
-                    <button class="btn btn-primary" onclick="mostrarReporteMes()" style="flex: 1;">
-                        <i class="fas fa-calendar-month"></i> Reporte del Mes
-                    </button>
-                </div>
-
-                <div id="reportesContent">
-                    <div style="text-align: center; padding: 40px; color: var(--texto-claro);">
-                        <i class="fas fa-chart-bar" style="font-size: 3em; margin-bottom: 15px; color: var(--amarillo-ocre);"></i>
-                        <p>Selecciona un tipo de reporte para ver los datos</p>
-                    </div>
                 </div>
             </div>
         </div>
@@ -851,7 +686,7 @@
                 </div>
             </div>
 
-            <div class="form-container fade-in-up">
+            <div class="form-container">
                 <div id="travelsList">
                     <div style="text-align: center; padding: 40px; color: var(--texto-claro);">
                         <i class="fas fa-route" style="font-size: 3em; margin-bottom: 15px; color: var(--amarillo-ocre);"></i>
@@ -875,7 +710,7 @@
                 </div>
             </div>
 
-            <div class="form-container fade-in-up">
+            <div class="form-container">
                 <div id="guardsList">
                     <div style="text-align: center; padding: 40px; color: var(--texto-claro);">
                         <i class="fas fa-user-clock" style="font-size: 3em; margin-bottom: 15px; color: var(--amarillo-ocre);"></i>
@@ -896,6 +731,8 @@
 
         // FUNCIÓN PARA MOSTRAR PANTALLAS
         function showScreen(screenId) {
+            console.log('Cambiando a pantalla:', screenId);
+            
             // Ocultar todas las pantallas
             document.querySelectorAll('.screen').forEach(screen => {
                 screen.classList.remove('active');
@@ -904,18 +741,20 @@
             
             // Mostrar la pantalla seleccionada
             const targetScreen = document.getElementById(screenId);
-            targetScreen.classList.remove('hidden');
-            targetScreen.classList.add('active');
-            
-            // Actualizar datos si es necesario
-            if (screenId === 'mainScreen') {
-                updateMainStats();
-            } else if (screenId === 'summaryScreen') {
-                updateSummary();
-            } else if (screenId === 'travelsListScreen') {
-                renderTravels();
-            } else if (screenId === 'guardsListScreen') {
-                renderGuards();
+            if (targetScreen) {
+                targetScreen.classList.remove('hidden');
+                targetScreen.classList.add('active');
+                
+                // Actualizar datos si es necesario
+                if (screenId === 'mainScreen') {
+                    updateMainStats();
+                } else if (screenId === 'summaryScreen') {
+                    updateSummary();
+                } else if (screenId === 'travelsListScreen') {
+                    renderTravels();
+                } else if (screenId === 'guardsListScreen') {
+                    renderGuards();
+                }
             }
         }
 
@@ -929,14 +768,85 @@
 
         // CONFIGURACIÓN INICIAL
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Aplicación iniciada correctamente');
+            
             // Configurar fecha actual por defecto
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('fechaViaje').value = hoy;
-            document.getElementById('fechaGuardia').value = hoy;
+            
+            // Mostrar solo la pantalla principal
+            showScreen('mainScreen');
             
             updateMainStats();
             updateSummary();
         });
+
+        // FUNCIÓN AGREGAR VIAJE
+        function addTravel() {
+            console.log('Intentando agregar viaje...');
+            
+            const orderNumber = document.getElementById('orderNumber').value;
+            const origin = document.getElementById('origin').value;
+            const destination = document.getElementById('destination').value;
+            const km = parseFloat(document.getElementById('km').value);
+            const travelType = document.getElementById('travelType').value;
+            const departureTime = document.getElementById('departureTime').value;
+            const arrivalTime = document.getElementById('arrivalTime').value;
+            const fechaInput = document.getElementById('fechaViaje').value;
+
+            console.log('Datos capturados:', {orderNumber, origin, destination, km, travelType, fechaInput});
+
+            // Validar campos obligatorios
+            if (!orderNumber || !origin || !destination || !km) {
+                alert('❌ Por favor completa todos los campos obligatorios');
+                return;
+            }
+
+            // Convertir fecha
+            let fechaViaje;
+            if (fechaInput) {
+                const [año, mes, dia] = fechaInput.split('-');
+                fechaViaje = `${dia}/${mes}/${año}`;
+            } else {
+                fechaViaje = new Date().toLocaleDateString('es-ES');
+            }
+
+            const travel = {
+                id: Date.now(),
+                orderNumber: orderNumber,
+                origin: origin,
+                destination: destination,
+                km: parseFloat(km),
+                type: travelType,
+                departureTime: departureTime,
+                arrivalTime: arrivalTime,
+                date: fechaViaje,
+                timestamp: new Date().toISOString()
+            };
+
+            console.log('Viaje a guardar:', travel);
+
+            // Guardar en array y localStorage
+            travels.push(travel);
+            localStorage.setItem('bus_travels', JSON.stringify(travels));
+            
+            console.log('Viajes guardados:', travels);
+
+            // Limpiar formulario
+            document.getElementById('orderNumber').value = '';
+            document.getElementById('origin').value = '';
+            document.getElementById('destination').value = '';
+            document.getElementById('km').value = '';
+            document.getElementById('departureTime').value = '';
+            document.getElementById('arrivalTime').value = '';
+            
+            // Actualizar estadísticas
+            updateMainStats();
+            updateSummary();
+            
+            alert('✅ Viaje agregado correctamente!');
+            showScreen('mainScreen');
+        }
 
         // FUNCIÓN PARA ACTUALIZAR ESTADÍSTICAS PRINCIPALES
         function updateMainStats() {
@@ -973,12 +883,103 @@
             document.getElementById('totalMoney').textContent = totalMoney.toFixed(2);
         }
 
-        // [EL RESTO DE LAS FUNCIONES JAVASCRIPT SE MANTIENEN IGUAL]
-        // addTravel, addGuard, renderTravels, renderGuards, deleteTravel, deleteGuard, etc.
-        
+        // FUNCIÓN MOSTRAR VIAJES
+        function renderTravels() {
+            const travelsList = document.getElementById('travelsList');
+            travelsList.innerHTML = '';
+
+            if (travels.length === 0) {
+                travelsList.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--texto-claro);">
+                        <i class="fas fa-route" style="font-size: 3em; margin-bottom: 15px; color: var(--amarillo-ocre);"></i>
+                        <p>No hay viajes registrados</p>
+                    </div>
+                `;
+                return;
+            }
+
+            console.log('Renderizando viajes:', travels);
+
+            // Ordenar por fecha más reciente primero
+            const sortedTravels = [...travels].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            sortedTravels.forEach(travel => {
+                const travelItem = document.createElement('div');
+                travelItem.className = 'list-item';
+                travelItem.style.borderLeftColor = travel.type === 'working' ? 'var(--amarillo-ocre)' : 'var(--marron-claro)';
+                
+                let timeInfo = '';
+                if (travel.departureTime || travel.arrivalTime) {
+                    timeInfo = `<div style="font-size: 0.9em; color: var(--texto-claro); margin-top: 5px;">
+                        ${travel.departureTime ? `🕒 ${travel.departureTime}` : ''} ${travel.arrivalTime ? `→ ${travel.arrivalTime}` : ''}
+                    </div>`;
+                }
+                
+                travelItem.innerHTML = `
+                    <div class="list-item-header">
+                        <div class="list-item-title">
+                            🚌 Orden #${travel.orderNumber} - ${travel.date}
+                        </div>
+                        <div class="list-item-actions">
+                            <button onclick="deleteTravel(${travel.id})" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </div>
+                    <div style="color: var(--texto-claro); margin-bottom: 8px;">
+                        📍 ${travel.origin} → ${travel.destination}
+                    </div>
+                    <div style="font-weight: 600; color: var(--marron);">
+                        ${travel.km} km • ${travel.type === 'working' ? '🚚 Trabajando' : '👥 Pasajero'}
+                    </div>
+                    ${timeInfo}
+                `;
+                travelsList.appendChild(travelItem);
+            });
+        }
+
+        // FUNCIÓN ELIMINAR VIAJE
+        function deleteTravel(id) {
+            if (confirm('¿Estás seguro de eliminar este viaje?')) {
+                travels = travels.filter(travel => travel.id !== id);
+                localStorage.setItem('bus_travels', JSON.stringify(travels));
+                renderTravels();
+                updateMainStats();
+                updateSummary();
+                alert('Viaje eliminado correctamente');
+            }
+        }
+
+        // FUNCIONES BÁSICAS
+        function exportData() {
+            alert('📄 Funcionalidad de exportación - Próximamente');
+        }
+
+        function clearMonth() {
+            if (confirm('¿Estás seguro de reiniciar todos los datos del mes?')) {
+                travels = [];
+                guards = [];
+                localStorage.removeItem('bus_travels');
+                localStorage.removeItem('bus_guards');
+                updateMainStats();
+                updateSummary();
+                renderTravels();
+                alert('✅ Todos los datos han sido reiniciados');
+            }
+        }
+
+        // Funciones placeholder para pantallas faltantes
+        function mostrarReporteHoy() {
+            alert('📅 Reporte de hoy - Próximamente');
+        }
+
+        function mostrarReporteMes() {
+            alert('📈 Reporte del mes - Próximamente');
+        }
     </script>
 </body>
 </html>
+
 
 
 
