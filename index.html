@@ -621,6 +621,59 @@
             </div>
         </div>
 
+        <!-- PANTALLA REGISTRAR GUARDIA (CORREGIDA) -->
+        <div id="guardScreen" class="screen hidden">
+            <div class="app-header">
+                <div class="header-content">
+                    <button class="back-btn" onclick="showScreen('mainScreen')">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div class="header-title">
+                        <h1><i class="fas fa-user-clock"></i> Registrar Guardia</h1>
+                        <p>Complete los datos de la guardia</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-container">
+                <div class="form-group">
+                    <label class="form-label">Fecha de la Guardia</label>
+                    <div class="btn-group">
+                        <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', 0)">
+                            <i class="fas fa-calendar-day"></i> Hoy
+                        </button>
+                        <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', -1)">
+                            <i class="fas fa-calendar-minus"></i> Ayer
+                        </button>
+                        <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', -2)">
+                            <i class="fas fa-calendar-week"></i> Hace 2 días
+                        </button>
+                    </div>
+                    <input type="date" id="fechaGuardia" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tipo de Guardia</label>
+                    <select id="guardType" class="form-select">
+                        <option value="common">🕒 Guardia Común (30 km/h)</option>
+                        <option value="special">⭐ Guardia Especial (40 km/h)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Horario de Guardia</label>
+                    <div class="time-group">
+                        <input type="time" id="guardStart" class="form-input">
+                        <input type="time" id="guardEnd" class="form-input">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="addGuard()" style="width: 100%;">
+                    <i class="fas fa-plus-circle"></i> Agregar Guardia
+                </button>
+            </div>
+        </div>
+
         <!-- PANTALLA RESUMEN GENERAL -->
         <div id="summaryScreen" class="screen hidden">
             <div class="app-header">
@@ -672,6 +725,39 @@
             </div>
         </div>
 
+        <!-- PANTALLA REPORTES (CORREGIDA) -->
+        <div id="reportsScreen" class="screen hidden">
+            <div class="app-header">
+                <div class="header-content">
+                    <button class="back-btn" onclick="showScreen('mainScreen')">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <div class="header-title">
+                        <h1><i class="fas fa-file-alt"></i> Reportes</h1>
+                        <p>Análisis detallados de actividad</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-container">
+                <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                    <button class="btn btn-primary" onclick="mostrarReporteHoy()" style="flex: 1;">
+                        <i class="fas fa-calendar-day"></i> Reporte de Hoy
+                    </button>
+                    <button class="btn btn-primary" onclick="mostrarReporteMes()" style="flex: 1;">
+                        <i class="fas fa-calendar-month"></i> Reporte del Mes
+                    </button>
+                </div>
+
+                <div id="reportesContent">
+                    <div style="text-align: center; padding: 40px; color: var(--texto-claro);">
+                        <i class="fas fa-chart-bar" style="font-size: 3em; margin-bottom: 15px; color: var(--amarillo-ocre);"></i>
+                        <p>Selecciona un tipo de reporte para ver los datos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- PANTALLA LISTA DE VIAJES -->
         <div id="travelsListScreen" class="screen hidden">
             <div class="app-header">
@@ -696,7 +782,7 @@
             </div>
         </div>
 
-        <!-- PANTALLA LISTA DE GUARDIAS -->
+        <!-- PANTALLA LISTA DE GUARDIAS (CORREGIDA) -->
         <div id="guardsListScreen" class="screen hidden">
             <div class="app-header">
                 <div class="header-content">
@@ -773,6 +859,7 @@
             // Configurar fecha actual por defecto
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('fechaViaje').value = hoy;
+            document.getElementById('fechaGuardia').value = hoy;
             
             // Mostrar solo la pantalla principal
             showScreen('mainScreen');
@@ -845,6 +932,78 @@
             updateSummary();
             
             alert('✅ Viaje agregado correctamente!');
+            showScreen('mainScreen');
+        }
+
+        // FUNCIÓN AGREGAR GUARDIA (NUEVA)
+        function addGuard() {
+            console.log('Intentando agregar guardia...');
+            
+            const guardType = document.getElementById('guardType').value;
+            const guardStart = document.getElementById('guardStart').value;
+            const guardEnd = document.getElementById('guardEnd').value;
+            const fechaInput = document.getElementById('fechaGuardia').value;
+
+            console.log('Datos guardia:', {guardType, guardStart, guardEnd, fechaInput});
+
+            // Validar campos obligatorios
+            if (!guardStart || !guardEnd) {
+                alert('❌ Por favor ingresa horario de inicio y fin');
+                return;
+            }
+
+            // Convertir fecha
+            let fechaGuardia;
+            if (fechaInput) {
+                const [año, mes, dia] = fechaInput.split('-');
+                fechaGuardia = `${dia}/${mes}/${año}`;
+            } else {
+                fechaGuardia = new Date().toLocaleDateString('es-ES');
+            }
+
+            // Calcular horas trabajadas
+            const start = new Date(`2000-01-01T${guardStart}`);
+            const end = new Date(`2000-01-01T${guardEnd}`);
+            
+            let hoursWorked = (end - start) / (1000 * 60 * 60);
+            if (hoursWorked < 0) {
+                hoursWorked += 24;
+            }
+
+            if (hoursWorked <= 0) {
+                alert('La hora de fin debe ser posterior a la hora de inicio');
+                return;
+            }
+
+            // Calcular km según tipo de guardia
+            const kmPerHour = guardType === 'common' ? 30 : 40;
+            const totalKm = hoursWorked * kmPerHour;
+
+            const guard = {
+                id: Date.now(),
+                type: guardType,
+                startTime: guardStart,
+                endTime: guardEnd,
+                hours: hoursWorked.toFixed(2),
+                km: totalKm.toFixed(1),
+                date: fechaGuardia
+            };
+
+            console.log('Guardia a guardar:', guard);
+
+            // Guardar en array y localStorage
+            guards.push(guard);
+            localStorage.setItem('bus_guards', JSON.stringify(guards));
+            
+            // Limpiar formulario
+            document.getElementById('guardStart').value = '';
+            document.getElementById('guardEnd').value = '';
+            
+            // Actualizar estadísticas
+            updateMainStats();
+            updateSummary();
+            
+            alert('✅ Guardia agregada correctamente!');
             showScreen('mainScreen');
         }
 
@@ -938,6 +1097,50 @@
             });
         }
 
+        // FUNCIÓN MOSTRAR GUARDIAS (NUEVA)
+        function renderGuards() {
+            const guardsList = document.getElementById('guardsList');
+            guardsList.innerHTML = '';
+
+            if (guards.length === 0) {
+                guardsList.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--texto-claro);">
+                        <i class="fas fa-user-clock" style="font-size: 3em; margin-bottom: 15px; color: var(--amarillo-ocre);"></i>
+                        <p>No hay guardias registradas</p>
+                    </div>
+                `;
+                return;
+            }
+
+            console.log('Renderizando guardias:', guards);
+            
+            guards.forEach(guard => {
+                const guardItem = document.createElement('div');
+                guardItem.className = 'list-item';
+                guardItem.style.borderLeftColor = guard.type === 'common' ? 'var(--amarillo-ocre)' : 'var(--marron-claro)';
+                
+                guardItem.innerHTML = `
+                    <div class="list-item-header">
+                        <div class="list-item-title">
+                            ⏰ ${guard.type === 'common' ? 'Guardia Común' : 'Guardia Especial'} - ${guard.date}
+                        </div>
+                        <div class="list-item-actions">
+                            <button onclick="deleteGuard(${guard.id})" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </div>
+                    <div style="color: var(--texto-claro); margin-bottom: 8px;">
+                        🕒 ${guard.startTime} - ${guard.endTime} (${guard.hours} horas)
+                    </div>
+                    <div style="font-weight: 600; color: var(--marron);">
+                        ${guard.km} km calculados
+                    </div>
+                `;
+                guardsList.appendChild(guardItem);
+            });
+        }
+
         // FUNCIÓN ELIMINAR VIAJE
         function deleteTravel(id) {
             if (confirm('¿Estás seguro de eliminar este viaje?')) {
@@ -948,6 +1151,79 @@
                 updateSummary();
                 alert('Viaje eliminado correctamente');
             }
+        }
+
+        // FUNCIÓN ELIMINAR GUARDIA (NUEVA)
+        function deleteGuard(id) {
+            if (confirm('¿Estás seguro de eliminar esta guardia?')) {
+                guards = guards.filter(guard => guard.id !== id);
+                localStorage.setItem('bus_guards', JSON.stringify(guards));
+                renderGuards();
+                updateMainStats();
+                updateSummary();
+                alert('Guardia eliminada correctamente');
+            }
+        }
+
+        // FUNCIONES DE REPORTES (MEJORADAS)
+        function mostrarReporteHoy() {
+            const hoy = new Date().toLocaleDateString('es-ES');
+            const viajesHoy = travels.filter(t => t.date === hoy);
+            const guardiasHoy = guards.filter(g => g.date === hoy);
+            
+            let contenido = `
+                <h3 style="color: var(--marron); margin-bottom: 20px;">📅 Reporte del Día: ${hoy}</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div style="background: white; padding: 15px; border-radius: var(--border-radius); text-align: center; box-shadow: var(--shadow-suave);">
+                        <h4 style="color: var(--amarillo-ocre); margin-bottom: 10px;">🚌 Viajes Hoy</h4>
+                        <div style="font-size: 1.5em; font-weight: 800; color: var(--marron);">${viajesHoy.length}</div>
+                        <div style="color: var(--texto-claro);">cantidad</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: var(--border-radius); text-align: center; box-shadow: var(--shadow-suave);">
+                        <h4 style="color: var(--ocre-dorado); margin-bottom: 10px;">⏰ Guardias Hoy</h4>
+                        <div style="font-size: 1.5em; font-weight: 800; color: var(--marron);">${guardiasHoy.length}</div>
+                        <div style="color: var(--texto-claro);">cantidad</div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('reportesContent').innerHTML = contenido;
+        }
+
+        function mostrarReporteMes() {
+            const hoy = new Date();
+            const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+            const nombreMes = hoy.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+            
+            const viajesMes = travels.filter(viaje => {
+                const [dia, mes, año] = viaje.date.split('/');
+                const fechaViaje = new Date(año, mes - 1, dia);
+                return fechaViaje >= primerDiaMes;
+            });
+            
+            const guardiasMes = guards.filter(guardia => {
+                const [dia, mes, año] = guardia.date.split('/');
+                const fechaGuardia = new Date(año, mes - 1, dia);
+                return fechaGuardia >= primerDiaMes;
+            });
+            
+            let contenido = `
+                <h3 style="color: var(--marron); margin-bottom: 20px;">📈 Reporte del Mes: ${nombreMes}</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                    <div style="background: white; padding: 15px; border-radius: var(--border-radius); text-align: center; box-shadow: var(--shadow-suave);">
+                        <h4 style="color: var(--amarillo-ocre); margin-bottom: 10px;">🚌 Viajes del Mes</h4>
+                        <div style="font-size: 1.5em; font-weight: 800; color: var(--marron);">${viajesMes.length}</div>
+                        <div style="color: var(--texto-claro);">total viajes</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: var(--border-radius); text-align: center; box-shadow: var(--shadow-suave);">
+                        <h4 style="color: var(--ocre-dorado); margin-bottom: 10px;">⏰ Guardias del Mes</h4>
+                        <div style="font-size: 1.5em; font-weight: 800; color: var(--marron);">${guardiasMes.length}</div>
+                        <div style="color: var(--texto-claro);">total guardias</div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('reportesContent').innerHTML = contenido;
         }
 
         // FUNCIONES BÁSICAS
@@ -964,21 +1240,14 @@
                 updateMainStats();
                 updateSummary();
                 renderTravels();
+                renderGuards();
                 alert('✅ Todos los datos han sido reiniciados');
             }
-        }
-
-        // Funciones placeholder para pantallas faltantes
-        function mostrarReporteHoy() {
-            alert('📅 Reporte de hoy - Próximamente');
-        }
-
-        function mostrarReporteMes() {
-            alert('📈 Reporte del mes - Próximamente');
         }
     </script>
 </body>
 </html>
+
 
 
 
