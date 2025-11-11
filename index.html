@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -8,295 +9,61 @@
     <style>
         :root {
             --crema: #FFF8E1;
-            --crema-oscuro: #F5E6CA;
-            --amarillo-ocre: #D4A017;
-            --ocre-dorado: #B8860B;
-            --marron-claro: #8B4513;
-            --marron: #654321;
-            --texto-oscuro: #2D1B08;
-            --texto-claro: #5D4037;
+            --ocre: #D4A017;
+            --marron: #8B4513;
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, var(--crema) 0%, var(--ocre) 100%);
+            min-height: 100vh; padding: 20px; color: #333;
         }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, var(--crema) 0%, var(--amarillo-ocre) 100%);
-            min-height: 100vh;
-            color: var(--texto-oscuro);
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
+        .container { max-width: 800px; margin: 0 auto; }
+        .screen { display: none; background: white; border-radius: 15px; padding: 25px; margin-top: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .screen.active { display: block; }
+        
         /* PANTALLA PRINCIPAL */
-        #mainScreen {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .logo-container {
-            background: var(--crema);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            border: 3px solid var(--amarillo-ocre);
-        }
-
-        .logo-title {
-            font-size: 3em;
-            font-weight: 800;
-            color: var(--amarillo-ocre);
-            margin-bottom: 10px;
-        }
-
-        .logo-subtitle {
-            font-size: 1.2em;
-            color: var(--marron);
-            font-weight: 600;
-        }
-
-        .stats-bar {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin: 25px 0;
-        }
-
-        .stat-card {
-            background: var(--crema);
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-            border-top: 4px solid var(--amarillo-ocre);
-        }
-
-        .stat-value {
-            font-size: 1.8em;
-            font-weight: 800;
-            color: var(--marron);
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            font-size: 0.8em;
-            color: var(--texto-claro);
-            font-weight: 600;
-        }
-
-        .menu-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 30px;
-        }
-
-        .menu-card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            border: 2px solid var(--crema-oscuro);
-        }
-
-        .menu-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            border-color: var(--amarillo-ocre);
-        }
-
-        .menu-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 10px;
-            font-size: 20px;
-            background: var(--amarillo-ocre);
-            color: white;
-        }
-
-        .menu-title {
-            font-size: 1em;
-            font-weight: 700;
-            color: var(--marron);
-            margin-bottom: 5px;
-        }
-
-        .menu-desc {
-            font-size: 0.8em;
-            color: var(--texto-claro);
-        }
-
-        /* PANTALLAS SECUNDARIAS */
-        .screen {
-            display: none;
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            margin-top: 20px;
-        }
-
-        .screen.active {
-            display: block;
-        }
-
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid var(--crema-oscuro);
-        }
-
-        .back-btn {
-            background: var(--amarillo-ocre);
-            color: white;
-            border: none;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-        }
-
-        .header-title h1 {
-            color: var(--marron);
-            font-size: 1.4em;
-        }
-
-        .header-title p {
-            color: var(--texto-claro);
-            font-size: 0.9em;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--marron);
-        }
-
-        input, select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid var(--crema-oscuro);
-            border-radius: 8px;
-            font-size: 16px;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--amarillo-ocre);
-        }
-
-        .time-group {
-            display: flex;
-            gap: 10px;
-        }
-
-        .time-group input {
-            flex: 1;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .btn-date {
-            flex: 1;
-            padding: 10px;
-            background: var(--amarillo-ocre);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        button {
-            background: var(--amarillo-ocre);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            background: var(--ocre-dorado);
-        }
-
-        .btn-danger {
-            background: var(--marron-claro);
-        }
-
-        .list-item {
-            background: var(--crema);
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 8px;
-            border-left: 4px solid var(--amarillo-ocre);
-        }
-
-        .list-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .list-item-title {
-            font-weight: bold;
-            color: var(--marron);
-        }
-
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 12px;
-            width: auto;
-        }
-
+        .logo-container { text-align: center; margin-bottom: 30px; }
+        .logo-title { font-size: 3em; font-weight: bold; color: var(--ocre); margin-bottom: 10px; }
+        .logo-subtitle { font-size: 1.2em; color: var(--marron); font-weight: 600; }
+        
+        .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 25px 0; }
+        .stat-card { background: var(--crema); padding: 20px; border-radius: 10px; text-align: center; border-top: 4px solid var(--ocre); }
+        .stat-value { font-size: 1.8em; font-weight: 800; color: var(--marron); }
+        .stat-label { font-size: 0.8em; color: #666; font-weight: 600; }
+        
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .menu-card { background: white; padding: 20px; border-radius: 10px; text-align: center; cursor: pointer; border: 2px solid var(--crema); transition: all 0.3s; }
+        .menu-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: var(--ocre); }
+        .menu-icon { font-size: 2em; margin-bottom: 10px; color: var(--ocre); }
+        .menu-title { font-weight: 700; color: var(--marron); margin-bottom: 5px; }
+        .menu-desc { font-size: 0.8em; color: #666; }
+        
+        /* HEADER */
+        .header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #eee; }
+        .back-btn { background: var(--ocre); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 16px; }
+        .header-title h1 { color: var(--marron); margin-bottom: 5px; }
+        .header-title p { color: #666; font-size: 0.9em; }
+        
+        /* FORMULARIOS */
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--marron); }
+        input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .time-group { display: flex; gap: 10px; }
+        .time-group input { flex: 1; }
+        .btn-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn-date { flex: 1; padding: 10px; background: var(--ocre); color: white; border: none; border-radius: 8px; cursor: pointer; }
+        button { background: var(--ocre); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 10px; }
+        .btn-danger { background: var(--marron); }
+        
+        /* LISTAS */
+        .list-item { background: #f9f9f9; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid var(--ocre); }
+        .list-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .list-item-title { font-weight: bold; color: var(--marron); }
+        .btn-sm { padding: 8px 12px; font-size: 12px; width: auto; }
+        
         @media (max-width: 768px) {
-            .menu-grid {
-                grid-template-columns: 1fr;
-            }
-            .stats-bar {
-                grid-template-columns: 1fr;
-            }
+            .menu-grid, .stats-bar { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -326,49 +93,32 @@
 
             <div class="menu-grid">
                 <div class="menu-card" onclick="showScreen('travelScreen')">
-                    <div class="menu-icon">
-                        <i class="fas fa-bus-alt"></i>
-                    </div>
+                    <div class="menu-icon">🚌</div>
                     <div class="menu-title">Registrar Viaje</div>
                     <div class="menu-desc">Agregar nuevo recorrido</div>
                 </div>
-
                 <div class="menu-card" onclick="showScreen('guardScreen')">
-                    <div class="menu-icon">
-                        <i class="fas fa-user-clock"></i>
-                    </div>
+                    <div class="menu-icon">⏰</div>
                     <div class="menu-title">Registrar Guardia</div>
                     <div class="menu-desc">Control de guardias</div>
                 </div>
-
                 <div class="menu-card" onclick="showScreen('summaryScreen')">
-                    <div class="menu-icon">
-                        <i class="fas fa-chart-pie"></i>
-                    </div>
+                    <div class="menu-icon">📊</div>
                     <div class="menu-title">Resumen General</div>
                     <div class="menu-desc">Estadísticas del mes</div>
                 </div>
-
                 <div class="menu-card" onclick="showScreen('reportsScreen')">
-                    <div class="menu-icon">
-                        <i class="fas fa-file-alt"></i>
-                    </div>
+                    <div class="menu-icon">📈</div>
                     <div class="menu-title">Reportes</div>
                     <div class="menu-desc">Análisis detallados</div>
                 </div>
-
                 <div class="menu-card" onclick="showScreen('travelsListScreen')">
-                    <div class="menu-icon">
-                        <i class="fas fa-list-ol"></i>
-                    </div>
+                    <div class="menu-icon">📋</div>
                     <div class="menu-title">Lista de Viajes</div>
                     <div class="menu-desc">Ver viajes registrados</div>
                 </div>
-
                 <div class="menu-card" onclick="showScreen('guardsListScreen')">
-                    <div class="menu-icon">
-                        <i class="fas fa-clipboard-list"></i>
-                    </div>
+                    <div class="menu-icon">🕒</div>
                     <div class="menu-title">Lista de Guardias</div>
                     <div class="menu-desc">Ver guardias registradas</div>
                 </div>
@@ -378,12 +128,10 @@
         <!-- PANTALLA REGISTRAR VIAJE -->
         <div id="travelScreen" class="screen">
             <div class="header">
-                <button class="back-btn" onclick="showScreen('mainScreen')">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
+                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
                 <div class="header-title">
                     <h1>Registrar Viaje</h1>
-                    <p>Complete los datos del nuevo servicio</p>
+                    <p>Complete los datos del servicio</p>
                 </div>
             </div>
 
@@ -401,22 +149,18 @@
                 <label>Número de Orden:</label>
                 <input type="number" id="orderNumber" placeholder="Ej: 123">
             </div>
-
             <div class="form-group">
                 <label>Origen:</label>
                 <input type="text" id="origin" placeholder="Ej: Montevideo">
             </div>
-
             <div class="form-group">
                 <label>Destino:</label>
                 <input type="text" id="destination" placeholder="Ej: Punta del Este">
             </div>
-
             <div class="form-group">
                 <label>Kilómetros:</label>
                 <input type="number" id="km" placeholder="Ej: 140" step="0.1">
             </div>
-
             <div class="form-group">
                 <label>Horarios:</label>
                 <div class="time-group">
@@ -424,7 +168,6 @@
                     <input type="time" id="arrivalTime">
                 </div>
             </div>
-
             <div class="form-group">
                 <label>Tipo:</label>
                 <select id="travelType">
@@ -432,16 +175,13 @@
                     <option value="passenger">De Pasajero</option>
                 </select>
             </div>
-
             <button onclick="addTravel()">Agregar Viaje</button>
         </div>
 
         <!-- PANTALLA REGISTRAR GUARDIA -->
         <div id="guardScreen" class="screen">
             <div class="header">
-                <button class="back-btn" onclick="showScreen('mainScreen')">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
+                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
                 <div class="header-title">
                     <h1>Registrar Guardia</h1>
                     <p>Complete los datos de la guardia</p>
@@ -465,7 +205,6 @@
                     <option value="special">Guardia Especial (40 km/h)</option>
                 </select>
             </div>
-
             <div class="form-group">
                 <label>Horario de Guardia:</label>
                 <div class="time-group">
@@ -473,22 +212,18 @@
                     <input type="time" id="guardEnd">
                 </div>
             </div>
-
             <button onclick="addGuard()">Agregar Guardia</button>
         </div>
 
-        <!-- PANTALLA RESUMEN GENERAL -->
+        <!-- PANTALLA RESUMEN -->
         <div id="summaryScreen" class="screen">
             <div class="header">
-                <button class="back-btn" onclick="showScreen('mainScreen')">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
+                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
                 <div class="header-title">
                     <h1>Resumen General</h1>
-                    <p>Estadísticas completas del mes</p>
+                    <p>Estadísticas del mes</p>
                 </div>
             </div>
-
             <div id="summaryContent">
                 <p>Km Trabajando: <span id="totalWorking">0</span> km</p>
                 <p>Km de Pasajero: <span id="totalPassenger">0</span> km</p>
@@ -496,34 +231,29 @@
                 <p><strong>TOTAL KM: <span id="totalAll">0</span> km</strong></p>
                 <p><strong>TOTAL A COBRAR: $<span id="totalMoney">0</span></strong></p>
             </div>
-
             <button onclick="exportData()">Exportar Resumen</button>
             <button onclick="clearMonth()" class="btn-danger">Reiniciar Mes</button>
         </div>
 
-        <!-- PANTALLA LISTA DE VIAJES -->
+        <!-- PANTALLA LISTA VIAJES -->
         <div id="travelsListScreen" class="screen">
             <div class="header">
-                <button class="back-btn" onclick="showScreen('mainScreen')">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
+                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
                 <div class="header-title">
                     <h1>Lista de Viajes</h1>
-                    <p>Gestionar viajes registrados</p>
+                    <p>Viajes registrados</p>
                 </div>
             </div>
             <div id="travelsList"></div>
         </div>
 
-        <!-- PANTALLA LISTA DE GUARDIAS -->
+        <!-- PANTALLA LISTA GUARDIAS -->
         <div id="guardsListScreen" class="screen">
             <div class="header">
-                <button class="back-btn" onclick="showScreen('mainScreen')">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
+                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
                 <div class="header-title">
                     <h1>Lista de Guardias</h1>
-                    <p>Gestionar guardias registradas</p>
+                    <p>Guardias registradas</p>
                 </div>
             </div>
             <div id="guardsList"></div>
@@ -532,18 +262,14 @@
         <!-- PANTALLA REPORTES -->
         <div id="reportsScreen" class="screen">
             <div class="header">
-                <button class="back-btn" onclick="showScreen('mainScreen')">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
+                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
                 <div class="header-title">
                     <h1>Reportes</h1>
-                    <p>Análisis detallados de actividad</p>
+                    <p>Análisis detallados</p>
                 </div>
             </div>
-            
             <button onclick="mostrarReporteHoy()" style="margin-bottom: 10px;">Ver Reporte de Hoy</button>
             <button onclick="mostrarReporteMes()">Ver Reporte del Mes</button>
-            
             <div id="reportesContent" style="margin-top: 20px;"></div>
         </div>
     </div>
@@ -553,33 +279,20 @@
         let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
         let guards = JSON.parse(localStorage.getItem('bus_guards')) || [];
 
-        // FUNCIÓN SIMPLE PARA MOSTRAR PANTALLAS
         function showScreen(screenId) {
-            // Ocultar todas las pantallas
-            document.querySelectorAll('.screen').forEach(screen => {
-                screen.classList.remove('active');
-            });
-            
-            // Mostrar la pantalla seleccionada
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
             
-            // Actualizar datos si es necesario
-            if (screenId === 'mainScreen') {
-                updateMainStats();
-            } else if (screenId === 'summaryScreen') {
-                updateSummary();
-            } else if (screenId === 'travelsListScreen') {
-                renderTravels();
-            } else if (screenId === 'guardsListScreen') {
-                renderGuards();
-            }
+            if (screenId === 'mainScreen') updateMainStats();
+            if (screenId === 'summaryScreen') updateSummary();
+            if (screenId === 'travelsListScreen') renderTravels();
+            if (screenId === 'guardsListScreen') renderGuards();
         }
 
         function setFecha(elementId, dias) {
             const fecha = new Date();
             fecha.setDate(fecha.getDate() + dias);
-            const fechaFormateada = fecha.toISOString().split('T')[0];
-            document.getElementById(elementId).value = fechaFormateada;
+            document.getElementById(elementId).value = fecha.toISOString().split('T')[0];
         }
 
         // CONFIGURACIÓN INICIAL
@@ -587,15 +300,11 @@
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('fechaViaje').value = hoy;
             document.getElementById('fechaGuardia').value = hoy;
-            
             updateMainStats();
             updateSummary();
-            
-            // Mostrar solo la pantalla principal
-            showScreen('mainScreen');
         });
 
-        // [RESTANTE DEL JAVASCRIPT IGUAL - addTravel, addGuard, updateSummary, etc.]
+        // AGREGAR VIAJE
         function addTravel() {
             const orderNumber = document.getElementById('orderNumber').value;
             const origin = document.getElementById('origin').value;
@@ -607,7 +316,7 @@
             const fechaInput = document.getElementById('fechaViaje').value;
 
             if (!orderNumber || !origin || !destination || !km) {
-                alert('Por favor completa todos los campos obligatorios');
+                alert('Complete todos los campos');
                 return;
             }
 
@@ -621,14 +330,8 @@
 
             const travel = {
                 id: Date.now(),
-                orderNumber,
-                origin,
-                destination,
-                km,
-                type: travelType,
-                departureTime,
-                arrivalTime,
-                date: fechaViaje,
+                orderNumber, origin, destination, km, type: travelType,
+                departureTime, arrivalTime, date: fechaViaje,
                 timestamp: new Date().toISOString()
             };
 
@@ -642,10 +345,61 @@
             
             updateMainStats();
             updateSummary();
-            alert('✅ Viaje agregado correctamente!');
+            alert('✅ Viaje agregado!');
             showScreen('mainScreen');
         }
 
+        // AGREGAR GUARDIA
+        function addGuard() {
+            const guardType = document.getElementById('guardType').value;
+            const guardStart = document.getElementById('guardStart').value;
+            const guardEnd = document.getElementById('guardEnd').value;
+            const fechaInput = document.getElementById('fechaGuardia').value;
+
+            if (!guardStart || !guardEnd) {
+                alert('Ingrese horario de inicio y fin');
+                return;
+            }
+
+            let fechaGuardia;
+            if (fechaInput) {
+                const [año, mes, dia] = fechaInput.split('-');
+                fechaGuardia = `${dia}/${mes}/${año}`;
+            } else {
+                fechaGuardia = new Date().toLocaleDateString('es-ES');
+            }
+
+            const start = new Date(`2000-01-01T${guardStart}`);
+            const end = new Date(`2000-01-01T${guardEnd}`);
+            let hoursWorked = (end - start) / (1000 * 60 * 60);
+            if (hoursWorked < 0) hoursWorked += 24;
+            if (hoursWorked <= 0) {
+                alert('La hora de fin debe ser posterior');
+                return;
+            }
+
+            const kmPerHour = guardType === 'common' ? 30 : 40;
+            const totalKm = hoursWorked * kmPerHour;
+
+            const guard = {
+                id: Date.now(),
+                type: guardType, startTime: guardStart, endTime: guardEnd,
+                hours: hoursWorked.toFixed(2), km: totalKm.toFixed(1), date: fechaGuardia
+            };
+
+            guards.push(guard);
+            localStorage.setItem('bus_guards', JSON.stringify(guards));
+            
+            document.getElementById('guardStart').value = '';
+            document.getElementById('guardEnd').value = '';
+            
+            updateMainStats();
+            updateSummary();
+            alert('✅ Guardia agregada!');
+            showScreen('mainScreen');
+        }
+
+        // ACTUALIZAR ESTADÍSTICAS
         function updateMainStats() {
             const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
             const totalPassenger = travels.filter(t => t.type === 'passenger').reduce((sum, t) => sum + t.km, 0);
@@ -672,7 +426,156 @@
             document.getElementById('totalMoney').textContent = totalMoney.toFixed(2);
         }
 
-        // [Resto de funciones JavaScript...]
+        // MOSTRAR LISTAS
+        function renderTravels() {
+            const travelsList = document.getElementById('travelsList');
+            travelsList.innerHTML = '';
+
+            if (travels.length === 0) {
+                travelsList.innerHTML = '<p>No hay viajes registrados</p>';
+                return;
+            }
+
+            travels.forEach(travel => {
+                const travelItem = document.createElement('div');
+                travelItem.className = 'list-item';
+                travelItem.innerHTML = `
+                    <div class="list-item-header">
+                        <div class="list-item-title">Orden #${travel.orderNumber}</div>
+                        <button onclick="deleteTravel(${travel.id})" class="btn-danger btn-sm">Eliminar</button>
+                    </div>
+                    <p>${travel.origin} → ${travel.destination}</p>
+                    <p>${travel.km} km - ${travel.date}</p>
+                    <p><small>${travel.type === 'working' ? 'Trabajando' : 'Pasajero'}</small></p>
+                `;
+                travelsList.appendChild(travelItem);
+            });
+        }
+
+        function renderGuards() {
+            const guardsList = document.getElementById('guardsList');
+            guardsList.innerHTML = '';
+
+            if (guards.length === 0) {
+                guardsList.innerHTML = '<p>No hay guardias registradas</p>';
+                return;
+            }
+
+            guards.forEach(guard => {
+                const guardItem = document.createElement('div');
+                guardItem.className = 'list-item';
+                guardItem.innerHTML = `
+                    <div class="list-item-header">
+                        <div class="list-item-title">Guardia ${guard.type === 'common' ? 'Común' : 'Especial'}</div>
+                        <button onclick="deleteGuard(${guard.id})" class="btn-danger btn-sm">Eliminar</button>
+                    </div>
+                    <p>${guard.startTime} - ${guard.endTime} (${guard.hours} horas)</p>
+                    <p>${guard.km} km - ${guard.date}</p>
+                `;
+                guardsList.appendChild(guardItem);
+            });
+        }
+
+        // ELIMINAR
+        function deleteTravel(id) {
+            if (confirm('¿Eliminar este viaje?')) {
+                travels = travels.filter(travel => travel.id !== id);
+                localStorage.setItem('bus_travels', JSON.stringify(travels));
+                renderTravels();
+                updateMainStats();
+                updateSummary();
+            }
+        }
+
+        function deleteGuard(id) {
+            if (confirm('¿Eliminar esta guardia?')) {
+                guards = guards.filter(guard => guard.id !== id);
+                localStorage.setItem('bus_guards', JSON.stringify(guards));
+                renderGuards();
+                updateMainStats();
+                updateSummary();
+            }
+        }
+
+        // REPORTES
+        function mostrarReporteHoy() {
+            const hoy = new Date().toLocaleDateString('es-ES');
+            const viajesHoy = travels.filter(t => t.date === hoy);
+            const guardiasHoy = guards.filter(g => g.date === hoy);
+            
+            let contenido = `
+                <h3>📅 Reporte del Día: ${hoy}</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+                    <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h4>🚌 Viajes Hoy</h4>
+                        <p><strong>Cantidad:</strong> ${viajesHoy.length}</p>
+                        <p><strong>Total KM:</strong> ${viajesHoy.reduce((sum, v) => sum + v.km, 0).toFixed(1)} km</p>
+                    </div>
+                    <div style="background: #f0fff0; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h4>⏰ Guardias Hoy</h4>
+                        <p><strong>Cantidad:</strong> ${guardiasHoy.length}</p>
+                        <p><strong>Total KM:</strong> ${guardiasHoy.reduce((sum, g) => sum + parseFloat(g.km), 0).toFixed(1)} km</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('reportesContent').innerHTML = contenido;
+        }
+
+        function mostrarReporteMes() {
+            const hoy = new Date();
+            const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+            const nombreMes = hoy.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+            
+            const viajesMes = travels.filter(viaje => {
+                const [dia, mes, año] = viaje.date.split('/');
+                const fechaViaje = new Date(año, mes - 1, dia);
+                return fechaViaje >= primerDiaMes;
+            });
+            
+            const guardiasMes = guards.filter(guardia => {
+                const [dia, mes, año] = guardia.date.split('/');
+                const fechaGuardia = new Date(año, mes - 1, dia);
+                return fechaGuardia >= primerDiaMes;
+            });
+            
+            let contenido = `
+                <h3>📈 Reporte del Mes: ${nombreMes}</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+                    <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h4>🚌 Viajes del Mes</h4>
+                        <p><strong>Cantidad:</strong> ${viajesMes.length}</p>
+                        <p><strong>Total KM:</strong> ${viajesMes.reduce((sum, v) => sum + v.km, 0).toFixed(1)} km</p>
+                    </div>
+                    <div style="background: #f0fff0; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h4>⏰ Guardias del Mes</h4>
+                        <p><strong>Cantidad:</strong> ${guardiasMes.length}</p>
+                        <p><strong>Total KM:</strong> ${guardiasMes.reduce((sum, g) => sum + parseFloat(g.km), 0).toFixed(1)} km</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('reportesContent').innerHTML = contenido;
+        }
+
+        // OTRAS FUNCIONES
+        function exportData() {
+            alert('📄 Funcionalidad de exportación - Próximamente');
+        }
+
+        function clearMonth() {
+            if (confirm('¿Reiniciar todos los datos?')) {
+                travels = [];
+                guards = [];
+                localStorage.removeItem('bus_travels');
+                localStorage.removeItem('bus_guards');
+                updateMainStats();
+                updateSummary();
+                renderTravels();
+                renderGuards();
+                alert('Datos reiniciados');
+            }
+        }
     </script>
 </body>
 </html>
