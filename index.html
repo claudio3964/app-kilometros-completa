@@ -632,9 +632,53 @@
     });
   }
 </script>
+<!-- Botón flotante -->
+<button id="install-btn" style="
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  z-index: 1000;
+">
+  Instalar COT
+</button>
+
+<script>
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault(); // evita que Chrome muestre el prompt automático
+  deferredPrompt = e;
+
+  const installBtn = document.getElementById('install-btn');
+  installBtn.style.display = 'inline-block';
+
+  installBtn.onclick = async () => {
+    installBtn.style.display = 'none'; // ocultamos el botón
+    deferredPrompt.prompt(); // mostramos el prompt
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`El usuario respondió: ${outcome}`);
+    deferredPrompt = null;
+  };
+});
+
+// Detectar cuando la app fue instalada
+window.addEventListener('appinstalled', () => {
+  console.log('COT fue instalado correctamente 👍');
+});
+</script>
 
 </body>
 </html>
+
 
 
 
