@@ -623,8 +623,19 @@
             }
         }
     </script>
+    <script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").then(() => {
+      console.log("✅ Service Worker registrado correctamente.");
+    }).catch((error) => {
+      console.log("❌ Error al registrar el Service Worker:", error);
+    });
+  }
+</script>
+
 </body>
 </html>
+
 
 
 
