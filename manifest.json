@@ -1,12 +1,39 @@
 {
-  "name": "App Kilómetros - Registro y Control",
-  "short_name": "App Kilómetros",
-  "description": "Aplicación para registro y control de kilómetros recorridos",
+  "name": "Control de Kilómetros",
+  "short_name": "COT",
+  "description": "App para registrar kilómetros, guardias y generar reportes",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#007bff",
-  "orientation": "portrait",
-  "icons": [],
-  "categories": ["productivity", "utilities"]
+  "background_color": "#FFFFFF",
+  "theme_color": "#D4A017",
+  "orientation": "portrait-primary",
+  "categories": ["productivity", "business"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ]
 }
