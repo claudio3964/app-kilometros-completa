@@ -2,9 +2,9 @@
   "name": "Control de Kilómetros",
   "short_name": "COT",
   "description": "App para registrar kilómetros, guardias y generar reportes",
-  "start_url": "/",
-  "scope": "/",
-  "display": "standalone",
+  "start_url": "./",
+"scope": "./"
+ "display": "standalone",
   "background_color": "#FFFFFF",
   "theme_color": "#D4A017",
   "orientation": "portrait-primary",
@@ -37,3 +37,4 @@
     }
   ]
 }
+
