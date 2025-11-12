@@ -2,11 +2,11 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open("cot-cache-v1").then((cache) => {
       return cache.addAll([
-        "./",
-        "./index.html",
-        "./manifest.json",
-        "./icons/icon-192.png",
-        "./icons/icon-512.png"
+        "/app-kilometros-completa/",
+        "/app-kilometros-completa/index.html",
+        "/app-kilometros-completa/manifest.json",
+        "/app-kilometros-completa/icons/icon-192.png",
+        "/app-kilometros-completa/icons/icon-512.png"
       ]);
     })
   );
@@ -19,3 +19,4 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+
