@@ -624,13 +624,13 @@
         }
     </script>
     <script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js").then(() => {
-      console.log("✅ Service Worker registrado correctamente.");
-    }).catch((error) => {
-      console.log("❌ Error al registrar el Service Worker:", error);
-    });
-  }
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(reg => console.log('✅ Service Worker registrado correctamente.', reg))
+      .catch(err => console.error('❌ Error registrando Service Worker:', err));
+  });
+}
 </script>
 <!-- Botón flotante -->
 <button id="install-btn" style="
@@ -695,6 +695,7 @@ window.addEventListener('appinstalled', () => {
 
 </body>
 </html>
+
 
 
 
