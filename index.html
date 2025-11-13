@@ -195,6 +195,24 @@ html, body {
                 <input type="text" id="destination" placeholder="Ej: Punta del Este">
             </div>
             <div class="form-group">
+  <label>Destino:</label>
+  <input type="text" id="destination" placeholder="Ej: Punta del Este">
+</div>
+<div class="form-group">
+  <label>Turno:</label>
+  <select id="turno">
+    <option value="1">1 - Turno común</option>
+    <option value="2">2 - Directo / Acoplado</option>
+    <option value="3">3 - Segundo acoplado</option>
+  </select>
+</div>
+
+<div class="form-group">
+  <label>Kilómetros:</label>
+  <input type="number" id="km" placeholder="Ej: 140" step="0.1">
+</div>
+
+            <div class="form-group">
                 <label>Kilómetros:</label>
                 <input type="number" id="km" placeholder="Ej: 140" step="0.1">
             </div>
@@ -377,10 +395,47 @@ html, body {
             const orderNumber = document.getElementById('orderNumber').value;
             const origin = document.getElementById('origin').value;
             const destination = document.getElementById('destination').value;
-            const km = parseFloat(document.getElementById('km').value);
+            const turno = parseInt(document.getElementById('turno').value);
+            let km = parseFloat(document.getElementById('km').value);
+let acopladoExtra = 0;
+if (turno > 1) {
+    acopladoExtra = 30;
+    km += 30;
+}
+
             const travelType = document.getElementById('travelType').value;
             const departureTime = document.getElementById('departureTime').value;
             const arrivalTime = document.getElementById('arrivalTime').value;
+            
+const fechaInput = document.getElementById('fechaViaje').value;
+
+if (!orderNumber || !origin || !destination || isNaN(km)) {
+    alert("Por favor complete todos los campos requeridos.");
+    return;
+}
+
+const newTravel = {
+    orderNumber,
+    origin,
+    destination,
+    turno,
+    km,
+    acopladoExtra,
+    travelType,
+    departureTime,
+    arrivalTime,
+    fecha: fechaInput
+};
+
+// Guardar en localStorage
+let travels = JSON.parse(localStorage.getItem('travels')) || [];
+travels.push(newTravel);
+localStorage.setItem('travels', JSON.stringify(travels));
+
+alert("Viaje agregado correctamente.");
+showScreen('mainScreen');
+clearTravelForm();
+
             const fechaInput = document.getElementById('fechaViaje').value;
 
             if (!orderNumber || !origin || !destination || !km) {
@@ -754,6 +809,7 @@ window.addEventListener('appinstalled', () => {
 
 </body>
 </html>
+
 
 
 
