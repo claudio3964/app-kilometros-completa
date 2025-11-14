@@ -1,48 +1,38 @@
-const CACHE_NAME = 'cot-cache-v1';
-const FILES_TO_CACHE = [
-  './',
-  './index.html',
-  './style.css',
-  './app.js',
-  './manifest.json',
-  './icons/icon-72.png',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/maskable-512.png'
+const CACHE_NAME = 'cot-app-cache-v1';
+const ASSETS_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/style.css',
+  '/app.js',
+  // agrega aquí todos los archivos que uses (iconos, librerías, etc.)
 ];
 
-// INSTALAR
+// Instalación del SW y cache de archivos
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CCACHE_NAME).then(cache => {
-      console.log('Cache abierto');
-      return cache.addAll(FILES_TO_CACHE);
-    })
-  );
-  self.skipWaiting();
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => cache.addAll(ASSETS_TO_CACHE))
+    );
+    self.skipWaiting(); // Activa el SW inmediatamente
 });
 
-// ACTIVAR
+// Activación y limpieza de cache viejo
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) return caches.delete(key);
-        })
-      );
-    })
-  );
-  self.clients.claim();
+    event.waitUntil(
+        caches.keys().then(keys =>
+            Promise.all(
+                keys.filter(key => key !== CACHE_NAME)
+                    .map(key => caches.delete(key))
+            )
+        )
+    );
+    clients.claim(); // Toma control inmediato
 });
 
-// FETCH → responder desde caché
+// Interceptar requests y servir desde cache primero
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
-    })
-  );
+    event.respondWith(
+        caches.match(event.request)
+            .then(cachedRes => cachedRes || fetch(event.request))
+    );
 });
-
-
