@@ -382,41 +382,76 @@ html, body {
         }
 
         // AGREGAR VIAJE
-        function addTravel() {
-            const orderNumber = document.getElementById('orderNumber').value;
-            const origin = document.getElementById('origin').value;
-            const destination = document.getElementById('destination').value;
-            const turno = parseInt(document.getElementById('turno').value);
-            let km = parseFloat(document.getElementById('km').value);
-let acopladoExtra = 0;
-if (turno > 1) {
-    acopladoExtra = 30;
-    km += 30;
+       // AGREGAR VIAJE
+function addTravel() {
+    // Obtener valores del formulario
+    const orderNumber = document.getElementById('orderNumber').value.trim();
+    const origin = document.getElementById('origin').value.trim();
+    const destination = document.getElementById('destination').value.trim();
+    const turno = parseInt(document.getElementById('turno').value);
+    let km = parseFloat(document.getElementById('km').value);
+    const travelType = document.getElementById('travelType').value;
+    const departureTime = document.getElementById('departureTime').value;
+    const arrivalTime = document.getElementById('arrivalTime').value;
+    const fechaInput = document.getElementById('fechaViaje').value;
+
+    // Validar campos obligatorios
+    if (!orderNumber || !origin || !destination || isNaN(km)) {
+        alert("Por favor complete todos los campos requeridos.");
+        return;
+    }
+
+    // Ajuste por acoplado según turno
+    let acopladoExtra = 0;
+    if (turno > 1) {
+        acopladoExtra = 30;
+        km += 30;
+    }
+
+    // Formatear fecha
+    let fechaViaje = fechaInput
+        ? fechaInput.split('-').reverse().join('/')
+        : new Date().toLocaleDateString('es-ES');
+
+    // Crear objeto viaje
+    const travel = {
+        id: Date.now(),
+        orderNumber,
+        origin,
+        destination,
+        turno,
+        km,
+        acopladoExtra,
+        type: travelType,
+        departureTime,
+        arrivalTime,
+        date: fechaViaje,
+        viaticos: 0, // Se calcula después
+        timestamp: new Date().toISOString()
+    };
+
+    // Guardar viaje
+    let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
+    travels.push(travel);
+    localStorage.setItem('bus_travels', JSON.stringify(travels));
+
+    // Limpiar formulario
+    document.getElementById('orderNumber').value = '';
+    document.getElementById('origin').value = '';
+    document.getElementById('destination').value = '';
+    document.getElementById('km').value = '';
+    document.getElementById('departureTime').value = '';
+    document.getElementById('arrivalTime').value = '';
+
+    // Actualizar otras pantallas
+    updateMainStats();
+    updateSummary();
+    renderTravels();
+
+    alert("✅ Viaje agregado correctamente.");
+    showScreen('mainScreen');
 }
 
-            const travelType = document.getElementById('travelType').value;
-            const departureTime = document.getElementById('departureTime').value;
-            const arrivalTime = document.getElementById('arrivalTime').value;
-            
-const fechaInput = document.getElementById('fechaViaje').value;
-
-if (!orderNumber || !origin || !destination || isNaN(km)) {
-    alert("Por favor complete todos los campos requeridos.");
-    return;
-}
-
-const newTravel = {
-    orderNumber,
-    origin,
-    destination,
-    turno,
-    km,
-    acopladoExtra,
-    travelType,
-    departureTime,
-    arrivalTime,
-    fecha: fechaInput
-};
 
 // Guardar en localStorage
 let travels = JSON.parse(localStorage.getItem('travels')) || [];
@@ -800,6 +835,7 @@ window.addEventListener('appinstalled', () => {
 
 </body>
 </html>
+
 
 
 
