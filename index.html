@@ -1,271 +1,570 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>COT - Control de Kilómetros</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --crema: #FFF8E1;
+            --ocre: #D4A017;
+            --marron: #8B4513;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, var(--crema) 0%, var(--ocre) 100%);
+            min-height: 100vh; padding: 20px; color: #333;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        .screen { display: none; background: white; border-radius: 15px; padding: 25px; margin-top: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .screen.active { display: block; }
+        
+        /* PANTALLA PRINCIPAL */
+        .logo-container { text-align: center; margin-bottom: 30px; }
+        .logo-title { font-size: 3em; font-weight: bold; color: var(--ocre); margin-bottom: 10px; }
+        .logo-subtitle { font-size: 1.2em; color: var(--marron); font-weight: 600; }
+        
+        .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 25px 0; }
+        .stat-card { background: var(--crema); padding: 20px; border-radius: 10px; text-align: center; border-top: 4px solid var(--ocre); }
+        .stat-value { font-size: 1.8em; font-weight: 800; color: var(--marron); }
+        .stat-label { font-size: 0.8em; color: #666; font-weight: 600; }
+        
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .menu-card { background: white; padding: 20px; border-radius: 10px; text-align: center; cursor: pointer; border: 2px solid var(--crema); transition: all 0.3s; }
+        .menu-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: var(--ocre); }
+        .menu-icon { font-size: 2em; margin-bottom: 10px; color: var(--ocre); }
+        .menu-title { font-weight: 700; color: var(--marron); margin-bottom: 5px; }
+        .menu-desc { font-size: 0.8em; color: #666; }
+        
+        /* HEADER */
+        .header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #eee; }
+        .back-btn { background: var(--ocre); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 16px; }
+        .header-title h1 { color: var(--marron); margin-bottom: 5px; }
+        .header-title p { color: #666; font-size: 0.9em; }
+        
+        /* FORMULARIOS */
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--marron); }
+        input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .time-group { display: flex; gap: 10px; }
+        .time-group input { flex: 1; }
+        .btn-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .btn-date { flex: 1; padding: 10px; background: var(--ocre); color: white; border: none; border-radius: 8px; cursor: pointer; }
+        button { background: var(--ocre); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 10px; }
+        .btn-danger { background: var(--marron); }
+        
+        /* LISTAS */
+        .list-item { background: #f9f9f9; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid var(--ocre); }
+        .list-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .list-item-title { font-weight: bold; color: var(--marron); }
+        .btn-sm { padding: 8px 12px; font-size: 12px; width: auto; }
+        
+        @media (max-width: 768px) {
+            .menu-grid, .stats-bar { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <!-- PANTALLA PRINCIPAL -->
+        <div id="mainScreen" class="screen active">
+            <div class="logo-container">
+                <div class="logo-title">COT</div>
+                <div class="logo-subtitle">CONTROL DE KILÓMETROS</div>
+            </div>
+            <div class="menu-grid">
+                <div class="menu-card" onclick="showScreen('travelScreen')">
+                    <div class="menu-icon">🚌</div>
+                    <div class="menu-title">Registrar Viaje</div>
+                    <div class="menu-desc">Agregar nuevo recorrido</div>
+                </div>
+                <div class="menu-card" onclick="showScreen('guardScreen')">
+                    <div class="menu-icon">⏰</div>
+                    <div class="menu-title">Registrar Guardia</div>
+                    <div class="menu-desc">Control de guardias</div>
+                </div>
+                <div class="menu-card" onclick="showScreen('summaryScreen')">
+                    <div class="menu-icon">📊</div>
+                    <div class="menu-title">Resumen General</div>
+                    <div class="menu-desc">Estadísticas del mes</div>
+                </div>
+                <div class="menu-card" onclick="showScreen('reportsScreen')">
+                    <div class="menu-icon">📈</div>
+                    <div class="menu-title">Reportes</div>
+                    <div class="menu-desc">Análisis detallados</div>
+                </div>
+                <div class="menu-card" onclick="showScreen('travelsListScreen')">
+                    <div class="menu-icon">📋</div>
+                    <div class="menu-title">Lista de Viajes</div>
+                    <div class="menu-desc">Ver viajes registrados</div>
+                </div>
+                <div class="menu-card" onclick="showScreen('guardsListScreen')">
+                    <div class="menu-icon">🕒</div>
+                    <div class="menu-title">Lista de Guardias</div>
+                    <div class="menu-desc">Ver guardias registradas</div>
+                </div>
+            </div>
+        </div>
 
-<!-- ======================
-     PANTALLA PRINCIPAL
-====================== -->
-<div id="mainScreen" class="screen active">
-    <h1>Control de Kilómetros</h1>
-    <button onclick="showScreen('travelScreen')">Registrar Viaje</button>
-    <button onclick="showScreen('guardScreen')">Registrar Guardia</button>
+        <!-- PANTALLA REGISTRAR VIAJE -->
+        <div id="travelScreen" class="screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
+                <div class="header-title">
+                    <h1>Registrar Viaje</h1>
+                    <p>Complete los datos del servicio</p>
+                </div>
+            </div>
 
-    <h2>Resumen</h2>
-    <p><strong>Kilómetros Trabajados:</strong> <span id="kmTrabajados">0</span></p>
-    <p><strong>Kilómetros Pasajero:</strong> <span id="kmPasajero">0</span></p>
-    <p><strong>Guardias:</strong> <span id="cantGuardias">0</span></p>
-</div>
+            <div class="form-group">
+                <label>Fecha del Viaje:</label>
+                <div class="btn-group">
+                    <button type="button" class="btn-date" onclick="setFecha('fechaViaje', 0)">Hoy</button>
+                    <button type="button" class="btn-date" onclick="setFecha('fechaViaje', -1)">Ayer</button>
+                    <button type="button" class="btn-date" onclick="setFecha('fechaViaje', -2)">Hace 2 días</button>
+                </div>
+                <input type="date" id="fechaViaje">
+            </div>
 
+            <div class="form-group">
+                <label>Número de Orden:</label>
+                <input type="number" id="orderNumber" placeholder="Ej: 123">
+            </div>
+            <div class="form-group">
+                <label>Origen:</label>
+                <input type="text" id="origin" placeholder="Ej: Montevideo">
+            </div>
+            <div class="form-group">
+                <label>Destino:</label>
+                <input type="text" id="destination" placeholder="Ej: Punta del Este">
+            </div>
+            <div class="form-group">
+                <label>Kilómetros:</label>
+                <input type="number" id="km" placeholder="Ej: 140" step="0.1">
+            </div>
+            <div class="form-group">
+                <label>Horarios:</label>
+                <div class="time-group">
+                    <input type="time" id="departureTime">
+                    <input type="time" id="arrivalTime">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Tipo:</label>
+                <select id="travelType">
+                    <option value="working">Trabajando</option>
+                    <option value="passenger">De Pasajero</option>
+                </select>
+            </div>
+            <button onclick="addTravel()">Agregar Viaje</button>
+        </div>
 
-<!-- ======================
-     PANTALLA REGISTRAR VIAJE
-====================== -->
-<div id="travelScreen" class="screen">
-    <div class="header">
-        <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
-        <div class="header-title">
-            <h1>Registrar Viaje</h1>
-            <p>Complete los datos del servicio</p>
+        <!-- PANTALLA REGISTRAR GUARDIA -->
+        <div id="guardScreen" class="screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
+                <div class="header-title">
+                    <h1>Registrar Guardia</h1>
+                    <p>Complete los datos de la guardia</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Fecha de la Guardia:</label>
+                <div class="btn-group">
+                    <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', 0)">Hoy</button>
+                    <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', -1)">Ayer</button>
+                    <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', -2)">Hace 2 días</button>
+                </div>
+                <input type="date" id="fechaGuardia">
+            </div>
+
+            <div class="form-group">
+                <label>Tipo de Guardia:</label>
+                <select id="guardType">
+                    <option value="common">Guardia Común (30 km/h)</option>
+                    <option value="special">Guardia Especial (40 km/h)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Horario de Guardia:</label>
+                <div class="time-group">
+                    <input type="time" id="guardStart">
+                    <input type="time" id="guardEnd">
+                </div>
+            </div>
+            <button onclick="addGuard()">Agregar Guardia</button>
+        </div>
+
+        <!-- PANTALLA RESUMEN -->
+        <div id="summaryScreen" class="screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
+                <div class="header-title">
+                    <h1>Resumen General</h1>
+                    <p>Estadísticas del mes</p>
+                </div>
+            </div>
+            <div id="summaryContent">
+                <p>Km Trabajando: <span id="totalWorking">0</span> km</p>
+                <p>Km de Pasajero: <span id="totalPassenger">0</span> km</p>
+                <p>Km por Guardias: <span id="totalGuards">0</span> km</p>
+                <p><strong>TOTAL KM: <span id="totalAll">0</span> km</strong></p>
+                <p><strong>TOTAL A COBRAR: $<span id="totalMoney">0</span></strong></p>
+            </div>
+            <button onclick="exportData()">Exportar Resumen</button>
+            <button onclick="clearMonth()" class="btn-danger">Reiniciar Mes</button>
+        </div>
+
+        <!-- PANTALLA LISTA VIAJES -->
+        <div id="travelsListScreen" class="screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
+                <div class="header-title">
+                    <h1>Lista de Viajes</h1>
+                    <p>Viajes registrados</p>
+                </div>
+            </div>
+            <div id="travelsList"></div>
+        </div>
+
+        <!-- PANTALLA LISTA GUARDIAS -->
+        <div id="guardsListScreen" class="screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
+                <div class="header-title">
+                    <h1>Lista de Guardias</h1>
+                    <p>Guardias registradas</p>
+                </div>
+            </div>
+            <div id="guardsList"></div>
+        </div>
+
+        <!-- PANTALLA REPORTES -->
+        <div id="reportsScreen" class="screen">
+            <div class="header">
+                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
+                <div class="header-title">
+                    <h1>Reportes</h1>
+                    <p>Análisis detallados</p>
+                </div>
+            </div>
+            <button onclick="mostrarReporteHoy()" style="margin-bottom: 10px;">Ver Reporte de Hoy</button>
+            <button onclick="mostrarReporteMes()">Ver Reporte del Mes</button>
+            <div id="reportesContent" style="margin-top: 20px;"></div>
         </div>
     </div>
 
-    <div class="form-group">
-        <label>Fecha del Viaje:</label>
-        <div class="btn-group">
-            <button type="button" class="btn-date" onclick="setFecha('fechaViaje', 0)">Hoy</button>
-            <button type="button" class="btn-date" onclick="setFecha('fechaViaje', -1)">Ayer</button>
-            <button type="button" class="btn-date" onclick="setFecha('fechaViaje', -2)">Hace 2 días</button>
-        </div>
-        <input type="date" id="fechaViaje">
-    </div>
+    <script>
+        const PRICE_PER_KM = 7.60;
+        let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
+        let guards = JSON.parse(localStorage.getItem('bus_guards')) || [];
 
-    <div class="form-group">
-        <label>Número de Orden:</label>
-        <input type="number" id="orderNumber" placeholder="Ej: 123">
-    </div>
-
-    <div class="form-group">
-        <label>Origen:</label>
-        <input type="text" id="origin" placeholder="Ej: Montevideo">
-    </div>
-
-    <div class="form-group">
-        <label>Destino:</label>
-        <input type="text" id="destination" placeholder="Ej: Punta del Este">
-    </div>
-
-    <div class="form-group">
-        <label>Turno:</label>
-        <select id="turno">
-            <option value="1">1 - Común</option>
-            <option value="2">2 - Directo / Acoplado</option>
-            <option value="3">3 - Segundo acoplado</option>
-        </select>
-    </div>
-
-    <div class="form-group">
-        <label>Kilómetros:</label>
-        <input type="number" id="km" step="0.1" placeholder="Ej: 140">
-    </div>
-
-    <div class="form-group">
-        <label>Horarios:</label>
-        <div class="time-group">
-            <input type="time" id="departureTime">
-            <input type="time" id="arrivalTime">
-        </div>
-    </div>
-
-    <div class="form-group">
-        <label>Tipo:</label>
-        <select id="travelType">
-            <option value="working">Trabajando</option>
-            <option value="passenger">De Pasajero</option>
-        </select>
-    </div>
-
-    <button onclick="addTravel()">Agregar Viaje</button>
-</div>
-
-
-<!-- ======================
-     PANTALLA REGISTRAR GUARDIA
-====================== -->
-<div id="guardScreen" class="screen">
-    <div class="header">
-        <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
-        <h1>Registrar Guardia</h1>
-    </div>
-
-    <div class="form-group">
-        <label>Fecha:</label>
-        <input type="date" id="guardDate">
-    </div>
-
-    <div class="form-group">
-        <label>Número de Orden:</label>
-        <input type="number" id="guardOrder">
-    </div>
-
-    <div class="form-group">
-        <label>Horario:</label>
-        <div class="time-group">
-            <input type="time" id="guardStart">
-            <input type="time" id="guardEnd">
-        </div>
-    </div>
-
-    <button onclick="addGuard()">Agregar Guardia</button>
-</div>
-
-
-<!-- ======================
-     LISTA DE REGISTROS
-====================== -->
-<div id="recordsScreen" class="screen">
-    <div class="header">
-        <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
-        <h1>Registros</h1>
-    </div>
-
-    <div id="recordsList"></div>
-</div>
-
-
-<!-- ======================
-     SCRIPT PRINCIPAL
-====================== -->
-<script>
-
-/* =============================
-   CAMBIO DE PANTALLA
-============================= */
-function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-}
-
-
-/* =============================
-   SETEAR FECHA RÁPIDA
-============================= */
-function setFecha(id, offset) {
-    const d = new Date();
-    d.setDate(d.getDate() + offset);
-    document.getElementById(id).value = d.toISOString().split("T")[0];
-}
-
-
-/* =============================
-   AGREGAR VIAJE (VERSIÓN CORRECTA)
-============================= */
-function addTravel() {
-    const date = document.getElementById('fechaViaje').value;
-    const orderNumber = document.getElementById('orderNumber').value.trim();
-    const origin = document.getElementById('origin').value.trim();
-    const destination = document.getElementById('destination').value.trim();
-    const turno = parseInt(document.getElementById('turno').value);
-    const km = parseFloat(document.getElementById('km').value);
-    const horaSalida = document.getElementById('departureTime').value;
-    const horaLlegada = document.getElementById('arrivalTime').value;
-    const type = document.getElementById('travelType').value;
-
-    if (!date || !orderNumber || !origin || !destination || isNaN(km) || !horaSalida || !horaLlegada) {
-        alert("Complete todos los campos.");
-        return;
-    }
-
-    const newTravel = {
-        type: "travel",
-        date,
-        orderNumber,
-        origin,
-        destination,
-        turno,
-        km,
-        horaSalida,
-        horaLlegada,
-        travelType: type,
-        viaticos: 0
-    };
-
-    let travels = JSON.parse(localStorage.getItem("bus_travels")) || [];
-    travels.push(newTravel);
-    localStorage.setItem("bus_travels", JSON.stringify(travels));
-
-    alert("Viaje registrado correctamente.");
-    updateSummary();
-    showScreen("mainScreen");
-}
-
-
-/* =============================
-   REGISTRAR GUARDIA
-============================= */
-function addGuard() {
-    const date = document.getElementById('guardDate').value;
-    const order = document.getElementById('guardOrder').value;
-    const start = document.getElementById('guardStart').value;
-    const end = document.getElementById('guardEnd').value;
-
-    if (!date || !order || !start || !end) {
-        alert("Complete todos los campos.");
-        return;
-    }
-
-    const guard = {
-        type: "guard",
-        date,
-        orderNumber: order,
-        horaSalida: start,
-        horaLlegada: end,
-        viaticos: 0
-    };
-
-    let records = JSON.parse(localStorage.getItem("bus_travels")) || [];
-    records.push(guard);
-    localStorage.setItem("bus_travels", JSON.stringify(records));
-
-    updateSummary();
-    showScreen("mainScreen");
-}
-
-
-/* =============================
-   ACTUALIZAR RESUMEN
-============================= */
-function updateSummary() {
-    const data = JSON.parse(localStorage.getItem("bus_travels")) || [];
-
-    let kmTrab = 0;
-    let kmPas = 0;
-    let cantGuard = 0;
-
-    data.forEach(item => {
-        if (item.type === "travel") {
-            if (item.travelType === "working") kmTrab += item.km;
-            else kmPas += item.km;
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            
+            if (screenId === 'mainScreen') updateMainStats();
+            if (screenId === 'summaryScreen') updateSummary();
+            if (screenId === 'travelsListScreen') renderTravels();
+            if (screenId === 'guardsListScreen') renderGuards();
         }
-        if (item.type === "guard") cantGuard++;
-    });
 
-    document.getElementById("kmTrabajados").textContent = kmTrab;
-    document.getElementById("kmPasajero").textContent = kmPas;
-    document.getElementById("cantGuardias").textContent = cantGuard;
-}
+        function setFecha(elementId, dias) {
+            const fecha = new Date();
+            fecha.setDate(fecha.getDate() + dias);
+            document.getElementById(elementId).value = fecha.toISOString().split('T')[0];
+        }
 
-updateSummary();
+        // CONFIGURACIÓN INICIAL
+        document.addEventListener('DOMContentLoaded', function() {
+            const hoy = new Date().toISOString().split('T')[0];
+            document.getElementById('fechaViaje').value = hoy;
+            document.getElementById('fechaGuardia').value = hoy;
+            updateMainStats();
+            updateSummary();
+        });
 
-</script>
+        // AGREGAR VIAJE
+        function addTravel() {
+            const orderNumber = document.getElementById('orderNumber').value;
+            const origin = document.getElementById('origin').value;
+            const destination = document.getElementById('destination').value;
+            const km = parseFloat(document.getElementById('km').value);
+            const travelType = document.getElementById('travelType').value;
+            const departureTime = document.getElementById('departureTime').value;
+            const arrivalTime = document.getElementById('arrivalTime').value;
+            const fechaInput = document.getElementById('fechaViaje').value;
 
+            if (!orderNumber || !origin || !destination || !km) {
+                alert('Complete todos los campos');
+                return;
+            }
+
+            let fechaViaje;
+            if (fechaInput) {
+                const [año, mes, dia] = fechaInput.split('-');
+                fechaViaje = `${dia}/${mes}/${año}`;
+            } else {
+                fechaViaje = new Date().toLocaleDateString('es-ES');
+            }
+
+            const travel = {
+                id: Date.now(),
+                orderNumber, origin, destination, km, type: travelType,
+                departureTime, arrivalTime, date: fechaViaje,
+                timestamp: new Date().toISOString()
+            };
+
+            travels.push(travel);
+            localStorage.setItem('bus_travels', JSON.stringify(travels));
+            
+            document.getElementById('orderNumber').value = '';
+            document.getElementById('origin').value = '';
+            document.getElementById('destination').value = '';
+            document.getElementById('km').value = '';
+            
+            updateMainStats();
+            updateSummary();
+            alert('✅ Viaje agregado!');
+            showScreen('mainScreen');
+        }
+
+        // AGREGAR GUARDIA
+        function addGuard() {
+            const guardType = document.getElementById('guardType').value;
+            const guardStart = document.getElementById('guardStart').value;
+            const guardEnd = document.getElementById('guardEnd').value;
+            const fechaInput = document.getElementById('fechaGuardia').value;
+
+            if (!guardStart || !guardEnd) {
+                alert('Ingrese horario de inicio y fin');
+                return;
+            }
+
+            let fechaGuardia;
+            if (fechaInput) {
+                const [año, mes, dia] = fechaInput.split('-');
+                fechaGuardia = `${dia}/${mes}/${año}`;
+            } else {
+                fechaGuardia = new Date().toLocaleDateString('es-ES');
+            }
+
+            const start = new Date(`2000-01-01T${guardStart}`);
+            const end = new Date(`2000-01-01T${guardEnd}`);
+            let hoursWorked = (end - start) / (1000 * 60 * 60);
+            if (hoursWorked < 0) hoursWorked += 24;
+            if (hoursWorked <= 0) {
+                alert('La hora de fin debe ser posterior');
+                return;
+            }
+
+            const kmPerHour = guardType === 'common' ? 30 : 40;
+            const totalKm = hoursWorked * kmPerHour;
+
+            const guard = {
+                id: Date.now(),
+                type: guardType, startTime: guardStart, endTime: guardEnd,
+                hours: hoursWorked.toFixed(2), km: totalKm.toFixed(1), date: fechaGuardia
+            };
+
+            guards.push(guard);
+            localStorage.setItem('bus_guards', JSON.stringify(guards));
+            
+            document.getElementById('guardStart').value = '';
+            document.getElementById('guardEnd').value = '';
+            
+            updateMainStats();
+            updateSummary();
+            alert('✅ Guardia agregada!');
+            showScreen('mainScreen');
+        }
+
+        // ACTUALIZAR ESTADÍSTICAS
+        function updateMainStats() {
+            const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
+            const totalPassenger = travels.filter(t => t.type === 'passenger').reduce((sum, t) => sum + t.km, 0);
+            const totalGuards = guards.reduce((sum, g) => sum + parseFloat(g.km), 0);
+            const totalAll = totalWorking + totalPassenger + totalGuards;
+            const totalMoney = totalAll * PRICE_PER_KM;
+
+            document.getElementById('mainTotalKm').textContent = totalAll.toFixed(0);
+            document.getElementById('mainTotalMoney').textContent = `$${totalMoney.toFixed(0)}`;
+            document.getElementById('mainTotalTravels').textContent = travels.length;
+        }
+
+        function updateSummary() {
+            const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
+            const totalPassenger = travels.filter(t => t.type === 'passenger').reduce((sum, t) => sum + t.km, 0);
+            const totalGuards = guards.reduce((sum, g) => sum + parseFloat(g.km), 0);
+            const totalAll = totalWorking + totalPassenger + totalGuards;
+            const totalMoney = totalAll * PRICE_PER_KM;
+
+            document.getElementById('totalWorking').textContent = totalWorking.toFixed(1);
+            document.getElementById('totalPassenger').textContent = totalPassenger.toFixed(1);
+            document.getElementById('totalGuards').textContent = totalGuards.toFixed(1);
+            document.getElementById('totalAll').textContent = totalAll.toFixed(1);
+            document.getElementById('totalMoney').textContent = totalMoney.toFixed(2);
+        }
+
+        // MOSTRAR LISTAS
+        function renderTravels() {
+            const travelsList = document.getElementById('travelsList');
+            travelsList.innerHTML = '';
+
+            if (travels.length === 0) {
+                travelsList.innerHTML = '<p>No hay viajes registrados</p>';
+                return;
+            }
+
+            travels.forEach(travel => {
+                const travelItem = document.createElement('div');
+                travelItem.className = 'list-item';
+                travelItem.innerHTML = `
+                    <div class="list-item-header">
+                        <div class="list-item-title">Orden #${travel.orderNumber}</div>
+                        <button onclick="deleteTravel(${travel.id})" class="btn-danger btn-sm">Eliminar</button>
+                    </div>
+                    <p>${travel.origin} → ${travel.destination}</p>
+                    <p>${travel.km} km - ${travel.date}</p>
+                    <p><small>${travel.type === 'working' ? 'Trabajando' : 'Pasajero'}</small></p>
+                `;
+                travelsList.appendChild(travelItem);
+            });
+        }
+
+        function renderGuards() {
+            const guardsList = document.getElementById('guardsList');
+            guardsList.innerHTML = '';
+
+            if (guards.length === 0) {
+                guardsList.innerHTML = '<p>No hay guardias registradas</p>';
+                return;
+            }
+
+            guards.forEach(guard => {
+                const guardItem = document.createElement('div');
+                guardItem.className = 'list-item';
+                guardItem.innerHTML = `
+                    <div class="list-item-header">
+                        <div class="list-item-title">Guardia ${guard.type === 'common' ? 'Común' : 'Especial'}</div>
+                        <button onclick="deleteGuard(${guard.id})" class="btn-danger btn-sm">Eliminar</button>
+                    </div>
+                    <p>${guard.startTime} - ${guard.endTime} (${guard.hours} horas)</p>
+                    <p>${guard.km} km - ${guard.date}</p>
+                `;
+                guardsList.appendChild(guardItem);
+            });
+        }
+
+        // ELIMINAR
+        function deleteTravel(id) {
+            if (confirm('¿Eliminar este viaje?')) {
+                travels = travels.filter(travel => travel.id !== id);
+                localStorage.setItem('bus_travels', JSON.stringify(travels));
+                renderTravels();
+                updateMainStats();
+                updateSummary();
+            }
+        }
+
+        function deleteGuard(id) {
+            if (confirm('¿Eliminar esta guardia?')) {
+                guards = guards.filter(guard => guard.id !== id);
+                localStorage.setItem('bus_guards', JSON.stringify(guards));
+                renderGuards();
+                updateMainStats();
+                updateSummary();
+            }
+        }
+
+        // REPORTES
+        function mostrarReporteHoy() {
+            const hoy = new Date().toLocaleDateString('es-ES');
+            const viajesHoy = travels.filter(t => t.date === hoy);
+            const guardiasHoy = guards.filter(g => g.date === hoy);
+            
+            let contenido = `
+                <h3>📅 Reporte del Día: ${hoy}</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+                    <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h4>🚌 Viajes Hoy</h4>
+                        <p><strong>Cantidad:</strong> ${viajesHoy.length}</p>
+                        <p><strong>Total KM:</strong> ${viajesHoy.reduce((sum, v) => sum + v.km, 0).toFixed(1)} km</p>
+                    </div>
+                    <div style="background: #f0fff0; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h4>⏰ Guardias Hoy</h4>
+                        <p><strong>Cantidad:</strong> ${guardiasHoy.length}</p>
+                        <p><strong>Total KM:</strong> ${guardiasHoy.reduce((sum, g) => sum + parseFloat(g.km), 0).toFixed(1)} km</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('reportesContent').innerHTML = contenido;
+        }
+
+        function mostrarReporteMes() {
+            const hoy = new Date();
+            const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+            const nombreMes = hoy.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+            
+            const viajesMes = travels.filter(viaje => {
+                const [dia, mes, año] = viaje.date.split('/');
+                const fechaViaje = new Date(año, mes - 1, dia);
+                return fechaViaje >= primerDiaMes;
+            });
+            
+            const guardiasMes = guards.filter(guardia => {
+                const [dia, mes, año] = guardia.date.split('/');
+                const fechaGuardia = new Date(año, mes - 1, dia);
+                return fechaGuardia >= primerDiaMes;
+            });
+            
+            let contenido = `
+                <h3>📈 Reporte del Mes: ${nombreMes}</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+                    <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h4>🚌 Viajes del Mes</h4>
+                        <p><strong>Cantidad:</strong> ${viajesMes.length}</p>
+                        <p><strong>Total KM:</strong> ${viajesMes.reduce((sum, v) => sum + v.km, 0).toFixed(1)} km</p>
+                    </div>
+                    <div style="background: #f0fff0; padding: 15px; border-radius: 8px; text-align: center;">
+                        <h4>⏰ Guardias del Mes</h4>
+                        <p><strong>Cantidad:</strong> ${guardiasMes.length}</p>
+                        <p><strong>Total KM:</strong> ${guardiasMes.reduce((sum, g) => sum + parseFloat(g.km), 0).toFixed(1)} km</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('reportesContent').innerHTML = contenido;
+        }
+
+        // OTRAS FUNCIONES
+        function exportData() {
+            alert('📄 Funcionalidad de exportación - Próximamente');
+        }
+
+                alert('Datos reiniciados');
+        function clearMonth() {
+            if (confirm('¿Reiniciar todos los datos?')) {
+                travels = [];
+                guards = [];
+                localStorage.removeItem('bus_travels');
+                localStorage.removeItem('bus_guards');
+                updateMainStats();
+                updateSummary();
+                renderTravels();
+                renderGuards();
+            }
+        }
+    </script>
 </body>
 </html>
+
+
 
 
 
