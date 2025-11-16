@@ -113,73 +113,83 @@
         </div>
 
         <!-- PANTALLA REGISTRAR VIAJE -->
-        <div id="travelScreen" class="screen">
-            <div class="header">
-                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
-                <div class="header-title">
-                    <h1>Registrar Viaje</h1>
-                    <p>Complete los datos del servicio</p>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Fecha del Viaje:</label>
-                <div class="btn-group">
-                    <button type="button" class="btn-date" onclick="setFecha('fechaViaje', 0)">Hoy</button>
-                    <button type="button" class="btn-date" onclick="setFecha('fechaViaje', -1)">Ayer</button>
-                    <button type="button" class="btn-date" onclick="setFecha('fechaViaje', -2)">Hace 2 días</button>
-                </div>
-                <input type="date" id="fechaViaje">
-            </div>
-
-            <!-- SELECTOR DE TURNO (NUEVO) -->
-<div class="form-group">
-    <label>Seleccionar Turno:</label>
-    <select id="turnoSeleccionado" onchange="cargarDatosTurno()">
-        <option value="">-- Selecciona un turno --</option>
-        <option value="1">Turno 1 - Montevideo → Punta del Este (134 km)</option>
-        <option value="2">Turno 2 - Montevideo → Punta del Este - Directo (134 km)</option>
-        <!-- ... más opciones ... -->
-    </select>
-</div>
-
-<!-- NÚMERO DE ORDEN (SE MANTIENE) -->
-<div class="form-group">
-    <label>Número de Orden:</label>
-    <input type="number" id="orderNumber" placeholder="Ej: 123">
-</div>
-
-<!-- CAMPOS AUTOCOMPLETADOS (NUEVOS) -->
-<div class="form-group">
-    <label>Origen:</label>
-    <input type="text" id="origin" placeholder="Se autocompletará" readonly>
-</div>
-<div class="form-group">
-    <label>Destino:</label>
-    <input type="text" id="destination" placeholder="Se autocompletará" readonly>
-</div>
-<div class="form-group">
-    <label>Kilómetros:</label>
-    <input type="number" id="km" placeholder="Se autocompletará" step="0.1" readonly>
-</div>
-                <input type="number" id="km" placeholder="Ej: 140" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Horarios:</label>
-                <div class="time-group">
-                    <input type="time" id="departureTime">
-                    <input type="time" id="arrivalTime">
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Tipo:</label>
-                <select id="travelType">
-                    <option value="working">Trabajando</option>
-                    <option value="passenger">De Pasajero</option>
-                </select>
-            </div>
-            <button onclick="addTravel()">Agregar Viaje</button>
+       <!-- PANTALLA REGISTRAR VIAJE -->
+<div id="travelScreen" class="screen">
+    <div class="header">
+        <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
+        <div class="header-title">
+            <h1>Registrar Viaje</h1>
+            <p>Complete los datos del servicio</p>
         </div>
+    </div>
+
+    <div class="form-group">
+        <label>Fecha del Viaje:</label>
+        <div class="btn-group">
+            <button type="button" class="btn-date" onclick="setFecha('fechaViaje', 0)">Hoy</button>
+            <button type="button" class="btn-date" onclick="setFecha('fechaViaje', -1)">Ayer</button>
+            <button type="button" class="btn-date" onclick="setFecha('fechaViaje', -2)">Hace 2 días</button>
+        </div>
+        <input type="date" id="fechaViaje">
+    </div>
+
+    <!-- SELECTOR DE TURNO -->
+    <div class="form-group">
+        <label>Seleccionar Turno:</label>
+        <select id="turnoSeleccionado" onchange="cargarDatosTurno()">
+            <option value="">-- Selecciona un turno --</option>
+            <option value="1">Turno 1 - Montevideo → Punta del Este (134 km)</option>
+            <option value="2">Turno 2 - Montevideo → Punta del Este - Directo (134 km)</option>
+            <option value="11">Turno 11 - Montevideo → Colonia (178 km)</option>
+            <option value="12">Turno 12 - Montevideo → Colonia - Directo (178 km)</option>
+            <option value="31">Turno 31 - Montevideo → Punta del Este - Ruta 9 (145 km)</option>
+            <option value="41">Turno 41 - Montevideo → San José (96 km)</option>
+            <option value="51">Turno 51 - Montevideo → Canelones (54 km)</option>
+            <option value="61">Turno 61 - Montevideo → Melo (389 km)</option>
+            <option value="71">Turno 71 - Montevideo → Rivera (505 km)</option>
+        </select>
+    </div>
+
+    <!-- NÚMERO DE ORDEN -->
+    <div class="form-group">
+        <label>Número de Orden:</label>
+        <input type="number" id="orderNumber" placeholder="Ej: 123">
+    </div>
+
+    <!-- CAMPOS AUTOCOMPLETADOS -->
+    <div class="form-group">
+        <label>Origen:</label>
+        <input type="text" id="origin" placeholder="Se autocompletará" readonly>
+    </div>
+    <div class="form-group">
+        <label>Destino:</label>
+        <input type="text" id="destination" placeholder="Se autocompletará" readonly>
+    </div>
+    <div class="form-group">
+        <label>Kilómetros:</label>
+        <input type="number" id="km" placeholder="Se autocompletará" step="0.1" readonly>
+    </div>
+
+    <!-- HORARIOS -->
+    <div class="form-group">
+        <label>Horarios:</label>
+        <div class="time-group">
+            <input type="time" id="departureTime">
+            <input type="time" id="arrivalTime">
+        </div>
+    </div>
+
+    <!-- TIPO DE VIAJE -->
+    <div class="form-group">
+        <label>Tipo:</label>
+        <select id="travelType">
+            <option value="working">Trabajando</option>
+            <option value="passenger">De Pasajero</option>
+        </select>
+    </div>
+
+    <button onclick="addTravel()">Agregar Viaje</button>
+</div>
 
         <!-- PANTALLA REGISTRAR GUARDIA -->
         <div id="guardScreen" class="screen">
@@ -631,6 +641,7 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+
 
 
 
