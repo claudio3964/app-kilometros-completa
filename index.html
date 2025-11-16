@@ -276,6 +276,29 @@
 
     <script>
         const PRICE_PER_KM = 7.60;
+        // BASE DE DATOS DE RUTAS COT - SISTEMA DE TURNOS
+const rutasCOT = {
+    // MONTEVIDEO - PUNTA DEL ESTE
+    1: { origen: "Montevideo", destino: "Punta del Este", km: 134, tipo: "normal", descripcion: "Turno Normal" },
+    2: { origen: "Montevideo", destino: "Punta del Este", km: 134, tipo: "directo", descripcion: "Directo" },
+    
+    // MONTEVIDEO - COLONIA
+    11: { origen: "Montevideo", destino: "Colonia", km: 178, tipo: "normal", descripcion: "Turno Normal" },
+    12: { origen: "Montevideo", destino: "Colonia", km: 178, tipo: "directo", descripcion: "Directo" },
+    
+    // MONTEVIDEO - PUNTA DEL ESTE (RUTA 9)
+    31: { origen: "Montevideo", destino: "Punta del Este", km: 145, tipo: "ruta9", descripcion: "Por Ruta 9" },
+    
+    // MONTEVIDEO - SAN JOSÉ
+    41: { origen: "Montevideo", destino: "San José", km: 96, tipo: "normal", descripcion: "Turno Normal" },
+    
+    // MONTEVIDEO - CANELONES
+    51: { origen: "Montevideo", destino: "Canelones", km: 54, tipo: "normal", descripcion: "Turno Normal" },
+    
+    // AGREGAR MÁS RUTAS SEGÚN NECESITES
+    61: { origen: "Montevideo", destino: "Melo", km: 389, tipo: "normal", descripcion: "Turno Normal" },
+    71: { origen: "Montevideo", destino: "Rivera", km: 505, tipo: "normal", descripcion: "Turno Normal" }
+};
         let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
         let guards = JSON.parse(localStorage.getItem('bus_guards')) || [];
 
@@ -590,6 +613,7 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+
 
 
 
