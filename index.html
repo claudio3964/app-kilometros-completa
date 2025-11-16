@@ -355,100 +355,119 @@ function cargarDatosTurno() {
         });
 
         // AGREGAR VIAJE
-        function addTravel() {
-            const orderNumber = document.getElementById('orderNumber').value;
-            const origin = document.getElementById('origin').value;
-            const destination = document.getElementById('destination').value;
-            const km = parseFloat(document.getElementById('km').value);
-            const travelType = document.getElementById('travelType').value;
-            const departureTime = document.getElementById('departureTime').value;
-            const arrivalTime = document.getElementById('arrivalTime').value;
-            const fechaInput = document.getElementById('fechaViaje').value;
+       function addTravel() {
+    const orderNumber = document.getElementById('orderNumber').value;
+    const origin = document.getElementById('origin').value;
+    const destination = document.getElementById('destination').value;
+    const km = parseFloat(document.getElementById('km').value);
+    const travelType = document.getElementById('travelType').value;
+    const departureTime = document.getElementById('departureTime').value;
+    const arrivalTime = document.getElementById('arrivalTime').value;
+    const fechaInput = document.getElementById('fechaViaje').value;
 
-            if (!orderNumber || !origin || !destination || !km) {
-                alert('Complete todos los campos');
-                return;
-            }
+    if (!orderNumber || !origin || !destination || !km || !departureTime || !arrivalTime) {
+        alert('Complete todos los campos');
+        return;
+    }
 
-            let fechaViaje;
-            if (fechaInput) {
-                const [año, mes, dia] = fechaInput.split('-');
-                fechaViaje = `${dia}/${mes}/${año}`;
-            } else {
-                fechaViaje = new Date().toLocaleDateString('es-ES');
-            }
+    // CALCULAR VIÁTICOS AUTOMÁTICAMENTE (≥9 horas)
+    const start = new Date(`2000-01-01T${departureTime}`);
+    const end = new Date(`2000-01-01T${arrivalTime}`);
+    let hoursWorked = (end - start) / (1000 * 60 * 60);
+    if (hoursWorked < 0) hoursWorked += 24; // Para turnos que pasan medianoche
+    
+    const viaticos = hoursWorked >= 9 ? 1 : 0;
 
-            const travel = {
-                id: Date.now(),
-                orderNumber, origin, destination, km, type: travelType,
-                departureTime, arrivalTime, date: fechaViaje,
-                timestamp: new Date().toISOString()
-            };
+    let fechaViaje;
+    if (fechaInput) {
+        const [año, mes, dia] = fechaInput.split('-');
+        fechaViaje = `${dia}/${mes}/${año}`;
+    } else {
+        fechaViaje = new Date().toLocaleDateString('es-ES');
+    }
 
-            travels.push(travel);
-            localStorage.setItem('bus_travels', JSON.stringify(travels));
-            
-            document.getElementById('orderNumber').value = '';
-            document.getElementById('origin').value = '';
-            document.getElementById('destination').value = '';
-            document.getElementById('km').value = '';
-            
-            updateMainStats();
-            updateSummary();
-            alert('✅ Viaje agregado!');
-            showScreen('mainScreen');
-        }
+    const travel = {
+        id: Date.now(),
+        orderNumber, origin, destination, km, type: travelType,
+        departureTime, arrivalTime, date: fechaViaje,
+        hours: hoursWorked.toFixed(2),
+        viaticos: viaticos, // ← NUEVO CAMPO
+        timestamp: new Date().toISOString()
+    };
+
+    travels.push(travel);
+    localStorage.setItem('bus_travels', JSON.stringify(travels));
+    
+    // Limpiar campos
+    document.getElementById('orderNumber').value = '';
+    document.getElementById('turnoSeleccionado').value = '';
+    document.getElementById('origin').value = '';
+    document.getElementById('destination').value = '';
+    document.getElementById('km').value = '';
+    document.getElementById('departureTime').value = '';
+    document.getElementById('arrivalTime').value = '';
+    
+    updateMainStats();
+    updateSummary();
+    alert('✅ Viaje agregado! ' + (viaticos ? '(Con viático)' : ''));
+    showScreen('mainScreen');
+}
 
         // AGREGAR GUARDIA
         function addGuard() {
-            const guardType = document.getElementById('guardType').value;
-            const guardStart = document.getElementById('guardStart').value;
-            const guardEnd = document.getElementById('guardEnd').value;
-            const fechaInput = document.getElementById('fechaGuardia').value;
+    const guardType = document.getElementById('guardType').value;
+    const guardStart = document.getElementById('guardStart').value;
+    const guardEnd = document.getElementById('guardEnd').value;
+    const fechaInput = document.getElementById('fechaGuardia').value;
 
-            if (!guardStart || !guardEnd) {
-                alert('Ingrese horario de inicio y fin');
-                return;
-            }
+    if (!guardStart || !guardEnd) {
+        alert('Ingrese horario de inicio y fin');
+        return;
+    }
 
-            let fechaGuardia;
-            if (fechaInput) {
-                const [año, mes, dia] = fechaInput.split('-');
-                fechaGuardia = `${dia}/${mes}/${año}`;
-            } else {
-                fechaGuardia = new Date().toLocaleDateString('es-ES');
-            }
+    // CALCULAR VIÁTICOS AUTOMÁTICAMENTE (≥9 horas)
+    const start = new Date(`2000-01-01T${guardStart}`);
+    const end = new Date(`2000-01-01T${guardEnd}`);
+    let hoursWorked = (end - start) / (1000 * 60 * 60);
+    if (hoursWorked < 0) hoursWorked += 24;
+    
+    const viaticos = hoursWorked >= 9 ? 1 : 0;
 
-            const start = new Date(`2000-01-01T${guardStart}`);
-            const end = new Date(`2000-01-01T${guardEnd}`);
-            let hoursWorked = (end - start) / (1000 * 60 * 60);
-            if (hoursWorked < 0) hoursWorked += 24;
-            if (hoursWorked <= 0) {
-                alert('La hora de fin debe ser posterior');
-                return;
-            }
+    let fechaGuardia;
+    if (fechaInput) {
+        const [año, mes, dia] = fechaInput.split('-');
+        fechaGuardia = `${dia}/${mes}/${año}`;
+    } else {
+        fechaGuardia = new Date().toLocaleDateString('es-ES');
+    }
 
-            const kmPerHour = guardType === 'common' ? 30 : 40;
-            const totalKm = hoursWorked * kmPerHour;
+    if (hoursWorked <= 0) {
+        alert('La hora de fin debe ser posterior');
+        return;
+    }
 
-            const guard = {
-                id: Date.now(),
-                type: guardType, startTime: guardStart, endTime: guardEnd,
-                hours: hoursWorked.toFixed(2), km: totalKm.toFixed(1), date: fechaGuardia
-            };
+    const kmPerHour = guardType === 'common' ? 30 : 40;
+    const totalKm = hoursWorked * kmPerHour;
 
-            guards.push(guard);
-            localStorage.setItem('bus_guards', JSON.stringify(guards));
-            
-            document.getElementById('guardStart').value = '';
-            document.getElementById('guardEnd').value = '';
-            
-            updateMainStats();
-            updateSummary();
-            alert('✅ Guardia agregada!');
-            showScreen('mainScreen');
-        }
+    const guard = {
+        id: Date.now(),
+        type: guardType, startTime: guardStart, endTime: guardEnd,
+        hours: hoursWorked.toFixed(2), km: totalKm.toFixed(1), 
+        viaticos: viaticos, // ← NUEVO CAMPO
+        date: fechaGuardia
+    };
 
+    guards.push(guard);
+    localStorage.setItem('bus_guards', JSON.stringify(guards));
+    
+    document.getElementById('guardStart').value = '';
+    document.getElementById('guardEnd').value = '';
+    
+    updateMainStats();
+    updateSummary();
+    alert('✅ Guardia agregada! ' + (viaticos ? '(Con viático)' : ''));
+    showScreen('mainScreen');
+}
         // ACTUALIZAR ESTADÍSTICAS
         function updateMainStats() {
             const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
@@ -637,6 +656,7 @@ function cargarDatosTurno() {
     </script>
 </body>
 </html>
+
 
 
 
