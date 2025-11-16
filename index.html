@@ -372,28 +372,39 @@ function cargarDatosTurno() {
 
     // CALCULAR VIÁTICOS AUTOMÁTICAMENTE (≥9 horas)
     const start = new Date(`2000-01-01T${departureTime}`);
-    const end = new Date(`2000-01-01T${arrivalTime}`);
-    let hoursWorked = (end - start) / (1000 * 60 * 60);
-    if (hoursWorked < 0) hoursWorked += 24; // Para turnos que pasan medianoche
-    
-    const viaticos = hoursWorked >= 9 ? 1 : 0;
+const end = new Date(`2000-01-01T${arrivalTime}`);
+let hoursWorked = (end - start) / (1000 * 60 * 60);
+if (hoursWorked < 0) hoursWorked += 24; // Para turnos que pasan medianoche
 
-    let fechaViaje;
-    if (fechaInput) {
-        const [año, mes, dia] = fechaInput.split('-');
-        fechaViaje = `${dia}/${mes}/${año}`;
-    } else {
-        fechaViaje = new Date().toLocaleDateString('es-ES');
-    }
+const viaticos = hoursWorked >= 9 ? 1 : 0;
 
-    const travel = {
-        id: Date.now(),
-        orderNumber, origin, destination, km, type: travelType,
-        departureTime, arrivalTime, date: fechaViaje,
-        hours: hoursWorked.toFixed(2),
-        viaticos: viaticos, // ← NUEVO CAMPO
-        timestamp: new Date().toISOString()
-    };
+// CALCULAR ACOPLADOS AUTOMÁTICAMENTE (directos = +30km)
+const turnoSeleccionado = document.getElementById('turnoSeleccionado');
+const descripcionTurno = turnoSeleccionado.options[turnoSeleccionado.selectedIndex].text;
+const esDirecto = descripcionTurno.includes('Directo');
+const acoplados = esDirecto ? 1 : 0;
+const kmTotal = esDirecto ? km + 30 : km;
+
+let fechaViaje;
+if (fechaInput) {
+    const [año, mes, dia] = fechaInput.split('-');
+    fechaViaje = `${dia}/${mes}/${año}`;
+} else {
+    fechaViaje = new Date().toLocaleDateString('es-ES');
+}
+
+const travel = {
+    id: Date.now(),
+    orderNumber, origin, destination, 
+    km: kmTotal, // ← KM TOTAL (ruta + 30km si es directo)
+    kmRuta: km,  // ← KM SOLO DE LA RUTA
+    acoplados: acoplados, // ← 1 si es directo, 0 si no
+    type: travelType,
+    departureTime, arrivalTime, date: fechaViaje,
+    hours: hoursWorked.toFixed(2),
+    viaticos: viaticos,
+    timestamp: new Date().toISOString()
+};
 
     travels.push(travel);
     localStorage.setItem('bus_travels', JSON.stringify(travels));
@@ -656,6 +667,7 @@ function cargarDatosTurno() {
     </script>
 </body>
 </html>
+
 
 
 
