@@ -136,16 +136,36 @@
                 <label>Número de Orden:</label>
                 <input type="number" id="orderNumber" placeholder="Ej: 123">
             </div>
-            <div class="form-group">
-                <label>Origen:</label>
-                <input type="text" id="origin" placeholder="Ej: Montevideo">
-            </div>
-            <div class="form-group">
-                <label>Destino:</label>
-                <input type="text" id="destination" placeholder="Ej: Punta del Este">
-            </div>
-            <div class="form-group">
-                <label>Kilómetros:</label>
+            <!-- SELECTOR DE TURNO (NUEVO) -->
+<div class="form-group">
+    <label>Seleccionar Turno:</label>
+    <select id="turnoSeleccionado" onchange="cargarDatosTurno()">
+        <option value="">-- Selecciona un turno --</option>
+        <option value="1">Turno 1 - Montevideo → Punta del Este (134 km)</option>
+        <option value="2">Turno 2 - Montevideo → Punta del Este - Directo (134 km)</option>
+        <!-- ... más opciones ... -->
+    </select>
+</div>
+
+<!-- NÚMERO DE ORDEN (SE MANTIENE) -->
+<div class="form-group">
+    <label>Número de Orden:</label>
+    <input type="number" id="orderNumber" placeholder="Ej: 123">
+</div>
+
+<!-- CAMPOS AUTOCOMPLETADOS (NUEVOS) -->
+<div class="form-group">
+    <label>Origen:</label>
+    <input type="text" id="origin" placeholder="Se autocompletará" readonly>
+</div>
+<div class="form-group">
+    <label>Destino:</label>
+    <input type="text" id="destination" placeholder="Se autocompletará" readonly>
+</div>
+<div class="form-group">
+    <label>Kilómetros:</label>
+    <input type="number" id="km" placeholder="Se autocompletará" step="0.1" readonly>
+</div>
                 <input type="number" id="km" placeholder="Ej: 140" step="0.1">
             </div>
             <div class="form-group">
@@ -288,7 +308,22 @@ const rutasCOT = {
 };
         let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
         let guards = JSON.parse(localStorage.getItem('bus_guards')) || [];
-
+        // FUNCIÓN PARA CARGAR DATOS DEL TURNO SELECCIONADO
+function cargarDatosTurno() {
+    const turnoId = document.getElementById('turnoSeleccionado').value;
+    
+    if (turnoId && rutasCOT[turnoId]) {
+        const ruta = rutasCOT[turnoId];
+        document.getElementById('origin').value = ruta.origen;
+        document.getElementById('destination').value = ruta.destino;
+        document.getElementById('km').value = ruta.km;
+    } else {
+        // Limpiar campos si no hay turno seleccionado
+        document.getElementById('origin').value = '';
+        document.getElementById('destination').value = '';
+        document.getElementById('km').value = '';
+    }
+}
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
@@ -600,6 +635,7 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
+
 
 
 
