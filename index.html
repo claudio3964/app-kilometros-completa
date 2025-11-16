@@ -577,8 +577,18 @@
             }
         }
     </script>
+// SERVICE WORKER REGISTRATION - AL FINAL
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW registrado:', reg))
+      .catch(err => console.log('SW error:', err));
+  });
+}
+</script>
 </body>
 </html>
+
 
 
 
