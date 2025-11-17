@@ -883,7 +883,7 @@ travels.forEach(travel => {
             }
         }
         
-        // SERVICE WORKER REGISTRATION - AL FINAL
+              // SERVICE WORKER REGISTRATION - AL FINAL
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register('./sw.js')
@@ -891,12 +891,12 @@ travels.forEach(travel => {
                     .catch(err => console.log('SW error:', err));
             });
         }
+    }); 
+// 
     </script>
-        }  
-}  
-}  
 </body>
 </html>
+
 
 
 
