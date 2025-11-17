@@ -389,25 +389,27 @@
             return horasTotales;
         }
         
-        function actualizarViaticosExistentes() {
-            const ordenesUnicos = [...new Set(travels.map(t => t.orderNumber))];
-            
-            ordenesUnicos.forEach(orden => {
-                const horasTotales = calcularHorasPorOrden(orden);
-                const tieneViatico = horasTotales >= 9 ? 1 : 0;
-                
-                travels.forEach(travel => {
-                    if (travel.orderNumber == orden) {
-                        travel.viaticos = tieneViatico;
-                    }
-                });
-            });
-            
-            localStorage.setItem('bus_travels', JSON.stringify(travels));
-            renderTravels();
-            updateSummary();
-            alert('✅ Viáticos actualizados para todos los viajes');
-        }
+       // ACTUALIZAR VIÁTICOS EN VIAJES EXISTENTES
+function actualizarViaticosExistentes() {
+    const ordenesUnicos = [...new Set(travels.map(t => t.orderNumber))];
+    
+    ordenesUnicos.forEach(orden => {
+        const horasTotales = calcularHorasPorOrden(orden);
+        const tieneViatico = horasTotales >= 9 ? 1 : 0;
+        
+        // Actualizar todos los viajes de este orden
+        travels.forEach(travel => {
+            if (travel.orderNumber == orden) {
+                travel.viaticos = tieneViatico;
+            }
+        });
+    });
+    
+    localStorage.setItem('bus_travels', JSON.stringify(travels));
+    renderTravels();
+    updateSummary();
+    alert('✅ Viáticos actualizados para todos los viajes');
+}
         
         function cargarDatosTurno() {
             const turnoId = document.getElementById('turnoSeleccionado').value;
@@ -499,8 +501,19 @@
                 return;
             }
             
-            const horasTotalesOrden = calcularHorasPorOrden(orderNumber);
-            const viaticos = horasTotalesOrden >= 9 ? 1 : 0;
+            let horasTotalesOrden = calcularHorasPorOrden(orderNumber);
+console.log(`🕒 Orden ${orderNumber}: ${horasTotalesOrden} horas totales`);
+
+// Si este es el primer viaje del orden, usar sus horas individuales
+const viajesDelOrden = travels.filter(t => t.orderNumber == orderNumber);
+if (viajesDelOrden.length === 0) {
+    // Es el primer viaje del orden - usar horas individuales temporalmente
+    horasTotalesOrden = hoursWorked;
+    console.log(`📝 Primer viaje del orden - horas temporales: ${horasTotalesOrden}`);
+}
+
+const viaticos = horasTotalesOrden >= 9 ? 1 : 0;
+console.log(`💰 Viático para orden ${orderNumber}: ${viaticos ? 'SÍ' : 'NO'}`);
             
             // Validar horarios
             const start = new Date(`2000-01-01T${departureTime}`);
@@ -839,6 +852,7 @@
     </script>
 </body>
 </html>
+
 
 
 
