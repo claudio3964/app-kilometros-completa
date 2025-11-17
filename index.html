@@ -576,34 +576,29 @@ const travel = {
     showScreen('mainScreen');
 }
 
-        // ACTUALIZAR ESTADÍSTICAS (COMENTADA TEMPORALMENTE)
-        /*
-        function updateMainStats() {
-            const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
-            const totalPassenger = travels.filter(t => t.type === 'passenger').reduce((sum, t) => sum + t.km, 0);
-            const totalGuards = guards.reduce((sum, g) => sum + parseFloat(g.km), 0);
-            const totalAll = totalWorking + totalPassenger + totalGuards;
-            const totalMoney = totalAll * PRICE_PER_KM;
+        // ACTUALIZAR ESTADÍSTICAS (VERSIÓN SEGURA - NO GENERA ERRORES)
+function updateMainStats() {
+    // Verificar si los elementos existen antes de intentar actualizar
+    const mainTotalKm = document.getElementById('mainTotalKm');
+    const mainTotalMoney = document.getElementById('mainTotalMoney');
+    const mainTotalTravels = document.getElementById('mainTotalTravels');
+    
+    // Si los elementos NO existen, salir silenciosamente
+    if (!mainTotalKm || !mainTotalMoney || !mainTotalTravels) {
+        return; // ← Sale sin hacer nada, sin errores
+    }
+    
+    // Solo si los elementos existen, actualizar normalmente
+    const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
+    const totalPassenger = travels.filter(t => t.type === 'passenger').reduce((sum, t) => sum + t.km, 0);
+    const totalGuards = guards.reduce((sum, g) => sum + parseFloat(g.km), 0);
+    const totalAll = totalWorking + totalPassenger + totalGuards;
+    const totalMoney = totalAll * PRICE_PER_KM;
 
-            document.getElementById('mainTotalKm').textContent = totalAll.toFixed(0);
-            document.getElementById('mainTotalMoney').textContent = `$${totalMoney.toFixed(0)}`;
-            document.getElementById('mainTotalTravels').textContent = travels.length;
-        }
-        */
-
-        function updateSummary() {
-            const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
-            const totalPassenger = travels.filter(t => t.type === 'passenger').reduce((sum, t) => sum + t.km, 0);
-            const totalGuards = guards.reduce((sum, g) => sum + parseFloat(g.km), 0);
-            const totalAll = totalWorking + totalPassenger + totalGuards;
-            const totalMoney = totalAll * PRICE_PER_KM;
-
-            document.getElementById('totalWorking').textContent = totalWorking.toFixed(1);
-            document.getElementById('totalPassenger').textContent = totalPassenger.toFixed(1);
-            document.getElementById('totalGuards').textContent = totalGuards.toFixed(1);
-            document.getElementById('totalAll').textContent = totalAll.toFixed(1);
-            document.getElementById('totalMoney').textContent = totalMoney.toFixed(2);
-        }
+    mainTotalKm.textContent = totalAll.toFixed(0);
+    mainTotalMoney.textContent = `$${totalMoney.toFixed(0)}`;
+    mainTotalTravels.textContent = travels.length;
+}
 
         // MOSTRAR LISTAS MEJORADA
 function renderTravels() {
@@ -792,6 +787,7 @@ function renderTravels() {
     </script>
 </body>
 </html>
+
 
 
 
