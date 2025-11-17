@@ -315,6 +315,27 @@ const rutasCOT = {
         let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
         let guards = JSON.parse(localStorage.getItem('bus_guards')) || [];
         
+        // CALCULAR HORAS TOTALES POR NÚMERO DE ORDEN
+function calcularHorasPorOrden(numeroOrden) {
+    // Buscar todos los viajes con este número de orden
+    const viajesDelOrden = travels.filter(t => t.orderNumber === numeroOrden);
+    
+    if (viajesDelOrden.length === 0) return 0;
+    
+    // Ordenar por timestamp (más antiguo primero)
+    viajesDelOrden.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    
+    // Tomar hora del primer viaje (inicio) y último viaje (fin)
+    const primerViaje = viajesDelOrden[0];
+    const ultimoViaje = viajesDelOrden[viajesDelOrden.length - 1];
+    
+    // Calcular diferencia en horas
+    const inicio = new Date(primerViaje.timestamp);
+    const fin = new Date(ultimoViaje.timestamp);
+    const horasTotales = (fin - inicio) / (1000 * 60 * 60);
+    
+    return horasTotales;
+}
 // FUNCIÓN MEJORADA PARA CARGAR DATOS DEL TURNO
 function cargarDatosTurno() {
     const turnoId = document.getElementById('turnoSeleccionado').value;
@@ -395,13 +416,22 @@ function cargarDatosTurno() {
         return;
     }
 
-    // CALCULAR VIÁTICOS AUTOMÁTICAMENTE (≥9 horas)
-    const start = new Date(`2000-01-01T${departureTime}`);
+    // CALCULAR VIÁTICOS POR NÚMERO DE ORDEN (≥9 horas totales)
+const horasTotalesOrden = calcularHorasPorOrden(orderNumber);
+const viaticos = horasTotalesOrden >= 9 ? 1 : 0;
+
+// CALCULAR HORAS DE ESTE VIAJE INDIVIDUAL (para mostrar en lista)
+const start = new Date(`2000-01-01T${departureTime}`);
 const end = new Date(`2000-01-01T${arrivalTime}`);
 let hoursWorked = (end - start) / (1000 * 60 * 60);
-if (hoursWorked < 0) hoursWorked += 24; // Para turnos que pasan medianoche
+if (hoursWorked < 0) hoursWorked += 24;
 
-const viaticos = hoursWorked >= 9 ? 1 : 0;
+// CALCULAR ACOPLADOS AUTOMÁTICAMENTE (directos = +30km)
+const turnoSeleccionado = document.getElementById('turnoSeleccionado');
+const descripcionTurno = turnoSeleccionado.options[turnoSeleccionado.selectedIndex].text;
+const esDirecto = descripcionTurno.includes('Directo');
+const acoplados = esDirecto ? 1 : 0;
+const kmTotal = esDirecto ? km + 30 : km;
 
 // CALCULAR ACOPLADOS AUTOMÁTICAMENTE (directos = +30km)
 const turnoSeleccionado = document.getElementById('turnoSeleccionado');
@@ -718,6 +748,7 @@ function renderTravels() {
     </script>
 </body>
 </html>
+
 
 
 
