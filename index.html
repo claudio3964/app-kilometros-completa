@@ -531,32 +531,58 @@ const travel = {
             document.getElementById('totalMoney').textContent = totalMoney.toFixed(2);
         }
 
-        // MOSTRAR LISTAS
-        function renderTravels() {
-            const travelsList = document.getElementById('travelsList');
-            travelsList.innerHTML = '';
+        // MOSTRAR LISTAS MEJORADA
+function renderTravels() {
+    const travelsList = document.getElementById('travelsList');
+    travelsList.innerHTML = '';
 
-            if (travels.length === 0) {
-                travelsList.innerHTML = '<p>No hay viajes registrados</p>';
-                return;
-            }
+    if (travels.length === 0) {
+        travelsList.innerHTML = '<p>No hay viajes registrados</p>';
+        return;
+    }
 
-            travels.forEach(travel => {
-                const travelItem = document.createElement('div');
-                travelItem.className = 'list-item';
-                travelItem.innerHTML = `
-                    <div class="list-item-header">
-                        <div class="list-item-title">Orden #${travel.orderNumber}</div>
-                        <button onclick="deleteTravel(${travel.id})" class="btn-danger btn-sm">Eliminar</button>
-                    </div>
-                    <p>${travel.origin} → ${travel.destination}</p>
-                    <p>${travel.km} km - ${travel.date}</p>
-                    <p><small>${travel.type === 'working' ? 'Trabajando' : 'Pasajero'}</small></p>
-                `;
-                travelsList.appendChild(travelItem);
-            });
-        }
+    // CREAR TABLA
+    const table = document.createElement('table');
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.marginTop = '10px';
+    
+    // ENCABEZADO DE TABLA
+    const header = document.createElement('tr');
+    header.innerHTML = `
+        <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">ORDEN</th>
+        <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">ORIGEN</th>
+        <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">DESTINO</th>
+        <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">KM</th>
+        <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">HORAS</th>
+        <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">VIAT</th>
+        <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">ACOP</th>
+        <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">ACCION</th>
+    `;
+    table.appendChild(header);
 
+    // FILAS DE DATOS
+    travels.forEach(travel => {
+        const row = document.createElement('tr');
+        row.style.borderBottom = '1px solid #eee';
+        
+        row.innerHTML = `
+            <td style="padding: 8px; font-weight: bold;">${travel.orderNumber}</td>
+            <td style="padding: 8px;">${travel.origin}</td>
+            <td style="padding: 8px;">${travel.destination}</td>
+            <td style="padding: 8px; text-align: center;">${travel.km}</td>
+            <td style="padding: 8px; text-align: center;">${travel.hours || '0'}</td>
+            <td style="padding: 8px; text-align: center; color: ${travel.viaticos ? 'green' : 'gray'}">${travel.viaticos ? 'Sí' : 'No'}</td>
+            <td style="padding: 8px; text-align: center; color: ${travel.acoplados ? 'blue' : 'gray'}">${travel.acoplados ? '30' : '0'}</td>
+            <td style="padding: 8px; text-align: center;">
+                <button onclick="deleteTravel(${travel.id})" class="btn-danger btn-sm">Eliminar</button>
+            </td>
+        `;
+        table.appendChild(row);
+    });
+
+    travelsList.appendChild(table);
+}
         function renderGuards() {
             const guardsList = document.getElementById('guardsList');
             guardsList.innerHTML = '';
@@ -692,6 +718,7 @@ const travel = {
     </script>
 </body>
 </html>
+
 
 
 
