@@ -445,14 +445,7 @@ const start = new Date(`2000-01-01T${departureTime}`);
 const end = new Date(`2000-01-01T${arrivalTime}`);
 let hoursWorked = (end - start) / (1000 * 60 * 60);
 if (hoursWorked < 0) hoursWorked += 24;
-
-// CALCULAR ACOPLADOS AUTOMÁTICAMENTE (directos = +30km)
-const turnoSeleccionado = document.getElementById('turnoSeleccionado');
-const descripcionTurno = turnoSeleccionado.options[turnoSeleccionado.selectedIndex].text;
-const esDirecto = descripcionTurno.includes('Directo');
-const acoplados = esDirecto ? 1 : 0;
-const kmTotal = esDirecto ? km + 30 : km;
-
+           
 // CALCULAR ACOPLADOS AUTOMÁTICAMENTE (directos = +30km)
 const turnoSeleccionado = document.getElementById('turnoSeleccionado');
 const descripcionTurno = turnoSeleccionado.options[turnoSeleccionado.selectedIndex].text;
@@ -768,6 +761,7 @@ function renderTravels() {
     </script>
 </body>
 </html>
+
 
 
 
