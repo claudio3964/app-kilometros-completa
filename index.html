@@ -133,21 +133,22 @@
     </div>
 
     <!-- SELECTOR DE TURNO -->
-    <div class="form-group">
-        <label>Seleccionar Turno:</label>
-        <select id="turnoSeleccionado" onchange="cargarDatosTurno()">
-            <option value="">-- Selecciona un turno --</option>
-            <option value="1">Turno 1 - Montevideo → Punta del Este (134 km)</option>
-            <option value="2">Turno 2 - Montevideo → Punta del Este - Directo (134 km)</option>
-            <option value="11">Turno 11 - Montevideo → Colonia (178 km)</option>
-            <option value="12">Turno 12 - Montevideo → Colonia - Directo (178 km)</option>
-            <option value="31">Turno 31 - Montevideo → Punta del Este - Ruta 9 (145 km)</option>
-            <option value="41">Turno 41 - Montevideo → San José (96 km)</option>
-            <option value="51">Turno 51 - Montevideo → Canelones (54 km)</option>
-            <option value="61">Turno 61 - Montevideo → Melo (389 km)</option>
-            <option value="71">Turno 71 - Montevideo → Rivera (505 km)</option>
-        </select>
-    </div>
+   <div class="form-group">
+    <label>Seleccionar Ruta:</label>
+    <select id="turnoSeleccionado" onchange="cargarDatosTurno()">
+        <option value="">-- Selecciona ruta --</option>
+        <option value="1">1 - Punta del Este</option>
+        <option value="2">2 - Punta del Este (Directo)</option>
+        <option value="11">11 - Colonia</option>
+        <option value="12">12 - Colonia (Directo)</option>
+        <option value="31">31 - Punta del Este (Ruta 9)</option>
+        <option value="41">41 - San José</option>
+        <option value="51">51 - Canelones</option>
+        <option value="61">61 - Melo</option>
+        <option value="71">71 - Rivera</option>
+        <option value="manual">+ Agregar destino manual</option>
+    </select>
+</div>
 
     <!-- NÚMERO DE ORDEN -->
     <div class="form-group">
@@ -313,20 +314,44 @@ const rutasCOT = {
 };
         let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
         let guards = JSON.parse(localStorage.getItem('bus_guards')) || [];
-        // FUNCIÓN PARA CARGAR DATOS DEL TURNO SELECCIONADO
+        
+// FUNCIÓN MEJORADA PARA CARGAR DATOS DEL TURNO
 function cargarDatosTurno() {
     const turnoId = document.getElementById('turnoSeleccionado').value;
     
-    if (turnoId && rutasCOT[turnoId]) {
+    if (turnoId === 'manual') {
+        // MODO MANUAL - campos editables
+        document.getElementById('origin').readOnly = false;
+        document.getElementById('destination').readOnly = false;
+        document.getElementById('km').readOnly = false;
+        // Limpiar campos
+        document.getElementById('origin').value = '';
+        document.getElementById('destination').value = '';
+        document.getElementById('km').value = '';
+        document.getElementById('origin').placeholder = 'Ej: Montevideo';
+        document.getElementById('destination').placeholder = 'Ej: Punta del Este';
+        document.getElementById('km').placeholder = 'Ej: 140';
+    } else if (turnoId && rutasCOT[turnoId]) {
+        // MODO AUTOMÁTICO - autocompletar
         const ruta = rutasCOT[turnoId];
         document.getElementById('origin').value = ruta.origen;
         document.getElementById('destination').value = ruta.destino;
         document.getElementById('km').value = ruta.km;
+        // Campos en solo lectura
+        document.getElementById('origin').readOnly = true;
+        document.getElementById('destination').readOnly = true;
+        document.getElementById('km').readOnly = true;
+        document.getElementById('origin').placeholder = 'Se autocompletó';
+        document.getElementById('destination').placeholder = 'Se autocompletó';
+        document.getElementById('km').placeholder = 'Se autocompletó';
     } else {
-        // Limpiar campos si no hay turno seleccionado
+        // Limpiar y hacer editables
         document.getElementById('origin').value = '';
         document.getElementById('destination').value = '';
         document.getElementById('km').value = '';
+        document.getElementById('origin').readOnly = false;
+        document.getElementById('destination').readOnly = false;
+        document.getElementById('km').readOnly = false;
     }
 }
         function showScreen(screenId) {
@@ -667,6 +692,7 @@ const travel = {
     </script>
 </body>
 </html>
+
 
 
 
