@@ -454,17 +454,19 @@
         }
         
         function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
-            
-            if (screenId === 'summaryScreen') updateSummary();
-            if (screenId === 'travelsListScreen') renderTravels();
-            if (screenId === 'guardsListScreen') renderGuards();
-            
-            if (screenId === 'travelScreen') {
-                actualizarSelectorDestinos();
-            }
-        }
+    document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+    
+    if (screenId === 'mainScreen') /* updateMainStats(); */ // COMENTADO
+    if (screenId === 'summaryScreen') updateSummary();
+    if (screenId === 'travelsListScreen') renderTravels();  // ← ESTA LÍNEA DEBERÍA FUNCIONAR
+    if (screenId === 'guardsListScreen') renderGuards();
+    
+    // Actualizar selector de destinos cuando se muestra la pantalla de viajes
+    if (screenId === 'travelScreen') {
+        actualizarSelectorDestinos();
+    }
+}
         
         function setFecha(elementId, dias) {
             const fecha = new Date();
@@ -837,6 +839,7 @@
     </script>
 </body>
 </html>
+
 
 
 
