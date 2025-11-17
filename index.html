@@ -315,24 +315,36 @@ const rutasCOT = {
         let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
         let guards = JSON.parse(localStorage.getItem('bus_guards')) || [];
         
-        // CALCULAR HORAS TOTALES POR NÚMERO DE ORDEN
+       
+// CALCULAR HORAS TOTALES POR NÚMERO DE ORDEN (VERSIÓN CORREGIDA)
 function calcularHorasPorOrden(numeroOrden) {
     // Buscar todos los viajes con este número de orden
-    const viajesDelOrden = travels.filter(t => t.orderNumber === numeroOrden);
+    const viajesDelOrden = travels.filter(t => t.orderNumber == numeroOrden);
     
-    if (viajesDelOrden.length === 0) return 0;
+    if (viajesDelOrden.length < 2) return 0;
     
-    // Ordenar por timestamp (más antiguo primero)
-    viajesDelOrden.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    // Encontrar el horario MÁS TEMPRANO de inicio y MÁS TARDÍO de fin
+    let horaInicioMasTemprana = '23:59';
+    let horaFinMasTardia = '00:00';
     
-    // Tomar hora del primer viaje (inicio) y último viaje (fin)
-    const primerViaje = viajesDelOrden[0];
-    const ultimoViaje = viajesDelOrden[viajesDelOrden.length - 1];
+    viajesDelOrden.forEach(viaje => {
+        // Comparar hora de inicio
+        if (viaje.departureTime < horaInicioMasTemprana) {
+            horaInicioMasTemprana = viaje.departureTime;
+        }
+        // Comparar hora de fin
+        if (viaje.arrivalTime > horaFinMasTardia) {
+            horaFinMasTardia = viaje.arrivalTime;
+        }
+    });
     
-    // Calcular diferencia en horas
-    const inicio = new Date(primerViaje.timestamp);
-    const fin = new Date(ultimoViaje.timestamp);
-    const horasTotales = (fin - inicio) / (1000 * 60 * 60);
+    // Calcular diferencia en horas entre el primer viaje y el último
+    const inicio = new Date(`2000-01-01T${horaInicioMasTemprana}`);
+    const fin = new Date(`2000-01-01T${horaFinMasTardia}`);
+    let horasTotales = (fin - inicio) / (1000 * 60 * 60);
+    
+    // Si pasa de medianoche, ajustar
+    if (horasTotales < 0) horasTotales += 24;
     
     return horasTotales;
 }
@@ -761,6 +773,7 @@ function renderTravels() {
     </script>
 </body>
 </html>
+
 
 
 
