@@ -599,7 +599,20 @@ function updateMainStats() {
     mainTotalMoney.textContent = `$${totalMoney.toFixed(0)}`;
     mainTotalTravels.textContent = travels.length;
 }
+function updateSummary() {
+    const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
+    const totalPassenger = travels.filter(t => t.type === 'passenger').reduce((sum, t) => sum + t.km, 0);
+    const totalGuards = guards.reduce((sum, g) => sum + parseFloat(g.km), 0);
+    const totalAll = totalWorking + totalPassenger + totalGuards;
+    const totalMoney = totalAll * PRICE_PER_KM;
 
+    document.getElementById('totalWorking').textContent = totalWorking.toFixed(1);
+    document.getElementById('totalPassenger').textContent = totalPassenger.toFixed(1);
+    document.getElementById('totalGuards').textContent = totalGuards.toFixed(1);
+    document.getElementById('totalAll').textContent = totalAll.toFixed(1);
+    document.getElementById('totalMoney').textContent = totalMoney.toFixed(2);
+}
+        
         // MOSTRAR LISTAS MEJORADA
 function renderTravels() {
     const travelsList = document.getElementById('travelsList');
@@ -787,6 +800,7 @@ function renderTravels() {
     </script>
 </body>
 </html>
+
 
 
 
