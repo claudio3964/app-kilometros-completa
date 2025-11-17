@@ -427,7 +427,7 @@ function cargarDatosTurno() {
             document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
             
-            if (screenId === 'mainScreen') updateMainStats();
+            if (screenId === 'mainScreen') /* updateMainStats(); */ // COMENTADO
             if (screenId === 'summaryScreen') updateSummary();
             if (screenId === 'travelsListScreen') renderTravels();
             if (screenId === 'guardsListScreen') renderGuards();
@@ -444,7 +444,7 @@ function cargarDatosTurno() {
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('fechaViaje').value = hoy;
             document.getElementById('fechaGuardia').value = hoy;
-            updateMainStats();
+            // updateMainStats(); // COMENTADO
             updateSummary();
         });
 
@@ -514,7 +514,7 @@ const travel = {
     document.getElementById('departureTime').value = '';
     document.getElementById('arrivalTime').value = '';
     
-    updateMainStats();
+    // updateMainStats(); // COMENTADO
     updateSummary();
     alert('✅ Viaje agregado! ' + (viaticos ? '(Con viático)' : ''));
     showScreen('mainScreen');
@@ -570,12 +570,14 @@ const travel = {
     document.getElementById('guardStart').value = '';
     document.getElementById('guardEnd').value = '';
     
-    updateMainStats();
+    // updateMainStats(); // COMENTADO
     updateSummary();
     alert('✅ Guardia agregada! ' + (viaticos ? '(Con viático)' : ''));
     showScreen('mainScreen');
 }
-        // ACTUALIZAR ESTADÍSTICAS
+
+        // ACTUALIZAR ESTADÍSTICAS (COMENTADA TEMPORALMENTE)
+        /*
         function updateMainStats() {
             const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
             const totalPassenger = travels.filter(t => t.type === 'passenger').reduce((sum, t) => sum + t.km, 0);
@@ -587,6 +589,7 @@ const travel = {
             document.getElementById('mainTotalMoney').textContent = `$${totalMoney.toFixed(0)}`;
             document.getElementById('mainTotalTravels').textContent = travels.length;
         }
+        */
 
         function updateSummary() {
             const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
@@ -684,7 +687,7 @@ function renderTravels() {
                 travels = travels.filter(travel => travel.id !== id);
                 localStorage.setItem('bus_travels', JSON.stringify(travels));
                 renderTravels();
-                updateMainStats();
+                // updateMainStats(); // COMENTADO
                 updateSummary();
             }
         }
@@ -694,7 +697,7 @@ function renderTravels() {
                 guards = guards.filter(guard => guard.id !== id);
                 localStorage.setItem('bus_guards', JSON.stringify(guards));
                 renderGuards();
-                updateMainStats();
+                // updateMainStats(); // COMENTADO
                 updateSummary();
             }
         }
@@ -772,7 +775,7 @@ function renderTravels() {
                 guards = [];
                 localStorage.removeItem('bus_travels');
                 localStorage.removeItem('bus_guards');
-                updateMainStats();
+                // updateMainStats(); // COMENTADO
                 updateSummary();
                 renderTravels();
                 renderGuards();
