@@ -589,7 +589,6 @@
                 acoplados: acoplados, // ← 1 si es directo, 0 si no
                 type: travelType,
                 departureTime, arrivalTime, date: fechaViaje,
-                hours: hoursWorked.toFixed(2),
                 viaticos: viaticos,
                 timestamp: new Date().toISOString()
             };
@@ -727,42 +726,41 @@
             table.style.borderCollapse = 'collapse';
             table.style.marginTop = '10px';
             
-            // ENCABEZADO DE TABLA
-            const header = document.createElement('tr');
-            header.innerHTML = `
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">ORDEN</th>
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">ORIGEN</th>
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">DESTINO</th>
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">KM</th>
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">HORAS</th>
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">VIAT</th>
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">ACOP</th>
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">ACCION</th>
-            `;
-            table.appendChild(header);
-            
-            // FILAS DE DATOS
-            travels.forEach(travel => {
-                const row = document.createElement('tr');
-                row.style.borderBottom = '1px solid #eee';
-                
-                row.innerHTML = `
-                    <td style="padding: 8px; font-weight: bold;">${travel.orderNumber}</td>
-                    <td style="padding: 8px;">${travel.origin}</td>
-                    <td style="padding: 8px;">${travel.destination}</td>
-                    <td style="padding: 8px; text-align: center;">${travel.km}</td>
-                    <td style="padding: 8px; text-align: center;">${travel.hours || '0'}</td>
-                    <td style="padding: 8px; text-align: center; color: ${travel.viaticos ? 'green' : 'gray'}">${travel.viaticos ? 'Sí' : 'No'}</td>
-                    <td style="padding: 8px; text-align: center; color: ${travel.acoplados ? 'blue' : 'gray'}">${travel.acoplados ? '30' : '0'}</td>
-                    <td style="padding: 8px; text-align: center;">
-                        <button onclick="deleteTravel(${travel.id})" class="btn-danger btn-sm">Eliminar</button>
-                    </td>
-                `;
-                table.appendChild(row);
-            });
-            
-            travelsList.appendChild(table);
-        }
+           
+           // ENCABEZADO DE TABLA - CAMBIAR POR HORA SALIDA Y HORA LLEGADA
+const header = document.createElement('tr');
+header.innerHTML = `
+    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">ORDEN</th>
+    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">ORIGEN</th>
+    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">DESTINO</th>
+    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">KM</th>
+    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">SALIDA</th>
+    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">LLEGADA</th>
+    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">VIAT</th>
+    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">ACOP</th>
+    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">ACCION</th>
+`;
+           
+           // FILAS DE DATOS - MOSTRAR HORA SALIDA Y HORA LLEGADA
+travels.forEach(travel => {
+    const row = document.createElement('tr');
+    row.style.borderBottom = '1px solid #eee';
+    
+    row.innerHTML = `
+        <td style="padding: 8px; font-weight: bold;">${travel.orderNumber}</td>
+        <td style="padding: 8px;">${travel.origin}</td>
+        <td style="padding: 8px;">${travel.destination}</td>
+        <td style="padding: 8px; text-align: center;">${travel.km}</td>
+        <td style="padding: 8px; text-align: center;">${travel.departureTime || '-'}</td>
+        <td style="padding: 8px; text-align: center;">${travel.arrivalTime || '-'}</td>
+        <td style="padding: 8px; text-align: center; color: ${travel.viaticos ? 'green' : 'gray'}">${travel.viaticos ? 'Sí' : 'No'}</td>
+        <td style="padding: 8px; text-align: center; color: ${travel.acoplados ? 'blue' : 'gray'}">${travel.acoplados ? '30' : '0'}</td>
+        <td style="padding: 8px; text-align: center;">
+            <button onclick="deleteTravel(${travel.id})" class="btn-danger btn-sm">Eliminar</button>
+        </td>
+    `;
+    table.appendChild(row);
+});
         
         function renderGuards() {
             const guardsList = document.getElementById('guardsList');
@@ -896,6 +894,7 @@
     </script>
 </body>
 </html>
+
 
 
 
