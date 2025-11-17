@@ -1,8 +1,3 @@
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -150,7 +145,6 @@
                     <option value="61">61 - Melo</option>
                     <option value="71">71 - Rivera</option>
                     <option value="manual">+ Agregar destino manual</option>
-                    <!-- Los destinos favoritos se agregarán automáticamente aquí -->
                 </select>
             </div>
 
@@ -296,24 +290,13 @@
         
         // BASE DE DATOS DE RUTAS COT - SISTEMA DE TURNOS
         const rutasCOT = {
-            // MONTEVIDEO - PUNTA DEL ESTE
             1: { origen: "Montevideo", destino: "Punta del Este", km: 134, tipo: "normal", descripcion: "Turno Normal" },
             2: { origen: "Montevideo", destino: "Punta del Este", km: 134, tipo: "directo", descripcion: "Directo" },
-            
-            // MONTEVIDEO - COLONIA
             11: { origen: "Montevideo", destino: "Colonia", km: 178, tipo: "normal", descripcion: "Turno Normal" },
             12: { origen: "Montevideo", destino: "Colonia", km: 178, tipo: "directo", descripcion: "Directo" },
-            
-            // MONTEVIDEO - PUNTA DEL ESTE (RUTA 9)
             31: { origen: "Montevideo", destino: "Punta del Este", km: 145, tipo: "ruta9", descripcion: "Por Ruta 9" },
-            
-            // MONTEVIDEO - SAN JOSÉ
             41: { origen: "Montevideo", destino: "San José", km: 96, tipo: "normal", descripcion: "Turno Normal" },
-            
-            // MONTEVIDEO - CANELONES
             51: { origen: "Montevideo", destino: "Canelones", km: 54, tipo: "normal", descripcion: "Turno Normal" },
-            
-            // AGREGAR MÁS RUTAS SEGÚN NECESITES
             61: { origen: "Montevideo", destino: "Melo", km: 389, tipo: "normal", descripcion: "Turno Normal" },
             71: { origen: "Montevideo", destino: "Rivera", km: 505, tipo: "normal", descripcion: "Turno Normal" }
         };
@@ -323,41 +306,31 @@
         
         // ========== SISTEMA DE DESTINOS FAVORITOS ==========
         
-        // CARGAR DESTINOS FAVORITOS DESDE LOCALSTORAGE
         function cargarDestinosFavoritos() {
             return JSON.parse(localStorage.getItem('destinosFavoritos')) || [];
         }
         
-        // GUARDAR DESTINO COMO FAVORITO
         function guardarDestinoFavorito(origen, destino, km) {
             const favoritos = cargarDestinosFavoritos();
-            
-            // Verificar si ya existe
             const existe = favoritos.some(fav => 
                 fav.origen === origen && fav.destino === destino && fav.km === km
             );
             
             if (!existe) {
                 favoritos.push({
-                    origen,
-                    destino, 
-                    km,
+                    origen, destino, km,
                     id: Date.now(),
                     tipo: "favorito",
                     descripcion: `${origen} - ${destino}`
                 });
-                
                 localStorage.setItem('destinosFavoritos', JSON.stringify(favoritos));
-                console.log('⭐ Destino guardado como favorito:', { origen, destino, km });
             }
         }
         
-        // ACTUALIZAR SELECTOR CON FAVORITOS
         function actualizarSelectorDestinos() {
             const selector = document.getElementById('turnoSeleccionado');
             const favoritos = cargarDestinosFavoritos();
             
-            // Eliminar favoritos antiguos (excepto la opción manual)
             const opcionesActuales = Array.from(selector.options);
             opcionesActuales.forEach(option => {
                 if (option.value.startsWith('fav_')) {
@@ -365,26 +338,20 @@
                 }
             });
             
-            // Agregar favoritos al selector
-            favoritos.forEach((fav, index) => {
+            favoritos.forEach((fav) => {
                 const option = document.createElement('option');
                 option.value = `fav_${fav.id}`;
                 option.textContent = `⭐ ${fav.origen} - ${fav.destino} (${fav.km}km)`;
                 selector.add(option);
             });
-            
-            console.log('🔄 Selector actualizado con', favoritos.length, 'destinos favoritos');
         }
         
         // ========== FUNCIONES PRINCIPALES ==========
         
-        // CALCULAR HORAS TOTALES POR NÚMERO DE ORDEN (VERSIÓN CORREGIDA)
         function calcularHorasPorOrden(numeroOrden) {
-            // Buscar todos los viajes con este número de orden
             const viajesDelOrden = travels.filter(t => t.orderNumber == numeroOrden);
             if (viajesDelOrden.length === 0) return 0;
             
-            // Si hay solo 1 viaje, calcular sus horas individuales
             if (viajesDelOrden.length === 1) {
                 const viaje = viajesDelOrden[0];
                 const inicio = new Date(`2000-01-01T${viaje.departureTime}`);
@@ -394,12 +361,10 @@
                 return horas;
             }
             
-            // Encontrar el horario MÁS TEMPRANO de inicio y MÁS TARDÍO de fin
             let horaInicioMasTemprana = '23:59';
             let horaFinMasTardia = '00:00';
             
             viajesDelOrden.forEach(viaje => {
-                // CORRECCIÓN: Comparar hora de inicio (CONVERTIR A DATE)
                 const inicioViaje = new Date(`2000-01-01T${viaje.departureTime}`);
                 const inicioMasTemprano = new Date(`2000-01-01T${horaInicioMasTemprana}`);
                 
@@ -407,7 +372,6 @@
                     horaInicioMasTemprana = viaje.departureTime;
                 }
                 
-                // CORRECCIÓN: Comparar hora de fin (CONVERTIR A DATE)
                 const finViaje = new Date(`2000-01-01T${viaje.arrivalTime}`);
                 const finMasTardio = new Date(`2000-01-01T${horaFinMasTardia}`);
                 
@@ -416,18 +380,15 @@
                 }
             });
             
-            // Calcular diferencia en horas entre el primer viaje y el último
             const inicio = new Date(`2000-01-01T${horaInicioMasTemprana}`);
             const fin = new Date(`2000-01-01T${horaFinMasTardia}`);
             let horasTotales = (fin - inicio) / (1000 * 60 * 60);
             
-            // Si pasa de medianoche, ajustar
             if (horasTotales < 0) horasTotales += 24;
             
             return horasTotales;
         }
         
-        // ACTUALIZAR VIÁTICOS EN VIAJES EXISTENTES
         function actualizarViaticosExistentes() {
             const ordenesUnicos = [...new Set(travels.map(t => t.orderNumber))];
             
@@ -435,7 +396,6 @@
                 const horasTotales = calcularHorasPorOrden(orden);
                 const tieneViatico = horasTotales >= 9 ? 1 : 0;
                 
-                // Actualizar todos los viajes de este orden
                 travels.forEach(travel => {
                     if (travel.orderNumber == orden) {
                         travel.viaticos = tieneViatico;
@@ -449,16 +409,13 @@
             alert('✅ Viáticos actualizados para todos los viajes');
         }
         
-        // FUNCIÓN MEJORADA PARA CARGAR DATOS DEL TURNO (CON FAVORITOS)
         function cargarDatosTurno() {
             const turnoId = document.getElementById('turnoSeleccionado').value;
             
             if (turnoId === 'manual') {
-                // MODO MANUAL - campos editables
                 document.getElementById('origin').readOnly = false;
                 document.getElementById('destination').readOnly = false;
                 document.getElementById('km').readOnly = false;
-                // Limpiar campos
                 document.getElementById('origin').value = '';
                 document.getElementById('destination').value = '';
                 document.getElementById('km').value = '';
@@ -466,7 +423,6 @@
                 document.getElementById('destination').placeholder = 'Ej: La Pedrera';
                 document.getElementById('km').placeholder = 'Ej: 220';
             } else if (turnoId.startsWith('fav_')) {
-                // MODO FAVORITO - autocompletar desde favoritos
                 const favoritos = cargarDestinosFavoritos();
                 const favId = parseInt(turnoId.replace('fav_', ''));
                 const favorito = favoritos.find(fav => fav.id === favId);
@@ -475,38 +431,25 @@
                     document.getElementById('origin').value = favorito.origen;
                     document.getElementById('destination').value = favorito.destino;
                     document.getElementById('km').value = favorito.km;
-                    // Campos en solo lectura
                     document.getElementById('origin').readOnly = true;
                     document.getElementById('destination').readOnly = true;
                     document.getElementById('km').readOnly = true;
-                    document.getElementById('origin').placeholder = 'Se autocompletó';
-                    document.getElementById('destination').placeholder = 'Se autocompletó';
-                    document.getElementById('km').placeholder = 'Se autocompletó';
                 }
             } else if (turnoId && rutasCOT[turnoId]) {
-                // MODO AUTOMÁTICO - rutas COT
                 const ruta = rutasCOT[turnoId];
                 document.getElementById('origin').value = ruta.origen;
                 document.getElementById('destination').value = ruta.destino;
                 document.getElementById('km').value = ruta.km;
-                // Campos en solo lectura
                 document.getElementById('origin').readOnly = true;
                 document.getElementById('destination').readOnly = true;
                 document.getElementById('km').readOnly = true;
-                document.getElementById('origin').placeholder = 'Se autocompletó';
-                document.getElementById('destination').placeholder = 'Se autocompletó';
-                document.getElementById('km').placeholder = 'Se autocompletó';
             } else {
-                // Limpiar y hacer editables
                 document.getElementById('origin').value = '';
                 document.getElementById('destination').value = '';
                 document.getElementById('km').value = '';
                 document.getElementById('origin').readOnly = false;
                 document.getElementById('destination').readOnly = false;
                 document.getElementById('km').readOnly = false;
-                document.getElementById('origin').placeholder = 'Ej: Montevideo';
-                document.getElementById('destination').placeholder = 'Ej: La Pedrera';
-                document.getElementById('km').placeholder = 'Ej: 220';
             }
         }
         
@@ -514,12 +457,10 @@
             document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
             
-            if (screenId === 'mainScreen') /* updateMainStats(); */ // COMENTADO
             if (screenId === 'summaryScreen') updateSummary();
             if (screenId === 'travelsListScreen') renderTravels();
             if (screenId === 'guardsListScreen') renderGuards();
             
-            // Actualizar selector de destinos cuando se muestra la pantalla de viajes
             if (screenId === 'travelScreen') {
                 actualizarSelectorDestinos();
             }
@@ -536,7 +477,7 @@
             const hoy = new Date().toISOString().split('T')[0];
             document.getElementById('fechaViaje').value = hoy;
             document.getElementById('fechaGuardia').value = hoy;
-            actualizarSelectorDestinos(); // ← INICIALIZAR DESTINOS FAVORITOS
+            actualizarSelectorDestinos();
             updateSummary();
         });
         
@@ -556,17 +497,21 @@
                 return;
             }
             
-            // CALCULAR VIÁTICOS POR NÚMERO DE ORDEN (≥9 horas totales)
             const horasTotalesOrden = calcularHorasPorOrden(orderNumber);
             const viaticos = horasTotalesOrden >= 9 ? 1 : 0;
             
-            // CALCULAR HORAS DE ESTE VIAJE INDIVIDUAL (para mostrar en lista)
+            // Validar horarios
             const start = new Date(`2000-01-01T${departureTime}`);
             const end = new Date(`2000-01-01T${arrivalTime}`);
             let hoursWorked = (end - start) / (1000 * 60 * 60);
             if (hoursWorked < 0) hoursWorked += 24;
             
-            // CALCULAR ACOPLADOS AUTOMÁTICAMENTE (directos = +30km)
+            if (hoursWorked <= 0) {
+                alert('La hora de llegada debe ser posterior a la de salida');
+                return;
+            }
+            
+            // CALCULAR ACOPLADOS
             const turnoSeleccionado = document.getElementById('turnoSeleccionado');
             const descripcionTurno = turnoSeleccionado.options[turnoSeleccionado.selectedIndex].text;
             const esDirecto = descripcionTurno.includes('Directo');
@@ -584,9 +529,9 @@
             const travel = {
                 id: Date.now(),
                 orderNumber, origin, destination, 
-                km: kmTotal, // ← KM TOTAL (ruta + 30km si es directo)
-                kmRuta: km,  // ← KM SOLO DE LA RUTA
-                acoplados: acoplados, // ← 1 si es directo, 0 si no
+                km: kmTotal,
+                kmRuta: km,
+                acoplados: acoplados,
                 type: travelType,
                 departureTime, arrivalTime, date: fechaViaje,
                 viaticos: viaticos,
@@ -629,7 +574,6 @@
                 return;
             }
             
-            // CALCULAR VIÁTICOS AUTOMÁTICAMENTE (≥9 horas)
             const start = new Date(`2000-01-01T${guardStart}`);
             const end = new Date(`2000-01-01T${guardEnd}`);
             let hoursWorked = (end - start) / (1000 * 60 * 60);
@@ -657,7 +601,7 @@
                 id: Date.now(),
                 type: guardType, startTime: guardStart, endTime: guardEnd,
                 hours: hoursWorked.toFixed(2), km: totalKm.toFixed(1), 
-                viaticos: viaticos, // ← NUEVO CAMPO
+                viaticos: viaticos,
                 date: fechaGuardia
             };
             
@@ -672,19 +616,15 @@
             showScreen('mainScreen');
         }
         
-        // ACTUALIZAR ESTADÍSTICAS (VERSIÓN SEGURA - NO GENERA ERRORES)
         function updateMainStats() {
-            // Verificar si los elementos existen antes de intentar actualizar
             const mainTotalKm = document.getElementById('mainTotalKm');
             const mainTotalMoney = document.getElementById('mainTotalMoney');
             const mainTotalTravels = document.getElementById('mainTotalTravels');
             
-            // Si los elementos NO existen, salir silenciosamente
             if (!mainTotalKm || !mainTotalMoney || !mainTotalTravels) {
-                return; // ← Sale sin hacer nada, sin errores
+                return;
             }
             
-            // Solo si los elementos existen, actualizar normalmente
             const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
             const totalPassenger = travels.filter(t => t.type === 'passenger').reduce((sum, t) => sum + t.km, 0);
             const totalGuards = guards.reduce((sum, g) => sum + parseFloat(g.km), 0);
@@ -714,54 +654,57 @@
         function renderTravels() {
             const travelsList = document.getElementById('travelsList');
             travelsList.innerHTML = '';
-            
+
             if (travels.length === 0) {
                 travelsList.innerHTML = '<p>No hay viajes registrados</p>';
                 return;
             }
-            
+
             // CREAR TABLA
             const table = document.createElement('table');
             table.style.width = '100%';
             table.style.borderCollapse = 'collapse';
             table.style.marginTop = '10px';
-            
-           
-           // ENCABEZADO DE TABLA - CAMBIAR POR HORA SALIDA Y HORA LLEGADA
-const header = document.createElement('tr');
-header.innerHTML = `
-    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">ORDEN</th>
-    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">ORIGEN</th>
-    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">DESTINO</th>
-    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">KM</th>
-    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">SALIDA</th>
-    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">LLEGADA</th>
-    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">VIAT</th>
-    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">ACOP</th>
-    <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">ACCION</th>
-`;
-           
-           // FILAS DE DATOS - MOSTRAR HORA SALIDA Y HORA LLEGADA
-travels.forEach(travel => {
-    const row = document.createElement('tr');
-    row.style.borderBottom = '1px solid #eee';
-    
-    row.innerHTML = `
-        <td style="padding: 8px; font-weight: bold;">${travel.orderNumber}</td>
-        <td style="padding: 8px;">${travel.origin}</td>
-        <td style="padding: 8px;">${travel.destination}</td>
-        <td style="padding: 8px; text-align: center;">${travel.km}</td>
-        <td style="padding: 8px; text-align: center;">${travel.departureTime || '-'}</td>
-        <td style="padding: 8px; text-align: center;">${travel.arrivalTime || '-'}</td>
-        <td style="padding: 8px; text-align: center; color: ${travel.viaticos ? 'green' : 'gray'}">${travel.viaticos ? 'Sí' : 'No'}</td>
-        <td style="padding: 8px; text-align: center; color: ${travel.acoplados ? 'blue' : 'gray'}">${travel.acoplados ? '30' : '0'}</td>
-        <td style="padding: 8px; text-align: center;">
-            <button onclick="deleteTravel(${travel.id})" class="btn-danger btn-sm">Eliminar</button>
-        </td>
-    `;
-    table.appendChild(row);
-});
-     }   
+
+            // ENCABEZADO DE TABLA
+            const header = document.createElement('tr');
+            header.innerHTML = `
+                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">ORDEN</th>
+                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">ORIGEN</th>
+                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">DESTINO</th>
+                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">KM</th>
+                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">SALIDA</th>
+                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">LLEGADA</th>
+                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">VIAT</th>
+                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">ACOP</th>
+                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">ACCION</th>
+            `;
+            table.appendChild(header);
+
+            // FILAS DE DATOS
+            travels.forEach(travel => {
+                const row = document.createElement('tr');
+                row.style.borderBottom = '1px solid #eee';
+                
+                row.innerHTML = `
+                    <td style="padding: 8px; font-weight: bold;">${travel.orderNumber}</td>
+                    <td style="padding: 8px;">${travel.origin}</td>
+                    <td style="padding: 8px;">${travel.destination}</td>
+                    <td style="padding: 8px; text-align: center;">${travel.km}</td>
+                    <td style="padding: 8px; text-align: center;">${travel.departureTime || '-'}</td>
+                    <td style="padding: 8px; text-align: center;">${travel.arrivalTime || '-'}</td>
+                    <td style="padding: 8px; text-align: center; color: ${travel.viaticos ? 'green' : 'gray'}">${travel.viaticos ? 'Sí' : 'No'}</td>
+                    <td style="padding: 8px; text-align: center; color: ${travel.acoplados ? 'blue' : 'gray'}">${travel.acoplados ? '30' : '0'}</td>
+                    <td style="padding: 8px; text-align: center;">
+                        <button onclick="deleteTravel(${travel.id})" class="btn-danger btn-sm">Eliminar</button>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+
+            travelsList.appendChild(table);
+        }
+        
         function renderGuards() {
             const guardsList = document.getElementById('guardsList');
             guardsList.innerHTML = '';
@@ -883,7 +826,7 @@ travels.forEach(travel => {
             }
         }
         
-                    // SERVICE WORKER REGISTRATION - AL FINAL
+        // SERVICE WORKER
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register('./sw.js')
@@ -894,6 +837,7 @@ travels.forEach(travel => {
     </script>
 </body>
 </html>
+
 
 
 
