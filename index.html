@@ -217,6 +217,10 @@
                 </select>
             </div>
             <div class="form-group">
+    <label>Número de Orden (opcional):</label>
+    <input type="number" id="guardOrderNumber" placeholder="Mismo número que viajes relacionados">
+</div>
+            <div class="form-group">
                 <label>Horario de Guardia:</label>
                 <div class="time-group">
                     <input type="time" id="guardStart">
@@ -347,47 +351,78 @@
         }
         
         // ========== FUNCIONES PRINCIPALES ==========
+        // CALCULAR HORAS TOTALES POR NÚMERO DE ORDEN (INCLUYENDO GUARDIAS)
+function calcularHorasPorOrden(numeroOrden) {
+    console.log(`🔍 Calculando horas para orden: ${numeroOrden}`);
+    
+    // Buscar TODOS los servicios con este número de orden (viajes + guardias)
+    const viajesDelOrden = travels.filter(t => t.orderNumber == numeroOrden);
+    const guardiasDelOrden = guards.filter(g => g.orderNumber == numeroOrden);
+    
+    console.log(`📊 Viajes del orden: ${viajesDelOrden.length}, Guardias del orden: ${guardiasDelOrden.length}`);
+    
+    const todosLosServicios = [...viajesDelOrden, ...guardiasDelOrden];
+    
+    if (todosLosServicios.length === 0) return 0;
+    
+    // Si hay solo 1 servicio, calcular sus horas individuales
+    if (todosLosServicios.length === 1) {
+        const servicio = todosLosServicios[0];
+        let horas = servicio.hours ? parseFloat(servicio.hours) : calcularHorasServicio(servicio);
+        console.log(`⏱️  Servicio único: ${horas} horas`);
+        return horas;
+    }
+    
+    // Encontrar el horario MÁS TEMPRANO de inicio y MÁS TARDÍO de fin
+    let horaInicioMasTemprana = '23:59';
+    let horaFinMasTardia = '00:00';
+    
+    todosLosServicios.forEach(servicio => {
+        const horaInicio = servicio.departureTime || servicio.startTime;
+        const horaFin = servicio.arrivalTime || servicio.endTime;
         
-        function calcularHorasPorOrden(numeroOrden) {
-            const viajesDelOrden = travels.filter(t => t.orderNumber == numeroOrden);
-            if (viajesDelOrden.length === 0) return 0;
-            
-            if (viajesDelOrden.length === 1) {
-                const viaje = viajesDelOrden[0];
-                const inicio = new Date(`2000-01-01T${viaje.departureTime}`);
-                const fin = new Date(`2000-01-01T${viaje.arrivalTime}`);
-                let horas = (fin - inicio) / (1000 * 60 * 60);
-                if (horas < 0) horas += 24;
-                return horas;
-            }
-            
-            let horaInicioMasTemprana = '23:59';
-            let horaFinMasTardia = '00:00';
-            
-            viajesDelOrden.forEach(viaje => {
-                const inicioViaje = new Date(`2000-01-01T${viaje.departureTime}`);
-                const inicioMasTemprano = new Date(`2000-01-01T${horaInicioMasTemprana}`);
-                
-                if (inicioViaje < inicioMasTemprano) {
-                    horaInicioMasTemprana = viaje.departureTime;
-                }
-                
-                const finViaje = new Date(`2000-01-01T${viaje.arrivalTime}`);
-                const finMasTardio = new Date(`2000-01-01T${horaFinMasTardia}`);
-                
-                if (finViaje > finMasTardio) {
-                    horaFinMasTardia = viaje.arrivalTime;
-                }
-            });
-            
-            const inicio = new Date(`2000-01-01T${horaInicioMasTemprana}`);
-            const fin = new Date(`2000-01-01T${horaFinMasTardia}`);
-            let horasTotales = (fin - inicio) / (1000 * 60 * 60);
-            
-            if (horasTotales < 0) horasTotales += 24;
-            
-            return horasTotales;
+        // CORRECCIÓN: Comparar hora de inicio (CONVERTIR A DATE)
+        const inicioServicio = new Date(`2000-01-01T${horaInicio}`);
+        const inicioMasTemprano = new Date(`2000-01-01T${horaInicioMasTemprana}`);
+        
+        if (inicioServicio < inicioMasTemprano) {
+            horaInicioMasTemprana = horaInicio;
         }
+        
+        // CORRECCIÓN: Comparar hora de fin (CONVERTIR A DATE)
+        const finServicio = new Date(`2000-01-01T${horaFin}`);
+        const finMasTardio = new Date(`2000-01-01T${horaFinMasTardia}`);
+        
+        if (finServicio > finMasTardio) {
+            horaFinMasTardia = horaFin;
+        }
+    });
+    
+    // Calcular diferencia en horas entre el primer servicio y el último
+    const inicio = new Date(`2000-01-01T${horaInicioMasTemprana}`);
+    const fin = new Date(`2000-01-01T${horaFinMasTardia}`);
+    let horasTotales = (fin - inicio) / (1000 * 60 * 60);
+    
+    // Si pasa de medianoche, ajustar
+    if (horasTotales < 0) horasTotales += 24;
+    
+    console.log(`🕒 Horas totales orden ${numeroOrden}: ${horaInicioMasTemprana} - ${horaFinMasTardia} = ${horasTotales} horas`);
+    
+    return horasTotales;
+}
+
+// FUNCIÓN AUXILIAR para calcular horas de cualquier servicio
+function calcularHorasServicio(servicio) {
+    const inicio = servicio.departureTime || servicio.startTime;
+    const fin = servicio.arrivalTime || servicio.endTime;
+    
+    const start = new Date(`2000-01-01T${inicio}`);
+    const end = new Date(`2000-01-01T${fin}`);
+    let horas = (end - start) / (1000 * 60 * 60);
+    if (horas < 0) horas += 24;
+    
+    return horas;
+}
         
        // ACTUALIZAR VIÁTICOS EN VIAJES EXISTENTES
 function actualizarViaticosExistentes() {
@@ -612,20 +647,24 @@ console.log(`💰 Viático para orden ${orderNumber}: ${viaticos ? 'SÍ' : 'NO'}
             const kmPerHour = guardType === 'common' ? 30 : 40;
             const totalKm = hoursWorked * kmPerHour;
             
-            const guard = {
-                id: Date.now(),
-                type: guardType, startTime: guardStart, endTime: guardEnd,
-                hours: hoursWorked.toFixed(2), km: totalKm.toFixed(1), 
-                viaticos: viaticos,
-                date: fechaGuardia
-            };
+           const guard = {
+    id: Date.now(),
+    orderNumber: document.getElementById('guardOrderNumber').value || '', // ← NUEVA LÍNEA
+    type: guardType, 
+    startTime: guardStart, 
+    endTime: guardEnd,
+    hours: hoursWorked.toFixed(2), 
+    km: totalKm.toFixed(1), 
+    viaticos: viaticos,
+    date: fechaGuardia
+};
             
             guards.push(guard);
             localStorage.setItem('bus_guards', JSON.stringify(guards));
             
             document.getElementById('guardStart').value = '';
             document.getElementById('guardEnd').value = '';
-            
+            document.getElementById('guardOrderNumber').value = '';
             updateSummary();
             alert('✅ Guardia agregada! ' + (viaticos ? '(Con viático)' : ''));
             showScreen('mainScreen');
@@ -852,6 +891,7 @@ console.log(`💰 Viático para orden ${orderNumber}: ${viaticos ? 'SÍ' : 'NO'}
     </script>
 </body>
 </html>
+
 
 
 
