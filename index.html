@@ -521,97 +521,99 @@ function actualizarViaticosExistentes() {
         });
         
         // AGREGAR VIAJE
-        function addTravel() {
-            const orderNumber = document.getElementById('orderNumber').value;
-            const origin = document.getElementById('origin').value;
-            const destination = document.getElementById('destination').value;
-            const km = parseFloat(document.getElementById('km').value);
-            const travelType = document.getElementById('travelType').value;
-            const departureTime = document.getElementById('departureTime').value;
-            const arrivalTime = document.getElementById('arrivalTime').value;
-            const fechaInput = document.getElementById('fechaViaje').value;
-            
-            if (!orderNumber || !origin || !destination || !km || !departureTime || !arrivalTime) {
-                alert('Complete todos los campos');
-                return;
-            }
-            
-            let horasTotalesOrden = calcularHorasPorOrden(orderNumber);
-console.log(`🕒 Orden ${orderNumber}: ${horasTotalesOrden} horas totales`);
+function addTravel() {
+    const orderNumber = document.getElementById('orderNumber').value;
+    const origin = document.getElementById('origin').value;
+    const destination = document.getElementById('destination').value;
+    const km = parseFloat(document.getElementById('km').value);
+    const travelType = document.getElementById('travelType').value;
+    const departureTime = document.getElementById('departureTime').value;
+    const arrivalTime = document.getElementById('arrivalTime').value;
+    const fechaInput = document.getElementById('fechaViaje').value;
+    
+    if (!orderNumber || !origin || !destination || !km || !departureTime || !arrivalTime) {
+        alert('Complete todos los campos');
+        return;
+    }
+    
+    // CALCULAR HORAS TRABAJADAS PRIMERO (para validaciones y cálculos)
+    const start = new Date(`2000-01-01T${departureTime}`);
+    const end = new Date(`2000-01-01T${arrivalTime}`);
+    let hoursWorked = (end - start) / (1000 * 60 * 60);
+    if (hoursWorked < 0) hoursWorked += 24;
+    
+    if (hoursWorked <= 0) {
+        alert('La hora de llegada debe ser posterior a la de salida');
+        return;
+    }
+    
+    // CALCULAR VIÁTICOS POR NÚMERO DE ORDEN
+    let horasTotalesOrden = calcularHorasPorOrden(orderNumber);
+    console.log(`🕒 Orden ${orderNumber}: ${horasTotalesOrden} horas totales`);
 
-// Si este es el primer viaje del orden, usar sus horas individuales
-const viajesDelOrden = travels.filter(t => t.orderNumber == orderNumber);
-if (viajesDelOrden.length === 0) {
-    // Es el primer viaje del orden - usar horas individuales temporalmente
-    horasTotalesOrden = hoursWorked;
-    console.log(`📝 Primer viaje del orden - horas temporales: ${horasTotalesOrden}`);
+    // Si este es el primer viaje del orden, usar sus horas individuales
+    const viajesDelOrden = travels.filter(t => t.orderNumber == orderNumber);
+    if (viajesDelOrden.length === 0) {
+        // Es el primer viaje del orden - usar horas individuales temporalmente
+        horasTotalesOrden = hoursWorked;
+        console.log(`📝 Primer viaje del orden - horas temporales: ${horasTotalesOrden}`);
+    }
+
+    const viaticos = horasTotalesOrden >= 9 ? 1 : 0;
+    console.log(`💰 Viático para orden ${orderNumber}: ${viaticos ? 'SÍ' : 'NO'}`);
+    
+    // CALCULAR ACOPLADOS
+    const turnoSeleccionado = document.getElementById('turnoSeleccionado');
+    const descripcionTurno = turnoSeleccionado.options[turnoSeleccionado.selectedIndex].text;
+    const esDirecto = descripcionTurno.includes('Directo');
+    const acoplados = esDirecto ? 1 : 0;
+    const kmTotal = esDirecto ? km + 30 : km;
+    
+    let fechaViaje;
+    if (fechaInput) {
+        const [año, mes, dia] = fechaInput.split('-');
+        fechaViaje = `${dia}/${mes}/${año}`;
+    } else {
+        fechaViaje = new Date().toLocaleDateString('es-ES');
+    }
+    
+    const travel = {
+        id: Date.now(),
+        orderNumber, origin, destination, 
+        km: kmTotal,
+        kmRuta: km,
+        acoplados: acoplados,
+        type: travelType,
+        departureTime, arrivalTime, 
+        hoursWorked: hoursWorked, // Agregué esto para tener registro
+        date: fechaViaje,
+        viaticos: viaticos,
+        timestamp: new Date().toISOString()
+    };
+    
+    travels.push(travel);
+    localStorage.setItem('bus_travels', JSON.stringify(travels));
+    
+    // GUARDAR COMO FAVORITO SI ES MANUAL
+    const turnoId = document.getElementById('turnoSeleccionado').value;
+    if (turnoId === 'manual') {
+        guardarDestinoFavorito(origin, destination, km);
+    }
+    
+    // Limpiar campos
+    document.getElementById('orderNumber').value = '';
+    document.getElementById('turnoSeleccionado').value = '';
+    document.getElementById('origin').value = '';
+    document.getElementById('destination').value = '';
+    document.getElementById('km').value = '';
+    document.getElementById('departureTime').value = '';
+    document.getElementById('arrivalTime').value = '';
+    
+    updateSummary();
+    alert('✅ Viaje agregado! ' + (viaticos ? '(Con viático)' : '') + 
+          (turnoId === 'manual' ? ' ⭐ (Guardado como favorito)' : ''));
+    showScreen('mainScreen');
 }
-
-const viaticos = horasTotalesOrden >= 9 ? 1 : 0;
-console.log(`💰 Viático para orden ${orderNumber}: ${viaticos ? 'SÍ' : 'NO'}`);
-            
-            // Validar horarios
-            const start = new Date(`2000-01-01T${departureTime}`);
-            const end = new Date(`2000-01-01T${arrivalTime}`);
-            let hoursWorked = (end - start) / (1000 * 60 * 60);
-            if (hoursWorked < 0) hoursWorked += 24;
-            
-            if (hoursWorked <= 0) {
-                alert('La hora de llegada debe ser posterior a la de salida');
-                return;
-            }
-            
-            // CALCULAR ACOPLADOS
-            const turnoSeleccionado = document.getElementById('turnoSeleccionado');
-            const descripcionTurno = turnoSeleccionado.options[turnoSeleccionado.selectedIndex].text;
-            const esDirecto = descripcionTurno.includes('Directo');
-            const acoplados = esDirecto ? 1 : 0;
-            const kmTotal = esDirecto ? km + 30 : km;
-            
-            let fechaViaje;
-            if (fechaInput) {
-                const [año, mes, dia] = fechaInput.split('-');
-                fechaViaje = `${dia}/${mes}/${año}`;
-            } else {
-                fechaViaje = new Date().toLocaleDateString('es-ES');
-            }
-            
-            const travel = {
-                id: Date.now(),
-                orderNumber, origin, destination, 
-                km: kmTotal,
-                kmRuta: km,
-                acoplados: acoplados,
-                type: travelType,
-                departureTime, arrivalTime, date: fechaViaje,
-                viaticos: viaticos,
-                timestamp: new Date().toISOString()
-            };
-            
-            travels.push(travel);
-            localStorage.setItem('bus_travels', JSON.stringify(travels));
-            
-            // GUARDAR COMO FAVORITO SI ES MANUAL
-            const turnoId = document.getElementById('turnoSeleccionado').value;
-            if (turnoId === 'manual') {
-                guardarDestinoFavorito(origin, destination, km);
-            }
-            
-            // Limpiar campos
-            document.getElementById('orderNumber').value = '';
-            document.getElementById('turnoSeleccionado').value = '';
-            document.getElementById('origin').value = '';
-            document.getElementById('destination').value = '';
-            document.getElementById('km').value = '';
-            document.getElementById('departureTime').value = '';
-            document.getElementById('arrivalTime').value = '';
-            
-            updateSummary();
-            alert('✅ Viaje agregado! ' + (viaticos ? '(Con viático)' : '') + 
-                  (turnoId === 'manual' ? ' ⭐ (Guardado como favorito)' : ''));
-            showScreen('mainScreen');
-        }
-        
         // AGREGAR GUARDIA
         function addGuard() {
             const guardType = document.getElementById('guardType').value;
@@ -891,6 +893,7 @@ console.log(`💰 Viático para orden ${orderNumber}: ${viaticos ? 'SÍ' : 'NO'}
     </script>
 </body>
 </html>
+
 
 
 
