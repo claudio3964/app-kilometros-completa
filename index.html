@@ -1,527 +1,583 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#D4A017">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
-    <title>COT - Control de Kilómetros</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Gestión de Viajes y Guardias</title>
     <style>
-        :root {
-            --crema: #FFF8E1;
-            --ocre: #D4A017;
-            --marron: #8B4513;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: linear-gradient(135deg, var(--crema) 0%, var(--ocre) 100%);
-            min-height: 100vh; padding: 20px; color: #333;
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
         }
-        .container { max-width: 800px; margin: 0 auto; }
-        .screen { display: none; background: white; border-radius: 15px; padding: 25px; margin-top: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .screen.active { display: block; }
-        
-        /* PANTALLA PRINCIPAL */
-        .logo-container { text-align: center; margin-bottom: 30px; }
-        .logo-title { font-size: 3em; font-weight: bold; color: var(--ocre); margin-bottom: 10px; }
-        .logo-subtitle { font-size: 1.2em; color: var(--marron); font-weight: 600; }
-        
-        .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 25px 0; }
-        .stat-card { background: var(--crema); padding: 20px; border-radius: 10px; text-align: center; border-top: 4px solid var(--ocre); }
-        .stat-value { font-size: 1.8em; font-weight: 800; color: var(--marron); }
-        .stat-label { font-size: 0.8em; color: #666; font-weight: 600; }
-        
-        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .menu-card { background: white; padding: 20px; border-radius: 10px; text-align: center; cursor: pointer; border: 2px solid var(--crema); transition: all 0.3s; }
-        .menu-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: var(--ocre); }
-        .menu-icon { font-size: 2em; margin-bottom: 10px; color: var(--ocre); }
-        .menu-title { font-weight: 700; color: var(--marron); margin-bottom: 5px; }
-        .menu-desc { font-size: 0.8em; color: #666; }
-        
-        /* HEADER */
-        .header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #eee; }
-        .back-btn { background: var(--ocre); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 16px; }
-        .header-title h1 { color: var(--marron); margin-bottom: 5px; }
-        .header-title p { color: #666; font-size: 0.9em; }
-        
-        /* FORMULARIOS */
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: var(--marron); }
-        input, select { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
-        .time-group { display: flex; gap: 10px; }
-        .time-group input { flex: 1; }
-        .btn-group { display: flex; gap: 10px; margin-bottom: 15px; }
-        .btn-date { flex: 1; padding: 10px; background: var(--ocre); color: white; border: none; border-radius: 8px; cursor: pointer; }
-        button { background: var(--ocre); color: white; border: none; padding: 15px; border-radius: 8px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 10px; }
-        .btn-danger { background: var(--marron); }
-        
-        /* LISTAS */
-        .list-item { background: #f9f9f9; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 4px solid var(--ocre); }
-        .list-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .list-item-title { font-weight: bold; color: var(--marron); }
-        .btn-sm { padding: 8px 12px; font-size: 12px; width: auto; }
-        
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #34495e;
+            border-bottom: 3px solid #2980b9;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            color: white;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab:hover {
+            background: #2980b9;
+        }
+
+        .nav-tab.active {
+            background: #2980b9;
+            font-weight: bold;
+        }
+
+        .screen {
+            display: none;
+            padding: 30px;
+            min-height: 500px;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+            border: none;
+            padding: 12px;
+            cursor: pointer;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-delete:hover {
+            background: #c0392b;
+            transform: scale(1.1);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .data-table th {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .no-data {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+            padding: 30px;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .summary-card h3 {
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .summary-card p {
+            font-size: 1.1em;
+            margin: 5px 0;
+        }
+
+        .backup-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin-top: 30px;
+            border: 2px dashed #bdc3c7;
+        }
+
+        .backup-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .btn-backup {
+            flex: 1;
+            min-width: 200px;
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .btn-backup:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4);
+        }
+
+        .btn-restore {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+        }
+
+        .btn-restore:hover {
+            box-shadow: 0 5px 15px rgba(230, 126, 34, 0.4);
+        }
+
         @media (max-width: 768px) {
-            .menu-grid, .stats-bar { grid-template-columns: 1fr; }
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .backup-buttons {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <header>
+            <h1>🚌 Gestión de Viajes y Guardias</h1>
+            <div class="subtitle">Sistema de control de operaciones de transporte</div>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="nav-tab active" onclick="showScreen('mainScreen')">🏠 Inicio</button>
+            <button class="nav-tab" onclick="showScreen('travelScreen')">🚗 Viajes</button>
+            <button class="nav-tab" onclick="showScreen('guardScreen')">🛡️ Guardias</button>
+            <button class="nav-tab" onclick="showScreen('backupScreen')">💾 Backup</button>
+        </nav>
+
         <!-- PANTALLA PRINCIPAL -->
         <div id="mainScreen" class="screen active">
-            <div class="logo-container">
-                <div class="logo-title">COT</div>
-                <div class="logo-subtitle">CONTROL DE KILÓMETROS</div>
+            <h2>📊 Resumen General</h2>
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <h3>📈 Viajes</h3>
+                    <p>Total: <span id="totalTravels">0</span></p>
+                    <p>Kilómetros: <span id="totalKm">0</span></p>
+                    <p>Viáticos: <span id="totalViaticos">0</span></p>
+                </div>
+                <div class="summary-card">
+                    <h3>🛡️ Guardias</h3>
+                    <p>Total: <span id="totalGuards">0</span></p>
+                    <p>Horas: <span id="totalGuardHours">0</span></p>
+                </div>
+                <div class="summary-card">
+                    <h3>📅 Hoy</h3>
+                    <p id="todayDate">Cargando...</p>
+                    <p>Viajes hoy: <span id="todayTravels">0</span></p>
+                </div>
             </div>
-            <div class="menu-grid">
-                <div class="menu-card" onclick="showScreen('travelScreen')">
-                    <div class="menu-icon">🚌</div>
-                    <div class="menu-title">Registrar Viaje</div>
-                    <div class="menu-desc">Agregar nuevo recorrido</div>
-                </div>
-                <div class="menu-card" onclick="showScreen('guardScreen')">
-                    <div class="menu-icon">⏰</div>
-                    <div class="menu-title">Registrar Guardia</div>
-                    <div class="menu-desc">Control de guardias</div>
-                </div>
-                <div class="menu-card" onclick="showScreen('summaryScreen')">
-                    <div class="menu-icon">📊</div>
-                    <div class="menu-title">Resumen General</div>
-                    <div class="menu-desc">Estadísticas del mes</div>
-                </div>
-                <div class="menu-card" onclick="showScreen('reportsScreen')">
-                    <div class="menu-icon">📈</div>
-                    <div class="menu-title">Reportes</div>
-                    <div class="menu-desc">Análisis detallados</div>
-                </div>
-                <div class="menu-card" onclick="showScreen('travelsListScreen')">
-                    <div class="menu-icon">📋</div>
-                    <div class="menu-title">Lista de Viajes</div>
-                    <div class="menu-desc">Ver viajes registrados</div>
-                </div>
-                <div class="menu-card" onclick="showScreen('guardsListScreen')">
-                    <div class="menu-icon">🕒</div>
-                    <div class="menu-title">Lista de Guardias</div>
-                    <div class="menu-desc">Ver guardias registradas</div>
-                </div>
+
+            <div class="table-container">
+                <h3>📋 Últimos Viajes</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>N° Orden</th>
+                            <th>Origen - Destino</th>
+                            <th>KM</th>
+                            <th>Horario</th>
+                            <th>Viático</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentTravels">
+                        <tr><td colspan="6" class="no-data">No hay viajes recientes</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <!-- PANTALLA REGISTRAR VIAJE -->
+        <!-- PANTALLA DE VIAJES -->
         <div id="travelScreen" class="screen">
-            <div class="header">
-                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
-                <div class="header-title">
-                    <h1>Registrar Viaje</h1>
-                    <p>Complete los datos del servicio</p>
+            <h2>🚗 Gestión de Viajes</h2>
+            
+            <form id="travelForm" onsubmit="addTravel(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="orderNumber">Número de Orden *</label>
+                        <input type="text" id="orderNumber" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="origin">Origen *</label>
+                        <input type="text" id="origin" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="destination">Destino *</label>
+                        <input type="text" id="destination" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="km">Kilómetros *</label>
+                        <input type="number" id="km" step="0.1" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="travelType">Tipo de Viaje</label>
+                        <select id="travelType">
+                            <option value="normal">Normal</option>
+                            <option value="especial">Especial</option>
+                            <option value="urgente">Urgente</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fechaViaje">Fecha del Viaje</label>
+                        <input type="date" id="fechaViaje">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="departureTime">Hora de Salida *</label>
+                        <input type="time" id="departureTime" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="arrivalTime">Hora de Llegada *</label>
+                        <input type="time" id="arrivalTime" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="turnoSeleccionado">Turno/Plantilla</label>
+                        <select id="turnoSeleccionado">
+                            <option value="manual">Manual</option>
+                            <option value="directo">Directo (+30km)</option>
+                            <option value="normal">Normal</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
+                
+                <button type="submit" class="btn-primary">✅ Agregar Viaje</button>
+            </form>
 
-            <div class="form-group">
-                <label>Fecha del Viaje:</label>
-                <div class="btn-group">
-                    <button type="button" class="btn-date" onclick="setFecha('fechaViaje', 0)">Hoy</button>
-                    <button type="button" class="btn-date" onclick="setFecha('fechaViaje', -1)">Ayer</button>
-                    <button type="button" class="btn-date" onclick="setFecha('fechaViaje', -2)">Hace 2 días</button>
-                </div>
-                <input type="date" id="fechaViaje">
+            <div class="table-container">
+                <h3>📋 Lista de Viajes</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>N° Orden</th>
+                            <th>Origen</th>
+                            <th>Destino</th>
+                            <th>KM</th>
+                            <th>Horario</th>
+                            <th>Viático</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="travelList">
+                        <!-- Los viajes se cargarán aquí -->
+                    </tbody>
+                </table>
             </div>
-
-            <!-- SELECTOR DE TURNO -->
-            <div class="form-group">
-                <label>Seleccionar Ruta:</label>
-                <select id="turnoSeleccionado" onchange="cargarDatosTurno()">
-                    <option value="">-- Selecciona ruta --</option>
-                    <option value="1">1 - Punta del Este</option>
-                    <option value="2">2 - Punta del Este (Directo)</option>
-                    <option value="11">11 - Colonia</option>
-                    <option value="12">12 - Colonia (Directo)</option>
-                    <option value="31">31 - Punta del Este (Ruta 9)</option>
-                    <option value="41">41 - San José</option>
-                    <option value="51">51 - Canelones</option>
-                    <option value="61">61 - Melo</option>
-                    <option value="71">71 - Rivera</option>
-                    <option value="manual">+ Agregar destino manual</option>
-                </select>
-            </div>
-
-            <!-- NÚMERO DE ORDEN -->
-            <div class="form-group">
-                <label>Número de Orden:</label>
-                <input type="number" id="orderNumber" placeholder="Ej: 123">
-            </div>
-
-            <!-- CAMPOS AUTOCOMPLETADOS -->
-            <div class="form-group">
-                <label>Origen:</label>
-                <input type="text" id="origin" placeholder="Se autocompletará" readonly>
-            </div>
-            <div class="form-group">
-                <label>Destino:</label>
-                <input type="text" id="destination" placeholder="Se autocompletará" readonly>
-            </div>
-            <div class="form-group">
-                <label>Kilómetros:</label>
-                <input type="number" id="km" placeholder="Se autocompletará" step="0.1" readonly>
-            </div>
-
-            <!-- HORARIOS -->
-            <div class="form-group">
-                <label>Horarios:</label>
-                <div class="time-group">
-                    <input type="time" id="departureTime">
-                    <input type="time" id="arrivalTime">
-                </div>
-            </div>
-
-            <!-- TIPO DE VIAJE -->
-            <div class="form-group">
-                <label>Tipo:</label>
-                <select id="travelType">
-                    <option value="working">Trabajando</option>
-                    <option value="passenger">De Pasajero</option>
-                </select>
-            </div>
-
-            <button onclick="addTravel()">Agregar Viaje</button>
         </div>
 
-        <!-- PANTALLA REGISTRAR GUARDIA -->
+        <!-- PANTALLA DE GUARDIAS -->
         <div id="guardScreen" class="screen">
-            <div class="header">
-                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
-                <div class="header-title">
-                    <h1>Registrar Guardia</h1>
-                    <p>Complete los datos de la guardia</p>
+            <h2>🛡️ Gestión de Guardias</h2>
+            
+            <form id="guardForm" onsubmit="addGuard(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="guardOrderNumber">Número de Orden *</label>
+                        <input type="text" id="guardOrderNumber" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="guardDriverName">Nombre del Conductor *</label>
+                        <input type="text" id="guardDriverName" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="guardStartTime">Hora de Inicio *</label>
+                        <input type="time" id="guardStartTime" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="guardEndTime">Hora de Fin *</label>
+                        <input type="time" id="guardEndTime" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="guardType">Tipo de Guardia</label>
+                        <select id="guardType">
+                            <option value="diurna">Diurna</option>
+                            <option value="nocturna">Nocturna</option>
+                            <option value="mixta">Mixta</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="guardFecha">Fecha de Guardia</label>
+                        <input type="date" id="guardFecha">
+                    </div>
                 </div>
-            </div>
+                
+                <button type="submit" class="btn-primary">✅ Agregar Guardia</button>
+            </form>
 
-            <div class="form-group">
-                <label>Fecha de la Guardia:</label>
-                <div class="btn-group">
-                    <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', 0)">Hoy</button>
-                    <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', -1)">Ayer</button>
-                    <button type="button" class="btn-date" onclick="setFecha('fechaGuardia', -2)">Hace 2 días</button>
-                </div>
-                <input type="date" id="fechaGuardia">
+            <div class="table-container">
+                <h3>📋 Lista de Guardias</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>N° Orden</th>
+                            <th>Conductor</th>
+                            <th>Horario</th>
+                            <th>Horas</th>
+                            <th>Tipo</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="guardList">
+                        <!-- Las guardias se cargarán aquí -->
+                    </tbody>
+                </table>
             </div>
-
-            <div class="form-group">
-                <label>Tipo de Guardia:</label>
-                <select id="guardType">
-                    <option value="common">Guardia Común (30 km/h)</option>
-                    <option value="special">Guardia Especial (40 km/h)</option>
-                </select>
-            </div>
-            <div class="form-group">
-    <label>Número de Orden (opcional):</label>
-    <input type="number" id="guardOrderNumber" placeholder="Mismo número que viajes relacionados">
-</div>
-            <div class="form-group">
-                <label>Horario de Guardia:</label>
-                <div class="time-group">
-                    <input type="time" id="guardStart">
-                    <input type="time" id="guardEnd">
-                </div>
-            </div>
-            <button onclick="addGuard()">Agregar Guardia</button>
         </div>
 
-        <!-- PANTALLA RESUMEN -->
-        <div id="summaryScreen" class="screen">
-            <div class="header">
-                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
-                <div class="header-title">
-                    <h1>Resumen General</h1>
-                    <p>Estadísticas del mes</p>
+        <!-- PANTALLA DE BACKUP -->
+        <div id="backupScreen" class="screen">
+            <h2>💾 Copias de Seguridad</h2>
+            
+            <div class="backup-section">
+                <h3>📥 Exportar Datos</h3>
+                <p>Descarga todos los datos en formato JSON para realizar copias de seguridad.</p>
+                <div class="backup-buttons">
+                    <button class="btn-backup" onclick="exportData()">📥 Exportar Todos los Datos</button>
+                    <button class="btn-backup" onclick="exportTravels()">🚗 Exportar Solo Viajes</button>
+                    <button class="btn-backup" onclick="exportGuards()">🛡️ Exportar Solo Guardias</button>
                 </div>
             </div>
-            <div id="summaryContent">
-                <p>Km Trabajando: <span id="totalWorking">0</span> km</p>
-                <p>Km de Pasajero: <span id="totalPassenger">0</span> km</p>
-                <p>Km por Guardias: <span id="totalGuards">0</span> km</p>
-                <p><strong>TOTAL KM: <span id="totalAll">0</span> km</strong></p>
-                <p><strong>TOTAL A COBRAR: $<span id="totalMoney">0</span></strong></p>
-            </div>
-            <button onclick="exportData()">Exportar Resumen</button>
-            <button onclick="clearMonth()" class="btn-danger">Reiniciar Mes</button>
-        </div>
 
-        <!-- PANTALLA LISTA VIAJES -->
-        <div id="travelsListScreen" class="screen">
-            <div class="header">
-                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
-                <div class="header-title">
-                    <h1>Lista de Viajes</h1>
-                    <p>Viajes registrados</p>
+            <div class="backup-section">
+                <h3>📤 Importar Datos</h3>
+                <p>Restaura los datos desde un archivo JSON previamente exportado.</p>
+                <div class="backup-buttons">
+                    <input type="file" id="backupFile" accept=".json" style="display: none;">
+                    <button class="btn-backup btn-restore" onclick="document.getElementById('backupFile').click()">
+                        📤 Seleccionar Archivo de Backup
+                    </button>
+                    <button class="btn-backup btn-restore" onclick="importData()">
+                        🔄 Restaurar Datos
+                    </button>
                 </div>
+                <p id="importStatus" style="margin-top: 10px;"></p>
             </div>
-            <div id="travelsList"></div>
-        </div>
 
-        <!-- PANTALLA LISTA GUARDIAS -->
-        <div id="guardsListScreen" class="screen">
-            <div class="header">
-                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
-                <div class="header-title">
-                    <h1>Lista de Guardias</h1>
-                    <p>Guardias registradas</p>
+            <div class="backup-section">
+                <h3>🔄 Acciones Rápidas</h3>
+                <div class="backup-buttons">
+                    <button class="btn-backup" onclick="clearAllData()" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
+                        🗑️ Limpiar Todos los Datos
+                    </button>
+                    <button class="btn-backup" onclick="generateSampleData()" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
+                        🎯 Generar Datos de Ejemplo
+                    </button>
                 </div>
             </div>
-            <div id="guardsList"></div>
-        </div>
-
-        <!-- PANTALLA REPORTES -->
-        <div id="reportsScreen" class="screen">
-            <div class="header">
-                <button class="back-btn" onclick="showScreen('mainScreen')">←</button>
-                <div class="header-title">
-                    <h1>Reportes</h1>
-                    <p>Análisis detallados</p>
-                </div>
-            </div>
-            <button onclick="mostrarReporteHoy()" style="margin-bottom: 10px;">Ver Reporte de Hoy</button>
-            <button onclick="mostrarReporteMes()">Ver Reporte del Mes</button>
-            <div id="reportesContent" style="margin-top: 20px;"></div>
         </div>
     </div>
 
-    <script>
-        const PRICE_PER_KM = 7.60;
-        
-        // BASE DE DATOS DE RUTAS COT - SISTEMA DE TURNOS
-        const rutasCOT = {
-            1: { origen: "Montevideo", destino: "Punta del Este", km: 134, tipo: "normal", descripcion: "Turno Normal" },
-            2: { origen: "Montevideo", destino: "Punta del Este", km: 134, tipo: "directo", descripcion: "Directo" },
-            11: { origen: "Montevideo", destino: "Colonia", km: 178, tipo: "normal", descripcion: "Turno Normal" },
-            12: { origen: "Montevideo", destino: "Colonia", km: 178, tipo: "directo", descripcion: "Directo" },
-            31: { origen: "Montevideo", destino: "Punta del Este", km: 145, tipo: "ruta9", descripcion: "Por Ruta 9" },
-            41: { origen: "Montevideo", destino: "San José", km: 96, tipo: "normal", descripcion: "Turno Normal" },
-            51: { origen: "Montevideo", destino: "Canelones", km: 54, tipo: "normal", descripcion: "Turno Normal" },
-            61: { origen: "Montevideo", destino: "Melo", km: 389, tipo: "normal", descripcion: "Turno Normal" },
-            71: { origen: "Montevideo", destino: "Rivera", km: 505, tipo: "normal", descripcion: "Turno Normal" }
-        };
-        
-        let travels = JSON.parse(localStorage.getItem('bus_travels')) || [];
-        let guards = JSON.parse(localStorage.getItem('bus_guards')) || [];
-        
-        // ========== SISTEMA DE DESTINOS FAVORITOS ==========
-        
-        function cargarDestinosFavoritos() {
-            return JSON.parse(localStorage.getItem('destinosFavoritos')) || [];
-        }
-        
-        function guardarDestinoFavorito(origen, destino, km) {
-            const favoritos = cargarDestinosFavoritos();
-            const existe = favoritos.some(fav => 
-                fav.origen === origen && fav.destino === destino && fav.km === km
-            );
-            
-            if (!existe) {
-                favoritos.push({
-                    origen, destino, km,
-                    id: Date.now(),
-                    tipo: "favorito",
-                    descripcion: `${origen} - ${destino}`
-                });
-                localStorage.setItem('destinosFavoritos', JSON.stringify(favoritos));
-            }
-        }
-        
-        function actualizarSelectorDestinos() {
-            const selector = document.getElementById('turnoSeleccionado');
-            const favoritos = cargarDestinosFavoritos();
-            
-            const opcionesActuales = Array.from(selector.options);
-            opcionesActuales.forEach(option => {
-                if (option.value.startsWith('fav_')) {
-                    selector.remove(option.index);
-                }
-            });
-            
-            favoritos.forEach((fav) => {
-                const option = document.createElement('option');
-                option.value = `fav_${fav.id}`;
-                option.textContent = `⭐ ${fav.origen} - ${fav.destino} (${fav.km}km)`;
-                selector.add(option);
-            });
-        }
-        
-        // ========== FUNCIONES PRINCIPALES ==========
-        // CALCULAR HORAS TOTALES POR NÚMERO DE ORDEN (INCLUYENDO GUARDIAS)
-function calcularHorasPorOrden(numeroOrden) {
-    console.log(`🔍 Calculando horas para orden: ${numeroOrden}`);
-    
-    // Buscar TODOS los servicios con este número de orden (viajes + guardias)
-    const viajesDelOrden = travels.filter(t => t.orderNumber == numeroOrden);
-    const guardiasDelOrden = guards.filter(g => g.orderNumber == numeroOrden);
-    
-    console.log(`📊 Viajes del orden: ${viajesDelOrden.length}, Guardias del orden: ${guardiasDelOrden.length}`);
-    
-    const todosLosServicios = [...viajesDelOrden, ...guardiasDelOrden];
-    
-    if (todosLosServicios.length === 0) return 0;
-    
-    // Si hay solo 1 servicio, calcular sus horas individuales
-    if (todosLosServicios.length === 1) {
-        const servicio = todosLosServicios[0];
-        let horas = servicio.hours ? parseFloat(servicio.hours) : calcularHorasServicio(servicio);
-        console.log(`⏱️  Servicio único: ${horas} horas`);
-        return horas;
-    }
-    
-    // Encontrar el horario MÁS TEMPRANO de inicio y MÁS TARDÍO de fin
-    let horaInicioMasTemprana = '23:59';
-    let horaFinMasTardia = '00:00';
-    
-    todosLosServicios.forEach(servicio => {
-        const horaInicio = servicio.departureTime || servicio.startTime;
-        const horaFin = servicio.arrivalTime || servicio.endTime;
-        
-        // CORRECCIÓN: Comparar hora de inicio (CONVERTIR A DATE)
-        const inicioServicio = new Date(`2000-01-01T${horaInicio}`);
-        const inicioMasTemprano = new Date(`2000-01-01T${horaInicioMasTemprana}`);
-        
-        if (inicioServicio < inicioMasTemprano) {
-            horaInicioMasTemprana = horaInicio;
-        }
-        
-        // CORRECCIÓN: Comparar hora de fin (CONVERTIR A DATE)
-        const finServicio = new Date(`2000-01-01T${horaFin}`);
-        const finMasTardio = new Date(`2000-01-01T${horaFinMasTardia}`);
-        
-        if (finServicio > finMasTardio) {
-            horaFinMasTardia = horaFin;
-        }
-    });
-    
-    // Calcular diferencia en horas entre el primer servicio y el último
-    const inicio = new Date(`2000-01-01T${horaInicioMasTemprana}`);
-    const fin = new Date(`2000-01-01T${horaFinMasTardia}`);
-    let horasTotales = (fin - inicio) / (1000 * 60 * 60);
-    
-    // Si pasa de medianoche, ajustar
-    if (horasTotales < 0) horasTotales += 24;
-    
-    console.log(`🕒 Horas totales orden ${numeroOrden}: ${horaInicioMasTemprana} - ${horaFinMasTardia} = ${horasTotales} horas`);
-    
-    return horasTotales;
-}
+    <script src="app.js"></script>
+</body>
+</html>
+// VARIABLES GLOBALES
+let travels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+let favoriteDestinations = JSON.parse(localStorage.getItem('bus_favorites') || '[]');
 
-// FUNCIÓN AUXILIAR para calcular horas de cualquier servicio
-function calcularHorasServicio(servicio) {
-    const inicio = servicio.departureTime || servicio.startTime;
-    const fin = servicio.arrivalTime || servicio.endTime;
+// INICIALIZACIÓN
+document.addEventListener('DOMContentLoaded', function() {
+    updateSummary();
+    updateTravelTable();
+    updateGuardList();
+    updateRecentTravels();
+    updateTodayDate();
     
-    const start = new Date(`2000-01-01T${inicio}`);
-    const end = new Date(`2000-01-01T${fin}`);
-    let horas = (end - start) / (1000 * 60 * 60);
-    if (horas < 0) horas += 24;
-    
-    return horas;
-}
-        
-       // ACTUALIZAR VIÁTICOS EN VIAJES EXISTENTES
-function actualizarViaticosExistentes() {
-    const ordenesUnicos = [...new Set(travels.map(t => t.orderNumber))];
-    
-    ordenesUnicos.forEach(orden => {
-        const horasTotales = calcularHorasPorOrden(orden);
-        const tieneViatico = horasTotales >= 9 ? 1 : 0;
-        
-        // Actualizar todos los viajes de este orden
-        travels.forEach(travel => {
-            if (travel.orderNumber == orden) {
-                travel.viaticos = tieneViatico;
-            }
-        });
+    // Configurar evento para importar datos
+    document.getElementById('backupFile').addEventListener('change', handleFileSelect);
+});
+
+// FUNCIONES DE NAVEGACIÓN
+function showScreen(screenId) {
+    // Ocultar todas las pantallas
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
     });
     
-    localStorage.setItem('bus_travels', JSON.stringify(travels));
-    renderTravels();
-    updateSummary();
-    alert('✅ Viáticos actualizados para todos los viajes');
-}
-        
-        function cargarDatosTurno() {
-            const turnoId = document.getElementById('turnoSeleccionado').value;
-            
-            if (turnoId === 'manual') {
-                document.getElementById('origin').readOnly = false;
-                document.getElementById('destination').readOnly = false;
-                document.getElementById('km').readOnly = false;
-                document.getElementById('origin').value = '';
-                document.getElementById('destination').value = '';
-                document.getElementById('km').value = '';
-                document.getElementById('origin').placeholder = 'Ej: Montevideo';
-                document.getElementById('destination').placeholder = 'Ej: La Pedrera';
-                document.getElementById('km').placeholder = 'Ej: 220';
-            } else if (turnoId.startsWith('fav_')) {
-                const favoritos = cargarDestinosFavoritos();
-                const favId = parseInt(turnoId.replace('fav_', ''));
-                const favorito = favoritos.find(fav => fav.id === favId);
-                
-                if (favorito) {
-                    document.getElementById('origin').value = favorito.origen;
-                    document.getElementById('destination').value = favorito.destino;
-                    document.getElementById('km').value = favorito.km;
-                    document.getElementById('origin').readOnly = true;
-                    document.getElementById('destination').readOnly = true;
-                    document.getElementById('km').readOnly = true;
-                }
-            } else if (turnoId && rutasCOT[turnoId]) {
-                const ruta = rutasCOT[turnoId];
-                document.getElementById('origin').value = ruta.origen;
-                document.getElementById('destination').value = ruta.destino;
-                document.getElementById('km').value = ruta.km;
-                document.getElementById('origin').readOnly = true;
-                document.getElementById('destination').readOnly = true;
-                document.getElementById('km').readOnly = true;
-            } else {
-                document.getElementById('origin').value = '';
-                document.getElementById('destination').value = '';
-                document.getElementById('km').value = '';
-                document.getElementById('origin').readOnly = false;
-                document.getElementById('destination').readOnly = false;
-                document.getElementById('km').readOnly = false;
-            }
-        }
-        
-        function showScreen(screenId) {
-    document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+    // Remover active de todas las pestañas
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Mostrar pantalla seleccionada
     document.getElementById(screenId).classList.add('active');
     
-    if (screenId === 'mainScreen') /* updateMainStats(); */ // COMENTADO
-    if (screenId === 'summaryScreen') updateSummary();
-    if (screenId === 'travelsListScreen') renderTravels();  // ← ESTA LÍNEA DEBERÍA FUNCIONAR
-    if (screenId === 'guardsListScreen') renderGuards();
+    // Activar pestaña correspondiente
+    event.target.classList.add('active');
     
-    // Actualizar selector de destinos cuando se muestra la pantalla de viajes
-    if (screenId === 'travelScreen') {
-        actualizarSelectorDestinos();
+    // Actualizar datos específicos de cada pantalla
+    if (screenId === 'mainScreen') {
+        updateRecentTravels();
+    } else if (screenId === 'travelScreen') {
+        updateTravelTable();
+    } else if (screenId === 'guardScreen') {
+        updateGuardList();
     }
 }
-        
-        function setFecha(elementId, dias) {
-            const fecha = new Date();
-            fecha.setDate(fecha.getDate() + dias);
-            document.getElementById(elementId).value = fecha.toISOString().split('T')[0];
-        }
-        
-        // CONFIGURACIÓN INICIAL
-        document.addEventListener('DOMContentLoaded', function() {
-            const hoy = new Date().toISOString().split('T')[0];
-            document.getElementById('fechaViaje').value = hoy;
-            document.getElementById('fechaGuardia').value = hoy;
-            actualizarSelectorDestinos();
-            updateSummary();
-        });
-        
-        // AGREGAR VIAJE
-function addTravel() {
+
+// FUNCIONES DE VIAJES
+function addTravel(event) {
+    event.preventDefault();
+    
     const orderNumber = document.getElementById('orderNumber').value;
     const origin = document.getElementById('origin').value;
     const destination = document.getElementById('destination').value;
@@ -532,11 +588,11 @@ function addTravel() {
     const fechaInput = document.getElementById('fechaViaje').value;
     
     if (!orderNumber || !origin || !destination || !km || !departureTime || !arrivalTime) {
-        alert('Complete todos los campos');
+        alert('Complete todos los campos obligatorios');
         return;
     }
     
-    // CALCULAR HORAS TRABAJADAS PRIMERO (para validaciones y cálculos)
+    // CALCULAR HORAS TRABAJADAS PRIMERO
     const start = new Date(`2000-01-01T${departureTime}`);
     const end = new Date(`2000-01-01T${arrivalTime}`);
     let hoursWorked = (end - start) / (1000 * 60 * 60);
@@ -554,7 +610,6 @@ function addTravel() {
     // Si este es el primer viaje del orden, usar sus horas individuales
     const viajesDelOrden = travels.filter(t => t.orderNumber == orderNumber);
     if (viajesDelOrden.length === 0) {
-        // Es el primer viaje del orden - usar horas individuales temporalmente
         horasTotalesOrden = hoursWorked;
         console.log(`📝 Primer viaje del orden - horas temporales: ${horasTotalesOrden}`);
     }
@@ -579,13 +634,16 @@ function addTravel() {
     
     const travel = {
         id: Date.now(),
-        orderNumber, origin, destination, 
+        orderNumber, 
+        origin, 
+        destination, 
         km: kmTotal,
         kmRuta: km,
         acoplados: acoplados,
         type: travelType,
-        departureTime, arrivalTime, 
-        hoursWorked: hoursWorked, // Agregué esto para tener registro
+        departureTime, 
+        arrivalTime, 
+        hoursWorked: hoursWorked.toFixed(2),
         date: fechaViaje,
         viaticos: viaticos,
         timestamp: new Date().toISOString()
@@ -600,300 +658,457 @@ function addTravel() {
         guardarDestinoFavorito(origin, destination, km);
     }
     
-    // Limpiar campos
-    document.getElementById('orderNumber').value = '';
-    document.getElementById('turnoSeleccionado').value = '';
-    document.getElementById('origin').value = '';
-    document.getElementById('destination').value = '';
-    document.getElementById('km').value = '';
-    document.getElementById('departureTime').value = '';
-    document.getElementById('arrivalTime').value = '';
+    // Limpiar formulario
+    document.getElementById('travelForm').reset();
     
     updateSummary();
+    updateTravelTable();
+    updateRecentTravels();
+    
     alert('✅ Viaje agregado! ' + (viaticos ? '(Con viático)' : '') + 
           (turnoId === 'manual' ? ' ⭐ (Guardado como favorito)' : ''));
     showScreen('mainScreen');
 }
-        // AGREGAR GUARDIA
-        function addGuard() {
-            const guardType = document.getElementById('guardType').value;
-            const guardStart = document.getElementById('guardStart').value;
-            const guardEnd = document.getElementById('guardEnd').value;
-            const fechaInput = document.getElementById('fechaGuardia').value;
-            
-            if (!guardStart || !guardEnd) {
-                alert('Ingrese horario de inicio y fin');
-                return;
+
+function calcularHorasPorOrden(orderNumber) {
+    const viajesOrden = travels.filter(t => t.orderNumber == orderNumber);
+    return viajesOrden.reduce((total, viaje) => total + parseFloat(viaje.hoursWorked || 0), 0);
+}
+
+function guardarDestinoFavorito(origin, destination, km) {
+    const nuevoFavorito = {
+        id: Date.now(),
+        origin,
+        destination,
+        km,
+        timestamp: new Date().toISOString()
+    };
+    
+    // Evitar duplicados
+    const existe = favoriteDestinations.some(fav => 
+        fav.origin === origin && fav.destination === destination
+    );
+    
+    if (!existe) {
+        favoriteDestinations.push(nuevoFavorito);
+        localStorage.setItem('bus_favorites', JSON.stringify(favoriteDestinations));
+    }
+}
+
+function updateTravelTable() {
+    const travelList = document.getElementById('travelList');
+    travelList.innerHTML = '';
+    
+    if (travels.length === 0) {
+        travelList.innerHTML = '<tr><td colspan="8" class="no-data">No hay viajes registrados</td></tr>';
+        return;
+    }
+    
+    // Ordenar por fecha más reciente primero
+    travels.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    travels.forEach(travel => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td>${travel.date}</td>
+            <td>${travel.orderNumber}</td>
+            <td>${travel.origin}</td>
+            <td>${travel.destination}</td>
+            <td>${travel.km.toFixed(1)}</td>
+            <td>${travel.departureTime} - ${travel.arrivalTime}</td>
+            <td>${travel.viaticos ? '✅' : '❌'}</td>
+            <td>
+                <button class="btn-delete" onclick="deleteTravel(${travel.id})">🗑️</button>
+            </td>
+        `;
+        
+        travelList.appendChild(row);
+    });
+}
+
+function deleteTravel(travelId) {
+    if (confirm('¿Estás seguro de que quieres eliminar este viaje?')) {
+        travels = travels.filter(travel => travel.id !== travelId);
+        localStorage.setItem('bus_travels', JSON.stringify(travels));
+        updateTravelTable();
+        updateSummary();
+        updateRecentTravels();
+    }
+}
+
+// FUNCIONES DE GUARDIAS
+function addGuard(event) {
+    event.preventDefault();
+    
+    const orderNumber = document.getElementById('guardOrderNumber').value;
+    const driverName = document.getElementById('guardDriverName').value;
+    const startTime = document.getElementById('guardStartTime').value;
+    const endTime = document.getElementById('guardEndTime').value;
+    const guardType = document.getElementById('guardType').value;
+    const fechaInput = document.getElementById('guardFecha').value;
+    
+    if (!orderNumber || !driverName || !startTime || !endTime) {
+        alert('Complete todos los campos obligatorios');
+        return;
+    }
+    
+    // CALCULAR HORAS
+    const start = new Date(`2000-01-01T${startTime}`);
+    const end = new Date(`2000-01-01T${endTime}`);
+    let hours = (end - start) / (1000 * 60 * 60);
+    if (hours < 0) hours += 24;
+    
+    if (hours <= 0) {
+        alert('La hora de finalización debe ser posterior a la de inicio');
+        return;
+    }
+    
+    let fechaGuardia;
+    if (fechaInput) {
+        const [año, mes, dia] = fechaInput.split('-');
+        fechaGuardia = `${dia}/${mes}/${año}`;
+    } else {
+        fechaGuardia = new Date().toLocaleDateString('es-ES');
+    }
+    
+    const guard = {
+        id: Date.now(),
+        orderNumber,
+        driverName,
+        startTime,
+        endTime,
+        hours: hours.toFixed(2),
+        type: guardType,
+        date: fechaGuardia,
+        timestamp: new Date().toISOString()
+    };
+    
+    let savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+    savedGuards.push(guard);
+    localStorage.setItem('bus_guards', JSON.stringify(savedGuards));
+    
+    // Limpiar formulario
+    document.getElementById('guardForm').reset();
+    
+    updateGuardList();
+    updateSummary();
+    
+    alert('✅ Guardia agregada exitosamente!');
+    showScreen('mainScreen');
+}
+
+function updateGuardList() {
+    const guardList = document.getElementById('guardList');
+    guardList.innerHTML = '';
+    
+    const savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+    
+    if (savedGuards.length === 0) {
+        guardList.innerHTML = '<tr><td colspan="7" class="no-data">No hay guardias registrados</td></tr>';
+        return;
+    }
+    
+    // Ordenar por fecha más reciente primero
+    savedGuards.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    savedGuards.forEach((guard, index) => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td>${guard.date}</td>
+            <td>${guard.orderNumber}</td>
+            <td>${guard.driverName}</td>
+            <td>${guard.startTime} - ${guard.endTime}</td>
+            <td>${guard.hours}</td>
+            <td>${guard.type}</td>
+            <td>
+                <button class="btn-delete" onclick="deleteGuard(${guard.id})">🗑️</button>
+            </td>
+        `;
+        
+        guardList.appendChild(row);
+    });
+}
+
+function deleteGuard(guardId) {
+    if (confirm('¿Estás seguro de que quieres eliminar esta guardia?')) {
+        let savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+        savedGuards = savedGuards.filter(guard => guard.id !== guardId);
+        localStorage.setItem('bus_guards', JSON.stringify(savedGuards));
+        updateGuardList();
+        updateSummary();
+    }
+}
+
+// FUNCIONES DE RESUMEN Y UTILIDADES
+function updateSummary() {
+    const savedTravels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+    const savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+    
+    // Cálculos para viajes
+    const totalTravels = savedTravels.length;
+    const totalKm = savedTravels.reduce((sum, travel) => sum + travel.km, 0);
+    const totalViaticos = savedTravels.filter(travel => travel.viaticos).length;
+    
+    // Cálculos para guardias
+    const totalGuards = savedGuards.length;
+    const totalGuardHours = savedGuards.reduce((sum, guard) => sum + parseFloat(guard.hours), 0);
+    
+    // Cálculos para hoy
+    const today = new Date().toLocaleDateString('es-ES');
+    const todayTravels = savedTravels.filter(travel => travel.date === today).length;
+    
+    // Actualizar resumen
+    document.getElementById('totalTravels').textContent = totalTravels;
+    document.getElementById('totalKm').textContent = totalKm.toFixed(0);
+    document.getElementById('totalViaticos').textContent = totalViaticos;
+    document.getElementById('totalGuards').textContent = totalGuards;
+    document.getElementById('totalGuardHours').textContent = totalGuardHours.toFixed(2);
+    document.getElementById('todayTravels').textContent = todayTravels;
+}
+
+function updateRecentTravels() {
+    const recentTravels = document.getElementById('recentTravels');
+    recentTravels.innerHTML = '';
+    
+    const savedTravels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+    
+    if (savedTravels.length === 0) {
+        recentTravels.innerHTML = '<tr><td colspan="6" class="no-data">No hay viajes recientes</td></tr>';
+        return;
+    }
+    
+    // Ordenar por fecha más reciente y tomar los últimos 5
+    const recent = savedTravels
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        .slice(0, 5);
+    
+    recent.forEach(travel => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td>${travel.date}</td>
+            <td>${travel.orderNumber}</td>
+            <td>${travel.origin} → ${travel.destination}</td>
+            <td>${travel.km.toFixed(1)}</td>
+            <td>${travel.departureTime} - ${travel.arrivalTime}</td>
+            <td>${travel.viaticos ? '✅' : '❌'}</td>
+        `;
+        
+        recentTravels.appendChild(row);
+    });
+}
+
+function updateTodayDate() {
+    const today = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('todayDate').textContent = today.toLocaleDateString('es-ES', options);
+}
+
+// FUNCIONES DE BACKUP
+function exportData() {
+    const data = {
+        travels: JSON.parse(localStorage.getItem('bus_travels') || '[]'),
+        guards: JSON.parse(localStorage.getItem('bus_guards') || '[]'),
+        favorites: JSON.parse(localStorage.getItem('bus_favorites') || '[]'),
+        exportDate: new Date().toISOString(),
+        version: '1.0'
+    };
+    
+    downloadJSON(data, `backup_completo_${getCurrentDateTime()}.json`);
+}
+
+function exportTravels() {
+    const travels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+    const data = {
+        travels: travels,
+        exportDate: new Date().toISOString(),
+        total: travels.length
+    };
+    
+    downloadJSON(data, `backup_viajes_${getCurrentDateTime()}.json`);
+}
+
+function exportGuards() {
+    const guards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+    const data = {
+        guards: guards,
+        exportDate: new Date().toISOString(),
+        total: guards.length
+    };
+    
+    downloadJSON(data, `backup_guardias_${getCurrentDateTime()}.json`);
+}
+
+function downloadJSON(data, filename) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    alert(`✅ Archivo ${filename} descargado exitosamente`);
+}
+
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            document.getElementById('backupFile').dataset.importData = e.target.result;
+            document.getElementById('importStatus').textContent = `✅ Archivo cargado: ${file.name}`;
+            document.getElementById('importStatus').style.color = 'green';
+        } catch (error) {
+            document.getElementById('importStatus').textContent = '❌ Error: Archivo JSON inválido';
+            document.getElementById('importStatus').style.color = 'red';
+        }
+    };
+    reader.readAsText(file);
+}
+
+function importData() {
+    const importData = document.getElementById('backupFile').dataset.importData;
+    
+    if (!importData) {
+        alert('Por favor selecciona un archivo de backup primero');
+        return;
+    }
+    
+    try {
+        const data = JSON.parse(importData);
+        
+        if (confirm('¿Estás seguro de que quieres importar estos datos? Se sobrescribirán los datos actuales.')) {
+            if (data.travels) {
+                localStorage.setItem('bus_travels', JSON.stringify(data.travels));
+                travels = data.travels;
             }
             
-            const start = new Date(`2000-01-01T${guardStart}`);
-            const end = new Date(`2000-01-01T${guardEnd}`);
-            let hoursWorked = (end - start) / (1000 * 60 * 60);
-            if (hoursWorked < 0) hoursWorked += 24;
-            
-            const viaticos = hoursWorked >= 9 ? 1 : 0;
-            
-            let fechaGuardia;
-            if (fechaInput) {
-                const [año, mes, dia] = fechaInput.split('-');
-                fechaGuardia = `${dia}/${mes}/${año}`;
-            } else {
-                fechaGuardia = new Date().toLocaleDateString('es-ES');
+            if (data.guards) {
+                localStorage.setItem('bus_guards', JSON.stringify(data.guards));
             }
             
-            if (hoursWorked <= 0) {
-                alert('La hora de fin debe ser posterior');
-                return;
+            if (data.favorites) {
+                localStorage.setItem('bus_favorites', JSON.stringify(data.favorites));
+                favoriteDestinations = data.favorites;
             }
             
-            const kmPerHour = guardType === 'common' ? 30 : 40;
-            const totalKm = hoursWorked * kmPerHour;
-            
-           const guard = {
-    id: Date.now(),
-    orderNumber: document.getElementById('guardOrderNumber').value || '', // ← NUEVA LÍNEA
-    type: guardType, 
-    startTime: guardStart, 
-    endTime: guardEnd,
-    hours: hoursWorked.toFixed(2), 
-    km: totalKm.toFixed(1), 
-    viaticos: viaticos,
-    date: fechaGuardia
-};
-            
-            guards.push(guard);
-            localStorage.setItem('bus_guards', JSON.stringify(guards));
-            
-            document.getElementById('guardStart').value = '';
-            document.getElementById('guardEnd').value = '';
-            document.getElementById('guardOrderNumber').value = '';
+            // Actualizar toda la interfaz
             updateSummary();
-            alert('✅ Guardia agregada! ' + (viaticos ? '(Con viático)' : ''));
-            showScreen('mainScreen');
+            updateTravelTable();
+            updateGuardList();
+            updateRecentTravels();
+            
+            // Limpiar estado
+            document.getElementById('backupFile').value = '';
+            document.getElementById('backupFile').dataset.importData = '';
+            document.getElementById('importStatus').textContent = '';
+            
+            alert('✅ Datos importados exitosamente!');
         }
-        
-        function updateMainStats() {
-            const mainTotalKm = document.getElementById('mainTotalKm');
-            const mainTotalMoney = document.getElementById('mainTotalMoney');
-            const mainTotalTravels = document.getElementById('mainTotalTravels');
-            
-            if (!mainTotalKm || !mainTotalMoney || !mainTotalTravels) {
-                return;
-            }
-            
-            const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
-            const totalPassenger = travels.filter(t => t.type === 'passenger').reduce((sum, t) => sum + t.km, 0);
-            const totalGuards = guards.reduce((sum, g) => sum + parseFloat(g.km), 0);
-            const totalAll = totalWorking + totalPassenger + totalGuards;
-            const totalMoney = totalAll * PRICE_PER_KM;
-            
-            mainTotalKm.textContent = totalAll.toFixed(0);
-            mainTotalMoney.textContent = `$${totalMoney.toFixed(0)}`;
-            mainTotalTravels.textContent = travels.length;
-        }
-        
-        function updateSummary() {
-            const totalWorking = travels.filter(t => t.type === 'working').reduce((sum, t) => sum + t.km, 0);
-            const totalPassenger = travels.filter(t => t.type === 'passenger').reduce((sum, t) => sum + t.km, 0);
-            const totalGuards = guards.reduce((sum, g) => sum + parseFloat(g.km), 0);
-            const totalAll = totalWorking + totalPassenger + totalGuards;
-            const totalMoney = totalAll * PRICE_PER_KM;
-            
-            document.getElementById('totalWorking').textContent = totalWorking.toFixed(1);
-            document.getElementById('totalPassenger').textContent = totalPassenger.toFixed(1);
-            document.getElementById('totalGuards').textContent = totalGuards.toFixed(1);
-            document.getElementById('totalAll').textContent = totalAll.toFixed(1);
-            document.getElementById('totalMoney').textContent = totalMoney.toFixed(2);
-        }
-        
-        // MOSTRAR LISTAS MEJORADA
-        function renderTravels() {
-            const travelsList = document.getElementById('travelsList');
-            travelsList.innerHTML = '';
+    } catch (error) {
+        alert('❌ Error al importar datos: ' + error.message);
+    }
+}
 
-            if (travels.length === 0) {
-                travelsList.innerHTML = '<p>No hay viajes registrados</p>';
-                return;
-            }
+function clearAllData() {
+    if (confirm('⚠️ ¿ESTÁS ABSOLUTAMENTE SEGURO? Esto eliminará TODOS los datos de viajes y guardias. Esta acción no se puede deshacer.')) {
+        localStorage.removeItem('bus_travels');
+        localStorage.removeItem('bus_guards');
+        localStorage.removeItem('bus_favorites');
+        
+        travels = [];
+        favoriteDestinations = [];
+        
+        updateSummary();
+        updateTravelTable();
+        updateGuardList();
+        updateRecentTravels();
+        
+        alert('🗑️ Todos los datos han sido eliminados');
+    }
+}
 
-            // CREAR TABLA
-            const table = document.createElement('table');
-            table.style.width = '100%';
-            table.style.borderCollapse = 'collapse';
-            table.style.marginTop = '10px';
-
-            // ENCABEZADO DE TABLA
-            const header = document.createElement('tr');
-            header.innerHTML = `
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">ORDEN</th>
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">ORIGEN</th>
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: left;">DESTINO</th>
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">KM</th>
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">SALIDA</th>
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">LLEGADA</th>
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">VIAT</th>
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">ACOP</th>
-                <th style="padding: 10px; border-bottom: 2px solid var(--ocre); text-align: center;">ACCION</th>
-            `;
-            table.appendChild(header);
-
-            // FILAS DE DATOS
-            travels.forEach(travel => {
-                const row = document.createElement('tr');
-                row.style.borderBottom = '1px solid #eee';
-                
-                row.innerHTML = `
-                    <td style="padding: 8px; font-weight: bold;">${travel.orderNumber}</td>
-                    <td style="padding: 8px;">${travel.origin}</td>
-                    <td style="padding: 8px;">${travel.destination}</td>
-                    <td style="padding: 8px; text-align: center;">${travel.km}</td>
-                    <td style="padding: 8px; text-align: center;">${travel.departureTime || '-'}</td>
-                    <td style="padding: 8px; text-align: center;">${travel.arrivalTime || '-'}</td>
-                    <td style="padding: 8px; text-align: center; color: ${travel.viaticos ? 'green' : 'gray'}">${travel.viaticos ? 'Sí' : 'No'}</td>
-                    <td style="padding: 8px; text-align: center; color: ${travel.acoplados ? 'blue' : 'gray'}">${travel.acoplados ? '30' : '0'}</td>
-                    <td style="padding: 8px; text-align: center;">
-                        <button onclick="deleteTravel(${travel.id})" class="btn-danger btn-sm">Eliminar</button>
-                    </td>
-                `;
-                table.appendChild(row);
-            });
-
-            travelsList.appendChild(table);
-        }
-        
-        function renderGuards() {
-            const guardsList = document.getElementById('guardsList');
-            guardsList.innerHTML = '';
-            
-            if (guards.length === 0) {
-                guardsList.innerHTML = '<p>No hay guardias registradas</p>';
-                return;
+function generateSampleData() {
+    if (confirm('¿Generar datos de ejemplo? Esto agregará viajes y guardias de prueba.')) {
+        const sampleTravels = [
+            {
+                id: Date.now() + 1,
+                orderNumber: 'ORD-001',
+                origin: 'Depósito Central',
+                destination: 'Planta Norte',
+                km: 45.5,
+                kmRuta: 45.5,
+                acoplados: 0,
+                type: 'normal',
+                departureTime: '08:00',
+                arrivalTime: '09:30',
+                hoursWorked: '1.50',
+                date: new Date().toLocaleDateString('es-ES'),
+                viaticos: 0,
+                timestamp: new Date().toISOString()
+            },
+            {
+                id: Date.now() + 2,
+                orderNumber: 'ORD-002',
+                origin: 'Planta Norte',
+                destination: 'Puerto',
+                km: 85.0,
+                kmRuta: 85.0,
+                acoplados: 1,
+                type: 'directo',
+                departureTime: '10:00',
+                arrivalTime: '13:00',
+                hoursWorked: '3.00',
+                date: new Date().toLocaleDateString('es-ES'),
+                viaticos: 1,
+                timestamp: new Date().toISOString()
             }
-            
-            guards.forEach(guard => {
-                const guardItem = document.createElement('div');
-                guardItem.className = 'list-item';
-                guardItem.innerHTML = `
-                    <div class="list-item-header">
-                        <div class="list-item-title">Guardia ${guard.type === 'common' ? 'Común' : 'Especial'}</div>
-                        <button onclick="deleteGuard(${guard.id})" class="btn-danger btn-sm">Eliminar</button>
-                    </div>
-                    <p>${guard.startTime} - ${guard.endTime} (${guard.hours} horas)</p>
-                    <p>${guard.km} km - ${guard.date}</p>
-                `;
-                guardsList.appendChild(guardItem);
-            });
-        }
+        ];
         
-        // ELIMINAR
-        function deleteTravel(id) {
-            if (confirm('¿Eliminar este viaje?')) {
-                travels = travels.filter(travel => travel.id !== id);
-                localStorage.setItem('bus_travels', JSON.stringify(travels));
-                renderTravels();
-                updateSummary();
+        const sampleGuards = [
+            {
+                id: Date.now() + 3,
+                orderNumber: 'GUARD-001',
+                driverName: 'Juan Pérez',
+                startTime: '18:00',
+                endTime: '06:00',
+                hours: '12.00',
+                type: 'nocturna',
+                date: new Date().toLocaleDateString('es-ES'),
+                timestamp: new Date().toISOString()
             }
-        }
+        ];
         
-        function deleteGuard(id) {
-            if (confirm('¿Eliminar esta guardia?')) {
-                guards = guards.filter(guard => guard.id !== id);
-                localStorage.setItem('bus_guards', JSON.stringify(guards));
-                renderGuards();
-                updateSummary();
-            }
-        }
+        // Agregar datos de ejemplo
+        sampleTravels.forEach(travel => travels.push(travel));
+        localStorage.setItem('bus_travels', JSON.stringify(travels));
         
-        // REPORTES
-        function mostrarReporteHoy() {
-            const hoy = new Date().toLocaleDateString('es-ES');
-            const viajesHoy = travels.filter(t => t.date === hoy);
-            const guardiasHoy = guards.filter(g => g.date === hoy);
-            
-            let contenido = `
-                <h3>📅 Reporte del Día: ${hoy}</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
-                    <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; text-align: center;">
-                        <h4>🚌 Viajes Hoy</h4>
-                        <p><strong>Cantidad:</strong> ${viajesHoy.length}</p>
-                        <p><strong>Total KM:</strong> ${viajesHoy.reduce((sum, v) => sum + v.km, 0).toFixed(1)} km</p>
-                    </div>
-                    <div style="background: #f0fff0; padding: 15px; border-radius: 8px; text-align: center;">
-                        <h4>⏰ Guardias Hoy</h4>
-                        <p><strong>Cantidad:</strong> ${guardiasHoy.length}</p>
-                        <p><strong>Total KM:</strong> ${guardiasHoy.reduce((sum, g) => sum + parseFloat(g.km), 0).toFixed(1)} km</p>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('reportesContent').innerHTML = contenido;
-        }
+        let savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+        sampleGuards.forEach(guard => savedGuards.push(guard));
+        localStorage.setItem('bus_guards', JSON.stringify(savedGuards));
         
-        function mostrarReporteMes() {
-            const hoy = new Date();
-            const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-            const nombreMes = hoy.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-            
-            const viajesMes = travels.filter(viaje => {
-                const [dia, mes, año] = viaje.date.split('/');
-                const fechaViaje = new Date(año, mes - 1, dia);
-                return fechaViaje >= primerDiaMes;
-            });
-            
-            const guardiasMes = guards.filter(guardia => {
-                const [dia, mes, año] = guardia.date.split('/');
-                const fechaGuardia = new Date(año, mes - 1, dia);
-                return fechaGuardia >= primerDiaMes;
-            });
-            
-            let contenido = `
-                <h3>📈 Reporte del Mes: ${nombreMes}</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
-                    <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; text-align: center;">
-                        <h4>🚌 Viajes del Mes</h4>
-                        <p><strong>Cantidad:</strong> ${viajesMes.length}</p>
-                        <p><strong>Total KM:</strong> ${viajesMes.reduce((sum, v) => sum + v.km, 0).toFixed(1)} km</p>
-                    </div>
-                    <div style="background: #f0fff0; padding: 15px; border-radius: 8px; text-align: center;">
-                        <h4>⏰ Guardias del Mes</h4>
-                        <p><strong>Cantidad:</strong> ${guardiasMes.length}</p>
-                        <p><strong>Total KM:</strong> ${guardiasMes.reduce((sum, g) => sum + parseFloat(g.km), 0).toFixed(1)} km</p>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('reportesContent').innerHTML = contenido;
-        }
+        // Actualizar interfaz
+        updateSummary();
+        updateTravelTable();
+        updateGuardList();
+        updateRecentTravels();
         
-        // OTRAS FUNCIONES
-        function exportData() {
-            alert('📄 Funcionalidad de exportación - Próximamente');
-        }
-        
-        function clearMonth() {
-            if (confirm('¿Reiniciar todos los datos?')) {
-                travels = [];
-                guards = [];
-                localStorage.removeItem('bus_travels');
-                localStorage.removeItem('bus_guards');
-                updateSummary();
-                renderTravels();
-                renderGuards();
-            }
-        }
-        
-        // SERVICE WORKER
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW registrado'))
-                    .catch(err => console.log('SW error:', err));
-            });
-        }
-    </script>
-</body>
-</html>
+        alert('🎯 Datos de ejemplo generados exitosamente!');
+    }
+}
 
+function getCurrentDateTime() {
+    const now = new Date();
+    return now.toISOString().slice(0, 19).replace(/:/g, '-');
+}
 
 
 
