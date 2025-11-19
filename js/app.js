@@ -178,26 +178,50 @@ function addTravel(event) {
     localStorage.setItem('bus_travels', JSON.stringify(travels));
     
     // ACTUALIZAR VIÁTICOS DE TODAS LAS ACTIVIDADES DEL MISMO ORDEN
-    actualizarViaticosPorOrden(orderNumber, fechaViaje, horasTotalesOrden);
+    function actualizarViaticosPorOrden(orderNumber, fecha, horasTotales) {
+    const viaticos = horasTotales >= 9 ? 1 : 0;
     
-    // GUARDAR COMO FAVORITO SI ES MANUAL
-    const turnoId = document.getElementById('turnoSeleccionado').value;
-    if (turnoId === 'manual') {
-        guardarDestinoFavorito(origin, destination, km);
+    console.log(`🔄 Actualizando viáticos para orden ${orderNumber} (${fecha}): ${viaticos ? 'SÍ' : 'NO'}`);
+    
+    // Actualizar todos los viajes del mismo orden y fecha (SOLO si cambió el estado de viáticos)
+    let viajesActualizados = false;
+    travels.forEach(travel => {
+        if (travel.orderNumber === orderNumber && travel.date === fecha) {
+            // Solo actualizar si cambió el estado del viático
+            if (travel.viaticos !== viaticos) {
+                travel.viaticos = viaticos;
+                viajesActualizados = true;
+            }
+        }
+    });
+    
+    // Actualizar todas las guardias del mismo orden y fecha (SOLO si cambió el estado de viáticos)
+    let guardiasActualizadas = false;
+    let savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+    savedGuards.forEach(guard => {
+        if (guard.orderNumber === orderNumber && guard.date === fecha) {
+            // Solo actualizar si cambió el estado del viático
+            if (guard.viaticos !== viaticos) {
+                guard.viaticos = viaticos;
+                guardiasActualizadas = true;
+            }
+        }
+    });
+    
+    // Guardar en localStorage solo si hubo cambios
+    if (viajesActualizados) {
+        localStorage.setItem('bus_travels', JSON.stringify(travels));
+    }
+    if (guardiasActualizadas) {
+        localStorage.setItem('bus_guards', JSON.stringify(savedGuards));
     }
     
-    // Limpiar formulario
-    document.getElementById('travelForm').reset();
-    
-    updateSummary();
-    updateTravelTable();
-    updateRecentTravels();
-    
-    alert('✅ Viaje agregado! ' + (viaticos ? '(Con viático)' : '') + 
-          (turnoId === 'manual' ? ' ⭐ (Guardado como favorito)' : ''));
-    showScreen('mainScreen');
+    if (viajesActualizados || guardiasActualizadas) {
+        console.log(`✅ Viáticos actualizados para orden ${orderNumber} (${fecha}): ${viaticos ? 'SÍ' : 'NO'}`);
+    } else {
+        console.log(`ℹ️  No hubo cambios en viáticos para orden ${orderNumber} (${fecha})`);
+    }
 }
-
 // FUNCIONES DE GUARDIAS
 function addGuard(event) {
     event.preventDefault();
