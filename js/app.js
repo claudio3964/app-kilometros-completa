@@ -9,7 +9,13 @@ document.addEventListener('DOMContentLoaded', function() {
     updateGuardList();
     updateRecentTravels();
     updateTodayDate();
-    // NUEVA FUNCIÓN: RESUMEN CONSOLIDADO POR ÓRDENES
+    updateConsolidatedSummary();
+    
+    // Configurar evento para importar datos
+    document.getElementById('backupFile').addEventListener('change', handleFileSelect);
+});
+
+// NUEVA FUNCIÓN: RESUMEN CONSOLIDADO POR ÓRDENES
 function updateConsolidatedSummary() {
     const consolidatedContainer = document.getElementById('consolidatedSummary');
     if (!consolidatedContainer) return;
@@ -133,9 +139,6 @@ function updateConsolidatedSummary() {
     
     consolidatedContainer.innerHTML = html;
 }
-    // Configurar evento para importar datos
-    document.getElementById('backupFile').addEventListener('change', handleFileSelect);
-});
 
 // FUNCIONES DE NAVEGACIÓN
 function showScreen(screenId) {
@@ -569,10 +572,12 @@ function updateSummary() {
     document.getElementById('totalGuardHours').textContent = totalGuardHours.toFixed(2);
     document.getElementById('todayTravels').textContent = todayTravels;
 }
- updateConsolidatedSummary();
 
+// FUNCIÓN COMPLETADA - VIAJES RECIENTES
 function updateRecentTravels() {
     const recentTravels = document.getElementById('recentTravels');
+    if (!recentTravels) return;
+    
     recentTravels.innerHTML = '';
     
     const savedTravels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
