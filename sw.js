@@ -1,3 +1,4 @@
+
 const CACHE_NAME = 'cot-app-v2';
 const ASSETS_TO_CACHE = [
   './',
