@@ -148,24 +148,21 @@ function showScreen(screenId) {
         screen.classList.remove('active');
     });
     
-    // Remover active de todas las pestañas
-    document.querySelectorAll('.nav-tab').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    
     // Mostrar pantalla seleccionada
     document.getElementById(screenId).classList.add('active');
     
-    // Activar pestaña correspondiente
-    event.target.classList.add('active');
-    
     // Actualizar datos específicos de cada pantalla
     if (screenId === 'mainScreen') {
+        updateSummary();
         updateRecentTravels();
     } else if (screenId === 'travelScreen') {
         updateTravelTable();
     } else if (screenId === 'guardScreen') {
         updateGuardList();
+    } else if (screenId === 'travelListScreen') {
+        updateAllTravelsList();
+    } else if (screenId === 'guardListScreen') {
+        updateAllGuardsList();
     }
 }
 
@@ -817,4 +814,67 @@ function generateSampleData() {
 function getCurrentDateTime() {
     const now = new Date();
     return now.toISOString().slice(0, 19).replace(/:/g, '-');
+}
+// FUNCIONES PARA LAS NUEVAS PANTALLAS
+function updateAllTravelsList() {
+    const allTravelsList = document.getElementById('allTravelsList');
+    if (!allTravelsList) return;
+    
+    allTravelsList.innerHTML = '';
+    
+    if (travels.length === 0) {
+        allTravelsList.innerHTML = '<tr><td colspan="7" class="no-data">No hay viajes registrados</td></tr>';
+        return;
+    }
+    
+    // Ordenar por fecha más reciente primero
+    const sortedTravels = [...travels].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    sortedTravels.forEach(travel => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td>${travel.date}</td>
+            <td>${travel.orderNumber}</td>
+            <td>${travel.origin}</td>
+            <td>${travel.destination}</td>
+            <td>${travel.km.toFixed(1)}</td>
+            <td>${travel.departureTime} - ${travel.arrivalTime}</td>
+            <td>${travel.viaticos ? '✅' : '❌'}</td>
+        `;
+        
+        allTravelsList.appendChild(row);
+    });
+}
+
+function updateAllGuardsList() {
+    const allGuardsList = document.getElementById('allGuardsList');
+    if (!allGuardsList) return;
+    
+    allGuardsList.innerHTML = '';
+    
+    const savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+    
+    if (savedGuards.length === 0) {
+        allGuardsList.innerHTML = '<tr><td colspan="6" class="no-data">No hay guardias registrados</td></tr>';
+        return;
+    }
+    
+    // Ordenar por fecha más reciente primero
+    const sortedGuards = [...savedGuards].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    sortedGuards.forEach(guard => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td>${guard.date}</td>
+            <td>${guard.orderNumber}</td>
+            <td>${guard.driverName}</td>
+            <td>${guard.startTime} - ${guard.endTime}</td>
+            <td>${guard.hours}</td>
+            <td>${guard.type}</td>
+        `;
+        
+        allGuardsList.appendChild(row);
+    });
 }
