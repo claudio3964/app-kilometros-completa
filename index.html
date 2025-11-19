@@ -4,121 +4,196 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Viajes y Guardias</title>
-   <link rel="stylesheet" href="css/styles.css">
+    <title>Gestión de Viajes en Bus</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>🚌 Gestión de Viajes y Guardias</h1>
-            <div class="subtitle">Sistema de control de operaciones de transporte</div>
-        </header>
-
-        <nav class="nav-tabs">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>🚌 Gestión de Viajes en Bus</h1>
+            <p id="todayDate"></p>
+        </div>
+        
+        <!-- NAVEGACIÓN -->
+        <div class="nav-tabs">
             <button class="nav-tab active" onclick="showScreen('mainScreen')">🏠 Inicio</button>
             <button class="nav-tab" onclick="showScreen('travelScreen')">🚗 Viajes</button>
             <button class="nav-tab" onclick="showScreen('guardScreen')">🛡️ Guardias</button>
             <button class="nav-tab" onclick="showScreen('backupScreen')">💾 Backup</button>
-        </nav>
-
+        </div>
+        
         <!-- PANTALLA PRINCIPAL -->
         <div id="mainScreen" class="screen active">
-            <h2>📊 Resumen General</h2>
-            <div class="summary-cards">
+            <!-- RESUMEN CONSOLIDADO -->
+            <div id="consolidatedSummary" class="consolidated-summary">
+                <!-- Se llena dinámicamente -->
+            </div>
+            
+            <!-- RESUMEN GENERAL -->
+            <div class="summary-grid">
                 <div class="summary-card">
-                    <h3>📈 Viajes</h3>
-                    <p>Total: <span id="totalTravels">0</span></p>
-                    <p>Kilómetros: <span id="totalKm">0</span></p>
-                    <p>Viáticos: <span id="totalViaticos">0</span></p>
+                    <h3>Total Viajes</h3>
+                    <div class="number" id="totalTravels">0</div>
                 </div>
                 <div class="summary-card">
-                    <h3>🛡️ Guardias</h3>
-                    <p>Total: <span id="totalGuards">0</span></p>
-                    <p>Horas: <span id="totalGuardHours">0</span></p>
+                    <h3>Kilómetros Totales</h3>
+                    <div class="number" id="totalKm">0</div>
                 </div>
                 <div class="summary-card">
-                    <h3>📅 Hoy</h3>
-                    <p id="todayDate">Cargando...</p>
-                    <p>Viajes hoy: <span id="todayTravels">0</span></p>
+                    <h3>Viáticos Totales</h3>
+                    <div class="number" id="totalViaticos">0</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Total Guardias</h3>
+                    <div class="number" id="totalGuards">0</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Horas de Guardia</h3>
+                    <div class="number" id="totalGuardHours">0</div>
+                </div>
+                <div class="summary-card">
+                    <h3>Viajes Hoy</h3>
+                    <div class="number" id="todayTravels">0</div>
                 </div>
             </div>
-
-           <div class="table-container">
-    <div id="consolidatedSummary">
-        <!-- El resumen consolidado se cargará aquí automáticamente -->
-    </div>
-</div>
-
-        <!-- PANTALLA DE VIAJES -->
-        <div id="travelScreen" class="screen">
-            <h2>🚗 Gestión de Viajes</h2>
             
-            <form id="travelForm" onsubmit="addTravel(event)">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="orderNumber">Número de Orden *</label>
-                        <input type="text" id="orderNumber" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="origin">Origen *</label>
-                        <input type="text" id="origin" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="destination">Destino *</label>
-                        <input type="text" id="destination" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="km">Kilómetros *</label>
-                        <input type="number" id="km" step="0.1" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="travelType">Tipo de Viaje</label>
-                        <select id="travelType">
-                            <option value="normal">Normal</option>
-                            <option value="especial">Especial</option>
-                            <option value="urgente">Urgente</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="fechaViaje">Fecha del Viaje</label>
-                        <input type="date" id="fechaViaje">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="departureTime">Hora de Salida *</label>
-                        <input type="time" id="departureTime" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="arrivalTime">Hora de Llegada *</label>
-                        <input type="time" id="arrivalTime" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="turnoSeleccionado">Turno/Plantilla</label>
-                        <select id="turnoSeleccionado">
-                            <option value="manual">Manual</option>
-                            <option value="directo">Directo (+30km)</option>
-                            <option value="normal">Normal</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <button type="submit" class="btn-primary">✅ Agregar Viaje</button>
-            </form>
-
+            <!-- VIAJES RECIENTES -->
             <div class="table-container">
-                <h3>📋 Lista de Viajes</h3>
-                <table class="data-table">
+                <h3 style="padding: 20px; background: #34495e; color: white; margin: 0;">📋 Viajes Recientes</h3>
+                <table>
                     <thead>
                         <tr>
                             <th>Fecha</th>
-                            <th>N° Orden</th>
+                            <th>Orden</th>
+                            <th>Ruta</th>
+                            <th>KM</th>
+                            <th>Horario</th>
+                            <th>Viático</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentTravels">
+                        <!-- Se llena dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- FORMULARIO RÁPIDO VIAJE -->
+            <div class="form-container">
+                <h3 style="margin-bottom: 20px; color: #2c3e50;">➕ Agregar Viaje Rápido</h3>
+                <form id="travelForm" onsubmit="addTravel(event)">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div class="form-group">
+                            <label for="orderNumber">Número de Orden *</label>
+                            <input type="text" id="orderNumber" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="origin">Origen *</label>
+                            <input type="text" id="origin" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="destination">Destino *</label>
+                            <input type="text" id="destination" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="km">Kilómetros *</label>
+                            <input type="number" id="km" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="travelType">Tipo de Viaje</label>
+                            <select id="travelType">
+                                <option value="normal">Normal</option>
+                                <option value="especial">Especial</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="turnoSeleccionado">Turno</label>
+                            <select id="turnoSeleccionado">
+                                <option value="directo">Directo</option>
+                                <option value="normal">Normal</option>
+                                <option value="manual">Manual (Guardar como favorito)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="departureTime">Hora Salida *</label>
+                            <input type="time" id="departureTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="arrivalTime">Hora Llegada *</label>
+                            <input type="time" id="arrivalTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fechaViaje">Fecha (opcional)</label>
+                            <input type="date" id="fechaViaje">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">➕ Agregar Viaje</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- PANTALLA VIAJES -->
+        <div id="travelScreen" class="screen">
+            <div class="form-container">
+                <h3 style="margin-bottom: 20px; color: #2c3e50;">🚗 Gestión de Viajes</h3>
+                <form id="travelFormDetailed" onsubmit="addTravel(event)">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div class="form-group">
+                            <label for="orderNumberTravels">Número de Orden *</label>
+                            <input type="text" id="orderNumberTravels" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="originTravels">Origen *</label>
+                            <input type="text" id="originTravels" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="destinationTravels">Destino *</label>
+                            <input type="text" id="destinationTravels" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="kmTravels">Kilómetros *</label>
+                            <input type="number" id="kmTravels" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="travelTypeTravels">Tipo de Viaje</label>
+                            <select id="travelTypeTravels">
+                                <option value="normal">Normal</option>
+                                <option value="especial">Especial</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="turnoSeleccionadoTravels">Turno</label>
+                            <select id="turnoSeleccionadoTravels">
+                                <option value="directo">Directo</option>
+                                <option value="normal">Normal</option>
+                                <option value="manual">Manual (Guardar como favorito)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="departureTimeTravels">Hora Salida *</label>
+                            <input type="time" id="departureTimeTravels" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="arrivalTimeTravels">Hora Llegada *</label>
+                            <input type="time" id="arrivalTimeTravels" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fechaViajeTravels">Fecha (opcional)</label>
+                            <input type="date" id="fechaViajeTravels">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">➕ Agregar Viaje</button>
+                </form>
+            </div>
+            
+            <!-- LISTA DE VIAJES -->
+            <div class="table-container">
+                <h3 style="padding: 20px; background: #34495e; color: white; margin: 0;">📋 Todos los Viajes</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Orden</th>
                             <th>Origen</th>
                             <th>Destino</th>
                             <th>KM</th>
@@ -128,63 +203,59 @@
                         </tr>
                     </thead>
                     <tbody id="travelList">
-                        <!-- Los viajes se cargarán aquí -->
+                        <!-- Se llena dinámicamente -->
                     </tbody>
                 </table>
             </div>
         </div>
-
-        <!-- PANTALLA DE GUARDIAS -->
+        
+        <!-- PANTALLA GUARDIAS -->
         <div id="guardScreen" class="screen">
-            <h2>🛡️ Gestión de Guardias</h2>
+            <div class="form-container">
+                <h3 style="margin-bottom: 20px; color: #2c3e50;">🛡️ Gestión de Guardias</h3>
+                <form id="guardForm" onsubmit="addGuard(event)">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div class="form-group">
+                            <label for="guardOrderNumber">Número de Orden *</label>
+                            <input type="text" id="guardOrderNumber" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="guardDriverName">Nombre Conductor *</label>
+                            <input type="text" id="guardDriverName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="guardStartTime">Hora Inicio *</label>
+                            <input type="time" id="guardStartTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="guardEndTime">Hora Fin *</label>
+                            <input type="time" id="guardEndTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="guardType">Tipo de Guardia</label>
+                            <select id="guardType">
+                                <option value="diurna">Diurna</option>
+                                <option value="nocturna">Nocturna</option>
+                                <option value="mixta">Mixta</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="guardFecha">Fecha (opcional)</label>
+                            <input type="date" id="guardFecha">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary">➕ Agregar Guardia</button>
+                </form>
+            </div>
             
-            <form id="guardForm" onsubmit="addGuard(event)">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="guardOrderNumber">Número de Orden *</label>
-                        <input type="text" id="guardOrderNumber" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="guardDriverName">Nombre del Conductor *</label>
-                        <input type="text" id="guardDriverName" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="guardStartTime">Hora de Inicio *</label>
-                        <input type="time" id="guardStartTime" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="guardEndTime">Hora de Fin *</label>
-                        <input type="time" id="guardEndTime" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="guardType">Tipo de Guardia</label>
-                        <select id="guardType">
-                            <option value="diurna">Diurna</option>
-                            <option value="nocturna">Nocturna</option>
-                            <option value="mixta">Mixta</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="guardFecha">Fecha de Guardia</label>
-                        <input type="date" id="guardFecha">
-                    </div>
-                </div>
-                
-                <button type="submit" class="btn-primary">✅ Agregar Guardia</button>
-            </form>
-
+            <!-- LISTA DE GUARDIAS -->
             <div class="table-container">
-                <h3>📋 Lista de Guardias</h3>
-                <table class="data-table">
+                <h3 style="padding: 20px; background: #34495e; color: white; margin: 0;">📋 Todas las Guardias</h3>
+                <table>
                     <thead>
                         <tr>
                             <th>Fecha</th>
-                            <th>N° Orden</th>
+                            <th>Orden</th>
                             <th>Conductor</th>
                             <th>Horario</th>
                             <th>Horas</th>
@@ -193,57 +264,54 @@
                         </tr>
                     </thead>
                     <tbody id="guardList">
-                        <!-- Las guardias se cargarán aquí -->
+                        <!-- Se llena dinámicamente -->
                     </tbody>
                 </table>
             </div>
         </div>
-
-        <!-- PANTALLA DE BACKUP -->
+        
+        <!-- PANTALLA BACKUP -->
         <div id="backupScreen" class="screen">
-            <h2>💾 Copias de Seguridad</h2>
-            
-            <div class="backup-section">
-                <h3>📥 Exportar Datos</h3>
-                <p>Descarga todos los datos en formato JSON para realizar copias de seguridad.</p>
-                <div class="backup-buttons">
-                    <button class="btn-backup" onclick="exportData()">📥 Exportar Todos los Datos</button>
-                    <button class="btn-backup" onclick="exportTravels()">🚗 Exportar Solo Viajes</button>
-                    <button class="btn-backup" onclick="exportGuards()">🛡️ Exportar Solo Guardias</button>
+            <div class="form-container">
+                <h3 style="margin-bottom: 20px; color: #2c3e50;">💾 Backup y Restauración</h3>
+                
+                <!-- EXPORTAR DATOS -->
+                <div style="margin-bottom: 30px;">
+                    <h4 style="color: #27ae60; margin-bottom: 15px;">📤 Exportar Datos</h4>
+                    <div class="backup-actions">
+                        <button class="backup-btn" onclick="exportData()">💾 Backup Completo</button>
+                        <button class="backup-btn" onclick="exportTravels()">🚗 Solo Viajes</button>
+                        <button class="backup-btn" onclick="exportGuards()">🛡️ Solo Guardias</button>
+                    </div>
                 </div>
-            </div>
-
-            <div class="backup-section">
-                <h3>📤 Importar Datos</h3>
-                <p>Restaura los datos desde un archivo JSON previamente exportado.</p>
-                <div class="backup-buttons">
-                    <input type="file" id="backupFile" accept=".json" style="display: none;">
-                    <button class="btn-backup btn-restore" onclick="document.getElementById('backupFile').click()">
-                        📤 Seleccionar Archivo de Backup
-                    </button>
-                    <button class="btn-backup btn-restore" onclick="importData()">
-                        🔄 Restaurar Datos
-                    </button>
+                
+                <!-- IMPORTAR DATOS -->
+                <div style="margin-bottom: 30px;">
+                    <h4 style="color: #3498db; margin-bottom: 15px;">📥 Importar Datos</h4>
+                    <div class="form-group">
+                        <label for="backupFile">Seleccionar archivo JSON de backup</label>
+                        <input type="file" id="backupFile" accept=".json">
+                        <div id="importStatus" style="margin-top: 10px; font-weight: bold;"></div>
+                    </div>
+                    <button class="backup-btn" onclick="importData()" style="margin-top: 10px;">🔄 Restaurar Backup</button>
                 </div>
-                <p id="importStatus" style="margin-top: 10px;"></p>
-            </div>
-
-            <div class="backup-section">
-                <h3>🔄 Acciones Rápidas</h3>
-                <div class="backup-buttons">
-                    <button class="btn-backup" onclick="clearAllData()" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
-                        🗑️ Limpiar Todos los Datos
-                    </button>
-                    <button class="btn-backup" onclick="generateSampleData()" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
-                        🎯 Generar Datos de Ejemplo
-                    </button>
+                
+                <!-- HERRAMIENTAS -->
+                <div>
+                    <h4 style="color: #e74c3c; margin-bottom: 15px;">⚙️ Herramientas</h4>
+                    <div class="backup-actions">
+                        <button class="backup-btn warning" onclick="generateSampleData()">🎯 Generar Datos de Ejemplo</button>
+                        <button class="backup-btn danger" onclick="clearAllData()">🗑️ Eliminar Todos los Datos</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-   <script src="js/app.js"></script>    
+
+    <script src="js/app.js"></script>
 </body>
 </html>
+
 
 
 
