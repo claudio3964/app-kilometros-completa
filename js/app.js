@@ -269,7 +269,7 @@ function addGuard(event) {
     showScreen('mainScreen');
 }
 
-// FUNCIÓN CORREGIDA PARA ACTUALIZAR VIÁTICOS
+// FUNCIÓN ACTUALIZADA PARA ACTUALIZAR VIÁTICOS
 function actualizarViaticosPorOrden(orderNumber, fecha, horasTotales) {
     const viaticos = horasTotales >= 9 ? 1 : 0;
     
