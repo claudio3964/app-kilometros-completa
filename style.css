@@ -321,3 +321,26 @@ input:focus, select:focus {
         grid-template-columns: 1fr;
     }
 }
+/* BOTÓN VOLVER */
+.screen-header {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background: white;
+    border-bottom: 1px solid #e9ecef;
+    margin-bottom: 20px;
+}
+
+.back-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 15px;
+}
+
+.back-btn:hover {
+    background: #5a6268;
+}
