@@ -268,3 +268,69 @@ input:focus, select:focus {
         flex-direction: column;
     }
 }
+/* ESTILOS PARA RESUMEN CONSOLIDADO */
+.consolidated-header {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px 10px 0 0;
+    margin-bottom: 0;
+}
+
+.consolidated-header h3 {
+    margin: 0;
+    font-size: 1.3em;
+}
+
+.order-summary {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    margin: 10px 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.order-header {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+    padding: 12px 15px;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.order-details {
+    padding: 15px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.order-details span {
+    background: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    font-size: 0.95em;
+}
+
+.daily-totals {
+    background: linear-gradient(135deg, #27ae60, #229954);
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    text-align: center;
+    font-size: 1.1em;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .order-details {
+        grid-template-columns: 1fr;
+    }
+    
+    .order-details span {
+        text-align: center;
+    }
+}
