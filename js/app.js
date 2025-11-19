@@ -1,4 +1,5 @@
 
+
 // VARIABLES GLOBALES
 let travels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
 let favoriteDestinations = JSON.parse(localStorage.getItem('bus_favorites') || '[]');
@@ -72,16 +73,9 @@ function addTravel(event) {
         return;
     }
     
-    // CALCULAR VIÁTICOS POR NÚMERO DE ORDEN
-    let horasTotalesOrden = calcularHorasPorOrden(orderNumber);
-    console.log(`🕒 Orden ${orderNumber}: ${horasTotalesOrden} horas totales`);
-
-    // Si este es el primer viaje del orden, usar sus horas individuales
-    const viajesDelOrden = travels.filter(t => t.orderNumber == orderNumber);
-    if (viajesDelOrden.length === 0) {
-        horasTotalesOrden = hoursWorked;
-        console.log(`📝 Primer viaje del orden - horas temporales: ${horasTotalesOrden}`);
-    }
+    // CALCULAR HORAS ACUMULADAS POR ORDEN (CORREGIDO)
+    let horasTotalesOrden = calcularHorasPorOrden(orderNumber) + hoursWorked;
+    console.log(`🕒 Orden ${orderNumber}: ${horasTotalesOrden} horas totales (acumuladas)`);
 
     const viaticos = horasTotalesOrden >= 9 ? 1 : 0;
     console.log(`💰 Viático para orden ${orderNumber}: ${viaticos ? 'SÍ' : 'NO'}`);
@@ -121,6 +115,9 @@ function addTravel(event) {
     travels.push(travel);
     localStorage.setItem('bus_travels', JSON.stringify(travels));
     
+    // ACTUALIZAR VIÁTICOS DE TODOS LOS VIAJES DEL MISMO ORDEN
+    actualizarViaticosPorOrden(orderNumber, horasTotalesOrden);
+    
     // GUARDAR COMO FAVORITO SI ES MANUAL
     const turnoId = document.getElementById('turnoSeleccionado').value;
     if (turnoId === 'manual') {
@@ -137,6 +134,23 @@ function addTravel(event) {
     alert('✅ Viaje agregado! ' + (viaticos ? '(Con viático)' : '') + 
           (turnoId === 'manual' ? ' ⭐ (Guardado como favorito)' : ''));
     showScreen('mainScreen');
+}
+
+// NUEVA FUNCIÓN PARA ACTUALIZAR VIÁTICOS
+function actualizarViaticosPorOrden(orderNumber, horasTotales) {
+    const viaticos = horasTotales >= 9 ? 1 : 0;
+    
+    // Actualizar todos los viajes del mismo orden
+    travels.forEach(travel => {
+        if (travel.orderNumber === orderNumber) {
+            travel.viaticos = viaticos;
+        }
+    });
+    
+    // Guardar en localStorage
+    localStorage.setItem('bus_travels', JSON.stringify(travels));
+    
+    console.log(`🔄 Actualizados viáticos para orden ${orderNumber}: ${viaticos ? 'SÍ' : 'NO'}`);
 }
 
 function calcularHorasPorOrden(orderNumber) {
