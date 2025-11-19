@@ -23,113 +23,59 @@
         </div>
         
         <!-- PANTALLA PRINCIPAL -->
-        <div id="mainScreen" class="screen active">
-            <!-- RESUMEN CONSOLIDADO -->
-            <div id="consolidatedSummary" class="consolidated-summary">
-                <!-- Se llena dinámicamente -->
-            </div>
-            
-            <!-- RESUMEN GENERAL -->
-            <div class="summary-grid">
-                <div class="summary-card">
-                    <h3>Total Viajes</h3>
-                    <div class="number" id="totalTravels">0</div>
-                </div>
-                <div class="summary-card">
-                    <h3>Kilómetros Totales</h3>
-                    <div class="number" id="totalKm">0</div>
-                </div>
-                <div class="summary-card">
-                    <h3>Viáticos Totales</h3>
-                    <div class="number" id="totalViaticos">0</div>
-                </div>
-                <div class="summary-card">
-                    <h3>Total Guardias</h3>
-                    <div class="number" id="totalGuards">0</div>
-                </div>
-                <div class="summary-card">
-                    <h3>Horas de Guardia</h3>
-                    <div class="number" id="totalGuardHours">0</div>
-                </div>
-                <div class="summary-card">
-                    <h3>Viajes Hoy</h3>
-                    <div class="number" id="todayTravels">0</div>
-                </div>
-            </div>
-            
-            <!-- VIAJES RECIENTES -->
-            <div class="table-container">
-                <h3 style="padding: 20px; background: #34495e; color: white; margin: 0;">📋 Viajes Recientes</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Orden</th>
-                            <th>Ruta</th>
-                            <th>KM</th>
-                            <th>Horario</th>
-                            <th>Viático</th>
-                        </tr>
-                    </thead>
-                    <tbody id="recentTravels">
-                        <!-- Se llena dinámicamente -->
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- FORMULARIO RÁPIDO VIAJE -->
-            <div class="form-container">
-                <h3 style="margin-bottom: 20px; color: #2c3e50;">➕ Agregar Viaje Rápido</h3>
-                <form id="travelForm" onsubmit="addTravel(event)">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                        <div class="form-group">
-                            <label for="orderNumber">Número de Orden *</label>
-                            <input type="text" id="orderNumber" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="origin">Origen *</label>
-                            <input type="text" id="origin" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="destination">Destino *</label>
-                            <input type="text" id="destination" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="km">Kilómetros *</label>
-                            <input type="number" id="km" step="0.1" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="travelType">Tipo de Viaje</label>
-                            <select id="travelType">
-                                <option value="normal">Normal</option>
-                                <option value="especial">Especial</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="turnoSeleccionado">Turno</label>
-                            <select id="turnoSeleccionado">
-                                <option value="directo">Directo</option>
-                                <option value="normal">Normal</option>
-                                <option value="manual">Manual (Guardar como favorito)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="departureTime">Hora Salida *</label>
-                            <input type="time" id="departureTime" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="arrivalTime">Hora Llegada *</label>
-                            <input type="time" id="arrivalTime" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="fechaViaje">Fecha (opcional)</label>
-                            <input type="date" id="fechaViaje">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn-primary">➕ Agregar Viaje</button>
-                </form>
-            </div>
+       <div id="mainScreen" class="screen active">
+    <!-- LOGO -->
+    <div class="logo-container">
+        <div class="app-logo">🚌</div>
+        <h1 class="app-title">Gestión de Viajes</h1>
+        <p class="app-subtitle">Sistema de control de flota</p>
+    </div>
+
+    <!-- MENÚ DE BOTONES -->
+    <div class="menu-container">
+        <h2 class="menu-title">¿Qué deseas hacer?</h2>
+        
+        <div class="button-grid">
+            <!-- FILA 1 -->
+            <button class="menu-btn primary" onclick="showScreen('travelScreen')">
+                <span class="btn-icon">🚗</span>
+                <span class="btn-text">Nuevo Viaje</span>
+                <span class="btn-desc">Registrar nuevo viaje</span>
+            </button>
+
+            <button class="menu-btn secondary" onclick="showScreen('guardScreen')">
+                <span class="btn-icon">🛡️</span>
+                <span class="btn-text">Nueva Guardia</span>
+                <span class="btn-desc">Agregar turno de guardia</span>
+            </button>
+
+            <!-- FILA 2 -->
+            <button class="menu-btn info" onclick="showScreen('travelListScreen')">
+                <span class="btn-icon">📋</span>
+                <span class="btn-text">Ver Viajes</span>
+                <span class="btn-desc">Lista de viajes registrados</span>
+            </button>
+
+            <button class="menu-btn warning" onclick="showScreen('guardListScreen')">
+                <span class="btn-icon">👥</span>
+                <span class="btn-text">Ver Guardias</span>
+                <span class="btn-desc">Lista de guardias activas</span>
+            </button>
+
+            <!-- FILA 3 -->
+            <button class="menu-btn success" onclick="showScreen('reportsScreen')">
+                <span class="btn-icon">📊</span>
+                <span class="btn-text">Reportes</span>
+                <span class="btn-desc">Estadísticas y reportes</span>
+            </button>
+
+            <button class="menu-btn dark" onclick="showScreen('backupScreen')">
+                <span class="btn-icon">💾</span>
+                <span class="btn-text">Backup</span>
+                <span class="btn-desc">Exportar/importar datos</span>
+            </button>
         </div>
+    </div>
         
         <!-- PANTALLA VIAJES -->
         <div id="travelScreen" class="screen">
@@ -310,6 +256,7 @@
    <script src="app.js"></script>
 </body>
 </html>
+
 
 
 
