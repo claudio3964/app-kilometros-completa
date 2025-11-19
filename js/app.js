@@ -570,7 +570,7 @@ function updateSummary() {
     document.getElementById('todayTravels').textContent = todayTravels;
 }
  updateConsolidatedSummary();
-}
+
 function updateRecentTravels() {
     const recentTravels = document.getElementById('recentTravels');
     recentTravels.innerHTML = '';
