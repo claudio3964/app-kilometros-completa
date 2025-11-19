@@ -9,7 +9,130 @@ document.addEventListener('DOMContentLoaded', function() {
     updateGuardList();
     updateRecentTravels();
     updateTodayDate();
+    // NUEVA FUNCIÓN: RESUMEN CONSOLIDADO POR ÓRDENES
+function updateConsolidatedSummary() {
+    const consolidatedContainer = document.getElementById('consolidatedSummary');
+    if (!consolidatedContainer) return;
     
+    const savedTravels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+    const savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+    const today = new Date().toLocaleDateString('es-ES');
+    
+    // Agrupar actividades por número de orden y fecha
+    const orders = {};
+    
+    // Procesar viajes
+    savedTravels.forEach(travel => {
+        if (travel.date === today) {
+            if (!orders[travel.orderNumber]) {
+                orders[travel.orderNumber] = {
+                    travels: [],
+                    guards: [],
+                    totalKM: 0,
+                    acoplados: 0,
+                    firstTime: '23:59',
+                    lastTime: '00:00'
+                };
+            }
+            orders[travel.orderNumber].travels.push(travel);
+            orders[travel.orderNumber].totalKM += travel.km;
+            orders[travel.orderNumber].acoplados += travel.acoplados;
+            
+            // Actualizar horarios
+            if (travel.departureTime < orders[travel.orderNumber].firstTime) {
+                orders[travel.orderNumber].firstTime = travel.departureTime;
+            }
+            if (travel.arrivalTime > orders[travel.orderNumber].lastTime) {
+                orders[travel.orderNumber].lastTime = travel.arrivalTime;
+            }
+        }
+    });
+    
+    // Procesar guardias
+    savedGuards.forEach(guard => {
+        if (guard.date === today) {
+            if (!orders[guard.orderNumber]) {
+                orders[guard.orderNumber] = {
+                    travels: [],
+                    guards: [],
+                    totalKM: 0,
+                    acoplados: 0,
+                    firstTime: '23:59',
+                    lastTime: '00:00'
+                };
+            }
+            orders[guard.orderNumber].guards.push(guard);
+            
+            // Actualizar horarios
+            if (guard.startTime < orders[guard.orderNumber].firstTime) {
+                orders[guard.orderNumber].firstTime = guard.startTime;
+            }
+            if (guard.endTime > orders[guard.orderNumber].lastTime) {
+                orders[guard.orderNumber].lastTime = guard.endTime;
+            }
+        }
+    });
+    
+    // Calcular horas totales y viáticos por orden
+    Object.keys(orders).forEach(orderNumber => {
+        const order = orders[orderNumber];
+        const start = new Date(`2000-01-01T${order.firstTime}`);
+        const end = new Date(`2000-01-01T${order.lastTime}`);
+        let totalHours = (end - start) / (1000 * 60 * 60);
+        if (totalHours < 0) totalHours += 24;
+        
+        order.totalHours = totalHours;
+        order.hasViatico = totalHours >= 9;
+    });
+    
+    // Generar HTML del resumen
+    let html = `
+        <div class="consolidated-header">
+            <h3>📋 RESUMEN DEL DÍA - ${today}</h3>
+        </div>
+    `;
+    
+    if (Object.keys(orders).length === 0) {
+        html += `<div class="no-data">No hay actividades registradas hoy</div>`;
+    } else {
+        Object.keys(orders).forEach(orderNumber => {
+            const order = orders[orderNumber];
+            const statusColor = order.hasViatico ? '🟢' : '🔴';
+            const viaticoText = order.hasViatico ? '1 viático' : '0 viáticos';
+            
+            html += `
+                <div class="order-summary">
+                    <div class="order-header">
+                        ${statusColor} ORDEN ${orderNumber}
+                    </div>
+                    <div class="order-details">
+                        <span>🚗 ${order.travels.length} viajes (${order.totalKM.toFixed(0)} KM)</span>
+                        <span>🛡️ ${order.guards.length} guardias</span>
+                        <span>🎯 ${order.acoplados} acoplado(s)</span>
+                        <span>💰 ${viaticoText}</span>
+                        <span>🕒 ${order.totalHours.toFixed(1)} horas</span>
+                    </div>
+                </div>
+            `;
+        });
+        
+        // Totales del día
+        const totalViajes = Object.values(orders).reduce((sum, order) => sum + order.travels.length, 0);
+        const totalGuardias = Object.values(orders).reduce((sum, order) => sum + order.guards.length, 0);
+        const totalAcoplados = Object.values(orders).reduce((sum, order) => sum + order.acoplados, 0);
+        const totalViaticos = Object.values(orders).reduce((sum, order) => sum + (order.hasViatico ? 1 : 0), 0);
+        
+        html += `
+            <div class="daily-totals">
+                <strong>📈 TOTALES DEL DÍA:</strong>
+                🚗 ${totalViajes} viajes | 🛡️ ${totalGuardias} guardias | 
+                🎯 ${totalAcoplados} acoplados | 💰 ${totalViaticos} viáticos
+            </div>
+        `;
+    }
+    
+    consolidatedContainer.innerHTML = html;
+}
     // Configurar evento para importar datos
     document.getElementById('backupFile').addEventListener('change', handleFileSelect);
 });
@@ -446,7 +569,8 @@ function updateSummary() {
     document.getElementById('totalGuardHours').textContent = totalGuardHours.toFixed(2);
     document.getElementById('todayTravels').textContent = todayTravels;
 }
-
+ updateConsolidatedSummary();
+}
 function updateRecentTravels() {
     const recentTravels = document.getElementById('recentTravels');
     recentTravels.innerHTML = '';
