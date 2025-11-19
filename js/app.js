@@ -1,5 +1,3 @@
-
-
 // VARIABLES GLOBALES
 let travels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
 let favoriteDestinations = JSON.parse(localStorage.getItem('bus_favorites') || '[]');
@@ -44,6 +42,71 @@ function showScreen(screenId) {
     }
 }
 
+// NUEVA FUNCIÓN PARA CALCULAR HORAS POR ORDEN (UNIFICADO)
+function calcularHorasTotalesOrden(orderNumber, fecha) {
+    // Obtener todos los viajes del orden en la fecha
+    const viajesOrden = travels.filter(t => 
+        t.orderNumber == orderNumber && t.date === fecha
+    );
+    
+    // Obtener todas las guardias del orden en la fecha
+    const savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+    const guardiasOrden = savedGuards.filter(g => 
+        g.orderNumber == orderNumber && g.date === fecha
+    );
+    
+    // Si no hay actividades, retornar 0
+    if (viajesOrden.length === 0 && guardiasOrden.length === 0) {
+        return 0;
+    }
+    
+    // Encontrar el horario más temprano
+    let horarioInicio = '23:59';
+    
+    // Revisar viajes
+    viajesOrden.forEach(viaje => {
+        if (viaje.departureTime < horarioInicio) {
+            horarioInicio = viaje.departureTime;
+        }
+    });
+    
+    // Revisar guardias
+    guardiasOrden.forEach(guardia => {
+        if (guardia.startTime < horarioInicio) {
+            horarioInicio = guardia.startTime;
+        }
+    });
+    
+    // Encontrar el horario más tardío
+    let horarioFin = '00:00';
+    
+    // Revisar viajes
+    viajesOrden.forEach(viaje => {
+        if (viaje.arrivalTime > horarioFin) {
+            horarioFin = viaje.arrivalTime;
+        }
+    });
+    
+    // Revisar guardias
+    guardiasOrden.forEach(guardia => {
+        if (guardia.endTime > horarioFin) {
+            horarioFin = guardia.endTime;
+        }
+    });
+    
+    // Calcular horas totales
+    const start = new Date(`2000-01-01T${horarioInicio}`);
+    const end = new Date(`2000-01-01T${horarioFin}`);
+    let horasTotales = (end - start) / (1000 * 60 * 60);
+    
+    // Ajustar si cruza medianoche
+    if (horasTotales < 0) horasTotales += 24;
+    
+    console.log(`🕒 Orden ${orderNumber} (${fecha}): ${horarioInicio} - ${horarioFin} = ${horasTotales.toFixed(2)} horas`);
+    
+    return horasTotales;
+}
+
 // FUNCIONES DE VIAJES
 function addTravel(event) {
     event.preventDefault();
@@ -73,20 +136,6 @@ function addTravel(event) {
         return;
     }
     
-    // CALCULAR HORAS ACUMULADAS POR ORDEN (CORREGIDO)
-    let horasTotalesOrden = calcularHorasPorOrden(orderNumber) + hoursWorked;
-    console.log(`🕒 Orden ${orderNumber}: ${horasTotalesOrden} horas totales (acumuladas)`);
-
-    const viaticos = horasTotalesOrden >= 9 ? 1 : 0;
-    console.log(`💰 Viático para orden ${orderNumber}: ${viaticos ? 'SÍ' : 'NO'}`);
-    
-    // CALCULAR ACOPLADOS
-    const turnoSeleccionado = document.getElementById('turnoSeleccionado');
-    const descripcionTurno = turnoSeleccionado.options[turnoSeleccionado.selectedIndex].text;
-    const esDirecto = descripcionTurno.includes('Directo');
-    const acoplados = esDirecto ? 1 : 0;
-    const kmTotal = esDirecto ? km + 30 : km;
-    
     let fechaViaje;
     if (fechaInput) {
         const [año, mes, dia] = fechaInput.split('-');
@@ -94,6 +143,19 @@ function addTravel(event) {
     } else {
         fechaViaje = new Date().toLocaleDateString('es-ES');
     }
+    
+    // CALCULAR HORAS TOTALES (GUARDIAS + VIAJES) - NUEVA LÓGICA
+    const horasTotalesOrden = calcularHorasTotalesOrden(orderNumber, fechaViaje);
+    const viaticos = horasTotalesOrden >= 9 ? 1 : 0;
+    
+    console.log(`💰 Viático para orden ${orderNumber}: ${viaticos ? 'SÍ' : 'NO'} (${horasTotalesOrden.toFixed(2)} horas totales)`);
+    
+    // CALCULAR ACOPLADOS
+    const turnoSeleccionado = document.getElementById('turnoSeleccionado');
+    const descripcionTurno = turnoSeleccionado.options[turnoSeleccionado.selectedIndex].text;
+    const esDirecto = descripcionTurno.includes('Directo');
+    const acoplados = esDirecto ? 1 : 0;
+    const kmTotal = esDirecto ? km + 30 : km;
     
     const travel = {
         id: Date.now(),
@@ -115,8 +177,8 @@ function addTravel(event) {
     travels.push(travel);
     localStorage.setItem('bus_travels', JSON.stringify(travels));
     
-    // ACTUALIZAR VIÁTICOS DE TODOS LOS VIAJES DEL MISMO ORDEN
-    actualizarViaticosPorOrden(orderNumber, horasTotalesOrden);
+    // ACTUALIZAR VIÁTICOS DE TODAS LAS ACTIVIDADES DEL MISMO ORDEN
+    actualizarViaticosPorOrden(orderNumber, fechaViaje, horasTotalesOrden);
     
     // GUARDAR COMO FAVORITO SI ES MANUAL
     const turnoId = document.getElementById('turnoSeleccionado').value;
@@ -136,26 +198,101 @@ function addTravel(event) {
     showScreen('mainScreen');
 }
 
-// NUEVA FUNCIÓN PARA ACTUALIZAR VIÁTICOS
-function actualizarViaticosPorOrden(orderNumber, horasTotales) {
+// FUNCIONES DE GUARDIAS
+function addGuard(event) {
+    event.preventDefault();
+    
+    const orderNumber = document.getElementById('guardOrderNumber').value;
+    const driverName = document.getElementById('guardDriverName').value;
+    const startTime = document.getElementById('guardStartTime').value;
+    const endTime = document.getElementById('guardEndTime').value;
+    const guardType = document.getElementById('guardType').value;
+    const fechaInput = document.getElementById('guardFecha').value;
+    
+    if (!orderNumber || !driverName || !startTime || !endTime) {
+        alert('Complete todos los campos obligatorios');
+        return;
+    }
+    
+    // CALCULAR HORAS
+    const start = new Date(`2000-01-01T${startTime}`);
+    const end = new Date(`2000-01-01T${endTime}`);
+    let hours = (end - start) / (1000 * 60 * 60);
+    if (hours < 0) hours += 24;
+    
+    if (hours <= 0) {
+        alert('La hora de finalización debe ser posterior a la de inicio');
+        return;
+    }
+    
+    let fechaGuardia;
+    if (fechaInput) {
+        const [año, mes, dia] = fechaInput.split('-');
+        fechaGuardia = `${dia}/${mes}/${año}`;
+    } else {
+        fechaGuardia = new Date().toLocaleDateString('es-ES');
+    }
+    
+    // CALCULAR HORAS TOTALES (GUARDIAS + VIAJES) - NUEVA LÓGICA
+    const horasTotalesOrden = calcularHorasTotalesOrden(orderNumber, fechaGuardia);
+    const viaticos = horasTotalesOrden >= 9 ? 1 : 0;
+    
+    console.log(`💰 Viático para orden ${orderNumber}: ${viaticos ? 'SÍ' : 'NO'} (${horasTotalesOrden.toFixed(2)} horas totales)`);
+    
+    const guard = {
+        id: Date.now(),
+        orderNumber,
+        driverName,
+        startTime,
+        endTime,
+        hours: hours.toFixed(2),
+        type: guardType,
+        date: fechaGuardia,
+        viaticos: viaticos,
+        timestamp: new Date().toISOString()
+    };
+    
+    let savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+    savedGuards.push(guard);
+    localStorage.setItem('bus_guards', JSON.stringify(savedGuards));
+    
+    // ACTUALIZAR VIÁTICOS DE TODAS LAS ACTIVIDADES DEL MISMO ORDEN
+    actualizarViaticosPorOrden(orderNumber, fechaGuardia, horasTotalesOrden);
+    
+    // Limpiar formulario
+    document.getElementById('guardForm').reset();
+    
+    updateGuardList();
+    updateSummary();
+    
+    alert('✅ Guardia agregada exitosamente! ' + (viaticos ? '(Con viático)' : ''));
+    showScreen('mainScreen');
+}
+
+// FUNCIÓN ACTUALIZADA PARA ACTUALIZAR VIÁTICOS
+function actualizarViaticosPorOrden(orderNumber, fecha, horasTotales) {
     const viaticos = horasTotales >= 9 ? 1 : 0;
     
-    // Actualizar todos los viajes del mismo orden
+    // Actualizar todos los viajes del mismo orden y fecha
     travels.forEach(travel => {
-        if (travel.orderNumber === orderNumber) {
+        if (travel.orderNumber === orderNumber && travel.date === fecha) {
             travel.viaticos = viaticos;
+        }
+    });
+    
+    // Actualizar todas las guardias del mismo orden y fecha
+    let savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+    savedGuards.forEach(guard => {
+        if (guard.orderNumber === orderNumber && guard.date === fecha) {
+            guard.viaticos = viaticos;
         }
     });
     
     // Guardar en localStorage
     localStorage.setItem('bus_travels', JSON.stringify(travels));
+    localStorage.setItem('bus_guards', JSON.stringify(savedGuards));
     
-    console.log(`🔄 Actualizados viáticos para orden ${orderNumber}: ${viaticos ? 'SÍ' : 'NO'}`);
-}
-
-function calcularHorasPorOrden(orderNumber) {
-    const viajesOrden = travels.filter(t => t.orderNumber == orderNumber);
-    return viajesOrden.reduce((total, viaje) => total + parseFloat(viaje.hoursWorked || 0), 0);
+    console.log(`🔄 Actualizados viáticos para orden ${orderNumber} (${fecha}): ${viaticos ? 'SÍ' : 'NO'}`);
 }
 
 function guardarDestinoFavorito(origin, destination, km) {
@@ -218,67 +355,6 @@ function deleteTravel(travelId) {
         updateSummary();
         updateRecentTravels();
     }
-}
-
-// FUNCIONES DE GUARDIAS
-function addGuard(event) {
-    event.preventDefault();
-    
-    const orderNumber = document.getElementById('guardOrderNumber').value;
-    const driverName = document.getElementById('guardDriverName').value;
-    const startTime = document.getElementById('guardStartTime').value;
-    const endTime = document.getElementById('guardEndTime').value;
-    const guardType = document.getElementById('guardType').value;
-    const fechaInput = document.getElementById('guardFecha').value;
-    
-    if (!orderNumber || !driverName || !startTime || !endTime) {
-        alert('Complete todos los campos obligatorios');
-        return;
-    }
-    
-    // CALCULAR HORAS
-    const start = new Date(`2000-01-01T${startTime}`);
-    const end = new Date(`2000-01-01T${endTime}`);
-    let hours = (end - start) / (1000 * 60 * 60);
-    if (hours < 0) hours += 24;
-    
-    if (hours <= 0) {
-        alert('La hora de finalización debe ser posterior a la de inicio');
-        return;
-    }
-    
-    let fechaGuardia;
-    if (fechaInput) {
-        const [año, mes, dia] = fechaInput.split('-');
-        fechaGuardia = `${dia}/${mes}/${año}`;
-    } else {
-        fechaGuardia = new Date().toLocaleDateString('es-ES');
-    }
-    
-    const guard = {
-        id: Date.now(),
-        orderNumber,
-        driverName,
-        startTime,
-        endTime,
-        hours: hours.toFixed(2),
-        type: guardType,
-        date: fechaGuardia,
-        timestamp: new Date().toISOString()
-    };
-    
-    let savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
-    savedGuards.push(guard);
-    localStorage.setItem('bus_guards', JSON.stringify(savedGuards));
-    
-    // Limpiar formulario
-    document.getElementById('guardForm').reset();
-    
-    updateGuardList();
-    updateSummary();
-    
-    alert('✅ Guardia agregada exitosamente!');
-    showScreen('mainScreen');
 }
 
 function updateGuardList() {
