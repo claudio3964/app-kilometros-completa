@@ -34,32 +34,46 @@ body {
 
 /* TABLAS */
 .table-container {
-    background: white;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    overflow: hidden;
-    margin-bottom: 20px;
-}
-
-table {
     width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 15px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid #e0e0e0;
+    background: white;
+}
+
+.table-container table {
+    width: 100%;
+    min-width: 600px;
     border-collapse: collapse;
+    background: white;
 }
 
-th, td {
-    padding: 15px;
-    text-align: left;
-    border-bottom: 1px solid #ecf0f1;
-}
-
-th {
-    background: #34495e;
+.table-container th {
+    background: #3498db;
     color: white;
+    padding: 12px 8px;
+    text-align: left;
     font-weight: 600;
+    font-size: 14px;
+    position: sticky;
+    left: 0;
 }
 
-tr:hover {
-    background: #f8f9fa;
+.table-container td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #ecf0f1;
+    font-size: 14px;
+}
+
+.table-container tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.table-container tr:hover {
+    background-color: #e8f4fc;
 }
 
 /* FORMULARIOS */
@@ -320,51 +334,7 @@ input:focus, select:focus {
         grid-template-columns: 1fr;
     }
 
-/* ===== RESPONSIVE PARA TABLAS EN MÓVIL ===== */
-.table-container {
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    margin: 15px 0;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    border: 1px solid #e0e0e0;
-}
-
-.table-container table {
-    width: 100%;
-    min-width: 600px;
-    border-collapse: collapse;
-    background: white;
-}
-
-.table-container th {
-    background: #3498db;
-    color: white;
-    padding: 12px 8px;
-    text-align: left;
-    font-weight: 600;
-    font-size: 14px;
-    position: sticky;
-    left: 0;
-}
-
-.table-container td {
-    padding: 10px 8px;
-    border-bottom: 1px solid #ecf0f1;
-    font-size: 14px;
-}
-
-.table-container tr:nth-child(even) {
-    background-color: #f8f9fa;
-}
-
-.table-container tr:hover {
-    background-color: #e8f4fc;
-}
-
-/* Estilos específicos para móvil */
-@media (max-width: 768px) {
+    /* TABLAS EN MÓVIL */
     .table-container {
         margin: 10px 0;
         border-radius: 6px;
@@ -380,7 +350,7 @@ input:focus, select:focus {
         padding: 10px 6px;
         font-size: 13px;
     }
-}
+} /* ← ESTA ES LA LLAVE QUE FALTABA CERRAR */
 
 /* Para pantallas muy pequeñas */
 @media (max-width: 480px) {
