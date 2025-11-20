@@ -319,3 +319,97 @@ input:focus, select:focus {
     .backup-actions {
         grid-template-columns: 1fr;
     }
+
+/* ===== RESPONSIVE PARA TABLAS EN MÓVIL ===== */
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 15px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 1px solid #e0e0e0;
+}
+
+.table-container table {
+    width: 100%;
+    min-width: 600px;
+    border-collapse: collapse;
+    background: white;
+}
+
+.table-container th {
+    background: #3498db;
+    color: white;
+    padding: 12px 8px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 14px;
+    position: sticky;
+    left: 0;
+}
+
+.table-container td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #ecf0f1;
+    font-size: 14px;
+}
+
+.table-container tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.table-container tr:hover {
+    background-color: #e8f4fc;
+}
+
+/* Estilos específicos para móvil */
+@media (max-width: 768px) {
+    .table-container {
+        margin: 10px 0;
+        border-radius: 6px;
+    }
+    
+    .table-container th,
+    .table-container td {
+        padding: 8px 6px;
+        font-size: 13px;
+    }
+    
+    .table-container th {
+        padding: 10px 6px;
+        font-size: 13px;
+    }
+}
+
+/* Para pantallas muy pequeñas */
+@media (max-width: 480px) {
+    .table-container table {
+        min-width: 650px;
+    }
+    
+    .table-container th,
+    .table-container td {
+        padding: 6px 4px;
+        font-size: 12px;
+    }
+}
+
+/* Scrollbar personalizado */
+.table-container::-webkit-scrollbar {
+    height: 6px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: #3498db;
+    border-radius: 3px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: #2980b9;
+}
