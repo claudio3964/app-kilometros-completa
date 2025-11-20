@@ -88,19 +88,134 @@
     </div>
 </div>
         <!-- PANTALLA VIAJES -->
-        <div id="travelScreen" class="screen">
-            <!-- (mantener el contenido actual de travelScreen) -->
-        </div>
+
+            <div id="travelScreen" class="screen">
+    <div class="screen-header">
+        <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
+        <h2>🚗 Nuevo Viaje</h2>
+    </div>
+    <div class="form-container">
+        <form id="travelFormDetailed" onsubmit="addTravel(event)">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div class="form-group">
+                    <label for="orderNumberTravels">Número de Orden *</label>
+                    <input type="text" id="orderNumberTravels" required>
+                </div>
+                <div class="form-group">
+                    <label for="originTravels">Origen *</label>
+                    <input type="text" id="originTravels" required>
+                </div>
+                <div class="form-group">
+                    <label for="destinationTravels">Destino *</label>
+                    <input type="text" id="destinationTravels" required>
+                </div>
+                <div class="form-group">
+                    <label for="kmTravels">Kilómetros *</label>
+                    <input type="number" id="kmTravels" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label for="travelTypeTravels">Tipo de Viaje</label>
+                    <select id="travelTypeTravels">
+                        <option value="normal">Normal</option>
+                        <option value="especial">Especial</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="departureTimeTravels">Hora Salida *</label>
+                    <input type="time" id="departureTimeTravels" required>
+                </div>
+                <div class="form-group">
+                    <label for="arrivalTimeTravels">Hora Llegada *</label>
+                    <input type="time" id="arrivalTimeTravels" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary">➕ Agregar Viaje</button>
+        </form>
+    </div>
+</div>
+        
 
         <!-- PANTALLA GUARDIAS -->
-        <div id="guardScreen" class="screen">
-            <!-- (mantener el contenido actual de guardScreen) -->
-        </div>
+        
+           <div id="guardScreen" class="screen">
+    <div class="screen-header">
+        <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
+        <h2>🛡️ Nueva Guardia</h2>
+    </div>
+    <div class="form-container">
+        <form id="guardForm" onsubmit="addGuard(event)">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div class="form-group">
+                    <label for="guardOrderNumber">Número de Orden *</label>
+                    <input type="text" id="guardOrderNumber" required>
+                </div>
+                <div class="form-group">
+                    <label for="guardDriverName">Nombre Conductor *</label>
+                    <input type="text" id="guardDriverName" required>
+                </div>
+                <div class="form-group">
+                    <label for="guardStartTime">Hora Inicio *</label>
+                    <input type="time" id="guardStartTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="guardEndTime">Hora Fin *</label>
+                    <input type="time" id="guardEndTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="guardType">Tipo de Guardia</label>
+                    <select id="guardType">
+                        <option value="diurna">Diurna</option>
+                        <option value="nocturna">Nocturna</option>
+                        <option value="mixta">Mixta</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn-primary">➕ Agregar Guardia</button>
+        </form>
+    </div>
+</div>
+       
 
         <!-- PANTALLA BACKUP -->
-        <div id="backupScreen" class="screen">
-            <!-- (mantener el contenido actual de backupScreen) -->
+        
+            <div id="backupScreen" class="screen">
+    <div class="screen-header">
+        <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
+        <h2>💾 Backup y Restauración</h2>
+    </div>
+    <div class="form-container">
+        <!-- EXPORTAR DATOS -->
+        <div style="margin-bottom: 30px;">
+            <h4 style="color: #27ae60; margin-bottom: 15px;">📤 Exportar Datos</h4>
+            <div class="backup-actions">
+                <button class="backup-btn" onclick="exportData()">💾 Backup Completo</button>
+                <button class="backup-btn" onclick="exportTravels()">🚗 Solo Viajes</button>
+                <button class="backup-btn" onclick="exportGuards()">🛡️ Solo Guardias</button>
+            </div>
         </div>
+        
+        <!-- IMPORTAR DATOS -->
+        <div style="margin-bottom: 30px;">
+            <h4 style="color: #3498db; margin-bottom: 15px;">📥 Importar Datos</h4>
+            <div class="form-group">
+                <label for="backupFile">Seleccionar archivo JSON de backup</label>
+                <input type="file" id="backupFile" accept=".json">
+                <div id="importStatus" style="margin-top: 10px; font-weight: bold;"></div>
+            </div>
+            <button class="backup-btn" onclick="importData()" style="margin-top: 10px;">🔄 Restaurar Backup</button>
+        </div>
+        
+        <!-- HERRAMIENTAS -->
+        <div>
+            <h4 style="color: #e74c3c; margin-bottom: 15px;">⚙️ Herramientas</h4>
+            <div class="backup-actions">
+                <button class="backup-btn warning" onclick="generateSampleData()">🎯 Generar Datos de Ejemplo</button>
+                <button class="backup-btn danger" onclick="clearAllData()">🗑️ Eliminar Todos los Datos</button>
+            </div>
+        </div>
+    </div>
+</div>
+        
 
         <!-- PANTALLA DE LISTA DE VIAJES -->
         <div id="travelListScreen" class="screen">
@@ -169,6 +284,7 @@
     <script src="app.js"></script>
 </body>
 </html>
+
 
 
 
