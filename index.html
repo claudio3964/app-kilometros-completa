@@ -217,31 +217,18 @@
 </div>
         
 
-        <!-- PANTALLA DE LISTA DE VIAJES -->
-        <div id="travelListScreen" class="screen">
-            <div class="screen-header">
-                <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
-                <h2>📋 Lista de Viajes</h2>
-            </div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Orden</th>
-                            <th>Origen</th>
-                            <th>Destino</th>
-                            <th>KM</th>
-                            <th>Horario</th>
-                            <th>Viático</th>
-                        </tr>
-                    </thead>
-                    <tbody id="allTravelsList">
-                        <!-- Se llenará con JavaScript -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        <!-- REEMPLAZÁ la tabla de viajes por esto: -->
+<div id="travelListScreen" class="screen">
+    <div class="screen-header">
+        <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
+        <h2>📋 Lista de Viajes</h2>
+    </div>
+    
+    <div class="lista-container" id="allTravelsList">
+        <!-- Se llenará con JavaScript -->
+        <div class="no-data">No hay viajes registrados</div>
+    </div>
+</div>
 
         <!-- PANTALLA DE LISTA DE GUARDIAS -->
         <div id="guardListScreen" class="screen">
@@ -284,6 +271,7 @@
     <script src="app.js"></script>
 </body>
 </html>
+
 
 
 
