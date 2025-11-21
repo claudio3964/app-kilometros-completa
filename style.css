@@ -383,3 +383,124 @@ input:focus, select:focus {
 .table-container::-webkit-scrollbar-thumb:hover {
     background: #2980b9;
 }
+/* ===== LISTAS MEJORADAS - VIAJES Y GUARDIAS ===== */
+.lista-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 10px 20px;
+}
+
+.item-viaje, .item-guardia {
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid #e74c3c;
+}
+
+.item-guardia {
+    border-left-color: #3498db;
+}
+
+.item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.orden-numero {
+    font-weight: bold;
+    color: #2c3e50;
+    font-size: 16px;
+}
+
+.fecha-item {
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.ruta-viaje {
+    font-weight: 600;
+    color: #34495e;
+    margin-bottom: 8px;
+    font-size: 15px;
+}
+
+.detalles-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.detalle-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.detalle-label {
+    font-size: 12px;
+    color: #7f8c8d;
+    margin-bottom: 2px;
+}
+
+.detalle-valor {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.viatico-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    background: #e8f6f3;
+    color: #27ae60;
+    margin-right: 8px;
+    margin-bottom: 5px;
+}
+
+.tipo-guardia {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.tipo-diurna { background: #e8f6f3; color: #27ae60; }
+.tipo-nocturna { background: #fef9e7; color: #f39c12; }
+.tipo-mixta { background: #ebf5fb; color: #3498db; }
+
+.tarifa-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    background: #fdebd0;
+    color: #e67e22;
+}
+
+/* Responsive para las nuevas listas */
+@media (max-width: 480px) {
+    .item-viaje, .item-guardia {
+        padding: 15px;
+    }
+    
+    .detalles-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .item-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+}
