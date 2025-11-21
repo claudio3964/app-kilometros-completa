@@ -1,3 +1,4 @@
+
 // VARIABLES GLOBALES
 let travels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
 let favoriteDestinations = JSON.parse(localStorage.getItem('bus_favorites') || '[]');
@@ -112,10 +113,57 @@ const serviciosDB = {
         ]
     }
 };
+
 // VARIABLES DEL SISTEMA INTELIGENTE
 let rutaSeleccionada = null;
 let servicioSeleccionado = null;
 let modoActual = 'regular';
+
+// 🆕 SISTEMA DE AUTO-DETECCIÓN DE RUTAS
+function detectarYCrearRuta(origin, destination, numeroServicio, tipoServicio, conAcoplado) {
+    const rutaKey = `${origin.toUpperCase().replace(/ /g, '_')}-${destination.toUpperCase().replace(/ /g, '_')}`;
+    
+    // Si la ruta ya existe, no hacer nada
+    if (serviciosDB[rutaKey]) {
+        return rutaKey;
+    }
+    
+    // CREAR NUEVA RUTA AUTOMÁTICAMENTE
+    serviciosDB[rutaKey] = {
+        nombre: `${origin} → ${destination}`,
+        servicios: [
+            { 
+                numero: numeroServicio, 
+                tipo: tipoServicio, 
+                acoplado: conAcoplado, 
+                reglas: "Ruta creada automáticamente por el sistema" 
+            }
+        ]
+    };
+    
+    console.log(`✅ Nueva ruta creada: ${rutaKey}`);
+    return rutaKey;
+}
+
+// 🆕 FUNCIÓN PARA AGREGAR DESTINO MANUAL
+function agregarDestinoManual() {
+    const origin = prompt('Origen (ej: Montevideo):');
+    const destination = prompt('Destino (ej: Punta Negra):');
+    const numeroServicio = prompt('Número de servicio (ej: 11):');
+    const tipoServicio = prompt('Tipo de servicio (ej: TURNO, DIRECTO):') || 'TURNO';
+    const conAcoplado = confirm('¿Genera acoplado?');
+    
+    if (origin && destination && numeroServicio) {
+        const rutaKey = detectarYCrearRuta(origin, destination, numeroServicio, tipoServicio, conAcoplado);
+        alert(`✅ Destino agregado: ${origin} → ${destination}`);
+        
+        // Opcional: Cambiar a modo regular y seleccionar la nueva ruta
+        setMode('regular');
+        seleccionarRuta(rutaKey);
+    } else {
+        alert('❌ Faltan datos obligatorios');
+    }
+}
 
 // FUNCIONES DEL SISTEMA INTELIGENTE
 function setMode(modo) {
@@ -287,7 +335,7 @@ function showScreen(screenId) {
     if (screenId === 'guardListScreen') renderGuardiasList();
 }
 
-// FUNCIONES DE VIAJES - VERSIÓN MEJORADA CON SISTEMA INTELIGENTE
+// FUNCIONES DE VIAJES - VERSIÓN MEJORADA CON AUTO-DETECCIÓN
 function addTravel(event) {
     event.preventDefault();
     
@@ -313,7 +361,7 @@ function addTravel(event) {
         numeroServicio = servicioSeleccionado.numero;
         
     } else {
-        // MODO CONTRATADO - usar datos manuales
+        // MODO CONTRATADO - usar datos manuales CON AUTO-DETECCIÓN
         origin = 'Montevideo'; // Por defecto desde MVD
         destination = document.getElementById('destinoContratado')?.value || '';
         tipoServicio = document.getElementById('tipoContratado')?.value || 'ESPECIAL';
@@ -324,6 +372,12 @@ function addTravel(event) {
             alert('Por favor ingresa el destino contratado');
             return;
         }
+        
+        // 🆕 AUTO-DETECCIÓN: Si no existe la ruta, crearla automáticamente
+        const rutaKey = detectarYCrearRuta(origin, destination, numeroServicio, tipoServicio, conAcoplado);
+        
+        // Opcional: Seleccionar automáticamente la ruta creada
+        seleccionarRuta(rutaKey);
     }
     
     if (!orderNumber || !km || !departureTime || !arrivalTime) {
@@ -372,58 +426,6 @@ function addTravel(event) {
     updateTravelTable();
     
     alert('✅ Viaje agregado exitosamente!');
-    showScreen('mainScreen');
-}
-
-// FUNCIONES DE GUARDIAS (MANTENIDAS IGUAL)
-function addGuard(event) {
-    event.preventDefault();
-    
-    const orderNumber = document.getElementById('guardOrderNumber')?.value || '';
-    const driverName = document.getElementById('guardDriverName')?.value || '';
-    const startTime = document.getElementById('guardStartTime')?.value || '';
-    const endTime = document.getElementById('guardEndTime')?.value || '';
-    
-    if (!orderNumber || !driverName || !startTime || !endTime) {
-        alert('Complete todos los campos obligatorios');
-        return;
-    }
-    
-    // Calcular horas
-    const start = new Date(`2000-01-01T${startTime}`);
-    const end = new Date(`2000-01-01T${endTime}`);
-    let hours = (end - start) / (1000 * 60 * 60);
-    if (hours < 0) hours += 24;
-    
-    if (hours <= 0) {
-        alert('La hora de finalización debe ser posterior a la de inicio');
-        return;
-    }
-    
-    const guard = {
-        id: Date.now(),
-        orderNumber,
-        driverName,
-        startTime,
-        endTime,
-        hours: hours.toFixed(2),
-        type: document.getElementById('guardType')?.value || 'diurna',
-        date: new Date().toLocaleDateString('es-ES'),
-        viaticos: hours >= 9 ? 1 : 0,
-        timestamp: new Date().toISOString()
-    };
-    
-    let savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
-    savedGuards.push(guard);
-    localStorage.setItem('bus_guards', JSON.stringify(savedGuards));
-    
-    // Limpiar formulario
-    if (event.target.reset) event.target.reset();
-    
-    updateSummary();
-    updateGuardList();
-    
-    alert('✅ Guardia agregada exitosamente!');
     showScreen('mainScreen');
 }
 
