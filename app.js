@@ -8,53 +8,51 @@ const serviciosDB = {
     "MVD-PDE": {
         nombre: "Montevideo → Punta del Este",
         servicios: [
-            { numero: "1", tipo: "PIRIAPOLIS", acoplado: false, reglas: "Por Piriapolis" },
-            { numero: "1", tipo: "PUNTA NEGRA", acoplado: false, reglas: "Punta Negra directo" },
-            { numero: "2", tipo: "SEMI-DIRECTO", acoplado: false, reglas: "Semi directo o como 1 si no hay Piriapolis" },
-            { numero: "3", tipo: "DIRECTO", acoplado: true, reglas: "Directo Pde o 2 si no hay Piriapolis" },
-            { numero: "4", tipo: "PIRIAPOLIS DIRECTO", acoplado: false, reglas: "Directo a Piriapolis" },
+            { numero: "Turno", tipo: "TURNO", acoplado: false, reglas: "Primer coche - No genera acoplado" },
+            { numero: "2", tipo: "SEMI-DIRECTO", acoplado: false, reglas: "Semi directo - No genera acoplado" },
+            { numero: "3", tipo: "DIRECTO", acoplado: true, reglas: "Directo Pde - Genera acoplado" },
             { numero: "51", tipo: "PAN AZUCAR - SAN CARLOS", acoplado: true, reglas: "Por Pan de Azúcar y San Carlos" },
             { numero: "31", tipo: "RUTA 8/9 - PAN AZUCAR - SAN CARLOS", acoplado: true, reglas: "Por Ruta 8 y 9, Pan de Azúcar y San Carlos" }
-        ]
-    },
-    "MVD-COLONIA": {
-        nombre: "Montevideo → Colonia",
-        servicios: [
-            { numero: "11", tipo: "TURNO", acoplado: false, reglas: "Servicio regular" },
-            { numero: "12", tipo: "DIRECTO", acoplado: true, reglas: "Directo a Colonia" }
-        ]
-    },
-    "MVD-CHUY": {
-        nombre: "Montevideo → Chuy",
-        servicios: [
-            { numero: "41", tipo: "DIRECTO", acoplado: true, reglas: "Directo a Chuy" },
-            { numero: "42", tipo: "DIRECTO", acoplado: true, reglas: "Directo a Chuy" }
         ]
     },
     "MVD-PIRIAPOLIS": {
         nombre: "Montevideo → Piriapolis",
         servicios: [
-            { numero: "4", tipo: "DIRECTO", acoplado: false, reglas: "Directo a Piriapolis" }
+            { numero: "1", tipo: "TURNO", acoplado: false, reglas: "Primer coche - No genera acoplado" },
+            { numero: "4", tipo: "DIRECTO", acoplado: true, reglas: "Directo a Piriapolis - Genera acoplado" }
+        ]
+    },
+    "MVD-COLONIA": {
+        nombre: "Montevideo → Colonia",
+        servicios: [
+            { numero: "11", tipo: "TURNO", acoplado: false, reglas: "Servicio regular - No genera acoplado" },
+            { numero: "12", tipo: "DIRECTO", acoplado: true, reglas: "Directo a Colonia - Genera acoplado" }
+        ]
+    },
+    "MVD-CHUY": {
+        nombre: "Montevideo → Chuy",
+        servicios: [
+            { numero: "41", tipo: "TURNO", acoplado: false, reglas: "Servicio regular - No genera acoplado" },
+            { numero: "42", tipo: "DIRECTO", acoplado: true, reglas: "Directo a Chuy - Genera acoplado" }
         ]
     },
     "MVD-PEDRERA": {
         nombre: "Montevideo → La Pedrera",
         servicios: [
-            { numero: "21", tipo: "DIRECTO", acoplado: true, reglas: "Directo a La Pedrera" },
-            { numero: "22", tipo: "DIRECTO", acoplado: true, reglas: "Directo a La Pedrera" }
+            { numero: "21", tipo: "TURNO", acoplado: false, reglas: "Servicio regular - No genera acoplado" },
+            { numero: "22", tipo: "DIRECTO", acoplado: true, reglas: "Directo a La Pedrera - Genera acoplado" }
         ]
     },
     "MVD-GARZON": {
         nombre: "Montevideo → Laguna Garzón",
         servicios: [
-            { numero: "2", tipo: "REGULAR", acoplado: false, reglas: "Servicio regular" }
+            { numero: "2", tipo: "TURNO", acoplado: false, reglas: "Servicio regular - No genera acoplado" }
         ]
     },
     "MVD-PUNTA-NEGRA": {
         nombre: "Montevideo → Punta Negra",
         servicios: [
-            { numero: "1", tipo: "DIRECTO", acoplado: false, reglas: "Directo a Punta Negra" },
-            { numero: "11", tipo: "DIRECTO", acoplado: false, reglas: "Directo a Punta Negra" }
+            { numero: "1", tipo: "TURNO", acoplado: false, reglas: "Directo a Punta Negra - No genera acoplado" }
         ]
     },
 
@@ -62,49 +60,48 @@ const serviciosDB = {
     "PDE-MVD": {
         nombre: "Punta del Este → Montevideo",
         servicios: [
-            { numero: "1", tipo: "PIRIAPOLIS", acoplado: false, reglas: "Por Piriapolis" },
-            { numero: "2", tipo: "SEMI-DIRECTO", acoplado: false, reglas: "Semi directo o como 1 si no hay Piriapolis" },
-            { numero: "3", tipo: "DIRECTO", acoplado: true, reglas: "Directo o 2 si no hay Piriapolis" },
-            { numero: "31", tipo: "RUTA 8/9", acoplado: true, reglas: "Por Ruta 8 y 9" },
-            { numero: "51", tipo: "SAN CARLOS - PAN AZUCAR", acoplado: true, reglas: "Por San Carlos y Pan de Azúcar" }
-        ]
-    },
-    "COLONIA-MVD": {
-        nombre: "Colonia → Montevideo",
-        servicios: [
-            { numero: "1", tipo: "TURNO", acoplado: false, reglas: "Servicio regular" },
-            { numero: "2", tipo: "DIRECTO", acoplado: true, reglas: "Directo a Montevideo" }
-        ]
-    },
-    "CHUY-MVD": {
-        nombre: "Chuy → Montevideo",
-        servicios: [
-            { numero: "61", tipo: "REGULAR", acoplado: true, reglas: "Servicio regular" },
-            { numero: "62", tipo: "DIRECTO", acoplado: true, reglas: "Directo a Montevideo" }
+            { numero: "Turno", tipo: "TURNO", acoplado: false, reglas: "Primer coche - No genera acoplado" },
+            { numero: "2", tipo: "SEMI-DIRECTO", acoplado: false, reglas: "Semi directo - No genera acoplado" },
+            { numero: "3", tipo: "DIRECTO", acoplado: true, reglas: "Directo a Montevideo - Genera acoplado" },
+            { numero: "31", tipo: "RUTA 8/9", acoplado: true, reglas: "Por Ruta 8 y 9 - Genera acoplado" },
+            { numero: "51", tipo: "SAN CARLOS - PAN AZUCAR", acoplado: true, reglas: "Por San Carlos y Pan de Azúcar - Genera acoplado" }
         ]
     },
     "PIRIAPOLIS-MVD": {
         nombre: "Piriapolis → Montevideo",
         servicios: [
-            { numero: "42", tipo: "DIRECTO", acoplado: false, reglas: "Directo a Montevideo" }
+            { numero: "41", tipo: "TURNO", acoplado: false, reglas: "Servicio regular - No genera acoplado" }
+        ]
+    },
+    "COLONIA-MVD": {
+        nombre: "Colonia → Montevideo",
+        servicios: [
+            { numero: "1", tipo: "TURNO", acoplado: false, reglas: "Servicio regular - No genera acoplado" },
+            { numero: "2", tipo: "DIRECTO", acoplado: true, reglas: "Directo a Montevideo - Genera acoplado" }
+        ]
+    },
+    "CHUY-MVD": {
+        nombre: "Chuy → Montevideo",
+        servicios: [
+            { numero: "61", tipo: "TURNO", acoplado: false, reglas: "Servicio regular - No genera acoplado" }
         ]
     },
     "PEDRERA-MVD": {
         nombre: "La Pedrera → Montevideo",
         servicios: [
-            { numero: "1", tipo: "DIRECTO", acoplado: false, reglas: "Directo a Montevideo" }
+            { numero: "1", tipo: "TURNO", acoplado: false, reglas: "Directo a Montevideo - No genera acoplado" }
         ]
     },
     "GARZON-MVD": {
         nombre: "Laguna Garzón → Montevideo",
         servicios: [
-            { numero: "81", tipo: "REGULAR", acoplado: false, reglas: "Servicio regular" }
+            { numero: "81", tipo: "TURNO", acoplado: false, reglas: "Servicio regular - No genera acoplado" }
         ]
     },
     "PUNTA-NEGRA-MVD": {
         nombre: "Punta Negra → Montevideo",
         servicios: [
-            { numero: "11", tipo: "DIRECTO", acoplado: false, reglas: "Directo a Montevideo" }
+            { numero: "11", tipo: "TURNO", acoplado: false, reglas: "Directo a Montevideo - No genera acoplado" }
         ]
     },
     "MALDONADO-MVD": {
@@ -115,7 +112,6 @@ const serviciosDB = {
         ]
     }
 };
-
 // VARIABLES DEL SISTEMA INTELIGENTE
 let rutaSeleccionada = null;
 let servicioSeleccionado = null;
@@ -154,7 +150,18 @@ function buscarRutas(termino) {
     for (const [key, ruta] of Object.entries(serviciosDB)) {
         const nombreBusqueda = ruta.nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         
+        // FILTRAR MEJORADO: Mostrar Piriapolis como destino independiente
         if (nombreBusqueda.includes(busqueda)) {
+            // EVITAR mostrar rutas PDE que mencionen Piriapolis cuando se busca específicamente Piriapolis
+            if (busqueda.includes('piriapolis') && nombreBusqueda.includes('punta del este')) {
+                continue; // Saltar estas rutas
+            }
+            
+            // EVITAR mostrar rutas Piriapolis cuando se busca específicamente Punta del Este
+            if (busqueda.includes('punta del este') && nombreBusqueda.includes('piriapolis') && !nombreBusqueda.includes('punta del este')) {
+                continue; // Saltar estas rutas
+            }
+            
             resultados.push({ key, ruta });
         }
     }
