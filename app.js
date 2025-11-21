@@ -36,6 +36,10 @@ function showScreen(screenId) {
     } else if (screenId === 'guardListScreen') {
         updateAllGuardsList();
     }
+    
+    // 🆕 NUEVAS LISTAS MEJORADAS
+    if (screenId === 'travelListScreen') renderViajesList();
+    if (screenId === 'guardListScreen') renderGuardiasList();
 }
 
 // FUNCIONES DE VIAJES
@@ -299,6 +303,97 @@ function updateAllGuardsList() {
         
         allGuardsList.appendChild(row);
     });
+}
+
+// 🆕 NUEVAS FUNCIONES DE LISTAS MEJORADAS
+function renderViajesList() {
+    const container = document.getElementById('allTravelsList');
+    if (!container) return;
+    
+    const viajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+    
+    if (viajes.length === 0) {
+        container.innerHTML = '<div class="no-data">No hay viajes registrados</div>';
+        return;
+    }
+    
+    // Ordenar por fecha más reciente primero
+    const sortedViajes = [...viajes].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    container.innerHTML = sortedViajes.map(viaje => `
+        <div class="item-viaje">
+            <div class="item-header">
+                <span class="orden-numero">Orden: ${viaje.orderNumber}</span>
+                <span class="fecha-item">${viaje.date}</span>
+            </div>
+            
+            <div class="ruta-viaje">🛣️ ${viaje.origin} → ${viaje.destination}</div>
+            
+            <div class="detalles-grid">
+                <div class="detalle-item">
+                    <span class="detalle-label">Kilómetros</span>
+                    <span class="detalle-valor">${viaje.km} km</span>
+                </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Horario</span>
+                    <span class="detalle-valor">${viaje.departureTime} - ${viaje.arrivalTime}</span>
+                </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Horas Trabajadas</span>
+                    <span class="detalle-valor">${viaje.hoursWorked}h</span>
+                </div>
+            </div>
+            
+            <div>
+                ${viaje.viaticos ? `<span class="viatico-badge">💰 Viáticos: $${viaje.viaticos}</span>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderGuardiasList() {
+    const container = document.getElementById('allGuardsList');
+    if (!container) return;
+    
+    const guardias = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+    
+    if (guardias.length === 0) {
+        container.innerHTML = '<div class="no-data">No hay guardias registradas</div>';
+        return;
+    }
+    
+    // Ordenar por fecha más reciente primero
+    const sortedGuardias = [...guardias].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    container.innerHTML = sortedGuardias.map(guardia => `
+        <div class="item-guardia">
+            <div class="item-header">
+                <span class="orden-numero">Orden: ${guardia.orderNumber}</span>
+                <span class="fecha-item">${guardia.date}</span>
+            </div>
+            
+            <div class="detalles-grid">
+                <div class="detalle-item">
+                    <span class="detalle-label">Conductor</span>
+                    <span class="detalle-valor">${guardia.driverName}</span>
+                </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Horario Guardia</span>
+                    <span class="detalle-valor">${guardia.startTime} - ${guardia.endTime}</span>
+                </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Horas Totales</span>
+                    <span class="detalle-valor">${guardia.hours}h</span>
+                </div>
+            </div>
+            
+            <div>
+                <span class="tipo-guardia tipo-${guardia.type}">${guardia.type.toUpperCase()}</span>
+                <span class="tarifa-badge">$30/hora</span>
+                ${guardia.viaticos ? `<span class="viatico-badge">💰 Viáticos: $${guardia.viaticos}</span>` : ''}
+            </div>
+        </div>
+    `).join('');
 }
 
 // ELIMINAR DATOS
