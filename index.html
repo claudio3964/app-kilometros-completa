@@ -307,32 +307,56 @@
                 <div class="no-data">No hay viajes registrados</div>
             </div>
         </div>
-
-        <!-- PANTALLA DE LISTA DE GUARDIAS (MANTENIDA IGUAL) -->
-        <div id="guardListScreen" class="screen">
-            <div class="screen-header">
-                <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
-                <h2>👥 Lista de Guardias</h2>
+    
+    // Ordenar por fecha más reciente primero
+    const sortedGuardias = [...guardias].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    container.innerHTML = sortedGuardias.map(guardia => `
+        <div class="item-guardia">
+            <div class="item-header">
+                <span class="orden-numero">Orden: ${guardia.orderNumber}</span>
+                <span class="fecha-item">${guardia.date}</span>
             </div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Orden</th>
-                            <th>Conductor</th>
-                            <th>Horario</th>
-                            <th>Horas</th>
-                            <th>Tipo</th>
-                        </tr>
-                    </thead>
-                    <tbody id="allGuardsList">
-                        <!-- Se llenará con JavaScript -->
-                    </tbody>
-                </table>
+            
+            <div class="detalles-grid">
+                <div class="detalle-item">
+                    <span class="detalle-label">Horario Guardia</span>
+                    <span class="detalle-valor">${guardia.startTime} - ${guardia.endTime}</span>
+                </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Horas Totales</span>
+                    <span class="detalle-valor">${guardia.hours}h</span>
+                </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Tarifa</span>
+                    <span class="detalle-valor">$${guardia.tarifa}/hora</span>
+                </div>
+            </div>
+            
+            <div class="detalles-grid">
+                <div class="detalle-item">
+                    <span class="detalle-label">Monto Total</span>
+                    <span class="detalle-valor">$${guardia.monto}</span>
+                </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Tipo</span>
+                    <span class="detalle-valor ${guardia.tipo === 'Especial' ? 'tipo-especial' : 'tipo-comun'}">${guardia.tipo}</span>
+                </div>
+            </div>
+            
+            ${guardia.descripcion ? `
+            <div class="descripcion-guardia">
+                <span class="detalle-label">Descripción:</span>
+                <span class="detalle-valor">${guardia.descripcion}</span>
+            </div>
+            ` : ''}
+            
+            <div>
+                ${guardia.viaticos ? `<span class="viatico-badge">💰 Viáticos: $${guardia.viaticos}</span>` : ''}
             </div>
         </div>
-
+    `).join('');
+}
         <!-- PANTALLA DE REPORTES (MANTENIDA IGUAL) -->
         <div id="reportsScreen" class="screen">
             <div class="screen-header">
@@ -349,6 +373,7 @@
     <script src="app.js"></script>
 </body>
 </html>
+
 
 
 
