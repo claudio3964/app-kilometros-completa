@@ -1050,3 +1050,137 @@ function exportarReporte() {
     console.log('📄 Exportando reporte...');
     alert('¡Exportación a PDF en desarrollo!');
 }
+// 🎯 FUNCIONES DE REPORTES - VERSIÓN COMPLETA
+function generarReporte() {
+    const fechaDesde = document.getElementById('filterDateFrom').value;
+    const fechaHasta = document.getElementById('filterDateTo').value;
+    const numeroOrden = document.getElementById('filterOrderNumber').value.trim().toLowerCase();
+    const conductor = document.getElementById('filterDriver').value.trim().toLowerCase();
+
+    const todosViajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+    
+    // 🔍 APLICAR FILTROS
+    let resultados = todosViajes.filter(viaje => {
+        // Filtro por fecha
+        if (fechaDesde && viaje.date < fechaDesde) return false;
+        if (fechaHasta && viaje.date > fechaHasta) return false;
+        
+        // Filtro por número de orden
+        if (numeroOrden && !viaje.orderNumber.toLowerCase().includes(numeroOrden)) return false;
+        
+        // Filtro por conductor
+        if (conductor && viaje.conductor && !viaje.conductor.toLowerCase().includes(conductor)) return false;
+        
+        return true;
+    });
+
+    // 📊 ORDENAR POR FECHA MÁS RECIENTE PRIMERO
+    resultados.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    mostrarResultadosReporte(resultados);
+}
+
+function mostrarResultadosReporte(resultados) {
+    const tbody = document.getElementById('reportResultsBody');
+    const contador = document.getElementById('resultCount');
+    const totalViajes = document.getElementById('totalViajesReport');
+    const totalKm = document.getElementById('totalKmReport');
+    const totalHoras = document.getElementById('totalHorasReport');
+    const totalViaticos = document.getElementById('totalViaticosReport');
+    
+    // 📈 ACTUALIZAR RESUMEN
+    const totalKM = resultados.reduce((sum, viaje) => sum + (parseFloat(viaje.km) || 0), 0);
+    const totalHorasTrabajadas = resultados.reduce((sum, viaje) => sum + (parseFloat(viaje.hoursWorked) || 0), 0);
+    const totalViaticosCount = resultados.reduce((sum, viaje) => sum + (viaje.viaticos || 0), 0);
+    
+    if (totalViajes) totalViajes.textContent = resultados.length;
+    if (totalKm) totalKm.textContent = totalKM.toFixed(1);
+    if (totalHoras) totalHoras.textContent = totalHorasTrabajadas.toFixed(1);
+    if (totalViaticos) totalViaticos.textContent = `$${totalViaticosCount}`;
+    
+    // 📋 ACTUALIZAR CONTADOR
+    contador.textContent = `${resultados.length} registro${resultados.length !== 1 ? 's' : ''} encontrado${resultados.length !== 1 ? 's' : ''}`;
+    
+    // 🎯 MOSTRAR RESULTADOS EN TABLA
+    if (resultados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="no-data">No se encontraron resultados con los filtros aplicados</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = resultados.map(viaje => `
+        <tr>
+            <td>${viaje.date}</td>
+            <td><strong>${viaje.orderNumber}</strong></td>
+            <td>${viaje.conductor || 'N/A'}</td>
+            <td>${viaje.origin} → ${viaje.destination}</td>
+            <td>${parseFloat(viaje.km).toFixed(1)} km</td>
+            <td>${parseFloat(viaje.hoursWorked).toFixed(1)}h</td>
+            <td>
+                ${viaje.viaticos ? 
+                    '<span class="badge-viatico">✅ $1</span>' : 
+                    '<span style="color: #6c757d;">❌</span>'
+                }
+            </td>
+            <td>
+                <span class="badge-tipo">${viaje.tipoServicio || 'Regular'}</span>
+                ${viaje.conAcoplado ? '<span style="margin-left: 5px; font-size: 0.8em;">🚛</span>' : ''}
+            </td>
+        </tr>
+    `).join('');
+}
+
+function limpiarFiltros() {
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    document.getElementById('filterOrderNumber').value = '';
+    document.getElementById('filterDriver').value = '';
+    
+    // 🆕 GENERAR REPORTE VACÍO AL LIMPIAR
+    generarReporte();
+}
+
+function exportarReporte() {
+    // 📄 VERSIÓN SIMPLE DE EXPORTACIÓN (por ahora)
+    const resultados = document.getElementById('reportResultsBody').innerHTML;
+    const totalViajes = document.getElementById('totalViajesReport').textContent;
+    const totalKm = document.getElementById('totalKmReport').textContent;
+    
+    if (resultados.includes('no-data')) {
+        alert('❌ No hay datos para exportar');
+        return;
+    }
+    
+    // 🆕 EXPORTACIÓN BÁSICA - LUEGO MEJORAMOS A PDF
+    const blob = new Blob([`
+        REPORTE DE VIAJES
+        =================
+        Total Viajes: ${totalViajes}
+        Total KM: ${totalKm}
+        Fecha: ${new Date().toLocaleDateString()}
+        
+        ${Array.from(document.querySelectorAll('.report-table tr')).map(row => row.textContent).join('\n')}
+    `], { type: 'text/plain' });
+    
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `reporte_viajes_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    alert('✅ Reporte exportado como archivo de texto');
+}
+
+// 🆕 INICIALIZAR REPORTES AL ENTRAR A LA PANTALLA
+function showScreen(screenId) {
+    // ... tu código actual de showScreen ...
+    
+    // 🆕 AGREGAR ESTO DENTRO DE TU showScreen
+    if (screenId === 'reportsScreen') {
+        setTimeout(() => {
+            limpiarFiltros(); // Mostrar todos los viajes al entrar
+        }, 100);
+    }
+}
