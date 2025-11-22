@@ -1164,3 +1164,348 @@ function exportarReporte() {
     
     alert('✅ Reporte exportado como archivo de texto');
 }
+// ============================================
+// 📊 SISTEMA DE REPORTES PARA USUARIO
+// ============================================
+
+class ReportesManager {
+    constructor() {
+        this.usuario = this.obtenerUsuarioActual();
+        this.viajes = this.obtenerViajesUsuario();
+    }
+
+    // 🎯 OBTENER USUARIO ACTUAL
+    obtenerUsuarioActual() {
+        return JSON.parse(localStorage.getItem('travelUser') || '{}');
+    }
+
+    // 🎯 OBTENER VIAJES DEL USUARIO ACTUAL
+    obtenerViajesUsuario() {
+        const todosViajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+        
+        // Si no hay usuario, devolver todos los viajes (para compatibilidad)
+        if (!this.usuario.nombre) {
+            return todosViajes;
+        }
+        
+        // Filtrar solo los viajes del usuario actual
+        return todosViajes.filter(viaje => viaje.conductor === this.usuario.nombre);
+    }
+
+    // 📅 FORMATEAR FECHA
+    formatearFecha(fechaStr) {
+        const fecha = new Date(fechaStr);
+        return fecha.toLocaleDateString('es-ES');
+    }
+
+    // 🔍 FILTRAR VIAJES POR FECHA
+    filtrarViajesPorFecha(fechaInicio, fechaFin) {
+        return this.viajes.filter(viaje => {
+            const fechaViaje = new Date(viaje.date.split('/').reverse().join('-'));
+            const inicio = fechaInicio ? new Date(fechaInicio) : new Date('2000-01-01');
+            const fin = fechaFin ? new Date(fechaFin) : new Date('2100-01-01');
+            
+            return fechaViaje >= inicio && fechaViaje <= fin;
+        });
+    }
+
+    // 📊 GENERAR REPORTE SEMANAL
+    generarReporteSemanal() {
+        const hoy = new Date();
+        const inicioSemana = new Date(hoy);
+        inicioSemana.setDate(hoy.getDate() - hoy.getDay()); // Domingo de esta semana
+        
+        const viajesSemana = this.filtrarViajesPorFecha(
+            inicioSemana.toISOString().split('T')[0],
+            hoy.toISOString().split('T')[0]
+        );
+
+        const totalViajes = viajesSemana.length;
+        const totalKm = viajesSemana.reduce((sum, v) => sum + (parseFloat(v.km) || 0), 0);
+        
+        const viajesConAcoplado = viajesSemana.filter(v => v.conAcoplado === true || v.conAcoplado === 'true');
+        const kmAcoplado = viajesConAcoplado.reduce((sum, v) => sum + (parseFloat(v.km) || 0), 0);
+        
+        const viajesConViaticos = viajesSemana.filter(v => v.viaticos === true || v.viaticos === 1 || v.viaticos === 'true').length;
+
+        return {
+            periodo: `Semana del ${this.formatearFecha(inicioSemana)} al ${this.formatearFecha(hoy)}`,
+            viajes: totalViajes,
+            kmTotal: totalKm.toFixed(1),
+            viajesAcoplado: viajesConAcoplado.length,
+            kmAcoplado: kmAcoplado.toFixed(1),
+            viajesViaticos: viajesConViaticos
+        };
+    }
+
+    // 📈 GENERAR REPORTE MENSUAL
+    generarReporteMensual() {
+        const hoy = new Date();
+        const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        
+        const viajesMes = this.filtrarViajesPorFecha(
+            inicioMes.toISOString().split('T')[0],
+            hoy.toISOString().split('T')[0]
+        );
+
+        const totalViajes = viajesMes.length;
+        const totalKm = viajesMes.reduce((sum, v) => sum + (parseFloat(v.km) || 0), 0);
+        
+        const viajesConAcoplado = viajesMes.filter(v => v.conAcoplado === true || v.conAcoplado === 'true');
+        const kmAcoplado = viajesConAcoplado.reduce((sum, v) => sum + (parseFloat(v.km) || 0), 0);
+        
+        const viajesConViaticos = viajesMes.filter(v => v.viaticos === true || v.viaticos === 1 || v.viaticos === 'true').length;
+
+        return {
+            periodo: `Mes de ${hoy.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`,
+            viajes: totalViajes,
+            kmTotal: totalKm.toFixed(1),
+            viajesAcoplado: viajesConAcoplado.length,
+            kmAcoplado: kmAcoplado.toFixed(1),
+            viajesViaticos: viajesConViaticos
+        };
+    }
+
+    // 📅 GENERAR REPORTE DIARIO
+    generarReporteDiario(fechaEspecifica = null) {
+        const fecha = fechaEspecifica || new Date().toISOString().split('T')[0];
+        const viajesDia = this.filtrarViajesPorFecha(fecha, fecha);
+
+        return viajesDia.map(viaje => ({
+            fecha: viaje.date,
+            orden: viaje.orderNumber,
+            ruta: `${viaje.origin} → ${viaje.destination}`,
+            km: parseFloat(viaje.km).toFixed(1),
+            horaSalida: viaje.departureTime,
+            horaLlegada: viaje.arrivalTime,
+            horasViaje: viaje.hoursWorked,
+            guardia: this.obtenerGuardiaOrden(viaje.orderNumber, viaje.date),
+            viaticos: (viaje.viaticos === true || viaje.viaticos === 1 || viaje.viaticos === 'true') ? '✅ SÍ' : '❌ NO',
+            acoplado: (viaje.conAcoplado === true || viaje.conAcoplado === 'true') ? '✅ SÍ' : '❌ NO',
+            tipoServicio: viaje.tipoServicio || 'Regular'
+        }));
+    }
+
+    // 🛡️ OBTENER INFORMACIÓN DE GUARDIA
+    obtenerGuardiaOrden(orderNumber, fecha) {
+        const guardias = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+        const guardia = guardias.find(g => g.orderNumber === orderNumber && g.date === fecha);
+        
+        if (guardia) {
+            return `SÍ (${guardia.startTime}-${guardia.endTime})`;
+        }
+        return 'NO';
+    }
+
+    // 🖨️ MOSTRAR REPORTE
+    mostrarReporte(tipo) {
+        let contenido = '';
+        
+        switch(tipo) {
+            case 'semanal':
+                const reporteSemanal = this.generarReporteSemanal();
+                contenido = this.generarHTMLReporteSemanal(reporteSemanal);
+                break;
+                
+            case 'mensual':
+                const reporteMensual = this.generarReporteMensual();
+                contenido = this.generarHTMLReporteMensual(reporteMensual);
+                break;
+                
+            case 'diario':
+                const reporteDiario = this.generarReporteDiario();
+                contenido = this.generarHTMLReporteDiario(reporteDiario);
+                break;
+        }
+        
+        this.mostrarPantallaReporte(contenido, tipo);
+    }
+
+    // 🎨 GENERAR HTML REPORTE SEMANAL
+    generarHTMLReporteSemanal(reporte) {
+        return `
+            <div class="reporte-contenedor">
+                <h3>📊 MI REPORTE SEMANAL</h3>
+                <div class="reporte-header">
+                    <strong>${reporte.periodo}</strong>
+                    <div class="usuario-info">👤 ${this.usuario.nombre || 'Usuario'}</div>
+                </div>
+                <div class="reporte-stats">
+                    <div class="stat-line">
+                        <span>📈 Mis viajes:</span>
+                        <strong>${reporte.viajes}</strong>
+                    </div>
+                    <div class="stat-line">
+                        <span>🛣️ KM total:</span>
+                        <strong>${reporte.kmTotal} km</strong>
+                    </div>
+                    <div class="stat-line">
+                        <span>🚛 Viajes con acoplado:</span>
+                        <strong>${reporte.viajesAcoplado}</strong>
+                    </div>
+                    <div class="stat-line">
+                        <span>🛣️ KM con acoplado:</span>
+                        <strong>${reporte.kmAcoplado} km</strong>
+                    </div>
+                    <div class="stat-line">
+                        <span>💰 Viajes con viáticos:</span>
+                        <strong>${reporte.viajesViaticos}</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 🎨 GENERAR HTML REPORTE MENSUAL
+    generarHTMLReporteMensual(reporte) {
+        return `
+            <div class="reporte-contenedor">
+                <h3>📈 MI REPORTE MENSUAL</h3>
+                <div class="reporte-header">
+                    <strong>${reporte.periodo}</strong>
+                    <div class="usuario-info">👤 ${this.usuario.nombre || 'Usuario'}</div>
+                </div>
+                <div class="reporte-stats">
+                    <div class="stat-line">
+                        <span>📈 Mis viajes:</span>
+                        <strong>${reporte.viajes}</strong>
+                    </div>
+                    <div class="stat-line">
+                        <span>🛣️ KM total:</span>
+                        <strong>${reporte.kmTotal} km</strong>
+                    </div>
+                    <div class="stat-line">
+                        <span>🚛 Viajes con acoplado:</span>
+                        <strong>${reporte.viajesAcoplado}</strong>
+                    </div>
+                    <div class="stat-line">
+                        <span>🛣️ KM con acoplado:</span>
+                        <strong>${reporte.kmAcoplado} km</strong>
+                    </div>
+                    <div class="stat-line">
+                        <span>💰 Viajes con viáticos:</span>
+                        <strong>${reporte.viajesViaticos}</strong>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 🎨 GENERAR HTML REPORTE DIARIO
+    generarHTMLReporteDiario(viajes) {
+        if (viajes.length === 0) {
+            return '<div class="no-data">No hay viajes registrados para hoy</div>';
+        }
+
+        return `
+            <div class="reporte-contenedor">
+                <h3>📅 MIS VIAJES - ${viajes[0].fecha}</h3>
+                <div class="reporte-header">
+                    <strong>👤 ${this.usuario.nombre || 'Usuario'}</strong>
+                </div>
+                ${viajes.map(viaje => `
+                    <div class="viaje-detalle">
+                        <div class="viaje-header">
+                            <strong>Orden: ${viaje.orden}</strong>
+                            <span class="ruta">${viaje.ruta}</span>
+                        </div>
+                        <div class="viaje-info">
+                            <div>🛣️ ${viaje.km} km</div>
+                            <div>🕐 ${viaje.horaSalida} - ${viaje.horaLlegada} (${viaje.horasViaje}h)</div>
+                            <div>👮 ${viaje.guardia}</div>
+                            <div>💰 ${viaje.viaticos}</div>
+                            <div>🚛 ${viaje.acoplado}</div>
+                            <div>🎫 ${viaje.tipoServicio}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // 🖥️ MOSTRAR PANTALLA DE REPORTE
+    mostrarPantallaReporte(contenido, tipo) {
+        // Crear pantalla de reportes si no existe
+        let reportScreen = document.getElementById('userReportsScreen');
+        
+        if (!reportScreen) {
+            reportScreen = document.createElement('div');
+            reportScreen.id = 'userReportsScreen';
+            reportScreen.className = 'screen';
+            reportScreen.innerHTML = `
+                <div class="screen-header">
+                    <button class="back-btn" onclick="app.reportes.cerrarReporte()">← Volver</button>
+                    <h2>📊 Mis Reportes</h2>
+                </div>
+                <div class="reporte-content" id="reporteContent"></div>
+            `;
+            document.querySelector('.container').appendChild(reportScreen);
+        }
+        
+        document.getElementById('reporteContent').innerHTML = contenido;
+        this.mostrarPantalla('userReportsScreen');
+    }
+
+    // 🚪 CERRAR REPORTE
+    cerrarReporte() {
+        showScreen('mainScreen');
+    }
+
+    // 🎯 MOSTRAR PANTALLA (compatibilidad con tu sistema)
+    mostrarPantalla(pantallaId) {
+        document.querySelectorAll('.screen').forEach(screen => {
+            screen.style.display = 'none';
+            screen.classList.remove('active');
+        });
+        
+        const targetScreen = document.getElementById(pantallaId);
+        if (targetScreen) {
+            targetScreen.style.display = 'block';
+            targetScreen.classList.add('active');
+        }
+    }
+}
+
+// 🎯 INICIALIZAR SISTEMA DE REPORTES
+let reportesManager = new ReportesManager();
+
+// 🆕 AGREGAR BOTONES DE REPORTES AL MENÚ PRINCIPAL
+function agregarBotonesReportesUsuario() {
+    const menuContainer = document.querySelector('.menu-container .button-grid');
+    
+    if (menuContainer && !document.getElementById('btnReporteDiario')) {
+        const botonesReportes = `
+            <button class="menu-btn info" onclick="reportesManager.mostrarReporte('diario')" id="btnReporteDiario">
+                <span class="btn-icon">📅</span>
+                <span class="btn-text">Mi Día</span>
+                <span class="btn-desc">Mis viajes de hoy</span>
+            </button>
+
+            <button class="menu-btn success" onclick="reportesManager.mostrarReporte('semanal')" id="btnReporteSemanal">
+                <span class="btn-icon">📊</span>
+                <span class="btn-text">Mi Semana</span>
+                <span class="btn-desc">Resumen semanal</span>
+            </button>
+
+            <button class="menu-btn primary" onclick="reportesManager.mostrarReporte('mensual')" id="btnReporteMensual">
+                <span class="btn-icon">📈</span>
+                <span class="btn-text">Mi Mes</span>
+                <span class="btn-desc">Resumen mensual</span>
+            </button>
+        `;
+        
+        // Insertar después del botón de reportes existente
+        const existingReportBtn = menuContainer.querySelector('.menu-btn.success[onclick*="reportsScreen"]');
+        if (existingReportBtn) {
+            existingReportBtn.insertAdjacentHTML('afterend', botonesReportes);
+        } else {
+            menuContainer.innerHTML += botonesReportes;
+        }
+    }
+}
+
+// 🎯 INICIALIZAR AL CARGAR LA APLICACIÓN
+document.addEventListener('DOMContentLoaded', function() {
+    // Esperar a que cargue la interfaz y luego agregar botones
+    setTimeout(agregarBotonesReportesUsuario, 1500);
+});
