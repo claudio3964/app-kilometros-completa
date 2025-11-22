@@ -698,7 +698,7 @@ function renderViajesList() {
             <div>
                 ${mostrarViatico ? `<span class="viatico-badge">💰 Viáticos: $1</span>` : ''}
                 ${viaje.tipoServicio ? `<span class="tarifa-badge">${viaje.tipoServicio}</span>` : ''}
-                ${viaje.conAcoplado ? `<span class="viatico-badge" style="background: #fdebd0; color: #e67e22;">🚛 Acoplado</span>` : ''}
+                ${viaje.conAcoplado ? `<span class="acoplado-badge">🚛 Acoplado</span>` : ''}
             </div>
         </div>
         `;
