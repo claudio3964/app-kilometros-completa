@@ -430,6 +430,32 @@ function addTravel(event) {
 }
 
 // EL RESTO DE TUS FUNCIONES SE MANTIENE EXACTAMENTE IGUAL
+// 🆕 FUNCIÓN PARA MOSTRAR/OCULTAR CAMPO DE DESCRIPCIÓN
+function actualizarDescripcionGuardia() {
+    const tarifa = document.getElementById('guardTarifa').value;
+    const campoDescripcion = document.getElementById('campoDescripcion');
+    const inputDescripcion = document.getElementById('guardDescripcion');
+    
+    if (tarifa === '40') {
+        campoDescripcion.style.display = 'block';
+        inputDescripcion.required = true;
+    } else {
+        campoDescripcion.style.display = 'none';
+        inputDescripcion.required = false;
+        inputDescripcion.value = ''; // Limpiar campo
+    }
+}
+
+// 🆕 INICIALIZAR AL CARGAR LA PANTALLA
+function showScreen(screenId) {
+    // ... código existente ...
+    
+    if (screenId === 'guardScreen') {
+        // Configurar campo de descripción
+        setTimeout(() => {
+            actualizarDescripcionGuardia();
+        }, 100);
+    }
 // ACTUALIZAR INTERFACES
 function updateSummary() {
     const savedTravels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
