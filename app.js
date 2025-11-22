@@ -305,36 +305,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // FUNCIONES DE NAVEGACIÓN
 function showScreen(screenId) {
-    // Ocultar todas las pantallas
-    document.querySelectorAll('.screen').forEach(screen => {
+    console.log('🎯 Mostrando pantalla:', screenId);
+    
+    // 1. Ocultar todas las pantallas
+    const allScreens = document.querySelectorAll('.screen');
+    allScreens.forEach(screen => {
         screen.classList.remove('active');
     });
     
-    // Mostrar pantalla seleccionada
+    // 2. Mostrar pantalla objetivo
     const targetScreen = document.getElementById(screenId);
     if (targetScreen) {
         targetScreen.classList.add('active');
+        console.log('✅ Pantalla activada:', screenId);
+        
+        // 3. Actualizar datos específicos de cada pantalla
+        if (screenId === 'mainScreen') {
+            updateSummary();
+        } else if (screenId === 'travelScreen') {
+            updateTravelTable();
+            limpiarSeleccionRegular();
+        } else if (screenId === 'guardScreen') {
+            updateGuardList();
+            setTimeout(() => {
+                actualizarDescripcionGuardia();
+            }, 100);
+        } else if (screenId === 'travelListScreen') {
+            updateAllTravelsList();
+            renderViajesList();
+        } else if (screenId === 'guardListScreen') {
+            updateAllGuardsList();
+            renderGuardiasList();
+        } else if (screenId === 'reportsScreen') {
+            setTimeout(() => {
+                generarReporte(); // 🆕 Cargar datos automáticamente
+            }, 100);
+        }
+    } else {
+        console.log('❌ Pantalla no encontrada:', screenId);
     }
-    
-    // Actualizar datos específicos de cada pantalla
-    if (screenId === 'mainScreen') {
-        updateSummary();
-    } else if (screenId === 'travelScreen') {
-        updateTravelTable();
-        // Limpiar selección al entrar a viajes
-        limpiarSeleccionRegular();
-    } else if (screenId === 'guardScreen') {
-        updateGuardList();
-        // 🆕 CONFIGURAR CAMPO DE DESCRIPCIÓN
-        setTimeout(() => {
-            actualizarDescripcionGuardia();
-        }, 100);
-    } else if (screenId === 'travelListScreen') {
-        updateAllTravelsList();
-    } else if (screenId === 'guardListScreen') {
-        updateAllGuardsList();
-    }
-    
+}
     // 🆕 NUEVAS LISTAS MEJORADAS
     if (screenId === 'travelListScreen') renderViajesList();
     if (screenId === 'guardListScreen') renderGuardiasList();
