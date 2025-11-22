@@ -610,6 +610,45 @@ function updateAllGuardsList() {
 }
 
 // 🆕 NUEVAS FUNCIONES DE LISTAS MEJORADAS
+// 🆕 FUNCIÓN PARA CALCULAR HORAS DE JORNADA POR ORDEN
+function calcularHorasJornadaPorOrden(orderNumber, fecha) {
+    // Filtrar todos los viajes/guardias del mismo orden y fecha
+    const viajesOrden = travels.filter(v => v.orderNumber === orderNumber && v.date === fecha);
+    const guardiasOrden = JSON.parse(localStorage.getItem('bus_guards') || '[]')
+        .filter(g => g.orderNumber === orderNumber && g.date === fecha);
+    
+    // Combinar todos los servicios
+    const todosServicios = [...viajesOrden, ...guardiasOrden];
+    
+    if (todosServicios.length === 0) return 0;
+    
+    // Encontrar hora más temprana y más tardía
+    const todasHoras = [];
+    
+    todosServicios.forEach(servicio => {
+        // Para viajes
+        if (servicio.departureTime) todasHoras.push(servicio.departureTime);
+        if (servicio.arrivalTime) todasHoras.push(servicio.arrivalTime);
+        
+        // Para guardias
+        if (servicio.startTime) todasHoras.push(servicio.startTime);
+        if (servicio.endTime) todasHoras.push(servicio.endTime);
+    });
+    
+    if (todasHoras.length < 2) return 0;
+    
+    // Ordenar horas y calcular diferencia
+    const horasOrdenadas = todasHoras.sort();
+    const inicio = new Date(`2000-01-01T${horasOrdenadas[0]}`);
+    const fin = new Date(`2000-01-01T${horasOrdenadas[horasOrdenadas.length - 1]}`);
+    
+    let horasTrabajadas = (fin - inicio) / (1000 * 60 * 60);
+    if (horasTrabajadas < 0) horasTrabajadas += 24;
+    
+    return horasTrabajadas;
+}
+
+// 🆕 REEMPLAZAR LA FUNCIÓN renderViajesList EXISTENTE
 function renderViajesList() {
     const container = document.getElementById('allTravelsList');
     if (!container) return;
@@ -621,10 +660,14 @@ function renderViajesList() {
         return;
     }
     
-    // Ordenar por fecha más reciente primero
     const sortedViajes = [...viajes].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     
-    container.innerHTML = sortedViajes.map(viaje => `
+    container.innerHTML = sortedViajes.map(viaje => {
+        // 🆕 CALCULAR HORAS DE JORNADA COMPLETA
+        const horasJornada = calcularHorasJornadaPorOrden(viaje.orderNumber, viaje.date);
+        const mostrarViatico = horasJornada >= 9;
+        
+        return `
         <div class="item-viaje">
             <div class="item-header">
                 <span class="orden-numero">Orden: ${viaje.orderNumber}</span>
@@ -643,18 +686,23 @@ function renderViajesList() {
                     <span class="detalle-valor">${viaje.departureTime} - ${viaje.arrivalTime}</span>
                 </div>
                 <div class="detalle-item">
-                    <span class="detalle-label">Horas Trabajadas</span>
+                    <span class="detalle-label">Horas Viaje</span>
                     <span class="detalle-valor">${viaje.hoursWorked}h</span>
+                </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Horas Jornada</span>
+                    <span class="detalle-valor ${mostrarViatico ? 'viatico-activo' : ''}">${horasJornada.toFixed(2)}h</span>
                 </div>
             </div>
             
             <div>
-                ${viaje.viaticos ? `<span class="viatico-badge">💰 Viáticos: $${viaje.viaticos}</span>` : ''}
+                ${mostrarViatico ? `<span class="viatico-badge">💰 Viáticos: $1</span>` : ''}
                 ${viaje.tipoServicio ? `<span class="tarifa-badge">${viaje.tipoServicio}</span>` : ''}
                 ${viaje.conAcoplado ? `<span class="viatico-badge" style="background: #fdebd0; color: #e67e22;">🚛 Acoplado</span>` : ''}
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function renderGuardiasList() {
