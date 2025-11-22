@@ -445,15 +445,88 @@
         
         <!-- PANTALLA DE REPORTES -->
         <div id="reportsScreen" class="screen">
-            <div class="screen-header">
-                <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
-                <h2>📊 Reportes y Estadísticas</h2>
-            </div>
-            <div class="form-container">
-                <p>Pantalla de reportes en desarrollo...</p>
-            </div>
+    <div class="screen-header">
+        <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
+        <h2>📊 Reportes y Búsquedas</h2>
+    </div>
+
+    <!-- 🎛️ PANEL DE FILTROS -->
+    <div class="filters-panel">
+        <div class="filter-group">
+            <label>📅 Fecha Desde:</label>
+            <input type="date" id="filterDateFrom" class="form-control">
+        </div>
+        <div class="filter-group">
+            <label>📅 Fecha Hasta:</label>
+            <input type="date" id="filterDateTo" class="form-control">
+        </div>
+        <div class="filter-group">
+            <label>🔢 Nº de Orden:</label>
+            <input type="text" id="filterOrderNumber" class="form-control" placeholder="Ej: ORD-001">
+        </div>
+        <div class="filter-group">
+            <label>👤 Conductor:</label>
+            <input type="text" id="filterDriver" class="form-control" placeholder="Buscar conductor...">
+        </div>
+        <div class="filter-actions">
+            <button class="btn-primary" onclick="generarReporte()">🔍 Generar Reporte</button>
+            <button class="btn-secondary" onclick="limpiarFiltros()">🔄 Limpiar</button>
         </div>
     </div>
+
+    <!-- 📊 RESUMEN RÁPIDO -->
+    <div class="report-summary">
+        <div class="summary-item">
+            <span class="summary-label">Total Viajes:</span>
+            <span class="summary-value" id="totalViajesReport">0</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">Total KM:</span>
+            <span class="summary-value" id="totalKmReport">0</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">Total Horas:</span>
+            <span class="summary-value" id="totalHorasReport">0</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">Total Viáticos:</span>
+            <span class="summary-value" id="totalViaticosReport">$0</span>
+        </div>
+    </div>
+
+    <!-- 📋 TABLA DE RESULTADOS (ESTILO PROFESIONAL) -->
+    <div class="report-results">
+        <div class="report-header">
+            <h3>📋 Resultados del Reporte</h3>
+            <div class="report-actions">
+                <span id="resultCount" class="result-count">0 registros encontrados</span>
+                <button class="btn-success" onclick="exportarReporte()">📄 Exportar a PDF</button>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table class="report-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Nº Orden</th>
+                        <th>Conductor</th>
+                        <th>Ruta</th>
+                        <th>KM</th>
+                        <th>Horas</th>
+                        <th>Viáticos</th>
+                        <th>Tipo Servicio</th>
+                    </tr>
+                </thead>
+                <tbody id="reportResultsBody">
+                    <tr>
+                        <td colspan="8" class="no-data">Usa los filtros para generar un reporte</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
     <!-- 🆕 SCRIPT NUEVO PARA EL LOGIN -->
     <script>
@@ -544,6 +617,7 @@
     <script src="app.js"></script>
 </body>
 </html>
+
 
 
 
