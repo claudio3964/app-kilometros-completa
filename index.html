@@ -308,10 +308,6 @@
             </div>
         </div>
     
-    // Ordenar por fecha más reciente primero
-    const sortedGuardias = [...guardias].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    
-    container.innerHTML = sortedGuardias.map(guardia => `
         <div class="item-guardia">
             <div class="item-header">
                 <span class="orden-numero">Orden: ${guardia.orderNumber}</span>
@@ -373,6 +369,7 @@
     <script src="app.js"></script>
 </body>
 </html>
+
 
 
 
