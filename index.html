@@ -236,13 +236,15 @@
                             <label for="guardEndTime">Hora Fin *</label>
                             <input type="time" id="guardEndTime" required>
                         </div>
-                        <div class="form-group">
+                         <!-- CAMPO DE TARIFA -->
+                <div class="form-group">
                     <label for="guardTarifa">Tipo de Guardia</label>
-                    <select id="guardTarifa">
+                    <select id="guardTarifa" onchange="actualizarDescripcionGuardia()">
                         <option value="30">Común - $30/hora</option>
                         <option value="40">Especial - $40/hora</option>
                     </select>
-                        </div>
+                </div>
+            </div>
                          <!-- 🆕 CAMPO DE TEXTO PARA DESCRIPCIÓN (SOLO PARA 40) -->
             <div id="campoDescripcion" class="form-group" style="display: none;">
                 <label for="guardDescripcion">📝 Descripción del Movimiento Especial *</label>
@@ -347,6 +349,7 @@
     <script src="app.js"></script>
 </body>
 </html>
+
 
 
 
