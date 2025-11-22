@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function showScreen(screenId) {
     console.log('🎯 Mostrando pantalla:', screenId);
     
-    // 1. Ocultar todas las pantallas
+    // 1. Ocultar TODAS las pantallas
     const allScreens = document.querySelectorAll('.screen');
     allScreens.forEach(screen => {
         screen.classList.remove('active');
@@ -338,17 +338,18 @@ function showScreen(screenId) {
             renderGuardiasList();
         } else if (screenId === 'reportsScreen') {
             setTimeout(() => {
-                generarReporte(); // 🆕 Cargar datos automáticamente
+                generarReporte(); // Cargar datos automáticamente
             }, 100);
+        } else if (screenId === 'backupScreen') {
+            // Limpiar estado de importación
+            const importStatus = document.getElementById('importStatus');
+            if (importStatus) importStatus.textContent = '';
         }
     } else {
         console.log('❌ Pantalla no encontrada:', screenId);
+        alert('Error: Pantalla "' + screenId + '" no encontrada');
     }
-}
-    // 🆕 NUEVAS LISTAS MEJORADAS
-    if (screenId === 'travelListScreen') renderViajesList();
-    if (screenId === 'guardListScreen') renderGuardiasList();
-}
+}}
 
 // FUNCIONES DE VIAJES - VERSIÓN MEJORADA CON AUTO-DETECCIÓN
 function addTravel(event) {
