@@ -680,10 +680,6 @@ function renderGuardiasList() {
             
             <div class="detalles-grid">
                 <div class="detalle-item">
-                    <span class="detalle-label">Conductor</span>
-                    <span class="detalle-valor">${guardia.driverName}</span>
-                </div>
-                <div class="detalle-item">
                     <span class="detalle-label">Horario Guardia</span>
                     <span class="detalle-valor">${guardia.startTime} - ${guardia.endTime}</span>
                 </div>
@@ -691,11 +687,31 @@ function renderGuardiasList() {
                     <span class="detalle-label">Horas Totales</span>
                     <span class="detalle-valor">${guardia.hours}h</span>
                 </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Tarifa</span>
+                    <span class="detalle-valor">$${guardia.tarifa}/hora</span>
+                </div>
             </div>
             
+            <div class="detalles-grid">
+                <div class="detalle-item">
+                    <span class="detalle-label">Monto Total</span>
+                    <span class="detalle-valor">$${guardia.monto}</span>
+                </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Tipo</span>
+                    <span class="detalle-valor ${guardia.tipo === 'Especial' ? 'tipo-especial' : 'tipo-comun'}">${guardia.tipo}</span>
+                </div>
+            </div>
+            
+            ${guardia.descripcion ? `
+            <div class="descripcion-guardia">
+                <span class="detalle-label">Descripción:</span>
+                <span class="detalle-valor">${guardia.descripcion}</span>
+            </div>
+            ` : ''}
+            
             <div>
-                <span class="tipo-guardia tipo-${guardia.type}">${guardia.type.toUpperCase()}</span>
-                <span class="tarifa-badge">$30/hora</span>
                 ${guardia.viaticos ? `<span class="viatico-badge">💰 Viáticos: $${guardia.viaticos}</span>` : ''}
             </div>
         </div>
