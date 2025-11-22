@@ -1,4 +1,3 @@
-
 // VARIABLES GLOBALES
 let travels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
 let favoriteDestinations = JSON.parse(localStorage.getItem('bus_favorites') || '[]');
@@ -302,20 +301,21 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('backupFile')?.addEventListener('change', handleFileSelect);
 });
 
-
-// FUNCIONES DE NAVEGACIÓN
+// FUNCIONES DE NAVEGACIÓN - VERSIÓN CORREGIDA
 function showScreen(screenId) {
     console.log('🎯 Mostrando pantalla:', screenId);
     
     // 1. Ocultar TODAS las pantallas
     const allScreens = document.querySelectorAll('.screen');
     allScreens.forEach(screen => {
+        screen.style.display = 'none';
         screen.classList.remove('active');
     });
     
     // 2. Mostrar pantalla objetivo
     const targetScreen = document.getElementById(screenId);
     if (targetScreen) {
+        targetScreen.style.display = 'block';
         targetScreen.classList.add('active');
         console.log('✅ Pantalla activada:', screenId);
         
@@ -338,7 +338,7 @@ function showScreen(screenId) {
             renderGuardiasList();
         } else if (screenId === 'reportsScreen') {
             setTimeout(() => {
-                generarReporte(); // Cargar datos automáticamente
+                limpiarFiltros(); // Mostrar todos los viajes al entrar
             }, 100);
         } else if (screenId === 'backupScreen') {
             // Limpiar estado de importación
@@ -347,7 +347,6 @@ function showScreen(screenId) {
         }
     } else {
         console.log('❌ Pantalla no encontrada:', screenId);
-        alert('Error: Pantalla "' + screenId + '" no encontrada');
     }
 }
 
@@ -471,7 +470,6 @@ function actualizarDescripcionGuardia() {
         inputDescripcion.value = ''; // Limpiar campo
     }
 }
-
 
 // ACTUALIZAR INTERFACES
 function updateSummary() {
@@ -1043,24 +1041,7 @@ function getCurrentDateTime() {
     const now = new Date();
     return now.toISOString().slice(0, 19).replace(/:/g, '-');
 }
-// 🎯 FUNCIONES DE REPORTES - VERSIÓN INICIAL
-function generarReporte() {
-    console.log('🔍 Generando reporte...');
-    // Esta función la implementaremos después del HTML
-    alert('¡Funcionalidad de reportes en desarrollo!');
-}
 
-function limpiarFiltros() {
-    document.getElementById('filterDateFrom').value = '';
-    document.getElementById('filterDateTo').value = '';
-    document.getElementById('filterOrderNumber').value = '';
-    document.getElementById('filterDriver').value = '';
-}
-
-function exportarReporte() {
-    console.log('📄 Exportando reporte...');
-    alert('¡Exportación a PDF en desarrollo!');
-}
 // 🎯 FUNCIONES DE REPORTES - VERSIÓN COMPLETA
 function generarReporte() {
     const fechaDesde = document.getElementById('filterDateFrom').value;
@@ -1183,160 +1164,3 @@ function exportarReporte() {
     
     alert('✅ Reporte exportado como archivo de texto');
 }
-
-// 🆕 INICIALIZAR REPORTES AL ENTRAR A LA PANTALLA
-function showScreen(screenId) {
-    // ... tu código actual de showScreen ...
-    
-    // 🆕 AGREGAR ESTO DENTRO DE TU showScreen
-    if (screenId === 'reportsScreen') {
-        setTimeout(() => {
-            limpiarFiltros(); // Mostrar todos los viajes al entrar
-        }, 100);
-    }
-}
-// ============================================
-// 🛠️ REPARACIÓN DEFINITIVA DE BOTONES
-// ============================================
-
-// FUNCIÓN showScreen ROBUSTA
-window.showScreen = function(screenId) {
-    console.log('🎯 Mostrando pantalla:', screenId);
-    
-    try {
-        // Ocultar TODAS las pantallas
-        const allScreens = document.querySelectorAll('.screen');
-        allScreens.forEach(screen => {
-            screen.classList.remove('active');
-        });
-        
-        // Mostrar pantalla objetivo
-        const targetScreen = document.getElementById(screenId);
-        if (targetScreen) {
-            targetScreen.classList.add('active');
-            console.log('✅ Pantalla activada:', screenId);
-            
-            // Actualizar datos específicos
-            if (screenId === 'mainScreen') {
-                if (typeof updateSummary === 'function') updateSummary();
-            } else if (screenId === 'travelScreen') {
-                if (typeof updateTravelTable === 'function') updateTravelTable();
-                if (typeof limpiarSeleccionRegular === 'function') limpiarSeleccionRegular();
-            } else if (screenId === 'guardScreen') {
-                if (typeof updateGuardList === 'function') updateGuardList();
-                setTimeout(() => {
-                    if (typeof actualizarDescripcionGuardia === 'function') actualizarDescripcionGuardia();
-                }, 100);
-            } else if (screenId === 'travelListScreen') {
-                if (typeof updateAllTravelsList === 'function') updateAllTravelsList();
-                if (typeof renderViajesList === 'function') renderViajesList();
-            } else if (screenId === 'guardListScreen') {
-                if (typeof updateAllGuardsList === 'function') updateAllGuardsList();
-                if (typeof renderGuardiasList === 'function') renderGuardiasList();
-            } else if (screenId === 'reportsScreen') {
-                setTimeout(() => {
-                    if (typeof generarReporte === 'function') generarReporte();
-                }, 100);
-            }
-        } else {
-            console.log('❌ Pantalla no encontrada:', screenId);
-        }
-    } catch (error) {
-        console.error('❌ Error en showScreen:', error);
-    }
-};
-
-// ELIMINAR COMPLETAMENTE LOS ONCLICK VIEJOS
-function eliminarOnclicksViejos() {
-    // Eliminar onclick de botones del menú
-    document.querySelectorAll('.menu-btn[onclick*="showScreen"]').forEach(boton => {
-        boton.removeAttribute('onclick');
-    });
-    
-    // Eliminar onclick de botones volver
-    document.querySelectorAll('.back-btn[onclick*="showScreen"]').forEach(boton => {
-        boton.removeAttribute('onclick');
-    });
-    
-    console.log('✅ Onclicks viejos eliminados');
-}
-
-// AGREGAR EVENT LISTENERS NUEVOS
-function agregarEventListenersNuevos() {
-    const mapeoBotones = {
-        'Nuevo Viaje': 'travelScreen',
-        'Nueva Guardia': 'guardScreen', 
-        'Ver Viajes': 'travelListScreen',
-        'Ver Guardias': 'guardListScreen',
-        'Reportes': 'reportsScreen',
-        'Backup': 'backupScreen'
-    };
-
-    let contador = 0;
-    
-    // Botones del menú principal
-    document.querySelectorAll('.menu-btn').forEach(boton => {
-        const texto = boton.textContent.trim();
-        const pantalla = Object.entries(mapeoBotones).find(([key]) => texto.includes(key))?.[1];
-        
-        if (pantalla) {
-            boton.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('🖱️ Click en:', texto);
-                showScreen(pantalla);
-            });
-            contador++;
-        }
-    });
-    
-    // Botones volver
-    document.querySelectorAll('.back-btn').forEach(boton => {
-        boton.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('🖱️ Click en Volver');
-            showScreen('mainScreen');
-        });
-        contador++;
-    });
-    
-    console.log(`✅ ${contador} event listeners agregados`);
-    return contador;
-}
-
-// INICIALIZACIÓN AGRESIVA
-function inicializarNavegacion() {
-    console.log('🚀 Inicializando navegación...');
-    
-    // Paso 1: Eliminar todos los onclick viejos
-    eliminarOnclicksViejos();
-    
-    // Paso 2: Agregar event listeners nuevos
-    const listenersAgregados = agregarEventListenersNuevos();
-    
-    // Paso 3: Verificar que showScreen esté disponible globalmente
-    if (typeof window.showScreen !== 'function') {
-        console.error('❌ showScreen no está disponible globalmente');
-        return false;
-    }
-    
-    console.log('🎯 Navegación inicializada correctamente');
-    console.log('📱 showScreen disponible:', typeof window.showScreen);
-    console.log('🖱️ Listeners agregados:', listenersAgregados);
-    
-    return true;
-}
-
-// EJECUTAR INMEDIATAMENTE
-console.log('🔧 Ejecutando reparación de navegación...');
-
-// Si el DOM ya está listo, ejecutar ahora
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', inicializarNavegacion);
-} else {
-    setTimeout(inicializarNavegacion, 100);
-}
-
-// También hacerlo disponible manualmente
-window.repararNavegacion = inicializarNavegacion;
