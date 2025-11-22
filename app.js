@@ -349,7 +349,7 @@ function showScreen(screenId) {
         console.log('❌ Pantalla no encontrada:', screenId);
         alert('Error: Pantalla "' + screenId + '" no encontrada');
     }
-}}
+}
 
 // FUNCIONES DE VIAJES - VERSIÓN MEJORADA CON AUTO-DETECCIÓN
 function addTravel(event) {
