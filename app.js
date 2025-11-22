@@ -1195,3 +1195,125 @@ function showScreen(screenId) {
         }, 100);
     }
 }
+// ============================================
+// 🛠️ REPARACIÓN DE BOTONES - PEGAR AL FINAL
+// ============================================
+
+// Asegurar que showScreen esté definida
+if (typeof showScreen === 'undefined') {
+    function showScreen(screenId) {
+        console.log('🎯 Mostrando pantalla:', screenId);
+        
+        // Ocultar TODAS las pantallas
+        const allScreens = document.querySelectorAll('.screen');
+        allScreens.forEach(screen => {
+            screen.classList.remove('active');
+        });
+        
+        // Mostrar pantalla objetivo
+        const targetScreen = document.getElementById(screenId);
+        if (targetScreen) {
+            targetScreen.classList.add('active');
+            console.log('✅ Pantalla activada:', screenId);
+            
+            // Actualizar datos específicos
+            if (screenId === 'mainScreen') {
+                updateSummary();
+            } else if (screenId === 'travelScreen') {
+                updateTravelTable();
+                limpiarSeleccionRegular();
+            } else if (screenId === 'guardScreen') {
+                updateGuardList();
+                setTimeout(() => {
+                    actualizarDescripcionGuardia();
+                }, 100);
+            } else if (screenId === 'travelListScreen') {
+                updateAllTravelsList();
+                renderViajesList();
+            } else if (screenId === 'guardListScreen') {
+                updateAllGuardsList();
+                renderGuardiasList();
+            } else if (screenId === 'reportsScreen') {
+                setTimeout(() => {
+                    generarReporte();
+                }, 100);
+            } else if (screenId === 'backupScreen') {
+                const importStatus = document.getElementById('importStatus');
+                if (importStatus) importStatus.textContent = '';
+            }
+        } else {
+            console.log('❌ Pantalla no encontrada:', screenId);
+        }
+    }
+}
+
+// Reparar todos los botones del menú
+function repararBotonesMenu() {
+    const botonesMenu = {
+        'Nuevo Viaje': 'travelScreen',
+        'Nueva Guardia': 'guardScreen', 
+        'Ver Viajes': 'travelListScreen',
+        'Ver Guardias': 'guardListScreen',
+        'Reportes': 'reportsScreen',
+        'Backup': 'backupScreen'
+    };
+
+    let botonesReparados = 0;
+    
+    document.querySelectorAll('.menu-btn').forEach(boton => {
+        const textoBoton = boton.textContent.trim();
+        const pantalla = Object.entries(botonesMenu).find(([texto]) => 
+            textoBoton.includes(texto)
+        )?.[1];
+        
+        if (pantalla) {
+            // Remover el onclick viejo que causa error
+            boton.removeAttribute('onclick');
+            
+            // Agregar nuevo evento
+            boton.addEventListener('click', function(e) {
+                e.preventDefault();
+                showScreen(pantalla);
+            });
+            
+            botonesReparados++;
+        }
+    });
+    
+    console.log(`✅ ${botonesReparados} botones reparados`);
+    return botonesReparados;
+}
+
+// Reparar botones de volver
+function repararBotonesVolver() {
+    document.querySelectorAll('.back-btn').forEach(boton => {
+        if (boton.getAttribute('onclick')?.includes('showScreen')) {
+            boton.removeAttribute('onclick');
+            boton.addEventListener('click', function(e) {
+                e.preventDefault();
+                showScreen('mainScreen');
+            });
+        }
+    });
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        const botonesReparados = repararBotonesMenu();
+        repararBotonesVolver();
+        
+        console.log('🎯 Sistema de navegación listo');
+        console.log('📱 Botones del menú reparados:', botonesReparados);
+        
+        // Verificar que todo funciona
+        console.log('🔧 showScreen disponible:', typeof showScreen);
+    }, 100);
+});
+
+// También reparar si la página ya está cargada
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', repararBotonesMenu);
+} else {
+    repararBotonesMenu();
+}
