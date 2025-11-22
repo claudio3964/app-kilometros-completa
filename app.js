@@ -662,10 +662,21 @@ function renderViajesList() {
     
     const sortedViajes = [...viajes].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     
+    // 🆕 IDENTIFICAR ÚLTIMO VIAJE DE CADA ORDEN
+    const ultimosViajesPorOrden = {};
+    sortedViajes.forEach(viaje => {
+        if (!ultimosViajesPorOrden[viaje.orderNumber] || 
+            new Date(viaje.timestamp) > new Date(ultimosViajesPorOrden[viaje.orderNumber].timestamp)) {
+            ultimosViajesPorOrden[viaje.orderNumber] = viaje;
+        }
+    });
+    
     container.innerHTML = sortedViajes.map(viaje => {
-        // 🆕 CALCULAR HORAS DE JORNADA COMPLETA
         const horasJornada = calcularHorasJornadaPorOrden(viaje.orderNumber, viaje.date);
         const mostrarViatico = horasJornada >= 9;
+        
+        // 🆕 MOSTRAR VIÁTICO SOLO EN EL ÚLTIMO VIAJE DE LA ORDEN
+        const esUltimoViaje = ultimosViajesPorOrden[viaje.orderNumber].id === viaje.id;
         
         return `
         <div class="item-viaje">
@@ -696,7 +707,7 @@ function renderViajesList() {
             </div>
             
             <div>
-                ${mostrarViatico ? `<span class="viatico-badge">💰 Viáticos: $1</span>` : ''}
+                ${mostrarViatico && esUltimoViaje ? `<span class="viatico-badge">💰 Viáticos: $1</span>` : ''}
                 ${viaje.tipoServicio ? `<span class="tarifa-badge">${viaje.tipoServicio}</span>` : ''}
                 ${viaje.conAcoplado ? `<span class="acoplado-badge">🚛 Acoplado</span>` : ''}
             </div>
