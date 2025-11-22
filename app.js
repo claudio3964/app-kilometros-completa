@@ -302,6 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('backupFile')?.addEventListener('change', handleFileSelect);
 });
 
+
 // FUNCIONES DE NAVEGACIÓN
 function showScreen(screenId) {
     // Ocultar todas las pantallas
@@ -324,6 +325,10 @@ function showScreen(screenId) {
         limpiarSeleccionRegular();
     } else if (screenId === 'guardScreen') {
         updateGuardList();
+        // 🆕 CONFIGURAR CAMPO DE DESCRIPCIÓN
+        setTimeout(() => {
+            actualizarDescripcionGuardia();
+        }, 100);
     } else if (screenId === 'travelListScreen') {
         updateAllTravelsList();
     } else if (screenId === 'guardListScreen') {
@@ -446,16 +451,7 @@ function actualizarDescripcionGuardia() {
     }
 }
 
-// 🆕 INICIALIZAR AL CARGAR LA PANTALLA
-function showScreen(screenId) {
-    // ... código existente ...
-    
-    if (screenId === 'guardScreen') {
-        // Configurar campo de descripción
-        setTimeout(() => {
-            actualizarDescripcionGuardia();
-        }, 100);
-    }
+
 // ACTUALIZAR INTERFACES
 function updateSummary() {
     const savedTravels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
