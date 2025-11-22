@@ -1032,3 +1032,21 @@ function getCurrentDateTime() {
     const now = new Date();
     return now.toISOString().slice(0, 19).replace(/:/g, '-');
 }
+// 🎯 FUNCIONES DE REPORTES - VERSIÓN INICIAL
+function generarReporte() {
+    console.log('🔍 Generando reporte...');
+    // Esta función la implementaremos después del HTML
+    alert('¡Funcionalidad de reportes en desarrollo!');
+}
+
+function limpiarFiltros() {
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    document.getElementById('filterOrderNumber').value = '';
+    document.getElementById('filterDriver').value = '';
+}
+
+function exportarReporte() {
+    console.log('📄 Exportando reporte...');
+    alert('¡Exportación a PDF en desarrollo!');
+}
