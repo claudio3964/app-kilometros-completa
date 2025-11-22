@@ -227,10 +227,7 @@
                             <label for="guardOrderNumber">Número de Orden *</label>
                             <input type="text" id="guardOrderNumber" required>
                         </div>
-                        <div class="form-group">
-                            <label for="guardDriverName">Nombre Conductor *</label>
-                            <input type="text" id="guardDriverName" required>
-                        </div>
+
                         <div class="form-group">
                             <label for="guardStartTime">Hora Inicio *</label>
                             <input type="time" id="guardStartTime" required>
@@ -240,13 +237,17 @@
                             <input type="time" id="guardEndTime" required>
                         </div>
                         <div class="form-group">
-                            <label for="guardType">Tipo de Guardia</label>
-                            <select id="guardType">
-                                <option value="diurna">Diurna</option>
-                                <option value="nocturna">Nocturna</option>
-                                <option value="mixta">Mixta</option>
-                            </select>
+                    <label for="guardTarifa">Tipo de Guardia</label>
+                    <select id="guardTarifa">
+                        <option value="30">Común - $30/hora</option>
+                        <option value="40">Especial - $40/hora</option>
+                    </select>
                         </div>
+                         <!-- 🆕 CAMPO DE TEXTO PARA DESCRIPCIÓN (SOLO PARA 40) -->
+            <div id="campoDescripcion" class="form-group" style="display: none;">
+                <label for="guardDescripcion">📝 Descripción del Movimiento Especial *</label>
+                <textarea id="guardDescripcion" rows="3" placeholder="Ej: Traslado especial a hotel, Servicio fuera de horario, Movimiento extra..."></textarea>
+                <small style="color: #666;">Describe brevemente por qué es una guardia especial</small>
                     </div>
                     <button type="submit" class="btn-primary">➕ Agregar Guardia</button>
                 </form>
@@ -346,6 +347,7 @@
     <script src="app.js"></script>
 </body>
 </html>
+
 
 
 
