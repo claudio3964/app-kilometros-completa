@@ -1164,8 +1164,9 @@ function exportarReporte() {
     
     alert('✅ Reporte exportado como archivo de texto');
 }
+
 // ============================================
-// 📊 SISTEMA DE REPORTES PARA USUARIO
+// 📊 SISTEMA DE REPORTES INTEGRADO EN REPORTES SCREEN - VERSIÓN CORREGIDA
 // ============================================
 
 class ReportesManager {
@@ -1297,59 +1298,80 @@ class ReportesManager {
         return 'NO';
     }
 
-    // 🖨️ MOSTRAR REPORTE
+    // 🖨️ MOSTRAR REPORTE EN LA PANTALLA DE REPORTES
     mostrarReporte(tipo) {
         let contenido = '';
+        let titulo = '';
         
         switch(tipo) {
             case 'semanal':
                 const reporteSemanal = this.generarReporteSemanal();
                 contenido = this.generarHTMLReporteSemanal(reporteSemanal);
+                titulo = '📊 Mi Reporte Semanal';
                 break;
                 
             case 'mensual':
                 const reporteMensual = this.generarReporteMensual();
                 contenido = this.generarHTMLReporteMensual(reporteMensual);
+                titulo = '📈 Mi Reporte Mensual';
                 break;
                 
             case 'diario':
                 const reporteDiario = this.generarReporteDiario();
                 contenido = this.generarHTMLReporteDiario(reporteDiario);
+                titulo = '📅 Mis Viajes de Hoy';
                 break;
         }
         
-        this.mostrarPantallaReporte(contenido, tipo);
+        this.mostrarEnPantallaReportes(contenido, titulo);
     }
 
     // 🎨 GENERAR HTML REPORTE SEMANAL
     generarHTMLReporteSemanal(reporte) {
         return `
-            <div class="reporte-contenedor">
-                <h3>📊 MI REPORTE SEMANAL</h3>
-                <div class="reporte-header">
-                    <strong>${reporte.periodo}</strong>
-                    <div class="usuario-info">👤 ${this.usuario.nombre || 'Usuario'}</div>
+            <div class="user-report-container">
+                <div class="user-report-header">
+                    <h3>📊 MI REPORTE SEMANAL</h3>
+                    <div class="user-info">👤 ${this.usuario.nombre || 'Usuario'}</div>
                 </div>
-                <div class="reporte-stats">
-                    <div class="stat-line">
-                        <span>📈 Mis viajes:</span>
-                        <strong>${reporte.viajes}</strong>
+                <div class="user-report-period">
+                    <strong>${reporte.periodo}</strong>
+                </div>
+                <div class="user-report-stats">
+                    <div class="user-stat-card">
+                        <div class="user-stat-icon">📈</div>
+                        <div class="user-stat-info">
+                            <div class="user-stat-value">${reporte.viajes}</div>
+                            <div class="user-stat-label">Mis viajes</div>
+                        </div>
                     </div>
-                    <div class="stat-line">
-                        <span>🛣️ KM total:</span>
-                        <strong>${reporte.kmTotal} km</strong>
+                    <div class="user-stat-card">
+                        <div class="user-stat-icon">🛣️</div>
+                        <div class="user-stat-info">
+                            <div class="user-stat-value">${reporte.kmTotal}</div>
+                            <div class="user-stat-label">KM total</div>
+                        </div>
                     </div>
-                    <div class="stat-line">
-                        <span>🚛 Viajes con acoplado:</span>
-                        <strong>${reporte.viajesAcoplado}</strong>
+                    <div class="user-stat-card">
+                        <div class="user-stat-icon">🚛</div>
+                        <div class="user-stat-info">
+                            <div class="user-stat-value">${reporte.viajesAcoplado}</div>
+                            <div class="user-stat-label">Viajes con acoplado</div>
+                        </div>
                     </div>
-                    <div class="stat-line">
-                        <span>🛣️ KM con acoplado:</span>
-                        <strong>${reporte.kmAcoplado} km</strong>
+                    <div class="user-stat-card">
+                        <div class="user-stat-icon">📏</div>
+                        <div class="user-stat-info">
+                            <div class="user-stat-value">${reporte.kmAcoplado}</div>
+                            <div class="user-stat-label">KM con acoplado</div>
+                        </div>
                     </div>
-                    <div class="stat-line">
-                        <span>💰 Viajes con viáticos:</span>
-                        <strong>${reporte.viajesViaticos}</strong>
+                    <div class="user-stat-card">
+                        <div class="user-stat-icon">💰</div>
+                        <div class="user-stat-info">
+                            <div class="user-stat-value">${reporte.viajesViaticos}</div>
+                            <div class="user-stat-label">Viajes con viáticos</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1359,32 +1381,49 @@ class ReportesManager {
     // 🎨 GENERAR HTML REPORTE MENSUAL
     generarHTMLReporteMensual(reporte) {
         return `
-            <div class="reporte-contenedor">
-                <h3>📈 MI REPORTE MENSUAL</h3>
-                <div class="reporte-header">
-                    <strong>${reporte.periodo}</strong>
-                    <div class="usuario-info">👤 ${this.usuario.nombre || 'Usuario'}</div>
+            <div class="user-report-container">
+                <div class="user-report-header">
+                    <h3>📈 MI REPORTE MENSUAL</h3>
+                    <div class="user-info">👤 ${this.usuario.nombre || 'Usuario'}</div>
                 </div>
-                <div class="reporte-stats">
-                    <div class="stat-line">
-                        <span>📈 Mis viajes:</span>
-                        <strong>${reporte.viajes}</strong>
+                <div class="user-report-period">
+                    <strong>${reporte.periodo}</strong>
+                </div>
+                <div class="user-report-stats">
+                    <div class="user-stat-card">
+                        <div class="user-stat-icon">📈</div>
+                        <div class="user-stat-info">
+                            <div class="user-stat-value">${reporte.viajes}</div>
+                            <div class="user-stat-label">Mis viajes</div>
+                        </div>
                     </div>
-                    <div class="stat-line">
-                        <span>🛣️ KM total:</span>
-                        <strong>${reporte.kmTotal} km</strong>
+                    <div class="user-stat-card">
+                        <div class="user-stat-icon">🛣️</div>
+                        <div class="user-stat-info">
+                            <div class="user-stat-value">${reporte.kmTotal}</div>
+                            <div class="user-stat-label">KM total</div>
+                        </div>
                     </div>
-                    <div class="stat-line">
-                        <span>🚛 Viajes con acoplado:</span>
-                        <strong>${reporte.viajesAcoplado}</strong>
+                    <div class="user-stat-card">
+                        <div class="user-stat-icon">🚛</div>
+                        <div class="user-stat-info">
+                            <div class="user-stat-value">${reporte.viajesAcoplado}</div>
+                            <div class="user-stat-label">Viajes con acoplado</div>
+                        </div>
                     </div>
-                    <div class="stat-line">
-                        <span>🛣️ KM con acoplado:</span>
-                        <strong>${reporte.kmAcoplado} km</strong>
+                    <div class="user-stat-card">
+                        <div class="user-stat-icon">📏</div>
+                        <div class="user-stat-info">
+                            <div class="user-stat-value">${reporte.kmAcoplado}</div>
+                            <div class="user-stat-label">KM con acoplado</div>
+                        </div>
                     </div>
-                    <div class="stat-line">
-                        <span>💰 Viajes con viáticos:</span>
-                        <strong>${reporte.viajesViaticos}</strong>
+                    <div class="user-stat-card">
+                        <div class="user-stat-icon">💰</div>
+                        <div class="user-stat-info">
+                            <div class="user-stat-value">${reporte.viajesViaticos}</div>
+                            <div class="user-stat-label">Viajes con viáticos</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1398,114 +1437,151 @@ class ReportesManager {
         }
 
         return `
-            <div class="reporte-contenedor">
-                <h3>📅 MIS VIAJES - ${viajes[0].fecha}</h3>
-                <div class="reporte-header">
-                    <strong>👤 ${this.usuario.nombre || 'Usuario'}</strong>
+            <div class="user-report-container">
+                <div class="user-report-header">
+                    <h3>📅 MIS VIAJES - ${viajes[0].fecha}</h3>
+                    <div class="user-info">👤 ${this.usuario.nombre || 'Usuario'}</div>
                 </div>
-                ${viajes.map(viaje => `
-                    <div class="viaje-detalle">
-                        <div class="viaje-header">
-                            <strong>Orden: ${viaje.orden}</strong>
-                            <span class="ruta">${viaje.ruta}</span>
+                <div class="user-daily-trips">
+                    ${viajes.map(viaje => `
+                        <div class="user-trip-card">
+                            <div class="user-trip-header">
+                                <div class="user-trip-order">Orden: <strong>${viaje.orden}</strong></div>
+                                <div class="user-trip-route">${viaje.ruta}</div>
+                            </div>
+                            <div class="user-trip-details">
+                                <div class="user-detail-line">
+                                    <span class="user-detail-label">Kilómetros:</span>
+                                    <span class="user-detail-value">${viaje.km} km</span>
+                                </div>
+                                <div class="user-detail-line">
+                                    <span class="user-detail-label">Horario:</span>
+                                    <span class="user-detail-value">${viaje.horaSalida} - ${viaje.horaLlegada}</span>
+                                </div>
+                                <div class="user-detail-line">
+                                    <span class="user-detail-label">Duración:</span>
+                                    <span class="user-detail-value">${viaje.horasViaje} horas</span>
+                                </div>
+                                <div class="user-detail-line">
+                                    <span class="user-detail-label">Guardia:</span>
+                                    <span class="user-detail-value">${viaje.guardia}</span>
+                                </div>
+                                <div class="user-detail-line">
+                                    <span class="user-detail-label">Viáticos:</span>
+                                    <span class="user-detail-value ${viaje.viaticos.includes('✅') ? 'user-viatico-yes' : 'user-viatico-no'}">${viaje.viaticos}</span>
+                                </div>
+                                <div class="user-detail-line">
+                                    <span class="user-detail-label">Acoplado:</span>
+                                    <span class="user-detail-value ${viaje.acoplado.includes('✅') ? 'user-acoplado-yes' : 'user-acoplado-no'}">${viaje.acoplado}</span>
+                                </div>
+                                <div class="user-detail-line">
+                                    <span class="user-detail-label">Tipo Servicio:</span>
+                                    <span class="user-detail-value user-service-type">${viaje.tipoServicio}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="viaje-info">
-                            <div>🛣️ ${viaje.km} km</div>
-                            <div>🕐 ${viaje.horaSalida} - ${viaje.horaLlegada} (${viaje.horasViaje}h)</div>
-                            <div>👮 ${viaje.guardia}</div>
-                            <div>💰 ${viaje.viaticos}</div>
-                            <div>🚛 ${viaje.acoplado}</div>
-                            <div>🎫 ${viaje.tipoServicio}</div>
-                        </div>
-                    </div>
-                `).join('')}
+                    `).join('')}
+                </div>
             </div>
         `;
     }
 
-    // 🖥️ MOSTRAR PANTALLA DE REPORTE
-    mostrarPantallaReporte(contenido, tipo) {
-        // Crear pantalla de reportes si no existe
-        let reportScreen = document.getElementById('userReportsScreen');
+    // 🖥️ MOSTRAR EN PANTALLA DE REPORTES EXISTENTE
+    mostrarEnPantallaReportes(contenido, titulo) {
+        // Actualizar el título de la sección
+        const reportHeader = document.querySelector('#reportsScreen .screen-header h2');
+        if (reportHeader && titulo) {
+            reportHeader.textContent = titulo;
+        }
         
-        if (!reportScreen) {
-            reportScreen = document.createElement('div');
-            reportScreen.id = 'userReportsScreen';
-            reportScreen.className = 'screen';
-            reportScreen.innerHTML = `
-                <div class="screen-header">
-                    <button class="back-btn" onclick="app.reportes.cerrarReporte()">← Volver</button>
-                    <h2>📊 Mis Reportes</h2>
+        // Mostrar en el área de resultados de reportes
+        const reportResults = document.querySelector('.report-results');
+        if (reportResults) {
+            reportResults.style.display = 'block';
+            reportResults.innerHTML = `
+                <div class="report-header">
+                    <h3>${titulo}</h3>
                 </div>
-                <div class="reporte-content" id="reporteContent"></div>
+                <div class="user-report-content">
+                    ${contenido}
+                </div>
             `;
-            document.querySelector('.container').appendChild(reportScreen);
         }
         
-        document.getElementById('reporteContent').innerHTML = contenido;
-        this.mostrarPantalla('userReportsScreen');
-    }
-
-    // 🚪 CERRAR REPORTE
-    cerrarReporte() {
-        showScreen('mainScreen');
-    }
-
-    // 🎯 MOSTRAR PANTALLA (compatibilidad con tu sistema)
-    mostrarPantalla(pantallaId) {
-        document.querySelectorAll('.screen').forEach(screen => {
-            screen.style.display = 'none';
-            screen.classList.remove('active');
-        });
-        
-        const targetScreen = document.getElementById(pantallaId);
-        if (targetScreen) {
-            targetScreen.style.display = 'block';
-            targetScreen.classList.add('active');
+        // Ocultar la tabla de resultados normal
+        const tablaNormal = document.querySelector('.table-container');
+        if (tablaNormal) {
+            tablaNormal.style.display = 'none';
         }
+        
+        // Ocultar el resumen rápido
+        const resumenRapido = document.querySelector('.report-summary');
+        if (resumenRapido) {
+            resumenRapido.style.display = 'none';
+        }
+    }
+
+    // 🔄 RESTAURAR VISTA NORMAL DE REPORTES
+    restaurarVistaNormal() {
+        const reportHeader = document.querySelector('#reportsScreen .screen-header h2');
+        if (reportHeader) {
+            reportHeader.textContent = '📊 Reportes y Búsquedas';
+        }
+        
+        const reportResults = document.querySelector('.report-results');
+        if (reportResults) {
+            reportResults.style.display = 'block';
+            // Aquí se restauraría el contenido original, pero lo manejamos con generarReporte()
+        }
+        
+        const tablaNormal = document.querySelector('.table-container');
+        if (tablaNormal) {
+            tablaNormal.style.display = 'block';
+        }
+        
+        const resumenRapido = document.querySelector('.report-summary');
+        if (resumenRapido) {
+            resumenRapido.style.display = 'flex';
+        }
+        
+        // Generar reporte normal
+        generarReporte();
     }
 }
 
 // 🎯 INICIALIZAR SISTEMA DE REPORTES
 let reportesManager = new ReportesManager();
 
-// 🆕 AGREGAR BOTONES DE REPORTES AL MENÚ PRINCIPAL
-function agregarBotonesReportesUsuario() {
-    const menuContainer = document.querySelector('.menu-container .button-grid');
+// 🆕 MODIFICAR LA PANTALLA DE REPORTES EXISTENTE
+function inicializarReportesUsuario() {
+    const filtersPanel = document.querySelector('.filters-panel');
     
-    if (menuContainer && !document.getElementById('btnReporteDiario')) {
-        const botonesReportes = `
-            <button class="menu-btn info" onclick="reportesManager.mostrarReporte('diario')" id="btnReporteDiario">
-                <span class="btn-icon">📅</span>
-                <span class="btn-text">Mi Día</span>
-                <span class="btn-desc">Mis viajes de hoy</span>
-            </button>
-
-            <button class="menu-btn success" onclick="reportesManager.mostrarReporte('semanal')" id="btnReporteSemanal">
-                <span class="btn-icon">📊</span>
-                <span class="btn-text">Mi Semana</span>
-                <span class="btn-desc">Resumen semanal</span>
-            </button>
-
-            <button class="menu-btn primary" onclick="reportesManager.mostrarReporte('mensual')" id="btnReporteMensual">
-                <span class="btn-icon">📈</span>
-                <span class="btn-text">Mi Mes</span>
-                <span class="btn-desc">Resumen mensual</span>
-            </button>
+    if (filtersPanel && !document.getElementById('btnReporteDiario')) {
+        const botonesReportesUsuario = `
+            <div class="filter-group">
+                <label>👤 Mis Reportes:</label>
+                <div class="reportes-usuario-buttons">
+                    <button class="btn-user-report" onclick="reportesManager.mostrarReporte('diario')">
+                        📅 Mi Día
+                    </button>
+                    <button class="btn-user-report" onclick="reportesManager.mostrarReporte('semanal')">
+                        📊 Mi Semana
+                    </button>
+                    <button class="btn-user-report" onclick="reportesManager.mostrarReporte('mensual')">
+                        📈 Mi Mes
+                    </button>
+                    <button class="btn-user-report secondary" onclick="reportesManager.restaurarVistaNormal()">
+                        🔄 Todos los Viajes
+                    </button>
+                </div>
+            </div>
         `;
         
-        // Insertar después del botón de reportes existente
-        const existingReportBtn = menuContainer.querySelector('.menu-btn.success[onclick*="reportsScreen"]');
-        if (existingReportBtn) {
-            existingReportBtn.insertAdjacentHTML('afterend', botonesReportes);
-        } else {
-            menuContainer.innerHTML += botonesReportes;
-        }
+        filtersPanel.insertAdjacentHTML('beforeend', botonesReportesUsuario);
     }
 }
 
 // 🎯 INICIALIZAR AL CARGAR LA APLICACIÓN
 document.addEventListener('DOMContentLoaded', function() {
-    // Esperar a que cargue la interfaz y luego agregar botones
-    setTimeout(agregarBotonesReportesUsuario, 1500);
+    setTimeout(inicializarReportesUsuario, 1000);
 });
