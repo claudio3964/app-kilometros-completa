@@ -5,13 +5,109 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Viajes</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* 🆕 ESTILOS PARA LAS PANTALLAS NUEVAS */
+        .screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            z-index: 1000;
+            background: white;
+        }
+        
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* SPLASH SCREEN */
+        #splashScreen {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        
+        .splash-container {
+            animation: fadeIn 1s ease-in;
+        }
+        
+        .splash-logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* LOGIN SCREEN */
+        #loginScreen {
+            background: #f5f5f5;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .login-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .login-container h2 {
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+        
+        .login-container input,
+        .login-container select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        .login-container button {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-top: 1rem;
+            cursor: pointer;
+        }
+        
+        .login-container button:hover {
+            background: #45a049;
+        }
+        
+        .note {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 1rem;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
 </head>
 <body>
-        <!-- ============================================ -->
-    <!-- 🆕 PANTALLAS NUEVAS (AGREGAR AL PRINCIPIO) -->
-    <!-- ============================================ -->
-    
-    <!-- 1. SPLASH SCREEN -->
+    <!-- 🆕 PANTALLAS NUEVAS -->
     <div id="splashScreen" class="screen active">
         <div class="splash-container">
             <div class="splash-logo">🚌</div>
@@ -20,7 +116,6 @@
         </div>
     </div>
 
-    <!-- 2. LOGIN SCREEN -->
     <div id="loginScreen" class="screen">
         <div class="login-container">
             <h2>👋 ¡Bienvenido!</h2>
@@ -34,9 +129,11 @@
             <p class="note">* Estos datos se guardarán localmente en tu dispositivo</p>
         </div>
     </div>
+
+    <!-- 🚗 TU APP ACTUAL (NO MODIFICADA) -->
     <div class="container">
         <!-- PANTALLA PRINCIPAL -->
-        <div id="mainScreen" class="screen active">
+        <div id="mainScreen" class="screen">
             <!-- LOGO -->
             <div class="logo-container">
                 <div class="app-logo">🚌</div>
@@ -116,15 +213,15 @@
             </div>
         </div>
 
-        <!-- PANTALLA VIAJES - ACTUALIZADA CON SISTEMA INTELIGENTE -->
+        <!-- PANTALLA VIAJES -->
         <div id="travelScreen" class="screen">
             <div class="screen-header">
                 <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
                 <h2>🚗 Nuevo Viaje</h2>
             </div>
             <button type="button" onclick="agregarDestinoManual()" class="btn-secondary">
-    ➕ Agregar Nuevo Destino
-</button>
+                ➕ Agregar Nuevo Destino
+            </button>
             <div class="form-container">
                 <!-- SELECTOR DE MODO -->
                 <div class="mode-selector" style="margin-bottom: 20px;">
@@ -214,13 +311,13 @@
                             <input type="text" id="orderNumberTravels" required>
                         </div>
                         <div class="form-group">
-        <label for="originTravels">Origen *</label>
-        <input type="text" id="originTravels" required readonly style="background-color: #f8f9fa;">
-    </div>
-    <div class="form-group">
-        <label for="destinationTravels">Destino *</label>
-        <input type="text" id="destinationTravels" required readonly style="background-color: #f8f9fa;">
-    </div>
+                            <label for="originTravels">Origen *</label>
+                            <input type="text" id="originTravels" required readonly style="background-color: #f8f9fa;">
+                        </div>
+                        <div class="form-group">
+                            <label for="destinationTravels">Destino *</label>
+                            <input type="text" id="destinationTravels" required readonly style="background-color: #f8f9fa;">
+                        </div>
                         
                         <div class="form-group">
                             <label for="kmTravels">Kilómetros *</label>
@@ -241,7 +338,7 @@
             </div>
         </div>
 
-        <!-- PANTALLA GUARDIAS (MANTENIDA IGUAL) -->
+        <!-- PANTALLA GUARDIAS -->
         <div id="guardScreen" class="screen">
             <div class="screen-header">
                 <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
@@ -264,26 +361,26 @@
                             <input type="time" id="guardEndTime" required>
                         </div>
                          <!-- CAMPO DE TARIFA -->
-                <div class="form-group">
-                    <label for="guardTarifa">Tipo de Guardia</label>
-                    <select id="guardTarifa" onchange="actualizarDescripcionGuardia()">
-                        <option value="30">Común - $30/hora</option>
-                        <option value="40">Especial - $40/hora</option>
-                    </select>
-                </div>
-            </div>
-                         <!-- 🆕 CAMPO DE TEXTO PARA DESCRIPCIÓN (SOLO PARA 40) -->
-            <div id="campoDescripcion" class="form-group" style="display: none;">
-                <label for="guardDescripcion">📝 Descripción del Movimiento Especial *</label>
-                <textarea id="guardDescripcion" rows="3" placeholder="Ej: Traslado especial a hotel, Servicio fuera de horario, Movimiento extra..."></textarea>
-                <small style="color: #666;">Describe brevemente por qué es una guardia especial</small>
+                        <div class="form-group">
+                            <label for="guardTarifa">Tipo de Guardia</label>
+                            <select id="guardTarifa" onchange="actualizarDescripcionGuardia()">
+                                <option value="30">Común - $30/hora</option>
+                                <option value="40">Especial - $40/hora</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- CAMPO DE TEXTO PARA DESCRIPCIÓN -->
+                    <div id="campoDescripcion" class="form-group" style="display: none;">
+                        <label for="guardDescripcion">📝 Descripción del Movimiento Especial *</label>
+                        <textarea id="guardDescripcion" rows="3" placeholder="Ej: Traslado especial a hotel, Servicio fuera de horario, Movimiento extra..."></textarea>
+                        <small style="color: #666;">Describe brevemente por qué es una guardia especial</small>
                     </div>
                     <button type="submit" class="btn-primary">➕ Agregar Guardia</button>
                 </form>
             </div>
         </div>
 
-        <!-- PANTALLA BACKUP (MANTENIDA IGUAL) -->
+        <!-- PANTALLA BACKUP -->
         <div id="backupScreen" class="screen">
             <div class="screen-header">
                 <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
@@ -322,7 +419,7 @@
             </div>
         </div>
 
-        <!-- LISTA DE VIAJES (MANTENIDA IGUAL) -->
+        <!-- LISTA DE VIAJES -->
         <div id="travelListScreen" class="screen">
             <div class="screen-header">
                 <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
@@ -330,11 +427,11 @@
             </div>
             
             <div class="lista-container" id="allTravelsList">
-                <!-- Se llenará con JavaScript -->
                 <div class="no-data">No hay viajes registrados</div>
             </div>
         </div>
-     <!-- 🆕 PANTALLA DE LISTA DE GUARDIAS (FALTABA) -->
+
+        <!-- LISTA DE GUARDIAS -->
         <div id="guardListScreen" class="screen">
             <div class="screen-header">
                 <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
@@ -342,12 +439,11 @@
             </div>
             
             <div class="lista-container" id="allGuardsList">
-                <!-- Se llenará con JavaScript -->
                 <div class="no-data">No hay guardias registradas</div>
             </div>
         </div>
         
-        <!-- PANTALLA DE REPORTES (MANTENIDA IGUAL) -->
+        <!-- PANTALLA DE REPORTES -->
         <div id="reportsScreen" class="screen">
             <div class="screen-header">
                 <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
@@ -357,12 +453,98 @@
                 <p>Pantalla de reportes en desarrollo...</p>
             </div>
         </div>
-
     </div>
 
+    <!-- 🆕 SCRIPT NUEVO PARA EL LOGIN -->
+    <script>
+        // 🎯 VARIABLE GLOBAL PARA EL USUARIO
+        let usuario = {
+            numero: '',
+            nombre: '', 
+            rol: ''
+        };
+
+        // 🎯 FUNCIÓN PARA GUARDAR USUARIO (LOGIN)
+        function guardarUsuario() {
+            const numero = document.getElementById('userNumber').value.trim();
+            const nombre = document.getElementById('userName').value.trim();
+            const rol = document.getElementById('userRole').value;
+            
+            // Validar campos
+            if (!numero) {
+                alert('Por favor ingresa tu número de funcionario');
+                return;
+            }
+            
+            if (!nombre) {
+                alert('Por favor ingresa tu nombre');
+                return;
+            }
+            
+            // Guardar datos del usuario
+            usuario = { 
+                numero: numero, 
+                nombre: nombre, 
+                rol: rol 
+            };
+            
+            // Guardar en localStorage
+            localStorage.setItem('travelUser', JSON.stringify(usuario));
+            
+            // Ocultar login y mostrar app principal
+            document.getElementById('loginScreen').classList.remove('active');
+            document.getElementById('mainScreen').classList.add('active');
+            
+            console.log('✅ Usuario guardado:', usuario);
+        }
+
+        // 🎯 FUNCIÓN PARA CARGAR USUARIO AL INICIAR
+        function cargarUsuario() {
+            const usuarioGuardado = localStorage.getItem('travelUser');
+            
+            if (usuarioGuardado) {
+                // Usuario ya existe, cargar datos
+                usuario = JSON.parse(usuarioGuardado);
+                console.log('✅ Usuario cargado:', usuario);
+                
+                // Ocultar splash y mostrar app principal directamente
+                setTimeout(() => {
+                    document.getElementById('splashScreen').classList.remove('active');
+                    document.getElementById('mainScreen').classList.add('active');
+                }, 1000);
+                
+            } else {
+                // Primer uso, mostrar login después del splash
+                setTimeout(() => {
+                    document.getElementById('splashScreen').classList.remove('active');
+                    document.getElementById('loginScreen').classList.add('active');
+                }, 2000);
+            }
+        }
+
+        // 🎯 FUNCIÓN PARA CORREGIR USUARIO (OPCIONAL)
+        function corregirUsuario() {
+            if (confirm('¿Deseas cambiar tus datos de usuario?\n\nEsto te llevará a la pantalla de configuración inicial.')) {
+                // Eliminar usuario guardado
+                localStorage.removeItem('travelUser');
+                // Ocultar app y mostrar login
+                document.getElementById('mainScreen').classList.remove('active');
+                document.getElementById('loginScreen').classList.add('active');
+            }
+        }
+
+        // 🎯 INICIAR LA APLICACIÓN
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Iniciando aplicación...');
+            cargarUsuario();
+        });
+    </script>
+
+    <!-- 🚗 TU SCRIPT ACTUAL -->
     <script src="app.js"></script>
 </body>
 </html>
+
 
 
 
