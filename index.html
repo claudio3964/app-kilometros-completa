@@ -7,6 +7,33 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+        <!-- ============================================ -->
+    <!-- 🆕 PANTALLAS NUEVAS (AGREGAR AL PRINCIPIO) -->
+    <!-- ============================================ -->
+    
+    <!-- 1. SPLASH SCREEN -->
+    <div id="splashScreen" class="screen active">
+        <div class="splash-container">
+            <div class="splash-logo">🚌</div>
+            <h1>Gestión de Viajes</h1>
+            <p>Cargando aplicación...</p>
+        </div>
+    </div>
+
+    <!-- 2. LOGIN SCREEN -->
+    <div id="loginScreen" class="screen">
+        <div class="login-container">
+            <h2>👋 ¡Bienvenido!</h2>
+            <input type="text" id="userNumber" placeholder="Nº de Funcionario" maxlength="10">
+            <input type="text" id="userName" placeholder="Nombre completo">
+            <select id="userRole">
+                <option value="conductor">Conductor</option>
+                <option value="administrativo">Administrativo</option>
+            </select>
+            <button onclick="guardarUsuario()">Comenzar a Usar</button>
+            <p class="note">* Estos datos se guardarán localmente en tu dispositivo</p>
+        </div>
+    </div>
     <div class="container">
         <!-- PANTALLA PRINCIPAL -->
         <div id="mainScreen" class="screen active">
@@ -336,6 +363,7 @@
     <script src="app.js"></script>
 </body>
 </html>
+
 
 
 
