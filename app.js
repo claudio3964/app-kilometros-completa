@@ -401,6 +401,7 @@ function addTravel(event) {
         return;
     }
     
+    // 🆕 VIAJE CON DATOS DE USUARIO INCORPORADOS
     const travel = {
         id: Date.now(),
         orderNumber, 
@@ -417,7 +418,16 @@ function addTravel(event) {
         modo: modoActual,
         tipoServicio: tipoServicio,
         conAcoplado: conAcoplado,
-        numeroServicio: numeroServicio
+        numeroServicio: numeroServicio,
+        
+        // ============================================
+        // 🆕 CAMPOS DEL USUARIO (AGREGAR ESTOS)
+        // ============================================
+        conductor: usuario.nombre,
+        numeroFuncionario: usuario.numero,
+        rolUsuario: usuario.rol,
+        fechaRegistroCompleta: new Date().toLocaleString()
+        // ============================================
     };
     
     travels.push(travel);
