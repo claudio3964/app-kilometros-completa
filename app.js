@@ -1317,26 +1317,44 @@ class ReportesManager {
         };
     }
 
-    // 📅 GENERAR REPORTE DIARIO - VERSIÓN CORREGIDA
-    generarReporteDiario(fechaEspecifica = null) {
-        const fecha = fechaEspecifica || new Date().toISOString().split('T')[0];
-        const viajesDia = this.filtrarViajesPorFecha(fecha, fecha);
-        const todosViajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
-
-        return viajesDia.map(viaje => ({
-            fecha: viaje.date,
-            orden: viaje.orderNumber,
-            ruta: `${viaje.origin} → ${viaje.destination}`,
-            km: parseFloat(viaje.km).toFixed(1),
-            horaSalida: viaje.departureTime,
-            horaLlegada: viaje.arrivalTime,
-            horasViaje: viaje.hoursWorked,
-            guardia: this.obtenerGuardiaOrden(viaje.orderNumber, viaje.date),
-            viaticos: this.determinarViaticos(viaje, todosViajes), // 🆕 USAR FUNCIÓN CORREGIDA
-            acoplado: (viaje.conAcoplado === true || viaje.conAcoplado === 'true') ? '✅ SÍ' : '❌ NO',
-            tipoServicio: viaje.tipoServicio || 'Regular'
-        }));
+    // 📅 GENERAR REPORTE DIARIO - VERSIÓN MEJORADA
+generarReporteDiario(fechaEspecifica = null) {
+    let fecha;
+    
+    if (fechaEspecifica) {
+        fecha = fechaEspecifica;
+    } else {
+        // Intentar obtener fecha del filtro "Fecha Desde"
+        const fechaFiltro = document.getElementById('filterDateFrom')?.value;
+        if (fechaFiltro) {
+            fecha = fechaFiltro;
+        } else {
+            // Usar fecha de hoy por defecto
+            fecha = new Date().toISOString().split('T')[0];
+        }
     }
+    
+    console.log('🔍 Buscando viajes para fecha:', fecha); // Para debug
+    
+    const viajesDia = this.filtrarViajesPorFecha(fecha, fecha);
+    const todosViajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+
+    console.log('📊 Viajes encontrados:', viajesDia.length); // Para debug
+    
+    return viajesDia.map(viaje => ({
+        fecha: viaje.date,
+        orden: viaje.orderNumber,
+        ruta: `${viaje.origin} → ${viaje.destination}`,
+        km: parseFloat(viaje.km).toFixed(1),
+        horaSalida: viaje.departureTime,
+        horaLlegada: viaje.arrivalTime,
+        horasViaje: viaje.hoursWorked,
+        guardia: this.obtenerGuardiaOrden(viaje.orderNumber, viaje.date),
+        viaticos: this.determinarViaticos(viaje, todosViajes),
+        acoplado: (viaje.conAcoplado === true || viaje.conAcoplado === 'true') ? '✅ SÍ' : '❌ NO',
+        tipoServicio: viaje.tipoServicio || 'Regular'
+    }));
+}
 
     // 🖨️ MOSTRAR REPORTE EN LA PANTALLA DE REPORTES
     mostrarReporte(tipo) {
