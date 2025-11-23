@@ -1165,6 +1165,7 @@ function exportarReporte() {
     alert('✅ Reporte exportado como archivo de texto');
 }
 
+
 // ============================================
 // 📊 SISTEMA DE REPORTES INTEGRADO EN REPORTES SCREEN - VERSIÓN CORREGIDA
 // ============================================
@@ -1210,6 +1211,49 @@ class ReportesManager {
         });
     }
 
+    // 🆕 FUNCIÓN CORREGIDA PARA DETERMINAR VIÁTICOS
+    determinarViaticos(viaje, todosViajes) {
+        // Buscar todos los viajes de la misma orden y fecha
+        const viajesMismaOrden = todosViajes.filter(v => 
+            v.orderNumber === viaje.orderNumber && v.date === viaje.date
+        );
+        
+        // Ordenar por timestamp para encontrar el último
+        viajesMismaOrden.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        
+        // Si es el último viaje de la orden, tiene viáticos
+        if (viajesMismaOrden.length > 0) {
+            const ultimoViaje = viajesMismaOrden[viajesMismaOrden.length - 1];
+            if (ultimoViaje.id === viaje.id) {
+                return '✅ SÍ';
+            }
+        }
+        
+        return '❌ NO';
+    }
+
+    // 🛡️ OBTENER INFORMACIÓN DE GUARDIA - VERSIÓN MEJORADA
+    obtenerGuardiaOrden(orderNumber, fecha) {
+        const guardias = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+        const guardia = guardias.find(g => g.orderNumber === orderNumber && g.date === fecha);
+        
+        if (guardia) {
+            return `SÍ (${guardia.startTime}-${guardia.endTime})`;
+        }
+        
+        // 🆕 BUSCAR GUARDIA POR CONDUCTOR Y FECHA (si no encuentra por orden)
+        const usuario = this.obtenerUsuarioActual();
+        const guardiaConductor = guardias.find(g => 
+            g.driverName === usuario.nombre && g.date === fecha
+        );
+        
+        if (guardiaConductor) {
+            return `SÍ (${guardiaConductor.startTime}-${guardiaConductor.endTime})`;
+        }
+        
+        return 'NO';
+    }
+
     // 📊 GENERAR REPORTE SEMANAL
     generarReporteSemanal() {
         const hoy = new Date();
@@ -1227,7 +1271,10 @@ class ReportesManager {
         const viajesConAcoplado = viajesSemana.filter(v => v.conAcoplado === true || v.conAcoplado === 'true');
         const kmAcoplado = viajesConAcoplado.reduce((sum, v) => sum + (parseFloat(v.km) || 0), 0);
         
-        const viajesConViaticos = viajesSemana.filter(v => v.viaticos === true || v.viaticos === 1 || v.viaticos === 'true').length;
+        const viajesConViaticos = viajesSemana.filter(v => {
+            const todosViajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+            return this.determinarViaticos(v, todosViajes) === '✅ SÍ';
+        }).length;
 
         return {
             periodo: `Semana del ${this.formatearFecha(inicioSemana)} al ${this.formatearFecha(hoy)}`,
@@ -1255,7 +1302,10 @@ class ReportesManager {
         const viajesConAcoplado = viajesMes.filter(v => v.conAcoplado === true || v.conAcoplado === 'true');
         const kmAcoplado = viajesConAcoplado.reduce((sum, v) => sum + (parseFloat(v.km) || 0), 0);
         
-        const viajesConViaticos = viajesMes.filter(v => v.viaticos === true || v.viaticos === 1 || v.viaticos === 'true').length;
+        const viajesConViaticos = viajesMes.filter(v => {
+            const todosViajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+            return this.determinarViaticos(v, todosViajes) === '✅ SÍ';
+        }).length;
 
         return {
             periodo: `Mes de ${hoy.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`,
@@ -1267,10 +1317,11 @@ class ReportesManager {
         };
     }
 
-    // 📅 GENERAR REPORTE DIARIO
+    // 📅 GENERAR REPORTE DIARIO - VERSIÓN CORREGIDA
     generarReporteDiario(fechaEspecifica = null) {
         const fecha = fechaEspecifica || new Date().toISOString().split('T')[0];
         const viajesDia = this.filtrarViajesPorFecha(fecha, fecha);
+        const todosViajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
 
         return viajesDia.map(viaje => ({
             fecha: viaje.date,
@@ -1281,21 +1332,10 @@ class ReportesManager {
             horaLlegada: viaje.arrivalTime,
             horasViaje: viaje.hoursWorked,
             guardia: this.obtenerGuardiaOrden(viaje.orderNumber, viaje.date),
-            viaticos: (viaje.viaticos === true || viaje.viaticos === 1 || viaje.viaticos === 'true') ? '✅ SÍ' : '❌ NO',
+            viaticos: this.determinarViaticos(viaje, todosViajes), // 🆕 USAR FUNCIÓN CORREGIDA
             acoplado: (viaje.conAcoplado === true || viaje.conAcoplado === 'true') ? '✅ SÍ' : '❌ NO',
             tipoServicio: viaje.tipoServicio || 'Regular'
         }));
-    }
-
-    // 🛡️ OBTENER INFORMACIÓN DE GUARDIA
-    obtenerGuardiaOrden(orderNumber, fecha) {
-        const guardias = JSON.parse(localStorage.getItem('bus_guards') || '[]');
-        const guardia = guardias.find(g => g.orderNumber === orderNumber && g.date === fecha);
-        
-        if (guardia) {
-            return `SÍ (${guardia.startTime}-${guardia.endTime})`;
-        }
-        return 'NO';
     }
 
     // 🖨️ MOSTRAR REPORTE EN LA PANTALLA DE REPORTES
@@ -1531,7 +1571,6 @@ class ReportesManager {
         const reportResults = document.querySelector('.report-results');
         if (reportResults) {
             reportResults.style.display = 'block';
-            // Aquí se restauraría el contenido original, pero lo manejamos con generarReporte()
         }
         
         const tablaNormal = document.querySelector('.table-container');
