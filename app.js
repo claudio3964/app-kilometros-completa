@@ -1165,33 +1165,22 @@ function exportarReporte() {
     alert('✅ Reporte exportado como archivo de texto');
 }
 
-
 // ============================================
-// 📊 SISTEMA DE REPORTES INTEGRADO EN REPORTES SCREEN - VERSIÓN CORREGIDA
+// 📊 SISTEMA DE REPORTES - ESTRUCTURA MODULAR
 // ============================================
 
 class ReportesManager {
     constructor() {
-        this.usuario = this.obtenerUsuarioActual();
-        this.viajes = this.obtenerViajesUsuario();
-    }
-
-    // 🎯 OBTENER USUARIO ACTUAL
-    obtenerUsuarioActual() {
-        return JSON.parse(localStorage.getItem('travelUser') || '{}');
+        this.usuario = DataManager.obtenerUsuario();
+        this.viajes = DataManager.obtenerViajes().filter(viaje => 
+            viaje.conductor === this.usuario.nombre
+        );
+        console.log('📊 ReportesManager iniciado para:', this.usuario.nombre);
     }
 
     // 🎯 OBTENER VIAJES DEL USUARIO ACTUAL
     obtenerViajesUsuario() {
-        const todosViajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
-        
-        // Si no hay usuario, devolver todos los viajes (para compatibilidad)
-        if (!this.usuario.nombre) {
-            return todosViajes;
-        }
-        
-        // Filtrar solo los viajes del usuario actual
-        return todosViajes.filter(viaje => viaje.conductor === this.usuario.nombre);
+        return this.viajes;
     }
 
     // 📅 FORMATEAR FECHA
@@ -1234,7 +1223,7 @@ class ReportesManager {
 
     // 🛡️ OBTENER INFORMACIÓN DE GUARDIA - VERSIÓN MEJORADA
     obtenerGuardiaOrden(orderNumber, fecha) {
-        const guardias = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+        const guardias = DataManager.obtenerGuardias();
         const guardia = guardias.find(g => g.orderNumber === orderNumber && g.date === fecha);
         
         if (guardia) {
@@ -1242,9 +1231,8 @@ class ReportesManager {
         }
         
         // 🆕 BUSCAR GUARDIA POR CONDUCTOR Y FECHA (si no encuentra por orden)
-        const usuario = this.obtenerUsuarioActual();
         const guardiaConductor = guardias.find(g => 
-            g.driverName === usuario.nombre && g.date === fecha
+            g.driverName === this.usuario.nombre && g.date === fecha
         );
         
         if (guardiaConductor) {
@@ -1254,16 +1242,35 @@ class ReportesManager {
         return 'NO';
     }
 
-    // 📊 GENERAR REPORTE SEMANAL
+    // 📊 GENERAR REPORTE SEMANAL - VERSIÓN CON FILTROS
     generarReporteSemanal() {
+        // 🆕 OBTENER FILTROS
+        const filtroOrden = document.getElementById('filterOrderNumber')?.value.trim().toLowerCase() || '';
+        const filtroConductor = document.getElementById('filterDriver')?.value.trim().toLowerCase() || '';
+        
         const hoy = new Date();
         const inicioSemana = new Date(hoy);
-        inicioSemana.setDate(hoy.getDate() - hoy.getDay()); // Domingo de esta semana
+        inicioSemana.setDate(hoy.getDate() - hoy.getDay());
         
-        const viajesSemana = this.filtrarViajesPorFecha(
+        // 🆕 FILTRAR POR FECHA PRIMERO
+        let viajesSemana = this.filtrarViajesPorFecha(
             inicioSemana.toISOString().split('T')[0],
             hoy.toISOString().split('T')[0]
         );
+
+        // 🆕 APLICAR FILTRO DE NÚMERO DE ORDEN
+        if (filtroOrden) {
+            viajesSemana = viajesSemana.filter(viaje => 
+                viaje.orderNumber.toLowerCase().includes(filtroOrden)
+            );
+        }
+        
+        // 🆕 APLICAR FILTRO DE CONDUCTOR
+        if (filtroConductor) {
+            viajesSemana = viajesSemana.filter(viaje => 
+                viaje.conductor && viaje.conductor.toLowerCase().includes(filtroConductor)
+            );
+        }
 
         const totalViajes = viajesSemana.length;
         const totalKm = viajesSemana.reduce((sum, v) => sum + (parseFloat(v.km) || 0), 0);
@@ -1272,7 +1279,7 @@ class ReportesManager {
         const kmAcoplado = viajesConAcoplado.reduce((sum, v) => sum + (parseFloat(v.km) || 0), 0);
         
         const viajesConViaticos = viajesSemana.filter(v => {
-            const todosViajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+            const todosViajes = DataManager.obtenerViajes();
             return this.determinarViaticos(v, todosViajes) === '✅ SÍ';
         }).length;
 
@@ -1286,15 +1293,34 @@ class ReportesManager {
         };
     }
 
-    // 📈 GENERAR REPORTE MENSUAL
+    // 📈 GENERAR REPORTE MENSUAL - VERSIÓN CON FILTROS
     generarReporteMensual() {
+        // 🆕 OBTENER FILTROS
+        const filtroOrden = document.getElementById('filterOrderNumber')?.value.trim().toLowerCase() || '';
+        const filtroConductor = document.getElementById('filterDriver')?.value.trim().toLowerCase() || '';
+        
         const hoy = new Date();
         const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
         
-        const viajesMes = this.filtrarViajesPorFecha(
+        // 🆕 FILTRAR POR FECHA PRIMERO
+        let viajesMes = this.filtrarViajesPorFecha(
             inicioMes.toISOString().split('T')[0],
             hoy.toISOString().split('T')[0]
         );
+
+        // 🆕 APLICAR FILTRO DE NÚMERO DE ORDEN
+        if (filtroOrden) {
+            viajesMes = viajesMes.filter(viaje => 
+                viaje.orderNumber.toLowerCase().includes(filtroOrden)
+            );
+        }
+        
+        // 🆕 APLICAR FILTRO DE CONDUCTOR
+        if (filtroConductor) {
+            viajesMes = viajesMes.filter(viaje => 
+                viaje.conductor && viaje.conductor.toLowerCase().includes(filtroConductor)
+            );
+        }
 
         const totalViajes = viajesMes.length;
         const totalKm = viajesMes.reduce((sum, v) => sum + (parseFloat(v.km) || 0), 0);
@@ -1303,7 +1329,7 @@ class ReportesManager {
         const kmAcoplado = viajesConAcoplado.reduce((sum, v) => sum + (parseFloat(v.km) || 0), 0);
         
         const viajesConViaticos = viajesMes.filter(v => {
-            const todosViajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+            const todosViajes = DataManager.obtenerViajes();
             return this.determinarViaticos(v, todosViajes) === '✅ SÍ';
         }).length;
 
@@ -1317,44 +1343,64 @@ class ReportesManager {
         };
     }
 
-    // 📅 GENERAR REPORTE DIARIO - VERSIÓN MEJORADA
-generarReporteDiario(fechaEspecifica = null) {
-    let fecha;
-    
-    if (fechaEspecifica) {
-        fecha = fechaEspecifica;
-    } else {
-        // Intentar obtener fecha del filtro "Fecha Desde"
-        const fechaFiltro = document.getElementById('filterDateFrom')?.value;
-        if (fechaFiltro) {
-            fecha = fechaFiltro;
+    // 📅 GENERAR REPORTE DIARIO - VERSIÓN CON FILTROS
+    generarReporteDiario() {
+        // 🆕 OBTENER FILTROS ACTUALES
+        const filtroOrden = document.getElementById('filterOrderNumber')?.value.trim().toLowerCase() || '';
+        const filtroConductor = document.getElementById('filterDriver')?.value.trim().toLowerCase() || '';
+        
+        let fecha;
+        
+        // 🆕 BUSCAR FECHA EN FILTROS
+        const fechaFiltroDesde = document.getElementById('filterDateFrom')?.value;
+        const fechaFiltroHasta = document.getElementById('filterDateTo')?.value;
+        
+        if (fechaFiltroDesde) {
+            fecha = fechaFiltroDesde;
+        } else if (fechaFiltroHasta) {
+            fecha = fechaFiltroHasta;
         } else {
-            // Usar fecha de hoy por defecto
-            fecha = new Date().toISOString().split('T')[0];
+            // Usar 22/11/2025 como fecha por defecto para pruebas
+            fecha = '2025-11-22';
         }
+        
+        console.log('🔍 Buscando viajes para fecha:', fecha, 'Orden:', filtroOrden);
+        
+        // 🆕 FILTRAR POR FECHA PRIMERO
+        let viajesFiltrados = this.filtrarViajesPorFecha(fecha, fecha);
+        
+        // 🆕 APLICAR FILTRO DE NÚMERO DE ORDEN
+        if (filtroOrden) {
+            viajesFiltrados = viajesFiltrados.filter(viaje => 
+                viaje.orderNumber.toLowerCase().includes(filtroOrden)
+            );
+        }
+        
+        // 🆕 APLICAR FILTRO DE CONDUCTOR
+        if (filtroConductor) {
+            viajesFiltrados = viajesFiltrados.filter(viaje => 
+                viaje.conductor && viaje.conductor.toLowerCase().includes(filtroConductor)
+            );
+        }
+        
+        console.log('📊 Viajes después de filtros:', viajesFiltrados.length);
+        
+        const todosViajes = DataManager.obtenerViajes();
+        
+        return viajesFiltrados.map(viaje => ({
+            fecha: viaje.date,
+            orden: viaje.orderNumber,
+            ruta: `${viaje.origin} → ${viaje.destination}`,
+            km: parseFloat(viaje.km).toFixed(1),
+            horaSalida: viaje.departureTime,
+            horaLlegada: viaje.arrivalTime,
+            horasViaje: viaje.hoursWorked,
+            guardia: this.obtenerGuardiaOrden(viaje.orderNumber, viaje.date),
+            viaticos: this.determinarViaticos(viaje, todosViajes),
+            acoplado: (viaje.conAcoplado === true || viaje.conAcoplado === 'true') ? '✅ SÍ' : '❌ NO',
+            tipoServicio: viaje.tipoServicio || 'Regular'
+        }));
     }
-    
-    console.log('🔍 Buscando viajes para fecha:', fecha); // Para debug
-    
-    const viajesDia = this.filtrarViajesPorFecha(fecha, fecha);
-    const todosViajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
-
-    console.log('📊 Viajes encontrados:', viajesDia.length); // Para debug
-    
-    return viajesDia.map(viaje => ({
-        fecha: viaje.date,
-        orden: viaje.orderNumber,
-        ruta: `${viaje.origin} → ${viaje.destination}`,
-        km: parseFloat(viaje.km).toFixed(1),
-        horaSalida: viaje.departureTime,
-        horaLlegada: viaje.arrivalTime,
-        horasViaje: viaje.hoursWorked,
-        guardia: this.obtenerGuardiaOrden(viaje.orderNumber, viaje.date),
-        viaticos: this.determinarViaticos(viaje, todosViajes),
-        acoplado: (viaje.conAcoplado === true || viaje.conAcoplado === 'true') ? '✅ SÍ' : '❌ NO',
-        tipoServicio: viaje.tipoServicio || 'Regular'
-    }));
-}
 
     // 🖨️ MOSTRAR REPORTE EN LA PANTALLA DE REPORTES
     mostrarReporte(tipo) {
@@ -1602,12 +1648,11 @@ generarReporteDiario(fechaEspecifica = null) {
         }
         
         // Generar reporte normal
-        generarReporte();
+        if (typeof generarReporte === 'function') {
+            generarReporte();
+        }
     }
 }
-
-// 🎯 INICIALIZAR SISTEMA DE REPORTES
-let reportesManager = new ReportesManager();
 
 // 🆕 MODIFICAR LA PANTALLA DE REPORTES EXISTENTE
 function inicializarReportesUsuario() {
@@ -1638,10 +1683,14 @@ function inicializarReportesUsuario() {
     }
 }
 
+// 🎯 INICIALIZAR SISTEMA DE REPORTES MODULAR
+window.reportesManager = new ReportesManager();
+
 // 🎯 INICIALIZAR AL CARGAR LA APLICACIÓN
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(inicializarReportesUsuario, 1000);
 });
+
 // ============================================
 // 🏗️ ESTRUCTURA MODULAR - FASE 1
 // ============================================
