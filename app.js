@@ -1165,6 +1165,47 @@ function exportarReporte() {
     alert('✅ Reporte exportado como archivo de texto');
 }
 
+
+
+// ============================================
+// 🏗️ ESTRUCTURA MODULAR - FASE 1
+// ============================================
+
+// 💾 1. DATA MANAGER (Solo lectura por ahora)
+class DataManager {
+    static obtenerUsuario() {
+        return JSON.parse(localStorage.getItem('travelUser') || '{}');
+    }
+    
+    static obtenerViajes() {
+        return JSON.parse(localStorage.getItem('bus_travels') || '[]');
+    }
+    
+    static obtenerGuardias() {
+        return JSON.parse(localStorage.getItem('bus_guards') || '[]');
+    }
+}
+
+// 🎨 2. UI MANAGER (Complementa tu código existente)
+class UIManager {
+    static mostrarPantalla(pantallaId) {
+        // Usa tu función existente showScreen()
+        showScreen(pantallaId);
+    }
+    
+    static actualizarResumen() {
+        // Usa tu función existente updateSummary()
+        updateSummary();
+    }
+    
+    static mostrarError(mensaje) {
+        alert(`❌ ${mensaje}`);
+    }
+    
+    static mostrarExito(mensaje) {
+        alert(`✅ ${mensaje}`);
+    }
+}
 // ============================================
 // 📊 SISTEMA DE REPORTES - ESTRUCTURA MODULAR
 // ============================================
@@ -1716,47 +1757,6 @@ window.reportesManager = new ReportesManager();
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(inicializarReportesUsuario, 1000);
 });
-
-// ============================================
-// 🏗️ ESTRUCTURA MODULAR - FASE 1
-// ============================================
-
-// 💾 1. DATA MANAGER (Solo lectura por ahora)
-class DataManager {
-    static obtenerUsuario() {
-        return JSON.parse(localStorage.getItem('travelUser') || '{}');
-    }
-    
-    static obtenerViajes() {
-        return JSON.parse(localStorage.getItem('bus_travels') || '[]');
-    }
-    
-    static obtenerGuardias() {
-        return JSON.parse(localStorage.getItem('bus_guards') || '[]');
-    }
-}
-
-// 🎨 2. UI MANAGER (Complementa tu código existente)
-class UIManager {
-    static mostrarPantalla(pantallaId) {
-        // Usa tu función existente showScreen()
-        showScreen(pantallaId);
-    }
-    
-    static actualizarResumen() {
-        // Usa tu función existente updateSummary()
-        updateSummary();
-    }
-    
-    static mostrarError(mensaje) {
-        alert(`❌ ${mensaje}`);
-    }
-    
-    static mostrarExito(mensaje) {
-        alert(`✅ ${mensaje}`);
-    }
-}
-
 // 🎪 3. EVENT MANAGER BÁSICO
 class EventManager {
     static init() {
