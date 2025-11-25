@@ -1189,16 +1189,28 @@ class ReportesManager {
         return fecha.toLocaleDateString('es-ES');
     }
 
-    // 🔍 FILTRAR VIAJES POR FECHA
-    filtrarViajesPorFecha(fechaInicio, fechaFin) {
-        return this.viajes.filter(viaje => {
-            const fechaViaje = new Date(viaje.date.split('/').reverse().join('-'));
-            const inicio = fechaInicio ? new Date(fechaInicio) : new Date('2000-01-01');
-            const fin = fechaFin ? new Date(fechaFin) : new Date('2100-01-01');
-            
-            return fechaViaje >= inicio && fechaViaje <= fin;
+   // 🔍 FILTRAR VIAJES POR FECHA - VERSIÓN CORREGIDA
+filtrarViajesPorFecha(fechaInicio, fechaFin) {
+    return this.viajes.filter(viaje => {
+        // Convertir fecha del viaje (22/11/2025) a Date object
+        const [dia, mes, año] = viaje.date.split('/');
+        const fechaViaje = new Date(año, mes - 1, dia);
+        
+        // Convertir fechas de filtro a Date objects
+        const inicio = fechaInicio ? new Date(fechaInicio) : new Date('2000-01-01');
+        const fin = fechaFin ? new Date(fechaFin) : new Date('2100-01-01');
+        
+        console.log('📅 Comparando fechas:', {
+            viaje: viaje.date,
+            fechaViaje: fechaViaje.toISOString().split('T')[0],
+            inicio: inicio.toISOString().split('T')[0],
+            fin: fin.toISOString().split('T')[0],
+            coincide: fechaViaje >= inicio && fechaViaje <= fin
         });
-    }
+        
+        return fechaViaje >= inicio && fechaViaje <= fin;
+    });
+}
 
     // 🆕 FUNCIÓN CORREGIDA PARA DETERMINAR VIÁTICOS
     determinarViaticos(viaje, todosViajes) {
