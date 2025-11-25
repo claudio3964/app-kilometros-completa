@@ -1367,14 +1367,28 @@ filtrarViajesPorFecha(fechaInicio, fechaFin) {
         const fechaFiltroDesde = document.getElementById('filterDateFrom')?.value;
         const fechaFiltroHasta = document.getElementById('filterDateTo')?.value;
         
-        if (fechaFiltroDesde) {
-            fecha = fechaFiltroDesde;
-        } else if (fechaFiltroHasta) {
-            fecha = fechaFiltroHasta;
-        } else {
-            // Usar 22/11/2025 como fecha por defecto para pruebas
-            fecha = '2025-11-22';
-        }
+        // En generarReporteDiario, cambia esta parte:
+if (fechaFiltroDesde) {
+    fecha = fechaFiltroDesde;
+} else if (fechaFiltroHasta) {
+    fecha = fechaFiltroHasta;
+} else {
+    // 🆕 BUSCAR LA ÚLTIMA FECHA CON VIAJES
+    const todosViajes = DataManager.obtenerViajes();
+    if (todosViajes.length > 0) {
+        // Encontrar la fecha más reciente de los viajes
+        const fechas = todosViajes.map(v => {
+            const [dia, mes, año] = v.date.split('/');
+            return new Date(año, mes - 1, dia);
+        });
+        const fechaMasReciente = new Date(Math.max(...fechas));
+        // Convertir a YYYY-MM-DD para el filtro
+        fecha = fechaMasReciente.toISOString().split('T')[0];
+        console.log('🕐 Usando fecha más reciente:', fecha);
+    } else {
+        fecha = '2025-11-22'; // Fecha de prueba
+    }
+}
         
         console.log('🔍 Buscando viajes para fecha:', fecha, 'Orden:', filtroOrden);
         
