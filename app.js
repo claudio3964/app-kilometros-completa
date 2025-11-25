@@ -1747,11 +1747,22 @@ function inicializarReportesUsuario() {
         `;
         
         filtersPanel.insertAdjacentHTML('beforeend', botonesReportesUsuario);
+        console.log('✅ Botones de reportes usuario inicializados');
     }
 }
+// 🎯 INICIALIZAR SISTEMA DE REPORTES MODULAR - SOLO CUANDO SEA NECESARIO
+function getReportesManager() {
+    if (!window._reportesManager) {
+        window._reportesManager = new ReportesManager();
+    }
+    return window._reportesManager;
+}
 
-// 🎯 INICIALIZAR SISTEMA DE REPORTES MODULAR
-window.reportesManager = new ReportesManager();
+// Usar esta función en lugar del acceso directo
+window.reportesManager = {
+    mostrarReporte: (tipo) => getReportesManager().mostrarReporte(tipo),
+    restaurarVistaNormal: () => getReportesManager().restaurarVistaNormal()
+};
 
 // 🎯 INICIALIZAR AL CARGAR LA APLICACIÓN
 document.addEventListener('DOMContentLoaded', function() {
