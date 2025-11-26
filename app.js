@@ -1439,7 +1439,7 @@ filtrarViajesPorFecha(fechaInicio, fechaFin) {
         }
     }
 
-   // 🔄 RESTAURAR VISTA NORMAL - VERSIÓN COMPLETA Y SEGURA
+   // 🔄 RESTAURAR VISTA NORMAL - VERSIÓN SEGURA
 restaurarVistaNormal() {
     console.log('🔄 Restaurando vista normal de reportes...');
     
@@ -1475,48 +1475,24 @@ restaurarVistaNormal() {
         document.getElementById('filterOrderNumber').value = '';
         document.getElementById('filterDriver').value = '';
         
-        // 6. Generar reporte normal (si la función existe)
-        if (typeof generarReporte === 'function') {
-            console.log('📊 Generando reporte normal...');
-            generarReporte();
-        } else {
-            console.log('⚠️ generarReporte no disponible');
-            // Mostrar tabla vacía como fallback
-            const tbody = document.getElementById('reportResultsBody');
-            if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="8">Usa los filtros para generar un reporte</td></tr>';
-            }
+        // 6. Limpiar tabla de resultados (EN LUGAR de generarReporte)
+        const tbody = document.getElementById('reportResultsBody');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="8">Usa los filtros para generar un reporte</td></tr>';
         }
         
-        console.log('✅ Vista normal restaurada correctamente');
+        // 7. Limpiar resumen
+        const elementosResumen = ['totalViajesReport', 'totalKmReport', 'totalHorasReport', 'totalViaticosReport'];
+        elementosResumen.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = id.includes('Viaticos') ? '$0' : '0';
+        });
+        
+        console.log('✅ Vista normal restaurada correctamente (sin errores)');
         
     } catch (error) {
         console.error('❌ Error al restaurar vista:', error);
-        UIManager.mostrarError('Error al cargar reportes: ' + error.message);
-    }
-}
-
-// 🆕 INICIALIZAR REPORTES
-function inicializarReportesUsuario() {
-    const filtersPanel = document.querySelector('.filters-panel');
-    
-    if (filtersPanel && !document.getElementById('btnReporteDiario')) {
-        const botonesReportesUsuario = `
-            <div class="filter-group">
-                <label>👤 Mis Reportes:</label>
-                <div class="reportes-usuario-buttons">
-                    <button class="btn-user-report" onclick="reportesManager.mostrarReporte('diario')">
-                        📅 Mi Día
-                    </button>
-                    <button class="btn-user-report secondary" onclick="reportesManager.restaurarVistaNormal()">
-                        🔄 Todos los Viajes
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        filtersPanel.insertAdjacentHTML('beforeend', botonesReportesUsuario);
-        console.log('✅ Botones de reportes inicializados');
+        // No mostrar alerta para evitar molestias al usuario
     }
 }
 
