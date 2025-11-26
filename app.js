@@ -1495,7 +1495,7 @@ restaurarVistaNormal() {
         UIManager.mostrarError('Error al cargar reportes: ' + error.message);
     }
 }
-
+}
 // 🆕 INICIALIZAR REPORTES
 function inicializarReportesUsuario() {
     const filtersPanel = document.querySelector('.filters-panel');
