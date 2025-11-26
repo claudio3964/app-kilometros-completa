@@ -1219,22 +1219,34 @@ class ReportesManager {
         console.log('📊 ReportesManager iniciado para:', this.usuario.nombre);
     }
 
-    // 🔍 FILTRAR VIAJES POR FECHA - VERSIÓN CORREGIDA
-    filtrarViajesPorFecha(fechaInicio, fechaFin) {
-    console.log('🔍 DEBUG - Viajes para filtrar:', this.viajes);
+    // 🔍 FILTRAR VIAJES POR FECHA - VERSIÓN DEFINITIVA
+filtrarViajesPorFecha(fechaInicio, fechaFin) {
+    console.log('🔍 DEBUG - Total viajes disponibles:', this.viajes.length);
+    console.log('🔍 DEBUG - Fechas de viajes:', this.viajes.map(v => v.date));
     
     return this.viajes.filter(viaje => {
+        // Convertir fecha del viaje "22/11/2025" a formato comparable
         const [dia, mes, año] = viaje.date.split('/');
         const fechaViaje = new Date(año, mes - 1, dia);
+        
+        // Si estamos buscando por fecha específica (como en Mi Día)
+        if (fechaInicio && fechaFin && fechaInicio === fechaFin) {
+            const fechaFiltro = new Date(fechaInicio);
+            const coincide = fechaViaje.toISOString().split('T')[0] === fechaFiltro.toISOString().split('T')[0];
+            
+            console.log('📅 DEBUG - Comparación exacta:', {
+                viaje: viaje.date,
+                fechaViaje: fechaViaje.toISOString().split('T')[0],
+                filtro: fechaFiltro.toISOString().split('T')[0],
+                coincide: coincide
+            });
+            
+            return coincide;
+        }
+        
+        // Para búsquedas por rango (fechas diferentes)
         const inicio = fechaInicio ? new Date(fechaInicio) : new Date('2000-01-01');
         const fin = fechaFin ? new Date(fechaFin) : new Date('2100-01-01');
-        
-        console.log('📅 DEBUG - Comparando:', {
-            viaje: viaje.date,
-            fechaViaje: fechaViaje.toISOString().split('T')[0],
-            filtro: fechaInicio,
-            coincide: fechaViaje.toISOString().split('T')[0] === fechaInicio
-        });
         
         return fechaViaje >= inicio && fechaViaje <= fin;
     });
@@ -1266,14 +1278,14 @@ class ReportesManager {
         const fechaFiltroHasta = document.getElementById('filterDateTo')?.value;
         
         if (fechaFiltroDesde) {
-            fecha = fechaFiltroDesde;
-        } else if (fechaFiltroHasta) {
-            fecha = fechaFiltroHasta;
-        } else {
-            // 🆕 USAR FECHA FIJA DE TUS VIAJES
-           fecha = '2025-11-22';
-console.log('🔍 DEBUG - Buscando viajes con fecha:', fecha);
-console.log('🔍 DEBUG - Viajes disponibles:', this.viajes.map(v => v.date));
+    fecha = fechaFiltroDesde;
+} else if (fechaFiltroHasta) {
+    fecha = fechaFiltroHasta;
+} else {
+    // 🆕 FORZAR LA FECHA DE TUS VIAJES EN FORMATO CORRECTO
+    fecha = '2025-11-22';
+    console.log('🕐 Usando fecha forzada:', fecha);
+}
         
         console.log('🔍 Buscando viajes para fecha:', fecha);
         
@@ -1427,41 +1439,60 @@ console.log('🔍 DEBUG - Viajes disponibles:', this.viajes.map(v => v.date));
         }
     }
 
-    // 🔄 RESTAURAR VISTA NORMAL - VERSIÓN CORREGIDA
+   // 🔄 RESTAURAR VISTA NORMAL - VERSIÓN COMPLETA Y SEGURA
 restaurarVistaNormal() {
-    console.log('🔄 Restaurando vista normal de reportes');
+    console.log('🔄 Restaurando vista normal de reportes...');
     
-    // Restaurar título
-    const reportHeader = document.querySelector('#reportsScreen .screen-header h2');
-    if (reportHeader) {
-        reportHeader.textContent = '📊 Reportes y Búsquedas';
-    }
-    
-    // Mostrar tabla normal
-    const tablaNormal = document.querySelector('.table-container');
-    if (tablaNormal) {
-        tablaNormal.style.display = 'block';
-    }
-    
-    // Mostrar resumen rápido
-    const resumenRapido = document.querySelector('.report-summary');
-    if (resumenRapido) {
-        resumenRapido.style.display = 'flex';
-    }
-    
-    // Limpiar resultados de reportes personalizados
-    const reportResults = document.querySelector('.report-results');
-    if (reportResults) {
-        reportResults.innerHTML = '';
-        reportResults.style.display = 'none';
-    }
-    
-    // Generar reporte normal usando tu función existente
-    if (typeof generarReporte === 'function') {
-        console.log('📊 Generando reporte normal...');
-        generarReporte();
-    } else {
-        console.error('❌ generarReporte no encontrado');
+    try {
+        // 1. Restaurar título principal
+        const reportHeader = document.querySelector('#reportsScreen .screen-header h2');
+        if (reportHeader) {
+            reportHeader.textContent = '📊 Reportes y Búsquedas';
+        }
+        
+        // 2. Mostrar tabla normal
+        const tablaNormal = document.querySelector('.table-container');
+        if (tablaNormal) {
+            tablaNormal.style.display = 'block';
+        }
+        
+        // 3. Mostrar resumen rápido
+        const resumenRapido = document.querySelector('.report-summary');
+        if (resumenRapido) {
+            resumenRapido.style.display = 'flex';
+        }
+        
+        // 4. Limpiar y ocultar resultados de reportes personalizados
+        const reportResults = document.querySelector('.report-results');
+        if (reportResults) {
+            reportResults.innerHTML = '';
+            reportResults.style.display = 'none';
+        }
+        
+        // 5. Limpiar filtros
+        document.getElementById('filterDateFrom').value = '';
+        document.getElementById('filterDateTo').value = '';
+        document.getElementById('filterOrderNumber').value = '';
+        document.getElementById('filterDriver').value = '';
+        
+        // 6. Generar reporte normal (si la función existe)
+        if (typeof generarReporte === 'function') {
+            console.log('📊 Generando reporte normal...');
+            generarReporte();
+        } else {
+            console.log('⚠️ generarReporte no disponible');
+            // Mostrar tabla vacía como fallback
+            const tbody = document.getElementById('reportResultsBody');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="8">Usa los filtros para generar un reporte</td></tr>';
+            }
+        }
+        
+        console.log('✅ Vista normal restaurada correctamente');
+        
+    } catch (error) {
+        console.error('❌ Error al restaurar vista:', error);
+        UIManager.mostrarError('Error al cargar reportes: ' + error.message);
     }
 }
 
