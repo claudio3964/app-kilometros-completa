@@ -169,7 +169,11 @@
                         <span class="btn-text">Ver Guardias</span>
                         <span class="btn-desc">Lista de guardias activas</span>
                     </button>
-
+<button class="menu-btn info" onclick="showScreen('semanaScreen')">
+    <span class="btn-icon">📅</span>
+    <span class="btn-text">Mi Semana</span>
+    <span class="btn-desc">Resumen semanal de viajes</span>
+</button>
                     <button class="menu-btn success" onclick="showScreen('reportsScreen')">
                         <span class="btn-icon">📊</span>
                         <span class="btn-text">Reportes</span>
@@ -526,6 +530,29 @@
             </table>
         </div>
     </div>
+          <!-- 🆕 PANTALLA MI SEMANA -->
+        <div id="semanaScreen" class="screen">
+            <div class="screen-header">
+                <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
+                <h2>📅 Mi Semana</h2>
+                <p>Resumen de todos tus viajes de esta semana</p>
+            </div>
+
+            <div class="container">
+                <!-- ESTADÍSTICAS SEMANALES -->
+                <div class="stats-grid" id="semanaStats">
+                    <!-- Las estadísticas se cargarán aquí con JavaScript -->
+                </div>
+                
+                <!-- LISTA DE VIAJES DE LA SEMANA -->
+                <div class="viajes-container">
+                    <h3>📋 Viajes de la Semana</h3>
+                    <div id="semanaViajesList" class="lista-container">
+                        <div class="no-data">Cargando viajes de la semana...</div>
+                    </div>
+                </div>
+            </div>
+        </div>   
 </div>
 
     <!-- 🆕 SCRIPT NUEVO PARA EL LOGIN -->
@@ -617,6 +644,7 @@
     <script src="app.js"></script>
 </body>
 </html>
+
 
 
 
