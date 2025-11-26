@@ -1221,19 +1221,24 @@ class ReportesManager {
 
     // 🔍 FILTRAR VIAJES POR FECHA - VERSIÓN CORREGIDA
     filtrarViajesPorFecha(fechaInicio, fechaFin) {
-        return this.viajes.filter(viaje => {
-            // Convertir fecha del viaje (22/11/2025) a Date object
-            const [dia, mes, año] = viaje.date.split('/');
-            const fechaViaje = new Date(año, mes - 1, dia);
-            
-            // Convertir fechas de filtro a Date objects
-            const inicio = fechaInicio ? new Date(fechaInicio) : new Date('2000-01-01');
-            const fin = fechaFin ? new Date(fechaFin) : new Date('2100-01-01');
-            
-            return fechaViaje >= inicio && fechaViaje <= fin;
+    console.log('🔍 DEBUG - Viajes para filtrar:', this.viajes);
+    
+    return this.viajes.filter(viaje => {
+        const [dia, mes, año] = viaje.date.split('/');
+        const fechaViaje = new Date(año, mes - 1, dia);
+        const inicio = fechaInicio ? new Date(fechaInicio) : new Date('2000-01-01');
+        const fin = fechaFin ? new Date(fechaFin) : new Date('2100-01-01');
+        
+        console.log('📅 DEBUG - Comparando:', {
+            viaje: viaje.date,
+            fechaViaje: fechaViaje.toISOString().split('T')[0],
+            filtro: fechaInicio,
+            coincide: fechaViaje.toISOString().split('T')[0] === fechaInicio
         });
-    }
-
+        
+        return fechaViaje >= inicio && fechaViaje <= fin;
+    });
+}
     // 🆕 FUNCIÓN CORREGIDA PARA DETERMINAR VIÁTICOS
     determinarViaticos(viaje, todosViajes) {
         const viajesMismaOrden = todosViajes.filter(v => 
@@ -1266,8 +1271,9 @@ class ReportesManager {
             fecha = fechaFiltroHasta;
         } else {
             // 🆕 USAR FECHA FIJA DE TUS VIAJES
-            fecha = '2025-11-22';
-        }
+           fecha = '2025-11-22';
+console.log('🔍 DEBUG - Buscando viajes con fecha:', fecha);
+console.log('🔍 DEBUG - Viajes disponibles:', this.viajes.map(v => v.date));
         
         console.log('🔍 Buscando viajes para fecha:', fecha);
         
@@ -1421,31 +1427,41 @@ class ReportesManager {
         }
     }
 
-    // 🔄 RESTAURAR VISTA NORMAL
-    restaurarVistaNormal() {
-        const reportHeader = document.querySelector('#reportsScreen .screen-header h2');
-        if (reportHeader) {
-            reportHeader.textContent = '📊 Reportes y Búsquedas';
-        }
-        
-        const reportResults = document.querySelector('.report-results');
-        if (reportResults) {
-            reportResults.style.display = 'block';
-        }
-        
-        const tablaNormal = document.querySelector('.table-container');
-        if (tablaNormal) {
-            tablaNormal.style.display = 'block';
-        }
-        
-        const resumenRapido = document.querySelector('.report-summary');
-        if (resumenRapido) {
-            resumenRapido.style.display = 'flex';
-        }
-        
-        if (typeof generarReporte === 'function') {
-            generarReporte();
-        }
+    // 🔄 RESTAURAR VISTA NORMAL - VERSIÓN CORREGIDA
+restaurarVistaNormal() {
+    console.log('🔄 Restaurando vista normal de reportes');
+    
+    // Restaurar título
+    const reportHeader = document.querySelector('#reportsScreen .screen-header h2');
+    if (reportHeader) {
+        reportHeader.textContent = '📊 Reportes y Búsquedas';
+    }
+    
+    // Mostrar tabla normal
+    const tablaNormal = document.querySelector('.table-container');
+    if (tablaNormal) {
+        tablaNormal.style.display = 'block';
+    }
+    
+    // Mostrar resumen rápido
+    const resumenRapido = document.querySelector('.report-summary');
+    if (resumenRapido) {
+        resumenRapido.style.display = 'flex';
+    }
+    
+    // Limpiar resultados de reportes personalizados
+    const reportResults = document.querySelector('.report-results');
+    if (reportResults) {
+        reportResults.innerHTML = '';
+        reportResults.style.display = 'none';
+    }
+    
+    // Generar reporte normal usando tu función existente
+    if (typeof generarReporte === 'function') {
+        console.log('📊 Generando reporte normal...');
+        generarReporte();
+    } else {
+        console.error('❌ generarReporte no encontrado');
     }
 }
 
