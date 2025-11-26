@@ -345,6 +345,9 @@ function showScreen(screenId) {
             const importStatus = document.getElementById('importStatus');
             if (importStatus) importStatus.textContent = '';
         }
+        else if (screenId === 'semanaScreen') {
+            renderizarSemana();
+        }
     } else {
         console.log('❌ Pantalla no encontrada:', screenId);
     }
