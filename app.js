@@ -1572,7 +1572,7 @@ function renderizarSemana() {
                     <h3>📅 No hay viajes esta semana</h3>
                     <p>Comienza agregando algunos viajes para ver tu resumen semanal</p>
                 </div>
-            `;
+            ;
         } else {
             statsContainer.innerHTML = `
                 <div class="stat-card">
