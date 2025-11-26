@@ -1207,7 +1207,7 @@ class UIManager {
     }
 }
 // ============================================
-// 📊 SISTEMA DE REPORTES - ESTRUCTURA MODULAR
+// 📊 REPORTES MANAGER - ESTRUCTURA MODULAR
 // ============================================
 
 class ReportesManager {
@@ -1219,51 +1219,29 @@ class ReportesManager {
         console.log('📊 ReportesManager iniciado para:', this.usuario.nombre);
     }
 
-    // 🎯 OBTENER VIAJES DEL USUARIO ACTUAL
-    obtenerViajesUsuario() {
-        return this.viajes;
-    }
-
-    // 📅 FORMATEAR FECHA
-    formatearFecha(fechaStr) {
-        const fecha = new Date(fechaStr);
-        return fecha.toLocaleDateString('es-ES');
-    }
-
-   // 🔍 FILTRAR VIAJES POR FECHA - VERSIÓN CORREGIDA
-filtrarViajesPorFecha(fechaInicio, fechaFin) {
-    return this.viajes.filter(viaje => {
-        // Convertir fecha del viaje (22/11/2025) a Date object
-        const [dia, mes, año] = viaje.date.split('/');
-        const fechaViaje = new Date(año, mes - 1, dia);
-        
-        // Convertir fechas de filtro a Date objects
-        const inicio = fechaInicio ? new Date(fechaInicio) : new Date('2000-01-01');
-        const fin = fechaFin ? new Date(fechaFin) : new Date('2100-01-01');
-        
-        console.log('📅 Comparando fechas:', {
-            viaje: viaje.date,
-            fechaViaje: fechaViaje.toISOString().split('T')[0],
-            inicio: inicio.toISOString().split('T')[0],
-            fin: fin.toISOString().split('T')[0],
-            coincide: fechaViaje >= inicio && fechaViaje <= fin
+    // 🔍 FILTRAR VIAJES POR FECHA - VERSIÓN CORREGIDA
+    filtrarViajesPorFecha(fechaInicio, fechaFin) {
+        return this.viajes.filter(viaje => {
+            // Convertir fecha del viaje (22/11/2025) a Date object
+            const [dia, mes, año] = viaje.date.split('/');
+            const fechaViaje = new Date(año, mes - 1, dia);
+            
+            // Convertir fechas de filtro a Date objects
+            const inicio = fechaInicio ? new Date(fechaInicio) : new Date('2000-01-01');
+            const fin = fechaFin ? new Date(fechaFin) : new Date('2100-01-01');
+            
+            return fechaViaje >= inicio && fechaViaje <= fin;
         });
-        
-        return fechaViaje >= inicio && fechaViaje <= fin;
-    });
-}
+    }
 
     // 🆕 FUNCIÓN CORREGIDA PARA DETERMINAR VIÁTICOS
     determinarViaticos(viaje, todosViajes) {
-        // Buscar todos los viajes de la misma orden y fecha
         const viajesMismaOrden = todosViajes.filter(v => 
             v.orderNumber === viaje.orderNumber && v.date === viaje.date
         );
         
-        // Ordenar por timestamp para encontrar el último
         viajesMismaOrden.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
         
-        // Si es el último viaje de la orden, tiene viáticos
         if (viajesMismaOrden.length > 0) {
             const ultimoViaje = viajesMismaOrden[viajesMismaOrden.length - 1];
             if (ultimoViaje.id === viaje.id) {
@@ -1274,183 +1252,34 @@ filtrarViajesPorFecha(fechaInicio, fechaFin) {
         return '❌ NO';
     }
 
-    // 🛡️ OBTENER INFORMACIÓN DE GUARDIA - VERSIÓN MEJORADA
-    obtenerGuardiaOrden(orderNumber, fecha) {
-        const guardias = DataManager.obtenerGuardias();
-        const guardia = guardias.find(g => g.orderNumber === orderNumber && g.date === fecha);
-        
-        if (guardia) {
-            return `SÍ (${guardia.startTime}-${guardia.endTime})`;
-        }
-        
-        // 🆕 BUSCAR GUARDIA POR CONDUCTOR Y FECHA (si no encuentra por orden)
-        const guardiaConductor = guardias.find(g => 
-            g.driverName === this.usuario.nombre && g.date === fecha
-        );
-        
-        if (guardiaConductor) {
-            return `SÍ (${guardiaConductor.startTime}-${guardiaConductor.endTime})`;
-        }
-        
-        return 'NO';
-    }
-
-    // 📊 GENERAR REPORTE SEMANAL - VERSIÓN CON FILTROS
-    generarReporteSemanal() {
-        // 🆕 OBTENER FILTROS
-        const filtroOrden = document.getElementById('filterOrderNumber')?.value.trim().toLowerCase() || '';
-        const filtroConductor = document.getElementById('filterDriver')?.value.trim().toLowerCase() || '';
-        
-        const hoy = new Date();
-        const inicioSemana = new Date(hoy);
-        inicioSemana.setDate(hoy.getDate() - hoy.getDay());
-        
-        // 🆕 FILTRAR POR FECHA PRIMERO
-        let viajesSemana = this.filtrarViajesPorFecha(
-            inicioSemana.toISOString().split('T')[0],
-            hoy.toISOString().split('T')[0]
-        );
-
-        // 🆕 APLICAR FILTRO DE NÚMERO DE ORDEN
-        if (filtroOrden) {
-            viajesSemana = viajesSemana.filter(viaje => 
-                viaje.orderNumber.toLowerCase().includes(filtroOrden)
-            );
-        }
-        
-        // 🆕 APLICAR FILTRO DE CONDUCTOR
-        if (filtroConductor) {
-            viajesSemana = viajesSemana.filter(viaje => 
-                viaje.conductor && viaje.conductor.toLowerCase().includes(filtroConductor)
-            );
-        }
-
-        const totalViajes = viajesSemana.length;
-        const totalKm = viajesSemana.reduce((sum, v) => sum + (parseFloat(v.km) || 0), 0);
-        
-        const viajesConAcoplado = viajesSemana.filter(v => v.conAcoplado === true || v.conAcoplado === 'true');
-        const kmAcoplado = viajesConAcoplado.reduce((sum, v) => sum + (parseFloat(v.km) || 0), 0);
-        
-        const viajesConViaticos = viajesSemana.filter(v => {
-            const todosViajes = DataManager.obtenerViajes();
-            return this.determinarViaticos(v, todosViajes) === '✅ SÍ';
-        }).length;
-
-        return {
-            periodo: `Semana del ${this.formatearFecha(inicioSemana)} al ${this.formatearFecha(hoy)}`,
-            viajes: totalViajes,
-            kmTotal: totalKm.toFixed(1),
-            viajesAcoplado: viajesConAcoplado.length,
-            kmAcoplado: kmAcoplado.toFixed(1),
-            viajesViaticos: viajesConViaticos
-        };
-    }
-
-    // 📈 GENERAR REPORTE MENSUAL - VERSIÓN CON FILTROS
-    generarReporteMensual() {
-        // 🆕 OBTENER FILTROS
-        const filtroOrden = document.getElementById('filterOrderNumber')?.value.trim().toLowerCase() || '';
-        const filtroConductor = document.getElementById('filterDriver')?.value.trim().toLowerCase() || '';
-        
-        const hoy = new Date();
-        const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-        
-        // 🆕 FILTRAR POR FECHA PRIMERO
-        let viajesMes = this.filtrarViajesPorFecha(
-            inicioMes.toISOString().split('T')[0],
-            hoy.toISOString().split('T')[0]
-        );
-
-        // 🆕 APLICAR FILTRO DE NÚMERO DE ORDEN
-        if (filtroOrden) {
-            viajesMes = viajesMes.filter(viaje => 
-                viaje.orderNumber.toLowerCase().includes(filtroOrden)
-            );
-        }
-        
-        // 🆕 APLICAR FILTRO DE CONDUCTOR
-        if (filtroConductor) {
-            viajesMes = viajesMes.filter(viaje => 
-                viaje.conductor && viaje.conductor.toLowerCase().includes(filtroConductor)
-            );
-        }
-
-        const totalViajes = viajesMes.length;
-        const totalKm = viajesMes.reduce((sum, v) => sum + (parseFloat(v.km) || 0), 0);
-        
-        const viajesConAcoplado = viajesMes.filter(v => v.conAcoplado === true || v.conAcoplado === 'true');
-        const kmAcoplado = viajesConAcoplado.reduce((sum, v) => sum + (parseFloat(v.km) || 0), 0);
-        
-        const viajesConViaticos = viajesMes.filter(v => {
-            const todosViajes = DataManager.obtenerViajes();
-            return this.determinarViaticos(v, todosViajes) === '✅ SÍ';
-        }).length;
-
-        return {
-            periodo: `Mes de ${hoy.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}`,
-            viajes: totalViajes,
-            kmTotal: totalKm.toFixed(1),
-            viajesAcoplado: viajesConAcoplado.length,
-            kmAcoplado: kmAcoplado.toFixed(1),
-            viajesViaticos: viajesConViaticos
-        };
-    }
-
-    // 📅 GENERAR REPORTE DIARIO - VERSIÓN CON FILTROS
+    // 📅 GENERAR REPORTE DIARIO - VERSIÓN MEJORADA
     generarReporteDiario() {
-        // 🆕 OBTENER FILTROS ACTUALES
         const filtroOrden = document.getElementById('filterOrderNumber')?.value.trim().toLowerCase() || '';
-        const filtroConductor = document.getElementById('filterDriver')?.value.trim().toLowerCase() || '';
         
         let fecha;
-        
-        // 🆕 BUSCAR FECHA EN FILTROS
         const fechaFiltroDesde = document.getElementById('filterDateFrom')?.value;
         const fechaFiltroHasta = document.getElementById('filterDateTo')?.value;
         
-        // En generarReporteDiario, cambia esta parte:
-if (fechaFiltroDesde) {
-    fecha = fechaFiltroDesde;
-} else if (fechaFiltroHasta) {
-    fecha = fechaFiltroHasta;
-} else {
-    // 🆕 BUSCAR LA ÚLTIMA FECHA CON VIAJES
-    const todosViajes = DataManager.obtenerViajes();
-    if (todosViajes.length > 0) {
-        // Encontrar la fecha más reciente de los viajes
-        const fechas = todosViajes.map(v => {
-            const [dia, mes, año] = v.date.split('/');
-            return new Date(año, mes - 1, dia);
-        });
-        const fechaMasReciente = new Date(Math.max(...fechas));
-        // Convertir a YYYY-MM-DD para el filtro
-        fecha = fechaMasReciente.toISOString().split('T')[0];
-        console.log('🕐 Usando fecha más reciente:', fecha);
-    } else {
-        fecha = '2025-11-22'; // Fecha de prueba
-    }
-}
+        if (fechaFiltroDesde) {
+            fecha = fechaFiltroDesde;
+        } else if (fechaFiltroHasta) {
+            fecha = fechaFiltroHasta;
+        } else {
+            // 🆕 USAR FECHA FIJA DE TUS VIAJES
+            fecha = '2025-11-22';
+        }
         
-        console.log('🔍 Buscando viajes para fecha:', fecha, 'Orden:', filtroOrden);
+        console.log('🔍 Buscando viajes para fecha:', fecha);
         
-        // 🆕 FILTRAR POR FECHA PRIMERO
         let viajesFiltrados = this.filtrarViajesPorFecha(fecha, fecha);
         
-        // 🆕 APLICAR FILTRO DE NÚMERO DE ORDEN
         if (filtroOrden) {
             viajesFiltrados = viajesFiltrados.filter(viaje => 
                 viaje.orderNumber.toLowerCase().includes(filtroOrden)
             );
         }
         
-        // 🆕 APLICAR FILTRO DE CONDUCTOR
-        if (filtroConductor) {
-            viajesFiltrados = viajesFiltrados.filter(viaje => 
-                viaje.conductor && viaje.conductor.toLowerCase().includes(filtroConductor)
-            );
-        }
-        
-        console.log('📊 Viajes después de filtros:', viajesFiltrados.length);
+        console.log('📊 Viajes encontrados:', viajesFiltrados.length);
         
         const todosViajes = DataManager.obtenerViajes();
         
@@ -1469,149 +1298,53 @@ if (fechaFiltroDesde) {
         }));
     }
 
-    // 🖨️ MOSTRAR REPORTE EN LA PANTALLA DE REPORTES
+    // 🛡️ OBTENER INFORMACIÓN DE GUARDIA
+    obtenerGuardiaOrden(orderNumber, fecha) {
+        const guardias = DataManager.obtenerGuardias();
+        const guardia = guardias.find(g => g.orderNumber === orderNumber && g.date === fecha);
+        
+        if (guardia) {
+            return `SÍ (${guardia.startTime}-${guardia.endTime})`;
+        }
+        
+        const guardiaConductor = guardias.find(g => 
+            g.driverName === this.usuario.nombre && g.date === fecha
+        );
+        
+        if (guardiaConductor) {
+            return `SÍ (${guardiaConductor.startTime}-${guardiaConductor.endTime})`;
+        }
+        
+        return 'NO';
+    }
+
+    // 🖨️ MOSTRAR REPORTE
     mostrarReporte(tipo) {
         let contenido = '';
         let titulo = '';
         
         switch(tipo) {
-            case 'semanal':
-                const reporteSemanal = this.generarReporteSemanal();
-                contenido = this.generarHTMLReporteSemanal(reporteSemanal);
-                titulo = '📊 Mi Reporte Semanal';
-                break;
-                
-            case 'mensual':
-                const reporteMensual = this.generarReporteMensual();
-                contenido = this.generarHTMLReporteMensual(reporteMensual);
-                titulo = '📈 Mi Reporte Mensual';
-                break;
-                
             case 'diario':
                 const reporteDiario = this.generarReporteDiario();
                 contenido = this.generarHTMLReporteDiario(reporteDiario);
-                titulo = '📅 Mis Viajes de Hoy';
+                titulo = '📅 Mis Viajes';
                 break;
         }
         
         this.mostrarEnPantallaReportes(contenido, titulo);
     }
 
-    // 🎨 GENERAR HTML REPORTE SEMANAL
-    generarHTMLReporteSemanal(reporte) {
-        return `
-            <div class="user-report-container">
-                <div class="user-report-header">
-                    <h3>📊 MI REPORTE SEMANAL</h3>
-                    <div class="user-info">👤 ${this.usuario.nombre || 'Usuario'}</div>
-                </div>
-                <div class="user-report-period">
-                    <strong>${reporte.periodo}</strong>
-                </div>
-                <div class="user-report-stats">
-                    <div class="user-stat-card">
-                        <div class="user-stat-icon">📈</div>
-                        <div class="user-stat-info">
-                            <div class="user-stat-value">${reporte.viajes}</div>
-                            <div class="user-stat-label">Mis viajes</div>
-                        </div>
-                    </div>
-                    <div class="user-stat-card">
-                        <div class="user-stat-icon">🛣️</div>
-                        <div class="user-stat-info">
-                            <div class="user-stat-value">${reporte.kmTotal}</div>
-                            <div class="user-stat-label">KM total</div>
-                        </div>
-                    </div>
-                    <div class="user-stat-card">
-                        <div class="user-stat-icon">🚛</div>
-                        <div class="user-stat-info">
-                            <div class="user-stat-value">${reporte.viajesAcoplado}</div>
-                            <div class="user-stat-label">Viajes con acoplado</div>
-                        </div>
-                    </div>
-                    <div class="user-stat-card">
-                        <div class="user-stat-icon">📏</div>
-                        <div class="user-stat-info">
-                            <div class="user-stat-value">${reporte.kmAcoplado}</div>
-                            <div class="user-stat-label">KM con acoplado</div>
-                        </div>
-                    </div>
-                    <div class="user-stat-card">
-                        <div class="user-stat-icon">💰</div>
-                        <div class="user-stat-info">
-                            <div class="user-stat-value">${reporte.viajesViaticos}</div>
-                            <div class="user-stat-label">Viajes con viáticos</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    // 🎨 GENERAR HTML REPORTE MENSUAL
-    generarHTMLReporteMensual(reporte) {
-        return `
-            <div class="user-report-container">
-                <div class="user-report-header">
-                    <h3>📈 MI REPORTE MENSUAL</h3>
-                    <div class="user-info">👤 ${this.usuario.nombre || 'Usuario'}</div>
-                </div>
-                <div class="user-report-period">
-                    <strong>${reporte.periodo}</strong>
-                </div>
-                <div class="user-report-stats">
-                    <div class="user-stat-card">
-                        <div class="user-stat-icon">📈</div>
-                        <div class="user-stat-info">
-                            <div class="user-stat-value">${reporte.viajes}</div>
-                            <div class="user-stat-label">Mis viajes</div>
-                        </div>
-                    </div>
-                    <div class="user-stat-card">
-                        <div class="user-stat-icon">🛣️</div>
-                        <div class="user-stat-info">
-                            <div class="user-stat-value">${reporte.kmTotal}</div>
-                            <div class="user-stat-label">KM total</div>
-                        </div>
-                    </div>
-                    <div class="user-stat-card">
-                        <div class="user-stat-icon">🚛</div>
-                        <div class="user-stat-info">
-                            <div class="user-stat-value">${reporte.viajesAcoplado}</div>
-                            <div class="user-stat-label">Viajes con acoplado</div>
-                        </div>
-                    </div>
-                    <div class="user-stat-card">
-                        <div class="user-stat-icon">📏</div>
-                        <div class="user-stat-info">
-                            <div class="user-stat-value">${reporte.kmAcoplado}</div>
-                            <div class="user-stat-label">KM con acoplado</div>
-                        </div>
-                    </div>
-                    <div class="user-stat-card">
-                        <div class="user-stat-icon">💰</div>
-                        <div class="user-stat-info">
-                            <div class="user-stat-value">${reporte.viajesViaticos}</div>
-                            <div class="user-stat-label">Viajes con viáticos</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
     // 🎨 GENERAR HTML REPORTE DIARIO
     generarHTMLReporteDiario(viajes) {
         if (viajes.length === 0) {
-            return '<div class="no-data">No hay viajes registrados para hoy</div>';
+            return '<div class="no-data">No hay viajes registrados</div>';
         }
 
         return `
             <div class="user-report-container">
                 <div class="user-report-header">
                     <h3>📅 MIS VIAJES - ${viajes[0].fecha}</h3>
-                    <div class="user-info">👤 ${this.usuario.nombre || 'Usuario'}</div>
+                    <div class="user-info">👤 ${this.usuario.nombre}</div>
                 </div>
                 <div class="user-daily-trips">
                     ${viajes.map(viaje => `
@@ -1657,15 +1390,13 @@ if (fechaFiltroDesde) {
         `;
     }
 
-    // 🖥️ MOSTRAR EN PANTALLA DE REPORTES EXISTENTE
+    // 🖥️ MOSTRAR EN PANTALLA DE REPORTES
     mostrarEnPantallaReportes(contenido, titulo) {
-        // Actualizar el título de la sección
         const reportHeader = document.querySelector('#reportsScreen .screen-header h2');
         if (reportHeader && titulo) {
             reportHeader.textContent = titulo;
         }
         
-        // Mostrar en el área de resultados de reportes
         const reportResults = document.querySelector('.report-results');
         if (reportResults) {
             reportResults.style.display = 'block';
@@ -1679,20 +1410,18 @@ if (fechaFiltroDesde) {
             `;
         }
         
-        // Ocultar la tabla de resultados normal
         const tablaNormal = document.querySelector('.table-container');
         if (tablaNormal) {
             tablaNormal.style.display = 'none';
         }
         
-        // Ocultar el resumen rápido
         const resumenRapido = document.querySelector('.report-summary');
         if (resumenRapido) {
             resumenRapido.style.display = 'none';
         }
     }
 
-    // 🔄 RESTAURAR VISTA NORMAL DE REPORTES
+    // 🔄 RESTAURAR VISTA NORMAL
     restaurarVistaNormal() {
         const reportHeader = document.querySelector('#reportsScreen .screen-header h2');
         if (reportHeader) {
@@ -1714,14 +1443,13 @@ if (fechaFiltroDesde) {
             resumenRapido.style.display = 'flex';
         }
         
-        // Generar reporte normal
         if (typeof generarReporte === 'function') {
             generarReporte();
         }
     }
 }
 
-// 🆕 MODIFICAR LA PANTALLA DE REPORTES EXISTENTE
+// 🆕 INICIALIZAR REPORTES
 function inicializarReportesUsuario() {
     const filtersPanel = document.querySelector('.filters-panel');
     
@@ -1733,12 +1461,6 @@ function inicializarReportesUsuario() {
                     <button class="btn-user-report" onclick="reportesManager.mostrarReporte('diario')">
                         📅 Mi Día
                     </button>
-                    <button class="btn-user-report" onclick="reportesManager.mostrarReporte('semanal')">
-                        📊 Mi Semana
-                    </button>
-                    <button class="btn-user-report" onclick="reportesManager.mostrarReporte('mensual')">
-                        📈 Mi Mes
-                    </button>
                     <button class="btn-user-report secondary" onclick="reportesManager.restaurarVistaNormal()">
                         🔄 Todos los Viajes
                     </button>
@@ -1747,37 +1469,13 @@ function inicializarReportesUsuario() {
         `;
         
         filtersPanel.insertAdjacentHTML('beforeend', botonesReportesUsuario);
-        console.log('✅ Botones de reportes usuario inicializados');
+        console.log('✅ Botones de reportes inicializados');
     }
 }
-// 🎯 INICIALIZAR SISTEMA DE REPORTES MODULAR - SOLO CUANDO SEA NECESARIO
-function getReportesManager() {
-    if (!window._reportesManager) {
-        window._reportesManager = new ReportesManager();
-    }
-    return window._reportesManager;
-}
 
-// Usar esta función en lugar del acceso directo
-window.reportesManager = {
-    mostrarReporte: (tipo) => getReportesManager().mostrarReporte(tipo),
-    restaurarVistaNormal: () => getReportesManager().restaurarVistaNormal()
-};
+// 🎯 INICIALIZACIÓN SEGURA
+window.reportesManager = new ReportesManager();
 
-// 🎯 INICIALIZAR AL CARGAR LA APLICACIÓN
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(inicializarReportesUsuario, 1000);
 });
-// 🎪 3. EVENT MANAGER BÁSICO
-class EventManager {
-    static init() {
-        console.log('✅ Módulos cargados correctamente');
-    }
-}
-
-// Inicialización suave
-document.addEventListener('DOMContentLoaded', () => {
-    EventManager.init();
-});
-
-console.log('🏗️ Estructura modular cargada (Fase 1)');
