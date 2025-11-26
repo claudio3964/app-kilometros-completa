@@ -1502,3 +1502,149 @@ window.reportesManager = new ReportesManager();
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(inicializarReportesUsuario, 1000);
 });
+// 🆕 FUNCIONES PARA "MI SEMANA"
+
+function obtenerInicioSemana(fecha) {
+    const dia = new Date(fecha);
+    const diaSemana = dia.getDay();
+    const diferencia = diaSemana === 0 ? 6 : diaSemana - 1; // Lunes como inicio
+    dia.setDate(dia.getDate() - diferencia);
+    dia.setHours(0, 0, 0, 0);
+    return dia;
+}
+
+function cargarViajesSemanaActual() {
+    const viajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+    const usuario = JSON.parse(localStorage.getItem('travelUser') || '{}');
+    
+    // Filtrar solo viajes del usuario actual
+    const viajesUsuario = viajes.filter(viaje => viaje.conductor === usuario.nombre);
+    
+    const hoy = new Date();
+    const inicioSemana = obtenerInicioSemana(hoy);
+    
+    const viajesSemana = viajesUsuario.filter(viaje => {
+        const [dia, mes, año] = viaje.date.split('/');
+        const fechaViaje = new Date(año, mes - 1, dia);
+        return fechaViaje >= inicioSemana && fechaViaje <= hoy;
+    });
+    
+    return viajesSemana;
+}
+
+function calcularEstadisticasSemana(viajes) {
+    if (viajes.length === 0) {
+        return {
+            totalViajes: 0,
+            totalKm: 0,
+            totalHoras: 0,
+            totalViaticos: 0,
+            promedioPorViaje: 0
+        };
+    }
+    
+    const totalKm = viajes.reduce((sum, viaje) => sum + (parseFloat(viaje.km) || 0), 0);
+    const totalHoras = viajes.reduce((sum, viaje) => sum + (parseFloat(viaje.hoursWorked) || 0), 0);
+    const totalViaticos = viajes.reduce((sum, viaje) => sum + (viaje.viaticos || 0), 0);
+    
+    return {
+        totalViajes: viajes.length,
+        totalKm: totalKm,
+        totalHoras: totalHoras,
+        totalViaticos: totalViaticos,
+        promedioPorViaje: totalKm / viajes.length
+    };
+}
+
+function renderizarSemana() {
+    const viajesSemana = cargarViajesSemanaActual();
+    const stats = calcularEstadisticasSemana(viajesSemana);
+    
+    // Actualizar estadísticas
+    const statsContainer = document.getElementById('semanaStats');
+    if (statsContainer) {
+        if (viajesSemana.length === 0) {
+            statsContainer.innerHTML = `
+                <div class="no-data" style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                    <h3>📅 No hay viajes esta semana</h3>
+                    <p>Comienza agregando algunos viajes para ver tu resumen semanal</p>
+                </div>
+            `;
+        } else {
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <h3>📅 Viajes Esta Semana</h3>
+                    <p class="stat-number">${stats.totalViajes}</p>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>🛣️ Total Kilómetros</h3>
+                    <p class="stat-number">${stats.totalKm.toFixed(1)} km</p>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>⏱️ Total Horas</h3>
+                    <p class="stat-number">${stats.totalHoras.toFixed(1)} h</p>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>💰 Total Viáticos</h3>
+                    <p class="stat-number">$${stats.totalViaticos}</p>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>📊 Promedio por Viaje</h3>
+                    <p class="stat-number">${stats.promedioPorViaje.toFixed(1)} km</p>
+                </div>
+            `;
+        }
+    }
+    
+    // Actualizar lista de viajes
+    const viajesContainer = document.getElementById('semanaViajesList');
+    if (viajesContainer) {
+        if (viajesSemana.length === 0) {
+            viajesContainer.innerHTML = '<div class="no-data">No hay viajes esta semana</div>';
+            return;
+        }
+        
+        // Ordenar por fecha (más reciente primero)
+        const viajesOrdenados = [...viajesSemana].sort((a, b) => {
+            const [diaA, mesA, añoA] = a.date.split('/');
+            const [diaB, mesB, añoB] = b.date.split('/');
+            return new Date(añoB, mesB - 1, diaB) - new Date(añoA, mesA - 1, diaA);
+        });
+        
+        viajesContainer.innerHTML = viajesOrdenados.map(viaje => `
+            <div class="viaje-item semana-item">
+                <div class="item-header">
+                    <span class="orden-numero">Orden: ${viaje.orderNumber}</span>
+                    <span class="fecha-item">${viaje.date}</span>
+                </div>
+                
+                <div class="ruta-viaje">🛣️ ${viaje.origin} → ${viaje.destination}</div>
+                
+                <div class="detalles-grid">
+                    <div class="detalle-item">
+                        <span class="detalle-label">Kilómetros</span>
+                        <span class="detalle-valor">${viaje.km} km</span>
+                    </div>
+                    <div class="detalle-item">
+                        <span class="detalle-label">Horario</span>
+                        <span class="detalle-valor">${viaje.departureTime} - ${viaje.arrivalTime}</span>
+                    </div>
+                    <div class="detalle-item">
+                        <span class="detalle-label">Horas</span>
+                        <span class="detalle-valor">${viaje.hoursWorked}h</span>
+                    </div>
+                </div>
+                
+                <div class="badges-container">
+                    ${viaje.viaticos ? '<span class="viatico-badge">💰 Viáticos: $1</span>' : ''}
+                    ${viaje.tipoServicio ? `<span class="tarifa-badge">${viaje.tipoServicio}</span>` : ''}
+                    ${viaje.conAcoplado ? '<span class="acoplado-badge">🚛 Acoplado</span>' : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+}
