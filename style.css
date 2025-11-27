@@ -1347,3 +1347,19 @@ input:focus, select:focus {
         font-size: 1.5rem;
     }
 }
+/* 🎨 FONDOS CORREGIDOS - SOLO LO ESENCIAL */
+.screen {
+    background: white !important;
+    border-radius: 15px;
+}
+
+#semanaScreen {
+    background: white !important;
+    border-radius: 0 !important;
+}
+
+#semanaScreen .container {
+    background: white !important;
+    border-radius: 0;
+    box-shadow: none;
+}
