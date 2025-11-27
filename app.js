@@ -338,7 +338,7 @@ function showScreen(screenId) {
             const importStatus = document.getElementById('importStatus');
             if (importStatus) importStatus.textContent = '';
         }
-       else if (screenId === 'semanaScreen') {
+      else if (screenId === 'semanaScreen') {
     // 🆕 FORZAR ESTILOS PARA PANTALLA COMPLETA
     targetScreen.style.background = 'white';
     targetScreen.style.position = 'fixed';
