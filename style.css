@@ -1441,3 +1441,26 @@ body:has(#semanaScreen.active) {
     min-height: 100vh !important;
     width: 100% !important;
 }
+/* 🚨 CORREGIR PANTALLA SPLASH/LOADING */
+#splashScreen {
+    background: white !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 10000 !important;
+    display: none !important;
+}
+
+/* Cuando se active la semana, asegurar que splash esté oculto */
+#semanaScreen.active ~ #splashScreen,
+body:has(#semanaScreen.active) #splashScreen {
+    display: none !important;
+}
+
+/* Forzar que durante la transición todo sea blanco */
+#semanaScreen.active,
+body:has(#semanaScreen.active) {
+    background: white !important;
+}
