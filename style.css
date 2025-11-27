@@ -1411,3 +1411,33 @@ body #semanaScreen {
 body:has(#semanaScreen) {
     overflow: hidden;
 }
+/* 🚨 SOLUCIÓN DEFINITIVA - ELIMINAR PADDING DEL BODY CUANDO SEMANA ESTÉ ABIERTA */
+#semanaScreen {
+    background: white !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 1000 !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Cuando semanaScreen está activa, quitar el padding del body */
+#semanaScreen.active ~ body,
+body:has(#semanaScreen.active) {
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+#semanaScreen .container {
+    background: white !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    min-height: 100vh !important;
+    width: 100% !important;
+}
