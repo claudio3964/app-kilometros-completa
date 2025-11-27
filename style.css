@@ -1486,3 +1486,15 @@ body:has(#semanaScreen.active) {
     padding: 20px !important;
     min-height: 100vh !important;
 }
+/* 🐛 DEBUG TEMPORAL - Quitar después de probar */
+* {
+    border: 1px solid red !important;
+}
+
+.menu-btn {
+    background: white !important;
+}
+
+.screen {
+    background: white !important;
+}
