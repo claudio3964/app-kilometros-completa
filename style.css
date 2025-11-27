@@ -1347,3 +1347,23 @@ input:focus, select:focus {
         font-size: 1.5rem;
     }
 }
+/* 🎨 FONDO GRADIENTE SOLO PARA PANTALLA PRINCIPAL */
+#mainScreen.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+}
+
+/* 🎨 FONDO BLANCO PARA TODAS LAS OTRAS PANTALLAS */
+.screen {
+    background: white;
+    border-radius: 15px;
+}
+
+/* 🎨 CORRECCIÓN ESPECÍFICA PARA MI SEMANA */
+#semanaScreen {
+    background: white !important;
+}
+
+#semanaScreen .container {
+    background: white !important;
+}
