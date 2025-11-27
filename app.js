@@ -1638,6 +1638,20 @@ function calcularEstadisticasSemana(viajes) {
 }
 
 function renderizarSemana() {
+    console.log('🔍 DEBUG renderizarSemana - INICIANDO');
+    
+    const viajesSemana = cargarViajesSemanaActual();
+    console.log('📊 Viajes de la semana:', viajesSemana);
+    
+    const stats = calcularEstadisticasSemana(viajesSemana);
+    console.log('📈 Estadísticas:', stats);
+    
+    const statsContainer = document.getElementById('semanaStats');
+    console.log('🎯 Stats container encontrado:', !!statsContainer);
+    
+    const viajesContainer = document.getElementById('semanaViajesList');
+    console.log('🎯 Viajes container encontrado:', !!viajesContainer);
+    
     const viajesSemana = cargarViajesSemanaActual();
     const stats = calcularEstadisticasSemana(viajesSemana);
     
