@@ -1443,7 +1443,7 @@ filtrarViajesPorFecha(fechaInicio, fechaFin) {
     }
 
    // 🔄 RESTAURAR VISTA NORMAL - VERSIÓN SEGURA
-restaurarVistaNormal() {
+function restaurarVistaNormal() {  // ✅ AGREGA 'function'
     console.log('🔄 Restaurando vista normal de reportes...');
     
     try {
@@ -1503,6 +1503,7 @@ restaurarVistaNormal() {
     window.reportesManager = new ReportesManager();
 
 document.addEventListener('DOMContentLoaded', function() {
+     window.reportesManager = new ReportesManager();
     setTimeout(inicializarReportesUsuario, 1000);
 });
 // 🆕 FUNCIONES PARA "MI SEMANA"
