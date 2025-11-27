@@ -1728,38 +1728,3 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('✅ App completamente inicializada');
 });
-// 🆕 FUNCIÓN PARA MOSTRAR "MI SEMANA" - VERSIÓN CORREGIDA
-function showSemana() {
-    console.log('📱 Mostrando pantalla de Mi Semana...');
-    
-    // 1. Ocultar TODAS las pantallas primero
-    document.querySelectorAll('.screen').forEach(screen => {
-        screen.style.display = 'none';
-        screen.classList.remove('active');
-    });
-    
-    // 2. Mostrar pantalla de semana
-    const semanaScreen = document.getElementById('semanaScreen');
-    if (semanaScreen) {
-        semanaScreen.style.display = 'block';
-        semanaScreen.classList.add('active');
-        
-        // 3. Forzar estilos para fondo blanco
-        semanaScreen.style.background = 'white';
-        semanaScreen.style.position = 'fixed';
-        semanaScreen.style.top = '0';
-        semanaScreen.style.left = '0';
-        semanaScreen.style.width = '100%';
-        semanaScreen.style.height = '100%';
-        semanaScreen.style.zIndex = '1000';
-        
-        // 4. Renderizar el contenido
-        setTimeout(() => {
-            renderizarSemana();
-        }, 100);
-        
-        console.log('✅ Pantalla de semana mostrada');
-    } else {
-        console.error('❌ No se encontró #semanaScreen');
-    }
-}
