@@ -1652,11 +1652,7 @@ function renderizarSemana() {
     const viajesContainer = document.getElementById('semanaViajesList');
     console.log('🎯 Viajes container encontrado:', !!viajesContainer);
     
-    const viajesSemana = cargarViajesSemanaActual();
-    const stats = calcularEstadisticasSemana(viajesSemana);
-    
     // Actualizar estadísticas
-    const statsContainer = document.getElementById('semanaStats');
     if (statsContainer) {
         if (viajesSemana.length === 0) {
             statsContainer.innerHTML = `
@@ -1696,7 +1692,6 @@ function renderizarSemana() {
     }
     
     // Actualizar lista de viajes
-    const viajesContainer = document.getElementById('semanaViajesList');
     if (viajesContainer) {
         if (viajesSemana.length === 0) {
             viajesContainer.innerHTML = '<div class="no-data">No hay viajes esta semana</div>';
