@@ -338,9 +338,25 @@ function showScreen(screenId) {
             const importStatus = document.getElementById('importStatus');
             if (importStatus) importStatus.textContent = '';
         }
-        else if (screenId === 'semanaScreen') {
-            renderizarSemana();
-        }
+       else if (screenId === 'semanaScreen') {
+    // 🆕 FORZAR ESTILOS PARA PANTALLA COMPLETA
+    targetScreen.style.background = 'white';
+    targetScreen.style.position = 'fixed';
+    targetScreen.style.top = '0';
+    targetScreen.style.left = '0';
+    targetScreen.style.width = '100%';
+    targetScreen.style.height = '100%';
+    targetScreen.style.zIndex = '1000';
+    
+    // 🆕 OCULTAR SPLASH SCREEN SI ESTÁ ACTIVA
+    const splashScreen = document.getElementById('splashScreen');
+    if (splashScreen && splashScreen.classList.contains('active')) {
+        splashScreen.style.display = 'none';
+        splashScreen.classList.remove('active');
+    }
+    
+    renderizarSemana();
+}
     } else {
         console.log('❌ Pantalla no encontrada:', screenId);
     }
