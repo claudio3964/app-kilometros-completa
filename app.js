@@ -1500,7 +1500,7 @@ function restaurarVistaNormal() {  // ✅ AGREGA 'function'
 }
 
 // 🎯 INICIALIZACIÓN SEGURA 
-    window.reportesManager = new ReportesManager();
+   
 
 document.addEventListener('DOMContentLoaded', function() {
      window.reportesManager = new ReportesManager();
