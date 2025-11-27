@@ -1,6 +1,8 @@
+
 // VARIABLES GLOBALES
 let travels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
 let favoriteDestinations = JSON.parse(localStorage.getItem('bus_favorites') || '[]');
+let usuario = JSON.parse(localStorage.getItem('travelUser') || '{"nombre": "Conductor", "numero": "000", "rol": "driver"}');
 
 // ===== SISTEMA INTELIGENTE DE VIAJES =====
 const serviciosDB = {
@@ -292,15 +294,6 @@ function limpiarSeleccionRegular() {
     document.getElementById('infoAuto').style.display = 'none';
 }
 
-// INICIALIZACIÓN
-document.addEventListener('DOMContentLoaded', function() {
-    updateTodayDate();
-    updateSummary();
-    
-    // Configurar evento para importar datos
-    document.getElementById('backupFile')?.addEventListener('change', handleFileSelect);
-});
-
 // FUNCIONES DE NAVEGACIÓN - VERSIÓN CORREGIDA
 function showScreen(screenId) {
     console.log('🎯 Mostrando pantalla:', screenId);
@@ -455,9 +448,76 @@ function addTravel(event) {
     
     alert('✅ Viaje agregado exitosamente!');
     showScreen('mainScreen');
+    
+    return false;
 }
 
-// EL RESTO DE TUS FUNCIONES SE MANTIENE EXACTAMENTE IGUAL
+// 🆕 FUNCIÓN PARA AGREGAR GUARDIA (FALTABA)
+function addGuard(event) {
+    event.preventDefault();
+    console.log('🛡️ Agregando guardia...');
+    
+    const orderNumber = document.getElementById('guardOrderNumber')?.value || '';
+    const startTime = document.getElementById('guardStartTime')?.value || '';
+    const endTime = document.getElementById('guardEndTime')?.value || '';
+    const tarifa = document.getElementById('guardTarifa')?.value || '30';
+    const descripcion = document.getElementById('guardDescripcion')?.value || '';
+    
+    if (!orderNumber || !startTime || !endTime) {
+        alert('Complete todos los campos obligatorios');
+        return;
+    }
+    
+    // Calcular horas
+    const start = new Date(`2000-01-01T${startTime}`);
+    const end = new Date(`2000-01-01T${endTime}`);
+    let hours = (end - start) / (1000 * 60 * 60);
+    if (hours < 0) hours += 24;
+    
+    if (hours <= 0) {
+        alert('La hora de fin debe ser posterior a la de inicio');
+        return;
+    }
+    
+    // Calcular monto
+    const monto = (hours * parseFloat(tarifa)).toFixed(2);
+    
+    // Determinar tipo basado en tarifa
+    const tipo = tarifa === '40' ? 'Especial' : 'Común';
+    
+    const guard = {
+        id: Date.now(),
+        orderNumber,
+        driverName: usuario.nombre,
+        startTime,
+        endTime,
+        hours: hours.toFixed(2),
+        tarifa: tarifa,
+        monto: monto,
+        tipo: tipo,
+        descripcion: descripcion,
+        date: new Date().toLocaleDateString('es-ES'),
+        timestamp: new Date().toISOString(),
+        viaticos: hours >= 9 ? 1 : 0
+    };
+    
+    let savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+    savedGuards.push(guard);
+    localStorage.setItem('bus_guards', JSON.stringify(savedGuards));
+    
+    // Limpiar formulario
+    if (event.target.reset) event.target.reset();
+    document.getElementById('campoDescripcion').style.display = 'none';
+    
+    updateSummary();
+    updateGuardList();
+    
+    alert('✅ Guardia agregada exitosamente!');
+    showScreen('mainScreen');
+    
+    return false;
+}
+
 // 🆕 FUNCIÓN PARA MOSTRAR/OCULTAR CAMPO DE DESCRIPCIÓN
 function actualizarDescripcionGuardia() {
     const tarifa = document.getElementById('guardTarifa').value;
@@ -1168,8 +1228,6 @@ function exportarReporte() {
     alert('✅ Reporte exportado como archivo de texto');
 }
 
-
-
 // ============================================
 // 🏗️ ESTRUCTURA MODULAR - FASE 1
 // ============================================
@@ -1209,6 +1267,7 @@ class UIManager {
         alert(`✅ ${mensaje}`);
     }
 }
+
 // ============================================
 // 📊 REPORTES MANAGER - ESTRUCTURA MODULAR
 // ============================================
@@ -1223,37 +1282,38 @@ class ReportesManager {
     }
 
     // 🔍 FILTRAR VIAJES POR FECHA - VERSIÓN DEFINITIVA
-filtrarViajesPorFecha(fechaInicio, fechaFin) {
-    console.log('🔍 DEBUG - Total viajes disponibles:', this.viajes.length);
-    console.log('🔍 DEBUG - Fechas de viajes:', this.viajes.map(v => v.date));
-    
-    return this.viajes.filter(viaje => {
-        // Convertir fecha del viaje "22/11/2025" a formato comparable
-        const [dia, mes, año] = viaje.date.split('/');
-        const fechaViaje = new Date(año, mes - 1, dia);
+    filtrarViajesPorFecha(fechaInicio, fechaFin) {
+        console.log('🔍 DEBUG - Total viajes disponibles:', this.viajes.length);
+        console.log('🔍 DEBUG - Fechas de viajes:', this.viajes.map(v => v.date));
         
-        // Si estamos buscando por fecha específica (como en Mi Día)
-        if (fechaInicio && fechaFin && fechaInicio === fechaFin) {
-            const fechaFiltro = new Date(fechaInicio);
-            const coincide = fechaViaje.toISOString().split('T')[0] === fechaFiltro.toISOString().split('T')[0];
+        return this.viajes.filter(viaje => {
+            // Convertir fecha del viaje "22/11/2025" a formato comparable
+            const [dia, mes, año] = viaje.date.split('/');
+            const fechaViaje = new Date(año, mes - 1, dia);
             
-            console.log('📅 DEBUG - Comparación exacta:', {
-                viaje: viaje.date,
-                fechaViaje: fechaViaje.toISOString().split('T')[0],
-                filtro: fechaFiltro.toISOString().split('T')[0],
-                coincide: coincide
-            });
+            // Si estamos buscando por fecha específica (como en Mi Día)
+            if (fechaInicio && fechaFin && fechaInicio === fechaFin) {
+                const fechaFiltro = new Date(fechaInicio);
+                const coincide = fechaViaje.toISOString().split('T')[0] === fechaFiltro.toISOString().split('T')[0];
+                
+                console.log('📅 DEBUG - Comparación exacta:', {
+                    viaje: viaje.date,
+                    fechaViaje: fechaViaje.toISOString().split('T')[0],
+                    filtro: fechaFiltro.toISOString().split('T')[0],
+                    coincide: coincide
+                });
+                
+                return coincide;
+            }
             
-            return coincide;
-        }
-        
-        // Para búsquedas por rango (fechas diferentes)
-        const inicio = fechaInicio ? new Date(fechaInicio) : new Date('2000-01-01');
-        const fin = fechaFin ? new Date(fechaFin) : new Date('2100-01-01');
-        
-        return fechaViaje >= inicio && fechaViaje <= fin;
-    });
-}
+            // Para búsquedas por rango (fechas diferentes)
+            const inicio = fechaInicio ? new Date(fechaInicio) : new Date('2000-01-01');
+            const fin = fechaFin ? new Date(fechaFin) : new Date('2100-01-01');
+            
+            return fechaViaje >= inicio && fechaViaje <= fin;
+        });
+    }
+
     // 🆕 FUNCIÓN CORREGIDA PARA DETERMINAR VIÁTICOS
     determinarViaticos(viaje, todosViajes) {
         const viajesMismaOrden = todosViajes.filter(v => 
@@ -1281,14 +1341,14 @@ filtrarViajesPorFecha(fechaInicio, fechaFin) {
         const fechaFiltroHasta = document.getElementById('filterDateTo')?.value;
         
         if (fechaFiltroDesde) {
-    fecha = fechaFiltroDesde;
-} else if (fechaFiltroHasta) {
-    fecha = fechaFiltroHasta;
-} else {
-    // 🆕 FORZAR LA FECHA DE TUS VIAJES EN FORMATO CORRECTO
-    fecha = '2025-11-22';
-    console.log('🕐 Usando fecha forzada:', fecha);
-}
+            fecha = fechaFiltroDesde;
+        } else if (fechaFiltroHasta) {
+            fecha = fechaFiltroHasta;
+        } else {
+            // 🆕 FORZAR LA FECHA DE TUS VIAJES EN FORMATO CORRECTO
+            fecha = '2025-11-22';
+            console.log('🕐 Usando fecha forzada:', fecha);
+        }
         
         console.log('🔍 Buscando viajes para fecha:', fecha);
         
@@ -1441,9 +1501,10 @@ filtrarViajesPorFecha(fechaInicio, fechaFin) {
             resumenRapido.style.display = 'none';
         }
     }
+}
 
-   // 🔄 RESTAURAR VISTA NORMAL - VERSIÓN SEGURA
-function restaurarVistaNormal() {  // ✅ AGREGA 'function'
+// 🔄 RESTAURAR VISTA NORMAL - VERSIÓN SEGURA
+function restaurarVistaNormal() {
     console.log('🔄 Restaurando vista normal de reportes...');
     
     try {
@@ -1500,14 +1561,14 @@ function restaurarVistaNormal() {  // ✅ AGREGA 'function'
 }
 
 // 🎯 INICIALIZACIÓN SEGURA 
-   
-
 document.addEventListener('DOMContentLoaded', function() {
-     window.reportesManager = new ReportesManager();
-    setTimeout(inicializarReportesUsuario, 1000);
+    window.reportesManager = new ReportesManager();
+    setTimeout(function() {
+        console.log('📊 Reportes de usuario inicializados');
+    }, 1000);
 });
-// 🆕 FUNCIONES PARA "MI SEMANA"
 
+// 🆕 FUNCIONES PARA "MI SEMANA"
 function obtenerInicioSemana(fecha) {
     const dia = new Date(fecha);
     const diaSemana = dia.getDay();
@@ -1652,3 +1713,18 @@ function renderizarSemana() {
         `).join('');
     }
 }
+
+// INICIALIZACIÓN
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📱 App.js cargado correctamente');
+    updateTodayDate();
+    updateSummary();
+    
+    // Configurar evento para importar datos
+    document.getElementById('backupFile')?.addEventListener('change', handleFileSelect);
+    
+    // Inicializar modo
+    setMode('regular');
+    
+    console.log('✅ App completamente inicializada');
+});
