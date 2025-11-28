@@ -866,7 +866,98 @@ input:focus, select:focus {
         font-size: 12px;
     }
 }
+/* 🚀 SOLUCIÓN DEFINITIVA - FONDOS BLANCOS EN BOTONES Y PANTALLAS */
 
+/* 1. RESET DE FONDOS PARA TODAS LAS PANTALLAS */
+.screen {
+    background: white !important;
+}
+
+/* 2. BOTONES CON FONDO BLANCO EXPLÍCITO Y FORZADO */
+.menu-btn {
+    background: white !important;
+    border: 2px solid #e9ecef !important;
+}
+
+.menu-btn:hover {
+    background: #f8f9fa !important;
+    border-color: #667eea !important;
+}
+
+/* 3. COLORES ESPECÍFICOS EN HOVER (DEBEN SOBREESCRIBIR EL FONDO BLANCO) */
+.menu-btn.primary:hover { 
+    background: #007bff !important; 
+    color: white !important; 
+    border-color: #007bff !important;
+}
+
+.menu-btn.secondary:hover { 
+    background: #6c757d !important; 
+    color: white !important; 
+    border-color: #6c757d !important;
+}
+
+.menu-btn.success:hover { 
+    background: #28a745 !important; 
+    color: white !important; 
+    border-color: #28a745 !important;
+}
+
+.menu-btn.info:hover { 
+    background: #17a2b8 !important; 
+    color: white !important; 
+    border-color: #17a2b8 !important;
+}
+
+.menu-btn.warning:hover { 
+    background: #ffc107 !important; 
+    color: white !important; 
+    border-color: #ffc107 !important;
+}
+
+.menu-btn.dark:hover { 
+    background: #343a40 !important; 
+    color: white !important; 
+    border-color: #343a40 !important;
+}
+
+/* 4. BOTONES DE ACCIÓN (AGREGAR, ELIMINAR, ETC) */
+.btn-primary, .btn-secondary, .btn-success, .back-btn, .backup-btn {
+    background: #3498db !important;
+    color: white !important;
+    border: none !important;
+}
+
+.btn-primary:hover, .back-btn:hover, .backup-btn:hover {
+    background: #2980b9 !important;
+}
+
+/* 5. CONTENEDORES PRINCIPALES */
+.container, .form-container, .lista-container,
+.table-container, .stats-grid, .viajes-container {
+    background: white !important;
+}
+
+/* 6. PANTALLA SEMANA ESPECÍFICA */
+#semanaScreen {
+    background: white !important;
+}
+
+#semanaScreen .container {
+    background: white !important;
+}
+
+/* 7. ITEMS DE LISTA */
+.item-viaje, .item-guardia, .semana-item {
+    background: white !important;
+}
+
+/* 8. ELIMINAR POSIBLE HERENCIA DEL BODY */
+body .menu-btn,
+body .screen,
+body .container {
+    background: white !important;
+}
 /* Scrollbar personalizado */
 .table-container::-webkit-scrollbar {
     height: 6px;
