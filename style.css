@@ -1019,3 +1019,32 @@ body .container {
 .table-container::-webkit-scrollbar-thumb:hover {
     background: #2980b9;
 }
+/* 🎯 SOLUCIÓN DEFINITIVA - FONDOS BLANCOS EN CONTENEDORES */
+
+/* 1. CONTENEDOR PRINCIPAL DE MENÚ CON FONDO BLANCO */
+.menu-container {
+    background: white !important;
+    border-radius: 15px;
+    margin: 20px;
+    padding: 30px !important;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1) !important;
+}
+
+/* 2. ASEGURAR QUE EL CONTENEDOR PRINCIPAL TENGA FONDO BLANCO */
+.container {
+    background: white !important;
+}
+
+/* 3. BOTONES CON MEJOR CONTRASTE */
+.menu-btn {
+    background: white !important;
+    border: 3px solid #dee2e6 !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+}
+
+/* 4. ELIMINAR CUALQUIER TRANSPARENCIA */
+body .container,
+body .screen {
+    background: white !important;
+    opacity: 1 !important;
+}
