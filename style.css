@@ -1048,3 +1048,10 @@ body .screen {
     background: white !important;
     opacity: 1 !important;
 }
+/* 🚨 SOLUCIÓN - DIMENSIONES PARA ITEMS */
+.item-viaje, .item-guardia {
+    display: block !important;
+    width: 100% !important;
+    min-height: 100px !important;
+    box-sizing: border-box !important;
+}
