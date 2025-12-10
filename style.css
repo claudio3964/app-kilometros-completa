@@ -1055,3 +1055,13 @@ body .screen {
     min-height: 100px !important;
     box-sizing: border-box !important;
 }
+/* SOLUCIÓN PARA CONTENEDOR DE LISTA */
+.lista-container {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    min-height: 300px !important;
+    gap: 15px !important;
+    padding: 20px !important;
+    background: #f9f9f9 !important; /* Temporal para verlo */
+}
