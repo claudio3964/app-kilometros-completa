@@ -103,3 +103,52 @@ body {
         grid-template-columns: 1fr;
     }
 }
+/* ESTILOS PARA ELEMENTOS DENTRO DE PANTALLAS */
+
+/* HEADER DE PANTALLA */
+.screen-header {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background: white;
+    border-bottom: 1px solid #e9ecef;
+    margin-bottom: 20px;
+}
+
+.back-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 15px;
+    font-size: 16px;
+}
+
+.back-btn:hover {
+    background: #5a6268;
+}
+
+/* CONTENEDOR DE LISTA MEJORADO */
+.lista-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 10px 20px;
+    min-height: 300px; /* ← IMPORTANTE: dar altura */
+    overflow-y: auto; /* ← Para scroll si hay muchos items */
+}
+
+/* ITEMS DE VIAJE MEJORADOS */
+.item-viaje {
+    background: white;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid #e74c3c;
+    display: block;
+    width: 100%;
+    min-height: 120px; /* ← Altura mínima */
+    margin-bottom: 10px;
+}
