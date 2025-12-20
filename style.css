@@ -22,8 +22,7 @@ body {
 }
 
 /* PANTALLAS */
-.screen { display: block; padding: 30px; min-height: 500px; background: white; }
-
+.screen { display: none; padding: 30px; min-height: 500px; background: white; }
 .screen.active {
     display: block;
 }
