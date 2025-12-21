@@ -289,11 +289,16 @@ function actualizarInfoServicio() {
 function limpiarSeleccionRegular() {
     rutaSeleccionada = null;
     servicioSeleccionado = null;
-    document.getElementById('buscarRuta').value = '';
-    document.getElementById('numeroServicio').innerHTML = '<option value="">Primero elegí una ruta...</option>';
-    document.getElementById('infoAuto').style.display = 'none';
+    
+    // SOLO modificar los elementos si EXISTEN
+    let buscarRuta = document.getElementById('buscarRuta');
+    let numeroServicio = document.getElementById('numeroServicio');
+    let infoAuto = document.getElementById('infoAuto');
+    
+    if (buscarRuta) buscarRuta.value = '';
+    if (numeroServicio) numeroServicio.innerHTML = '<option value="">Primero elegí una ruta...</option>';
+    if (infoAuto) infoAuto.style.display = 'none';
 }
-
 // FUNCIONES DE NAVEGACIÓN - VERSIÓN CORREGIDA
 function showScreen(screenId) {
     console.log('🎯 Mostrando pantalla:', screenId);
