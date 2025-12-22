@@ -146,3 +146,142 @@ body {
     min-height: 120px; /* ← Altura mínima */
     margin-bottom: 10px;
 }
+/* ===== ESTILOS PARA PANTALLAS ===== */
+
+/* TODAS las pantallas .screen - BASE */
+.screen {
+    /* Inicialmente ocultas */
+    display: none;
+    position: relative;
+    width: 100%;
+}
+
+/* Pantalla ACTIVA (la que se muestra) */
+.screen.active {
+    display: block;
+}
+
+/* ===== ESPECÍFICO PARA MAINSCREEN ===== */
+#mainScreen {
+    /* Pantalla completa */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    z-index: 10;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+/* ===== ESPECÍFICO PARA TRAVELSCREEN ===== */
+#travelScreen {
+    /* Modal centrado */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 900px;
+    max-height: 90vh;
+    background: white;
+    z-index: 1000;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    overflow-y: auto;
+    display: none; /* Inicialmente oculta */
+}
+
+#travelScreen.active {
+    display: block; /* Se muestra cuando tiene clase active */
+}
+
+/* Overlay para travelScreen */
+#travelScreen-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    display: none;
+}
+
+#travelScreen-backdrop.active {
+    display: block;
+}
+
+/* ===== ESPECÍFICO PARA GUARDSCREEN ===== */
+#guardScreen {
+    /* Similar a travelScreen */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 700px;
+    background: white;
+    z-index: 1000;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    display: none;
+}
+
+#guardScreen.active {
+    display: block;
+}
+
+/* ===== OTRAS PANTALLAS (listas, reportes, etc) ===== */
+#travelListScreen,
+#guardListScreen,
+#reportsScreen,
+#backupScreen,
+#semanaScreen {
+    /* Pantallas completas */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: white;
+    z-index: 100;
+    overflow-y: auto;
+    padding: 20px;
+    display: none;
+}
+
+#travelListScreen.active,
+#guardListScreen.active,
+#reportsScreen.active,
+#backupScreen.active,
+#semanaScreen.active {
+    display: block;
+}
+
+/* ===== BOTÓN DE CERRAR/VOLVER ===== */
+.back-btn, .close-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.back-btn:hover, .close-btn:hover {
+    background: #5a6268;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    #travelScreen, #guardScreen {
+        width: 95%;
+        padding: 20px;
+    }
+}
