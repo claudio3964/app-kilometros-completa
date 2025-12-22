@@ -299,7 +299,7 @@ function limpiarSeleccionRegular() {
     if (numeroServicio) numeroServicio.innerHTML = '<option value="">Primero elegí una ruta...</option>';
     if (infoAuto) infoAuto.style.display = 'none';
 }
-// FUNCIÓN showScreen CORREGIDA Y SIMPLIFICADA
+// 🎯 FUNCIÓN showScreen CORREGIDA - VERSIÓN DEFINITIVA
 function showScreen(screenId) {
     console.log('🎯 Mostrando pantalla:', screenId);
     
@@ -310,36 +310,148 @@ function showScreen(screenId) {
     });
     
     // 2. Ocultar TODOS los backdrops
-    document.querySelectorAll('.screen-backdrop').forEach(backdrop => {
-        backdrop.style.display = 'none';
-        backdrop.classList.remove('active');
+    document.querySelectorAll('#travelScreen-backdrop, #guardScreen-backdrop').forEach(backdrop => {
+        if (backdrop) {
+            backdrop.style.display = 'none';
+            backdrop.classList.remove('active');
+        }
     });
     
     // 3. Mostrar pantalla objetivo
     const targetScreen = document.getElementById(screenId);
     if (targetScreen) {
-        targetScreen.style.display = 'block';
-        targetScreen.classList.add('active');
-        console.log('✅ Pantalla activada:', screenId);
+        console.log('✅ Pantalla encontrada:', screenId);
         
-        // 4. Si es travelScreen o guardScreen, mostrar backdrop
-        if (screenId === 'travelScreen' || screenId === 'guardScreen') {
-            const backdropId = screenId + '-backdrop';
-            let backdrop = document.getElementById(backdropId);
+        // ============================================
+        // 🎨 APLICAR ESTILOS ESPECÍFICOS
+        // ============================================
+        
+        if (screenId === 'travelScreen') {
+            // 🚨 ESTILOS CRÍTICOS PARA travelScreen
+            targetScreen.style.cssText = `
+                /* POSICIÓN - MODAL CENTRADO */
+                position: fixed !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                
+                /* TAMAÑO */
+                width: 90% !important;
+                max-width: 900px !important;
+                max-height: 85vh !important;
+                
+                /* VISIBILIDAD */
+                display: block !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                
+                /* Z-INDEX MÁXIMO */
+                z-index: 2147483647 !important;
+                
+                /* ESTILOS VISUALES */
+                background: white !important;
+                border-radius: 20px !important;
+                padding: 30px !important;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
+                
+                /* SCROLL INTERNO */
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+            `;
             
+            // 🎯 CREAR BACKDROP (fondo oscuro)
+            let backdrop = document.getElementById('travelScreen-backdrop');
             if (!backdrop) {
                 backdrop = document.createElement('div');
-                backdrop.id = backdropId;
-                backdrop.className = 'screen-backdrop';
+                backdrop.id = 'travelScreen-backdrop';
+                backdrop.style.cssText = `
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    background: rgba(0,0,0,0.5) !important;
+                    z-index: 2147483646 !important;
+                    display: block !important;
+                `;
                 backdrop.onclick = function() {
                     showScreen('mainScreen');
                 };
                 document.body.appendChild(backdrop);
+            } else {
+                backdrop.style.display = 'block';
+                backdrop.classList.add('active');
             }
             
-            backdrop.style.display = 'block';
-            backdrop.classList.add('active');
+        } else if (screenId === 'guardScreen') {
+            // SIMILAR A travelScreen
+            targetScreen.style.cssText = `
+                position: fixed !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                width: 90% !important;
+                max-width: 700px !important;
+                background: white !important;
+                z-index: 2147483647 !important;
+                display: block !important;
+                border-radius: 20px !important;
+                padding: 30px !important;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
+            `;
+            
+            // BACKDROP para guardScreen
+            let backdrop = document.getElementById('guardScreen-backdrop');
+            if (!backdrop) {
+                backdrop = document.createElement('div');
+                backdrop.id = 'guardScreen-backdrop';
+                backdrop.style.cssText = `
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    background: rgba(0,0,0,0.5) !important;
+                    z-index: 2147483646 !important;
+                    display: block !important;
+                `;
+                backdrop.onclick = function() {
+                    showScreen('mainScreen');
+                };
+                document.body.appendChild(backdrop);
+            } else {
+                backdrop.style.display = 'block';
+                backdrop.classList.add('active');
+            }
+            
+        } else if (screenId === 'mainScreen') {
+            // 🏠 MAINSCREEN - Dentro del container normal
+            targetScreen.style.cssText = `
+                display: block !important;
+                width: 100% !important;
+                min-height: 100vh !important;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            `;
+            
+        } else {
+            // 📱 OTRAS PANTALLAS (listas, reportes, etc.)
+            targetScreen.style.cssText = `
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                background: white !important;
+                z-index: 1000 !important;
+                display: block !important;
+                overflow-y: auto !important;
+                padding: 20px !important;
+            `;
         }
+        
+        // 4. Agregar clase active
+        targetScreen.classList.add('active');
+        console.log('✅ Pantalla activada:', screenId);
         
         // 5. Ejecutar funciones específicas
         setTimeout(() => {
@@ -353,10 +465,15 @@ function showScreen(screenId) {
                     break;
                 case 'guardScreen':
                     if (typeof updateGuardList === 'function') updateGuardList();
+                    if (typeof actualizarDescripcionGuardia === 'function') actualizarDescripcionGuardia();
                     break;
                 case 'travelListScreen':
                     if (typeof updateAllTravelsList === 'function') updateAllTravelsList();
                     if (typeof renderViajesList === 'function') renderViajesList();
+                    break;
+                case 'guardListScreen':
+                    if (typeof updateAllGuardsList === 'function') updateAllGuardsList();
+                    if (typeof renderGuardiasList === 'function') renderGuardiasList();
                     break;
                 case 'reportsScreen':
                     if (typeof limpiarFiltros === 'function') limpiarFiltros();
@@ -369,8 +486,14 @@ function showScreen(screenId) {
         
     } else {
         console.error('❌ Pantalla no encontrada:', screenId);
-        showScreen('mainScreen'); // Fallback seguro
+        // Fallback seguro
+        showScreen('mainScreen');
     }
+}
+
+// 🎯 FUNCIÓN SIMPLIFICADA PARA CERRAR
+function cerrarModal() {
+    showScreen('mainScreen');
 }
 
 // FUNCIONES DE VIAJES - VERSIÓN MEJORADA CON AUTO-DETECCIÓN
