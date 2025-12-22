@@ -299,69 +299,77 @@ function limpiarSeleccionRegular() {
     if (numeroServicio) numeroServicio.innerHTML = '<option value="">Primero elegí una ruta...</option>';
     if (infoAuto) infoAuto.style.display = 'none';
 }
-// FUNCIONES DE NAVEGACIÓN - VERSIÓN CORREGIDA
+// FUNCIÓN showScreen CORREGIDA Y SIMPLIFICADA
 function showScreen(screenId) {
     console.log('🎯 Mostrando pantalla:', screenId);
     
     // 1. Ocultar TODAS las pantallas
-    const allScreens = document.querySelectorAll('.screen');
-    allScreens.forEach(screen => {
+    document.querySelectorAll('.screen').forEach(screen => {
         screen.style.display = 'none';
         screen.classList.remove('active');
     });
     
-    // 2. Mostrar pantalla objetivo
+    // 2. Ocultar TODOS los backdrops
+    document.querySelectorAll('.screen-backdrop').forEach(backdrop => {
+        backdrop.style.display = 'none';
+        backdrop.classList.remove('active');
+    });
+    
+    // 3. Mostrar pantalla objetivo
     const targetScreen = document.getElementById(screenId);
     if (targetScreen) {
         targetScreen.style.display = 'block';
         targetScreen.classList.add('active');
         console.log('✅ Pantalla activada:', screenId);
         
-        // 3. Actualizar datos específicos de cada pantalla
-        if (screenId === 'mainScreen') {
-            updateSummary();
-        } else if (screenId === 'travelScreen') {
-            updateTravelTable();
-            limpiarSeleccionRegular();
-        } else if (screenId === 'guardScreen') {
-            updateGuardList();
-            setTimeout(() => {
-                actualizarDescripcionGuardia();
-            }, 100);
-        } else if (screenId === 'travelListScreen') {
-            updateAllTravelsList();
-            renderViajesList();
-        } else if (screenId === 'guardListScreen') {
-            updateAllGuardsList();
-            renderGuardiasList();
-        } else if (screenId === 'reportsScreen') {
-            setTimeout(() => {
-                limpiarFiltros();
-            }, 100);
-        } else if (screenId === 'backupScreen') {
-            const importStatus = document.getElementById('importStatus');
-            if (importStatus) importStatus.textContent = '';
-        } else if (screenId === 'semanaScreen') {
-            // 🆕 FORZAR ESTILOS PARA PANTALLA COMPLETA
-            targetScreen.style.background = 'white';
-            targetScreen.style.position = 'fixed';
-            targetScreen.style.top = '0';
-            targetScreen.style.left = '0';
-            targetScreen.style.width = '100%';
-            targetScreen.style.height = '100%';
-            targetScreen.style.zIndex = '1000';
+        // 4. Si es travelScreen o guardScreen, mostrar backdrop
+        if (screenId === 'travelScreen' || screenId === 'guardScreen') {
+            const backdropId = screenId + '-backdrop';
+            let backdrop = document.getElementById(backdropId);
             
-            // 🆕 OCULTAR SPLASH SCREEN SI ESTÁ ACTIVA
-            const splashScreen = document.getElementById('splashScreen');
-            if (splashScreen && splashScreen.classList.contains('active')) {
-                splashScreen.style.display = 'none';
-                splashScreen.classList.remove('active');
+            if (!backdrop) {
+                backdrop = document.createElement('div');
+                backdrop.id = backdropId;
+                backdrop.className = 'screen-backdrop';
+                backdrop.onclick = function() {
+                    showScreen('mainScreen');
+                };
+                document.body.appendChild(backdrop);
             }
             
-            renderizarSemana();
+            backdrop.style.display = 'block';
+            backdrop.classList.add('active');
         }
+        
+        // 5. Ejecutar funciones específicas
+        setTimeout(() => {
+            switch(screenId) {
+                case 'mainScreen':
+                    if (typeof updateSummary === 'function') updateSummary();
+                    break;
+                case 'travelScreen':
+                    if (typeof limpiarSeleccionRegular === 'function') limpiarSeleccionRegular();
+                    if (typeof updateTravelTable === 'function') updateTravelTable();
+                    break;
+                case 'guardScreen':
+                    if (typeof updateGuardList === 'function') updateGuardList();
+                    break;
+                case 'travelListScreen':
+                    if (typeof updateAllTravelsList === 'function') updateAllTravelsList();
+                    if (typeof renderViajesList === 'function') renderViajesList();
+                    break;
+                case 'reportsScreen':
+                    if (typeof limpiarFiltros === 'function') limpiarFiltros();
+                    break;
+                case 'semanaScreen':
+                    if (typeof renderizarSemana === 'function') renderizarSemana();
+                    break;
+            }
+        }, 100);
+        
     } else {
-        console.log('❌ Pantalla no encontrada:', screenId);
+        console.error('❌ Pantalla no encontrada:', screenId);
+        showScreen('mainScreen'); // Fallback seguro
     }
 }
 
