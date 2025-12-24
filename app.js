@@ -1887,3 +1887,43 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('✅ App completamente inicializada');
 });
+// ===== CONTROL DEL FONDO CON LOGO =====
+
+// Esperar a que el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    const background = document.querySelector('.main-screen-background');
+    const mainScreen = document.getElementById('mainScreen');
+    
+    // Solo ejecutar si estamos en la pantalla principal
+    if (background && mainScreen && mainScreen.classList.contains('active')) {
+        
+        // Controlar el efecto al hacer scroll
+        window.addEventListener('scroll', function() {
+            const scrollY = window.scrollY || window.pageYOffset;
+            
+            // Activar efecto después de 50px de scroll
+            if (scrollY > 50) {
+                background.classList.add('scrolled');
+                
+                // Efecto progresivo: más scroll = más desenfoque
+                const blurAmount = Math.min(8, scrollY / 30); // Máximo 8px de blur
+                const opacityAmount = 0.04 + (scrollY / 2000); // Opacidad dinámica
+                
+                background.style.filter = `blur(${blurAmount}px)`;
+                background.style.webkitFilter = `blur(${blurAmount}px)`;
+                background.style.opacity = Math.min(0.06, opacityAmount);
+                
+            } else {
+                // Resetear al volver arriba
+                background.classList.remove('scrolled');
+                background.style.filter = 'blur(0px)';
+                background.style.webkitFilter = 'blur(0px)';
+                background.style.opacity = '0.07';
+            }
+        });
+        
+        // Precargar la imagen del logo para evitar parpadeo
+        const logoImg = new Image();
+        logoImg.src = background.style.backgroundImage.replace(/url\(['"]?(.*?)['"]?\)/i, '$1');
+    }
+});
