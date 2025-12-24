@@ -2,188 +2,60 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Viajes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <!-- META PWA CRÍTICOS -->
+    <meta name="theme-color" content="#D4A017">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Control Kilómetros">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="COT">
+    
+    <!-- ÍCONOS APPLE -->
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
+    
+    <!-- MANIFEST PWA -->
+    <link rel="manifest" href="./manifest.json">
+    
+    <!-- FONTAWESOME PARA ÍCONOS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- TU CSS -->
     <link rel="stylesheet" href="./style.css">
+    
+    <title>Gestión de Viajes</title>
+    
     <style>
         /* 🆕 ESTILOS PARA LAS PANTALLAS NUEVAS */
-        
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">  
-        
-        /* SPLASH SCREEN */
-        #splashScreen {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-family: Arial, sans-serif;
-        }
-        
-        .splash-container {
-            animation: fadeIn 1s ease-in;
-        }
-        
-        .splash-logo {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-        }
-        
-        /* LOGIN SCREEN */
-        #loginScreen {
-            background: #f5f5f5;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-        }
-        
-        .login-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-        
-        .login-container h2 {
-            margin-bottom: 1.5rem;
-            color: #333;
-        }
-        
-        .login-container input,
-        .login-container select {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        
-        .login-container button {
-            width: 100%;
-            padding: 12px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            margin-top: 1rem;
-            cursor: pointer;
-        }
-        
-        .login-container button:hover {
-            background: #45a049;
-        }
-        
-        .note {
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: 1rem;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        /* ===== ESTILOS CRÍTICOS CORREGIDOS ===== */
-        
-        /* TRAVELSCREEN COMO MODAL INDEPENDIENTE */
-        #travelScreen {
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            width: 90% !important;
-            max-width: 900px !important;
-            max-height: 85vh !important;
-            background: white !important;
-            z-index: 10000 !important;
-            border-radius: 20px !important;
-            padding: 30px !important;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
-            overflow-y: auto !important;
-            display: none !important;
-        }
-        
-        #travelScreen.active {
-            display: block !important;
-        }
-        
-        /* BACKDROP PARA MODALES */
-        .modal-backdrop {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: rgba(0,0,0,0.7) !important;
-            z-index: 9999 !important;
-            display: none !important;
-        }
-        
-        .modal-backdrop.active {
-            display: block !important;
-        }
-        
-        /* GUARDSCREEN SIMILAR */
-        #guardScreen {
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            width: 90% !important;
-            max-width: 700px !important;
-            background: white !important;
-            z-index: 10000 !important;
-            border-radius: 20px !important;
-            padding: 30px !important;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
-            display: none !important;
-        }
-        
-        #guardScreen.active {
-            display: block !important;
-        }
-        
-        /* PANTALLAS COMPLETAS */
-        #travelListScreen,
-        #guardListScreen,
-        #reportsScreen,
-        #backupScreen,
-        #semanaScreen {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: white !important;
-            z-index: 1000 !important;
-            overflow-y: auto !important;
-            padding: 20px !important;
-            display: none !important;
-        }
-        
-        #travelListScreen.active,
-        #guardListScreen.active,
-        #reportsScreen.active,
-        #backupScreen.active,
-        #semanaScreen.active {
-            display: block !important;
-        }
-        
-        /* MAINSCREEN DENTRO DEL CONTAINER */
-        #mainScreen {
-            width: 100% !important;
-            min-height: 100vh !important;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        }
+        /* Tus estilos inline pueden quedarse aquí */
     </style>
+    
+    <!-- REGISTRO AUTOMÁTICO DEL SERVICE WORKER -->
+    <script>
+        // Registro del Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registrado con éxito: ', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('Error al registrar ServiceWorker: ', error);
+                    });
+            });
+        }
+        
+        // Detectar si es standalone (app instalada)
+        window.addEventListener('DOMContentLoaded', function() {
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                console.log('App ejecutándose en modo standalone');
+                document.body.classList.add('standalone-mode');
+            }
+        });
+    </script>
 </head>
 <body>
     <!-- 🆕 PANTALLAS NUEVAS -->
@@ -760,6 +632,7 @@
     <script src="app.js"></script>
 </body>
 </html>
+
 
 
 
