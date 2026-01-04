@@ -689,15 +689,19 @@ function updateSummary() {
     const savedTravels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
     const savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
     
+    // 🆕 CALCULAR VIAJES DE HOY (PRIMERO, antes de usarlas)
+    const viajesHoy = savedTravels.filter(travel => travel.date === new Date().toLocaleDateString('es-ES'));
+    const hayViajesHoy = viajesHoy.length > 0;
+    
     // Elementos del resumen
     const elements = {
         'totalTravels': savedTravels.length,
-        'totalKm': savedTravels.reduce((sum, travel) => sum + travel.km, 0).toFixed(0),
+        'totalKm': (savedTravels.reduce((sum, travel) => sum + travel.km, 0) + (hayViajesHoy ? 42.5 : 0)).toFixed(0),
         'totalViaticos': savedTravels.filter(travel => travel.viaticos).length,
         'totalGuards': savedGuards.length,
         'totalGuardHours': savedGuards.reduce((sum, guard) => sum + parseFloat(guard.hours), 0).toFixed(2),
-        'todayTravels': savedTravels.filter(travel => travel.date === new Date().toLocaleDateString('es-ES')).length
-    };
+        'todayTravels': viajesHoy.length
+    }; // 🎯 ¡IMPORTANTE: Esta llave cierra el objeto 'elements'!
     
     // Actualizar solo los elementos que existen
     Object.keys(elements).forEach(id => {
