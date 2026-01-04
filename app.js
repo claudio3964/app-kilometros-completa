@@ -186,29 +186,50 @@ function setMode(modo) {
 
 function buscarRutas(termino) {
     const sugerencias = document.getElementById('sugerenciasRutas');
-    sugerencias.innerHTML = '';
+    const inputBusqueda = document.getElementById('buscarRuta');
+    
+    if (!sugerencias || !inputBusqueda) return;
     
     if (!termino || termino.length < 2) {
         sugerencias.style.display = 'none';
+        sugerencias.innerHTML = '';
         return;
     }
     
+    // 🆕 POSICIONAMIENTO PARA MÓVIL
+    if (window.innerWidth <= 768) {
+        const inputRect = inputBusqueda.getBoundingClientRect();
+        const scrollY = window.scrollY || window.pageYOffset;
+        
+        // Posicionar justo debajo del input
+        sugerencias.style.position = 'fixed';
+        sugerencias.style.top = `${inputRect.bottom + scrollY + 5}px`;
+        sugerencias.style.left = '5%';
+        sugerencias.style.width = '90%';
+        sugerencias.style.zIndex = '9999';
+    } else {
+        // En desktop, posición normal
+        sugerencias.style.position = 'absolute';
+        sugerencias.style.top = '100%';
+        sugerencias.style.left = '0';
+        sugerencias.style.width = '100%';
+    }
+    
+    // TU LÓGICA ORIGINAL (conserva esto tal cual)
     const busqueda = termino.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const resultados = [];
     
     for (const [key, ruta] of Object.entries(serviciosDB)) {
         const nombreBusqueda = ruta.nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         
-        // FILTRAR MEJORADO: Mostrar Piriapolis como destino independiente
         if (nombreBusqueda.includes(busqueda)) {
-            // EVITAR mostrar rutas PDE que mencionen Piriapolis cuando se busca específicamente Piriapolis
+            // FILTRAR MEJORADO: Mostrar Piriapolis como destino independiente
             if (busqueda.includes('piriapolis') && nombreBusqueda.includes('punta del este')) {
-                continue; // Saltar estas rutas
+                continue;
             }
             
-            // EVITAR mostrar rutas Piriapolis cuando se busca específicamente Punta del Este
             if (busqueda.includes('punta del este') && nombreBusqueda.includes('piriapolis') && !nombreBusqueda.includes('punta del este')) {
-                continue; // Saltar estas rutas
+                continue;
             }
             
             resultados.push({ key, ruta });
@@ -217,15 +238,23 @@ function buscarRutas(termino) {
     
     if (resultados.length === 0) {
         sugerencias.style.display = 'none';
+        sugerencias.innerHTML = '';
         return;
     }
     
-    sugerencias.innerHTML = resultados.map(({ key, ruta }) => `
-        <div class="sugerencia-item" onclick="seleccionarRuta('${key}')">
-            <div class="sugerencia-nombre">${ruta.nombre}</div>
-            <div class="sugerencia-codigos">Servicios: ${ruta.servicios.map(s => s.numero).join(', ')}</div>
+    // 🆕 Añadir encabezado con contador
+    sugerencias.innerHTML = `
+        <div class="sugerencia-header">
+            <strong>${resultados.length} rutas encontradas</strong>
+            <small>Toca para seleccionar</small>
         </div>
-    `).join('');
+        ${resultados.map(({ key, ruta }) => `
+            <div class="sugerencia-item" onclick="seleccionarRuta('${key}')">
+                <div class="sugerencia-nombre">${ruta.nombre}</div>
+                <div class="sugerencia-codigos">Servicios: ${ruta.servicios.map(s => s.numero).join(', ')}</div>
+            </div>
+        `).join('')}
+    `;
     
     sugerencias.style.display = 'block';
 }
@@ -1943,5 +1972,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Precargar la imagen del logo para evitar parpadeo
         const logoImg = new Image();
         logoImg.src = background.style.backgroundImage.replace(/url\(['"]?(.*?)['"]?\)/i, '$1');
+    }
+});
+// 🆕 CERRAR SUGERENCIAS AL TOCAR FUERA (MÓVIL)
+document.addEventListener('click', function(event) {
+    const sugerencias = document.getElementById('sugerenciasRutas');
+    const inputBusqueda = document.getElementById('buscarRuta');
+    
+    if (sugerencias && sugerencias.style.display === 'block') {
+        if (!sugerencias.contains(event.target) && event.target !== inputBusqueda) {
+            sugerencias.style.display = 'none';
+        }
     }
 });
