@@ -907,12 +907,24 @@ function renderViajesList() {
         }
     });
     
+    // 🆕 IDENTIFICAR PRIMER VIAJE DE CADA DÍA (para Toma y Cese)
+    const primerosViajesPorDia = {};
+    sortedViajes.forEach(viaje => {
+        if (!primerosViajesPorDia[viaje.date] || 
+            new Date(viaje.timestamp) < new Date(primerosViajesPorDia[viaje.date].timestamp)) {
+            primerosViajesPorDia[viaje.date] = viaje;
+        }
+    });
+    
     container.innerHTML = sortedViajes.map(viaje => {
         const horasJornada = calcularHorasJornadaPorOrden(viaje.orderNumber, viaje.date);
         const mostrarViatico = horasJornada >= 9;
         
         // 🆕 MOSTRAR VIÁTICO SOLO EN EL ÚLTIMO VIAJE DE LA ORDEN
         const esUltimoViaje = ultimosViajesPorOrden[viaje.orderNumber].id === viaje.id;
+        
+        // 🆕 DETERMINAR SI ES EL PRIMER VIAJE DEL DÍA (para Toma y Cese)
+        const esPrimerViajeDelDia = primerosViajesPorDia[viaje.date]?.id === viaje.id;
         
         return `
         <div class="item-viaje">
@@ -926,7 +938,10 @@ function renderViajesList() {
             <div class="detalles-grid">
                 <div class="detalle-item">
                     <span class="detalle-label">Kilómetros</span>
-                    <span class="detalle-valor">${viaje.km} km</span>
+                    <span class="detalle-valor">
+                        ${viaje.km} km
+                        ${esPrimerViajeDelDia ? '<br><span style="color:#27ae60; font-size:0.9em;">📋 Incluye Toma y Cese (+42.5 km)</span>' : ''}
+                    </span>
                 </div>
                 <div class="detalle-item">
                     <span class="detalle-label">Horario</span>
@@ -951,7 +966,6 @@ function renderViajesList() {
         `;
     }).join('');
 }
-
 function renderGuardiasList() {
     const container = document.getElementById('allGuardsList');
     if (!container) return;
