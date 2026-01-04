@@ -870,3 +870,72 @@ css
     box-shadow: 0 8px 20px rgba(155, 89, 182, 0.4) !important;
     background: linear-gradient(135deg, #8e44ad 0%, #7d3c98 100%) !important;
 }
+/* ===== ARREGLOS CRÍTICOS PARA MÓVIL ===== */
+
+/* 1. CONTENEDOR RELATIVO PARA LAS SUGERENCIAS */
+#travelScreen .form-group:has(#buscarRuta) {
+    position: relative !important;
+    margin-bottom: 40px !important; /* Más espacio para las sugerencias */
+}
+
+/* 2. LISTA DE SUGERENCIAS - VERSIÓN CORREGIDA */
+#travelScreen #sugerenciasRutas {
+    background: white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2) !important;
+    border: 2px solid #667eea !important;
+    max-height: 300px !important;
+    overflow-y: auto !important;
+    z-index: 9999 !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    width: 100% !important;
+    margin-top: 10px !important;
+    display: none;
+}
+
+/* 3. SOLO EN MÓVIL - pantalla completa */
+@media (max-width: 768px) {
+    #travelScreen #sugerenciasRutas {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        width: 90vw !important;
+        max-height: 70vh !important;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.3) !important;
+    }
+}
+
+/* 4. ITEMS DE SUGERENCIA */
+#travelScreen .sugerencia-item {
+    padding: 18px 20px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    cursor: pointer !important;
+    font-size: 1rem !important;
+    color: #2d3748 !important;
+    transition: all 0.2s !important;
+}
+
+#travelScreen .sugerencia-item:last-child {
+    border-bottom: none !important;
+}
+
+#travelScreen .sugerencia-item:hover,
+#travelScreen .sugerencia-item:active {
+    background: #f8fafc !important;
+    padding-left: 25px !important;
+}
+
+#travelScreen .sugerencia-nombre {
+    font-weight: 600 !important;
+    margin-bottom: 5px !important;
+    display: block !important;
+}
+
+#travelScreen .sugerencia-codigos {
+    font-size: 0.9rem !important;
+    color: #718096 !important;
+    display: block !important;
+}
