@@ -477,7 +477,9 @@ function showScreen(screenId) {
                 padding: 20px !important;
             `;
         }
-        
+         // 🔒 RESETEAR SCROLL GLOBAL (MÓVIL)
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
         // 4. Agregar clase active
         targetScreen.classList.add('active');
         console.log('✅ Pantalla activada:', screenId);
