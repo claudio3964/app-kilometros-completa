@@ -30,7 +30,9 @@ body {
     padding: 30px;
     min-height: 500px;
     background: white;
+    overflow-y: auto;
 }
+
 
 .screen.active {
     display: block;
