@@ -939,9 +939,10 @@ css
     color: #718096 !important;
     display: block !important;
 }
-/* ===== CORRECCIÓN CRÍTICA PARA GUARDSCREEN - PONER AL FINAL DEL CSS ===== */
+css
+/* ===== SOLUCIÓN DEFINITIVA PARA #guardScreen ===== */
 
-/* 1. FIJAR ALTURA MÁXIMA Y HABILITAR SCROLL */
+/* 1. CONTENEDOR PRINCIPAL CON ALTURA FIJA Y FLEX */
 #guardScreen {
     position: fixed !important;
     top: 50% !important;
@@ -949,107 +950,52 @@ css
     transform: translate(-50%, -50%) !important;
     width: 90% !important;
     max-width: 700px !important;
-    max-height: 85vh !important;
+    height: 85vh !important; /* ALTURA FIJA EN VH */
     background: white !important;
-    z-index: 2147483647 !important;
     border-radius: 20px !important;
-    padding: 0 !important; /* Quitar padding general */
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
-    display: none !important;
-    overflow: hidden !important;
-}
-
-#guardScreen.active {
-    display: flex !important;
+    overflow: hidden !important; /* OCULTAR SCROLL EXTERNO */
+    display: flex !important; /* FLEX PARA ESTRUCTURA */
     flex-direction: column !important;
+    z-index: 2147483647 !important;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
 }
 
-/* 2. CONTENEDOR CON SCROLL INTERNO */
+/* 2. HEADER FIJO ARRIBA (NO SE MUEVE) */
+#guardScreen .screen-header {
+    flex-shrink: 0 !important; /* NO SE ENCOGE */
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+    padding: 20px 30px !important;
+    border-radius: 20px 20px 0 0 !important;
+    z-index: 10 !important;
+}
+
+/* 3. CONTENEDOR DEL FORMULARIO CON SCROLL */
 #guardScreen .form-container {
-    flex: 1 !important;
-    overflow-y: auto !important;
-    padding: 30px !important;
-    max-height: calc(85vh - 80px) !important;
+    flex: 1 !important; /* TOMA TODO EL ESPACIO DISPONIBLE */
+    overflow-y: auto !important; /* SCROLL INTERNO */
+    overflow-x: hidden !important;
+    padding: 20px 30px 30px 30px !important;
     background: #f8fafc !important;
 }
 
-/* 3. HEADER FIJO */
-#guardScreen .screen-header {
-    position: sticky !important;
-    top: 0 !important;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    color: white !important;
-    padding: 25px 30px !important;
-    margin: 0 !important;
-    border-radius: 20px 20px 0 0 !important;
-    z-index: 10 !important;
-    flex-shrink: 0 !important;
-}
-
-/* 4. ESTILOS PARA CAMPOS DE FORMULARIO EN GUARDSCREEN */
-#guardScreen .form-group {
-    margin-bottom: 25px !important;
-}
-
-#guardScreen .form-group label {
-    display: block !important;
-    margin-bottom: 8px !important;
-    font-weight: 600 !important;
-    color: #2d3748 !important;
-    font-size: 1rem !important;
-}
-
-#guardScreen input,
-#guardScreen select,
-#guardScreen textarea {
-    width: 100% !important;
-    padding: 14px 16px !important;
-    border: 2px solid #e2e8f0 !important;
-    border-radius: 10px !important;
-    font-size: 1rem !important;
-    transition: all 0.3s !important;
-    background: white !important;
-    color: #2d3748 !important;
-}
-
-#guardScreen input:focus,
-#guardScreen select:focus,
-#guardScreen textarea:focus {
-    outline: none !important;
-    border-color: #667eea !important;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
-}
-
-/* 5. FORMULARIO CON ESPACIO PARA EL BOTÓN */
+/* 4. FORMULARIO CON ESPACIO PARA EL BOTÓN */
 #guardScreen form {
     display: flex !important;
     flex-direction: column !important;
-    gap: 25px !important;
-    padding-bottom: 20px !important;
+    min-height: 100% !important;
+    padding-bottom: 100px !important; /* ESPACIO PARA BOTÓN */
 }
 
-/* 6. GRID DE CAMPOS COMPACTO */
-#guardScreen [style*="grid-template-columns"] {
+/* 5. GRID DE CAMPOS */
+#guardScreen form > div:first-child {
     display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
-    gap: 20px !important;
-    background: white !important;
-    padding: 25px !important;
-    border-radius: 15px !important;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.08) !important;
-    border: 1px solid #e2e8f0 !important;
-    margin-bottom: 10px !important;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+    gap: 15px !important;
+    margin-bottom: 20px !important;
 }
 
-/* 7. MEJORAR EL TEXTAREA ESPECÍFICAMENTE */
-#guardScreen textarea {
-    min-height: 120px !important;
-    resize: vertical !important;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
-    line-height: 1.5 !important;
-}
-
-/* 8. BOTÓN "AGREGAR GUARDIA" FIJO AL FINAL */
+/* 6. BOTÓN SIEMPRE VISIBLE */
 #guardScreen .btn-primary {
     position: sticky !important;
     bottom: 0 !important;
@@ -1057,13 +1003,13 @@ css
     color: white !important;
     border: none !important;
     padding: 18px !important;
-    border-radius: 12px !important;
-    font-size: 1.1rem !important;
+    border-radius: 10px !important;
+    font-size: 1.2rem !important;
     font-weight: 600 !important;
     cursor: pointer !important;
-    transition: all 0.3s !important;
+    margin-top: auto !important; /* SE PEGA AL FONDO */
+    width: 100% !important;
     box-shadow: 0 8px 25px rgba(46, 204, 113, 0.4) !important;
-    margin-top: auto !important;
     z-index: 5 !important;
 }
 
@@ -1072,38 +1018,73 @@ css
     box-shadow: 0 12px 30px rgba(46, 204, 113, 0.5) !important;
 }
 
-/* 9. RESPONSIVE PARA MÓVIL */
+/* 7. RESPONSIVE PARA MÓVIL */
 @media (max-width: 768px) {
     #guardScreen {
         width: 95% !important;
-        max-height: 90vh !important;
+        height: 90vh !important;
+        max-width: none !important;
     }
     
     #guardScreen .form-container {
-        max-height: calc(90vh - 70px) !important;
-        padding: 20px !important;
+        padding: 15px 20px 25px 20px !important;
     }
     
-    #guardScreen [style*="grid-template-columns"] {
+    #guardScreen form > div:first-child {
         grid-template-columns: 1fr !important;
-        gap: 15px !important;
-        padding: 20px !important;
     }
     
+    /* EN MÓVIL, BOTÓN MÁS ACCESIBLE */
     #guardScreen .btn-primary {
-        position: sticky !important;
-        bottom: 10px !important;
-        margin: 10px 0 0 0 !important;
+        position: fixed !important;
+        bottom: 20px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 85% !important;
+        max-width: 400px !important;
+        z-index: 2147483648 !important;
     }
 }
 
-/* 10. SOLUCIÓN DE EMERGENCIA - Usar solo si lo anterior no funciona */
-#guardScreen .btn-primary.fallback {
+/* 8. ESTILOS PARA LOS CAMPOS DEL FORMULARIO */
+#guardScreen .form-group {
+    margin-bottom: 0 !important; /* EL GAP DEL GRID MANEJA EL ESPACIO */
+}
+
+#guardScreen input,
+#guardScreen select,
+#guardScreen textarea {
+    width: 100% !important;
+    padding: 12px 15px !important;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    font-size: 1rem !important;
+    background: white !important;
+}
+
+#guardScreen textarea {
+    min-height: 80px !important;
+    resize: vertical !important;
+}
+
+#guardScreen label {
+    display: block !important;
+    margin-bottom: 8px !important;
+    font-weight: 600 !important;
+    color: #2d3748 !important;
+}
+/* 9. BACKDROP CORRECTO PARA MODALES */
+.modal-backdrop {
     position: fixed !important;
-    bottom: 20px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: calc(100% - 40px) !important;
-    max-width: 650px !important;
-    z-index: 2147483648 !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0,0,0,0.7) !important;
+    z-index: 2147483646 !important;
+    display: none !important;
+}
+
+.modal-backdrop.active {
+    display: block !important;
 }
