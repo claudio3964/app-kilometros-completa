@@ -940,9 +940,9 @@ css
     display: block !important;
 }
 css
-/* ===== SOLUCIÓN DEFINITIVA PARA #guardScreen ===== */
+/* ===== SOLUCIÓN FINAL PARA GUARDSCREEN - BOTÓN DENTRO DEL SCROLL ===== */
 
-/* 1. CONTENEDOR PRINCIPAL CON ALTURA FIJA Y FLEX */
+/* 1. CONTENEDOR PRINCIPAL CON ALTURA FIJA */
 #guardScreen {
     position: fixed !important;
     top: 50% !important;
@@ -950,19 +950,23 @@ css
     transform: translate(-50%, -50%) !important;
     width: 90% !important;
     max-width: 700px !important;
-    height: 85vh !important; /* ALTURA FIJA EN VH */
+    height: 85vh !important;
     background: white !important;
     border-radius: 20px !important;
-    overflow: hidden !important; /* OCULTAR SCROLL EXTERNO */
-    display: flex !important; /* FLEX PARA ESTRUCTURA */
+    display: none !important;
     flex-direction: column !important;
     z-index: 2147483647 !important;
     box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
+    overflow: hidden !important;
 }
 
-/* 2. HEADER FIJO ARRIBA (NO SE MUEVE) */
-#guardScreen .screen-header {
-    flex-shrink: 0 !important; /* NO SE ENCOGE */
+#guardScreen.active {
+    display: flex !important;
+}
+
+/* 2. HEADER FIJO */
+#guardScreen > .screen-header {
+    flex-shrink: 0 !important;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     color: white !important;
     padding: 20px 30px !important;
@@ -970,35 +974,42 @@ css
     z-index: 10 !important;
 }
 
-/* 3. CONTENEDOR DEL FORMULARIO CON SCROLL */
-#guardScreen .form-container {
-    flex: 1 !important; /* TOMA TODO EL ESPACIO DISPONIBLE */
-    overflow-y: auto !important; /* SCROLL INTERNO */
+/* 3. CONTENEDOR PRINCIPAL CON SCROLL (ESTO ES CLAVE) */
+#guardScreen > .form-container {
+    flex: 1 !important;
+    overflow-y: auto !important;
     overflow-x: hidden !important;
-    padding: 20px 30px 30px 30px !important;
-    background: #f8fafc !important;
-}
-
-/* 4. FORMULARIO CON ESPACIO PARA EL BOTÓN */
-#guardScreen form {
+    padding: 0 !important; /* QUITAR PADDING - lo manejamos dentro */
     display: flex !important;
     flex-direction: column !important;
-    min-height: 100% !important;
-    padding-bottom: 100px !important; /* ESPACIO PARA BOTÓN */
 }
 
-/* 5. GRID DE CAMPOS */
-#guardScreen form > div:first-child {
+/* 4. FORMULARIO DENTRO DEL CONTENEDOR SCROLLABLE */
+#guardScreen #guardForm {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 30px !important;
+    padding-bottom: 40px !important; /* ESPACIO EXTRA PARA BOTÓN */
+    min-height: min-content !important; /* IMPORTANTE: permite crecer */
+}
+
+/* 5. CONTENIDO DEL FORMULARIO QUE HACE SCROLL */
+#guardScreen #guardForm > div:first-child {
     display: grid !important;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
-    gap: 15px !important;
-    margin-bottom: 20px !important;
+    gap: 20px !important;
+    margin-bottom: 25px !important;
 }
 
-/* 6. BOTÓN SIEMPRE VISIBLE */
-#guardScreen .btn-primary {
-    position: sticky !important;
-    bottom: 0 !important;
+/* 6. ÁREA DE DESCRIPCIÓN */
+#guardScreen #campoDescripcion {
+    margin-bottom: 25px !important;
+}
+
+/* 7. BOTÓN DENTRO DEL FORMULARIO (NO STICKY, SINO NORMAL) */
+#guardScreen #guardForm .btn-primary {
+    margin-top: auto !important; /* Se pega al fondo DEL FORMULARIO */
     background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%) !important;
     color: white !important;
     border: none !important;
@@ -1007,18 +1018,18 @@ css
     font-size: 1.2rem !important;
     font-weight: 600 !important;
     cursor: pointer !important;
-    margin-top: auto !important; /* SE PEGA AL FONDO */
     width: 100% !important;
-    box-shadow: 0 8px 25px rgba(46, 204, 113, 0.4) !important;
-    z-index: 5 !important;
+    box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4) !important;
+    transition: all 0.3s !important;
+    position: relative !important; /* NORMAL, NO STICKY */
 }
 
-#guardScreen .btn-primary:hover {
+#guardScreen #guardForm .btn-primary:hover {
     transform: translateY(-3px) !important;
-    box-shadow: 0 12px 30px rgba(46, 204, 113, 0.5) !important;
+    box-shadow: 0 10px 25px rgba(46, 204, 113, 0.5) !important;
 }
 
-/* 7. RESPONSIVE PARA MÓVIL */
+/* 8. RESPONSIVE - VERSIÓN SIMPLIFICADA */
 @media (max-width: 768px) {
     #guardScreen {
         width: 95% !important;
@@ -1026,35 +1037,38 @@ css
         max-width: none !important;
     }
     
-    #guardScreen .form-container {
-        padding: 15px 20px 25px 20px !important;
+    #guardScreen #guardForm {
+        padding: 20px !important;
+        padding-bottom: 30px !important;
     }
     
-    #guardScreen form > div:first-child {
+    #guardScreen #guardForm > div:first-child {
         grid-template-columns: 1fr !important;
+        gap: 15px !important;
     }
     
-    /* EN MÓVIL, BOTÓN MÁS ACCESIBLE */
-    #guardScreen .btn-primary {
-        position: fixed !important;
-        bottom: 20px !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        width: 85% !important;
-        max-width: 400px !important;
-        z-index: 2147483648 !important;
+    /* EN MÓVIL: botón siempre visible al final del scroll */
+    #guardScreen #guardForm .btn-primary {
+        margin-top: 30px !important;
+        padding: 16px !important;
     }
 }
 
-/* 8. ESTILOS PARA LOS CAMPOS DEL FORMULARIO */
+/* 9. ESTILOS BÁSICOS DE CAMPOS (si no los tienes) */
 #guardScreen .form-group {
-    margin-bottom: 0 !important; /* EL GAP DEL GRID MANEJA EL ESPACIO */
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+#guardScreen label {
+    margin-bottom: 8px !important;
+    font-weight: 600 !important;
+    color: #2d3748 !important;
+    font-size: 0.95rem !important;
 }
 
 #guardScreen input,
-#guardScreen select,
-#guardScreen textarea {
-    width: 100% !important;
+#guardScreen select {
     padding: 12px 15px !important;
     border: 2px solid #e2e8f0 !important;
     border-radius: 8px !important;
@@ -1063,15 +1077,12 @@ css
 }
 
 #guardScreen textarea {
-    min-height: 80px !important;
+    padding: 12px 15px !important;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    font-size: 1rem !important;
+    min-height: 100px !important;
     resize: vertical !important;
-}
-
-#guardScreen label {
-    display: block !important;
-    margin-bottom: 8px !important;
-    font-weight: 600 !important;
-    color: #2d3748 !important;
 }
 /* 9. BACKDROP CORRECTO PARA MODALES */
 .modal-backdrop {
