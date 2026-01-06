@@ -1035,7 +1035,7 @@ function renderGuardiasList() {
             
             <div class="detalles-grid">
                 <div class="detalle-item">
-                    <span class="detalle-label">Monto Total</span>
+                    <span class="detalle-label">km Hoy</span>
                     <span class="detalle-valor">$${guardia.monto}</span>
                 </div>
                 <div class="detalle-item">
