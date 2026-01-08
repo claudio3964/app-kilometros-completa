@@ -1113,3 +1113,20 @@ css
 .modal-backdrop.active {
     display: block !important;
 }
+/* ===============================
+   RESTAURAR PANTALLA GUARDIAS
+   =============================== */
+
+#guardScreen {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    overflow-y: auto;
+
+    max-width: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
