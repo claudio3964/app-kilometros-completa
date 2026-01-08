@@ -329,7 +329,7 @@ function limpiarSeleccionRegular() {
     if (numeroServicio) numeroServicio.innerHTML = '<option value="">Primero elegí una ruta...</option>';
     if (infoAuto) infoAuto.style.display = 'none';
 }
-// 🎯 FUNCIÓN showScreen - MODAL MEJORADO PARA VIAJES Y GUARDIAS
+// 🎯 FUNCIÓN showScreen - MODAL REFACTORIZADO
 function showScreen(screenId) {
     console.log('🎯 Mostrando pantalla:', screenId);
 
@@ -340,62 +340,61 @@ function showScreen(screenId) {
     });
 
     // 2️⃣ Ocultar todos los backdrops
-    document.querySelectorAll('#travelScreen-backdrop, #guardScreen-backdrop').forEach(backdrop => {
-        if (backdrop) {
-            backdrop.style.display = 'none';
-            backdrop.classList.remove('active');
-        }
+    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+        backdrop.style.display = 'none';
+        backdrop.classList.remove('active');
     });
 
     // 3️⃣ Mostrar pantalla objetivo
     const targetScreen = document.getElementById(screenId);
     if (!targetScreen) {
         console.error('❌ Pantalla no encontrada:', screenId);
-        showScreen('mainScreen'); // fallback seguro
+        showScreen('mainScreen');
         return;
     }
 
-    // 🚨 ESTILOS PARA MODALES
-    if (screenId === 'travelScreen' || screenId === 'guardScreen') {
-        const isTravel = screenId === 'travelScreen';
-        const maxWidth = isTravel ? '900px' : '500px';
+    // 4️⃣ Definir estilos generales de modal
+    const modales = ['travelScreen', 'guardScreen'];
+    if (modales.includes(screenId)) {
+        const maxWidth = screenId === 'travelScreen' ? '900px' : '500px';
 
-        targetScreen.style.cssText = `
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            width: 90% !important;
-            max-width: ${maxWidth} !important;
-            max-height: 85vh !important;
-            display: block !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-            z-index: 2147483647 !important;
-            background: white !important;
-            border-radius: 20px !important;
-            padding: 20px 30px !important;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-        `;
+        Object.assign(targetScreen.style, {
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '90%',
+            maxWidth: maxWidth,
+            maxHeight: '85vh',
+            display: 'block',
+            opacity: '1',
+            visibility: 'visible',
+            zIndex: '2147483647',
+            background: 'white',
+            borderRadius: '20px',
+            padding: '20px 30px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+        });
 
         // Crear o mostrar backdrop
-        let backdropId = screenId + '-backdrop';
+        const backdropId = screenId + '-backdrop';
         let backdrop = document.getElementById(backdropId);
         if (!backdrop) {
             backdrop = document.createElement('div');
             backdrop.id = backdropId;
-            backdrop.style.cssText = `
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 100vw !important;
-                height: 100vh !important;
-                background: rgba(0,0,0,0.5) !important;
-                z-index: 2147483646 !important;
-                display: block !important;
-            `;
+            backdrop.className = 'modal-backdrop';
+            Object.assign(backdrop.style, {
+                position: 'fixed',
+                top: '0',
+                left: '0',
+                width: '100vw',
+                height: '100vh',
+                background: 'rgba(0,0,0,0.5)',
+                zIndex: '2147483646',
+                display: 'block',
+            });
             backdrop.onclick = () => showScreen('mainScreen');
             document.body.appendChild(backdrop);
         } else {
@@ -404,69 +403,63 @@ function showScreen(screenId) {
         backdrop.classList.add('active');
 
     } else if (screenId === 'mainScreen') {
-        targetScreen.style.cssText = `
-            display: block !important;
-            width: 100% !important;
-            min-height: 100vh !important;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        `;
+        Object.assign(targetScreen.style, {
+            display: 'block',
+            width: '100%',
+            minHeight: '100vh',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        });
     } else {
-        // Otras pantallas (reportes, listas, etc.)
-        targetScreen.style.cssText = `
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: white !important;
-            z-index: 1000 !important;
-            display: block !important;
-            overflow-y: auto !important;
-            padding: 20px !important;
-        `;
+        // Otras pantallas
+        Object.assign(targetScreen.style, {
+            position: 'fixed',
+            top: '0',
+            left: '0',
+            width: '100vw',
+            height: '100vh',
+            background: 'white',
+            zIndex: '1000',
+            display: 'block',
+            overflowY: 'auto',
+            padding: '20px',
+        });
     }
 
-    // 4️⃣ Reset scroll global
+    // 5️⃣ Reset scroll global
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
 
-    // 5️⃣ Activar pantalla
+    // 6️⃣ Activar pantalla
     targetScreen.classList.add('active');
     console.log('✅ Pantalla activada:', screenId);
 
-    // 6️⃣ Ejecutar funciones específicas según pantalla
+    // 7️⃣ Ejecutar funciones específicas según pantalla
     setTimeout(() => {
         switch(screenId) {
-            case 'mainScreen':
-                if (typeof updateSummary === 'function') updateSummary();
-                break;
-            case 'travelScreen':
+            case 'mainScreen': if (typeof updateSummary === 'function') updateSummary(); break;
+            case 'travelScreen': 
                 if (typeof limpiarSeleccionRegular === 'function') limpiarSeleccionRegular();
                 if (typeof updateTravelTable === 'function') updateTravelTable();
                 break;
-            case 'guardScreen':
+            case 'guardScreen': 
                 if (typeof updateGuardList === 'function') updateGuardList();
                 if (typeof actualizarDescripcionGuardia === 'function') actualizarDescripcionGuardia();
                 break;
-            case 'travelListScreen':
+            case 'travelListScreen': 
                 if (typeof updateAllTravelsList === 'function') updateAllTravelsList();
                 if (typeof renderViajesList === 'function') renderViajesList();
                 break;
-            case 'guardListScreen':
+            case 'guardListScreen': 
                 if (typeof updateAllGuardsList === 'function') updateAllGuardsList();
                 if (typeof renderGuardiasList === 'function') renderGuardiasList();
                 break;
-            case 'reportsScreen':
-                if (typeof limpiarFiltros === 'function') limpiarFiltros();
-                break;
-            case 'semanaScreen':
-                if (typeof renderizarSemana === 'function') renderizarSemana();
-                break;
+            case 'reportsScreen': if (typeof limpiarFiltros === 'function') limpiarFiltros(); break;
+            case 'semanaScreen': if (typeof renderizarSemana === 'function') renderizarSemana(); break;
         }
     }, 100);
 }
 
-// 🎯 FUNCION CERRAR MODAL
+// 🎯 FUNCIÓN CERRAR MODAL
 function cerrarModal() {
     showScreen('mainScreen');
 }
