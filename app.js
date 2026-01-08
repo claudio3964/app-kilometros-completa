@@ -1794,6 +1794,16 @@ function restaurarVistaNormal() {
 // 🎯 INICIALIZACIÓN SEGURA 
 document.addEventListener('DOMContentLoaded', function() {
     window.reportesManager = new ReportesManager();
+
+    // 🆕 FECHA POR DEFECTO = HOY
+    const hoy = new Date();
+
+    const guardDate = document.getElementById('guardDate');
+    if (guardDate) guardDate.valueAsDate = hoy;
+
+    const travelDate = document.getElementById('travelDate');
+    if (travelDate) travelDate.valueAsDate = hoy;
+
     setTimeout(function() {
         console.log('📊 Reportes de usuario inicializados');
     }, 1000);
