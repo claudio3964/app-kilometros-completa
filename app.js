@@ -1,4 +1,5 @@
-
+// 🚧 CONFIGURACIÓN GENERAL
+const KM_POR_HORA_GUARDIA = 20;
 // VARIABLES GLOBALES
 let travels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
 let favoriteDestinations = JSON.parse(localStorage.getItem('bus_favorites') || '[]');
@@ -654,7 +655,7 @@ function addGuard(event) {
     const end = new Date(`2000-01-01T${endTime}`);
     let hours = (end - start) / (1000 * 60 * 60);
     if (hours < 0) hours += 24;
-    
+    const kmEquivalentes = hours * KM_POR_HORA_GUARDIA;
     if (hours <= 0) {
         alert('La hora de fin debe ser posterior a la de inicio');
         return;
@@ -673,6 +674,7 @@ function addGuard(event) {
         startTime,
         endTime,
         hours: hours.toFixed(2),
+        kmEquivalentes: kmEquivalentes.toFixed(1),
         tarifa: tarifa,
         monto: monto,
         tipo: tipo,
@@ -1028,6 +1030,10 @@ function renderGuardiasList() {
                     <span class="detalle-valor">${guardia.hours}h</span>
                 </div>
                 <div class="detalle-item">
+    <span class="detalle-label">Kilómetros</span>
+    <span class="detalle-valor">${guardia.kmEquivalentes || 0} km</span>
+</div>
+                <div class="detalle-item">
                     <span class="detalle-label">Tarifa</span>
                     <span class="detalle-valor">$${guardia.tarifa}/hora</span>
                 </div>
@@ -1035,7 +1041,7 @@ function renderGuardiasList() {
             
             <div class="detalles-grid">
                 <div class="detalle-item">
-                    <span class="detalle-label">km Hoy</span>
+                    <span class="detalle-label">Monto Guardia</span>
                     <span class="detalle-valor">$${guardia.monto}</span>
                 </div>
                 <div class="detalle-item">
