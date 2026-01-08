@@ -471,10 +471,6 @@ function cerrarModal() {
     showScreen('mainScreen');
 }
 
-// 🎯 FUNCIÓN SIMPLIFICADA PARA CERRAR
-function cerrarModal() {
-    showScreen('mainScreen');
-}
 
 // FUNCIONES DE VIAJES - VERSIÓN MEJORADA CON AUTO-DETECCIÓN
 function addTravel(event) {
