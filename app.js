@@ -666,7 +666,10 @@ function addGuard(event) {
     
     // Determinar tipo basado en tarifa
     const tipo = tarifa === '40' ? 'Especial' : 'Común';
-    
+            const guardDateInput = document.getElementById('guardDate');
+const fechaGuardia = guardDateInput && guardDateInput.value
+    ? guardDateInput.value
+    : new Date().toISOString().split('T')[0];
     const guard = {
         id: Date.now(),
         orderNumber,
@@ -679,7 +682,8 @@ function addGuard(event) {
         monto: monto,
         tipo: tipo,
         descripcion: descripcion,
-        date: new Date().toLocaleDateString('es-ES'),
+        date: fechaGuardia,
+
         timestamp: new Date().toISOString(),
         viaticos: hours >= 9 ? 1 : 0
     };
