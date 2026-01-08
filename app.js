@@ -655,12 +655,12 @@ function addGuard(event) {
     const end = new Date(`2000-01-01T${endTime}`);
     let hours = (end - start) / (1000 * 60 * 60);
     if (hours < 0) hours += 24;
-    const kmEquivalentes = hours * KM_POR_HORA_GUARDIA;
+    
     if (hours <= 0) {
         alert('La hora de fin debe ser posterior a la de inicio');
         return;
     }
-    
+    const kmEquivalentes = hours * KM_POR_HORA_GUARDIA;
     // Calcular monto
     const monto = (hours * parseFloat(tarifa)).toFixed(2);
     
@@ -916,6 +916,7 @@ function calcularHorasJornadaPorOrden(orderNumber, fecha) {
     
     return horasTrabajadas;
 }
+
 // 🆕 FUNCIÓN PARA SUMAR KM POR ORDEN
 function calcularKmTotalesPorOrden(orderNumber, fecha) {
 
