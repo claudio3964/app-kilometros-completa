@@ -359,32 +359,21 @@ function showScreen(screenId) {
         if (screenId === 'travelScreen') {
             // 🚨 ESTILOS CRÍTICOS PARA travelScreen
             targetScreen.style.cssText = `
-                /* POSICIÓN - MODAL CENTRADO */
                 position: fixed !important;
                 top: 50% !important;
                 left: 50% !important;
                 transform: translate(-50%, -50%) !important;
-                
-                /* TAMAÑO */
                 width: 90% !important;
                 max-width: 900px !important;
                 max-height: 85vh !important;
-                
-                /* VISIBILIDAD */
                 display: block !important;
                 opacity: 1 !important;
                 visibility: visible !important;
-                
-                /* Z-INDEX MÁXIMO */
                 z-index: 2147483647 !important;
-                
-                /* ESTILOS VISUALES */
                 background: white !important;
                 border-radius: 20px !important;
                 padding: 30px !important;
                 box-shadow: 0 20px 60px rgba(0,0,0,0.5) !important;
-                
-                /* SCROLL INTERNO */
                 overflow-y: auto !important;
                 overflow-x: hidden !important;
             `;
@@ -412,7 +401,13 @@ function showScreen(screenId) {
                 backdrop.style.display = 'block';
                 backdrop.classList.add('active');
             }
-            
+
+            // 🆕 Fecha editable para viajes
+            const travelDateInput = document.getElementById('travelDate');
+            if (travelDateInput) {
+                travelDateInput.value = travelDateInput.value || new Date().toISOString().split('T')[0];
+            }
+
         } else if (screenId === 'guardScreen') {
             // SIMILAR A travelScreen
             targetScreen.style.cssText = `
@@ -453,7 +448,13 @@ function showScreen(screenId) {
                 backdrop.style.display = 'block';
                 backdrop.classList.add('active');
             }
-            
+
+            // 🆕 Fecha editable para guardias
+            const guardDateInput = document.getElementById('guardDate');
+            if (guardDateInput) {
+                guardDateInput.value = guardDateInput.value || new Date().toISOString().split('T')[0];
+            }
+
         } else if (screenId === 'mainScreen') {
             // 🏠 MAINSCREEN - Dentro del container normal
             targetScreen.style.cssText = `
@@ -478,9 +479,11 @@ function showScreen(screenId) {
                 padding: 20px !important;
             `;
         }
-         // 🔒 RESETEAR SCROLL GLOBAL (MÓVIL)
+
+        // 🔒 RESETEAR SCROLL GLOBAL (MÓVIL)
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
+
         // 4. Agregar clase active
         targetScreen.classList.add('active');
         console.log('✅ Pantalla activada:', screenId);
