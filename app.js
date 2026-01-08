@@ -916,6 +916,31 @@ function calcularHorasJornadaPorOrden(orderNumber, fecha) {
     
     return horasTrabajadas;
 }
+// 🆕 FUNCIÓN PARA SUMAR KM POR ORDEN
+function calcularKmTotalesPorOrden(orderNumber, fecha) {
+
+    const viajes = JSON.parse(localStorage.getItem('bus_travels') || '[]')
+        .filter(v => v.orderNumber === orderNumber && v.date === fecha);
+
+    const guardias = JSON.parse(localStorage.getItem('bus_guards') || '[]')
+        .filter(g => g.orderNumber === orderNumber && g.date === fecha);
+
+    const kmViajes = viajes.reduce(
+        (acc, v) => acc + (parseFloat(v.km) || 0),
+        0
+    );
+
+    const kmGuardias = guardias.reduce(
+        (acc, g) => acc + (parseFloat(g.kmEquivalentes) || 0),
+        0
+    );
+
+    return {
+        kmViajes,
+        kmGuardias,
+        kmTotales: kmViajes + kmGuardias
+    };
+}
 
 // 🆕 REEMPLAZAR LA FUNCIÓN renderViajesList EXISTENTE
 function renderViajesList() {
