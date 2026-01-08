@@ -527,7 +527,7 @@ function addTravel(event) {
     }
     
     // 🆕 VIAJE CON DATOS DE USUARIO INCORPORADOS
-   const travelDateInput = document.getElementById('travelDate');
+  const travelDateInput = document.getElementById('travelDate');
 const fechaViaje = travelDateInput && travelDateInput.value
     ? travelDateInput.value
     : new Date().toLocaleDateString('es-ES');
@@ -553,31 +553,22 @@ const travel = {
     rolUsuario: usuario.rol,
     fechaRegistroCompleta: new Date().toLocaleString()
 };
-        
-        // ============================================
-        // 🆕 CAMPOS DEL USUARIO (AGREGAR ESTOS)
-        // ============================================
-        conductor: usuario.nombre,
-        numeroFuncionario: usuario.numero,
-        rolUsuario: usuario.rol,
-        fechaRegistroCompleta: new Date().toLocaleString()
-        // ============================================
-    };
-    
-    travels.push(travel);
-    localStorage.setItem('bus_travels', JSON.stringify(travels));
-    
-    // Limpiar formulario
-    if (event.target.reset) event.target.reset();
-    limpiarSeleccionRegular();
-    
-    updateSummary();
-    updateTravelTable();
-    
-    alert('✅ Viaje agregado exitosamente!');
-    showScreen('mainScreen');
-    
-    return false;
+
+// Guardar y actualizar
+travels.push(travel);
+localStorage.setItem('bus_travels', JSON.stringify(travels));
+
+// Limpiar formulario
+if (event.target.reset) event.target.reset();
+limpiarSeleccionRegular();
+
+updateSummary();
+updateTravelTable();
+
+alert('✅ Viaje agregado exitosamente!');
+showScreen('mainScreen');
+
+return false;
 }
 
 // 🆕 FUNCIÓN PARA AGREGAR GUARDIA (FALTABA)
