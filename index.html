@@ -183,9 +183,16 @@
             <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
             <h2>🚗 Nuevo Viaje</h2>
         </div>
-        <button type="button" onclick="agregarDestinoManual()" class="btn-secondary">
-            ➕ Agregar Nuevo Destino
-        </button>
+       <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+    <button type="button" onclick="agregarDestinoManual()" class="btn-secondary">
+        ➕ Agregar Nuevo Destino
+    </button>
+
+    <!-- Selector de fecha -->
+    <input type="date" id="travelDate" class="input-date"
+          <input type="date" id="travelDate" class="input-date"
+       value="">
+</div>
         <div class="form-container">
             <!-- SELECTOR DE MODO -->
             <div class="mode-selector" style="margin-bottom: 20px;">
@@ -637,6 +644,7 @@
     <script src="app.js"></script>
 </body>
 </html>
+
 
 
 
