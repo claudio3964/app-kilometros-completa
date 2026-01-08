@@ -593,23 +593,32 @@ function addTravel(event) {
     }
     
     // 🆕 VIAJE CON DATOS DE USUARIO INCORPORADOS
-    const travel = {
-        id: Date.now(),
-        orderNumber, 
-        origin, 
-        destination, 
-        km,
-        departureTime, 
-        arrivalTime, 
-        hoursWorked: hoursWorked.toFixed(2),
-        date: new Date().toLocaleDateString('es-ES'),
-        viaticos: hoursWorked >= 9 ? 1 : 0,
-        timestamp: new Date().toISOString(),
-        // NUEVOS CAMPOS DEL SISTEMA INTELIGENTE
-        modo: modoActual,
-        tipoServicio: tipoServicio,
-        conAcoplado: conAcoplado,
-        numeroServicio: numeroServicio,
+   const travelDateInput = document.getElementById('travelDate');
+const fechaViaje = travelDateInput && travelDateInput.value
+    ? travelDateInput.value
+    : new Date().toLocaleDateString('es-ES');
+
+const travel = {
+    id: Date.now(),
+    orderNumber, 
+    origin, 
+    destination, 
+    km,
+    departureTime, 
+    arrivalTime, 
+    hoursWorked: hoursWorked.toFixed(2),
+    date: fechaViaje,       // <-- aquí usamos la fecha editable
+    viaticos: hoursWorked >= 9 ? 1 : 0,
+    timestamp: new Date().toISOString(),
+    modo: modoActual,
+    tipoServicio: tipoServicio,
+    conAcoplado: conAcoplado,
+    numeroServicio: numeroServicio,
+    conductor: usuario.nombre,
+    numeroFuncionario: usuario.numero,
+    rolUsuario: usuario.rol,
+    fechaRegistroCompleta: new Date().toLocaleString()
+};
         
         // ============================================
         // 🆕 CAMPOS DEL USUARIO (AGREGAR ESTOS)
