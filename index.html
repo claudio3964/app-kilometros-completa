@@ -189,9 +189,7 @@
     </button>
 
     <!-- Selector de fecha -->
-    <input type="date" id="travelDate" class="input-date"
-          <input type="date" id="travelDate" class="input-date"
-       value="">
+    <input type="date" id="travelDate" class="input-date" />
 </div>
         <div class="form-container">
             <!-- SELECTOR DE MODO -->
@@ -642,8 +640,17 @@
 
     <!-- 🚗 TU SCRIPT ACTUAL -->
     <script src="app.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const travelDateInput = document.getElementById('travelDate');
+    if (travelDateInput) {
+        travelDateInput.value = new Date().toISOString().split('T')[0];
+    }
+});
+</script>
 </body>
 </html>
+
 
 
 
