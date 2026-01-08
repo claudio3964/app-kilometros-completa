@@ -663,9 +663,11 @@ body {
 }
 
 /* BOTÓN "AGREGAR NUEVO DESTINO" */
-#travelScreen .btn-secondary {
-    display: block !important;
-    margin: 20px auto !important;
+/* Estilo compartido para botones y date input */
+#travelScreen .btn-secondary,
+#travelScreen .input-date.btn-secondary {
+    display: inline-block !important;   /* inline-block para inputs */
+    margin: 0 !important;               /* se ajusta margen */
     padding: 12px 25px !important;
     background: #3498db !important;
     color: white !important;
@@ -676,6 +678,13 @@ body {
     cursor: pointer !important;
     transition: all 0.3s !important;
     box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3) !important;
+    text-align: center;                 /* para que el texto quede centrado */
+}
+
+/* Ajuste del ícono del calendario en Chrome/Safari */
+#travelScreen .input-date.btn-secondary::-webkit-calendar-picker-indicator {
+    filter: invert(1); /* icono blanco */
+    cursor: pointer;
 }
 
 #travelScreen .btn-secondary:hover {
