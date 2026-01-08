@@ -588,55 +588,7 @@
         });
     </script>
 
-    <!-- 🎯 FUNCIÓN showScreen CORREGIDA -->
-    <script>
-        // FUNCIÓN showScreen CORREGIDA Y SIMPLIFICADA
-        function showScreen(screenId) {
-            console.log('🎯 Mostrando pantalla:', screenId);
-            
-            // 1. Ocultar TODAS las pantallas
-            document.querySelectorAll('.screen').forEach(screen => {
-                screen.style.display = 'none';
-                screen.classList.remove('active');
-            });
-            
-            // 2. Ocultar backdrops
-            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
-                backdrop.style.display = 'none';
-                backdrop.classList.remove('active');
-            });
-            
-            // 3. Mostrar pantalla solicitada
-            const targetScreen = document.getElementById(screenId);
-            if (targetScreen) {
-                targetScreen.style.display = 'block';
-                targetScreen.classList.add('active');
-                
-                // 4. Si es modal, crear backdrop
-                if (screenId === 'travelScreen' || screenId === 'guardScreen') {
-                    const backdrop = document.createElement('div');
-                    backdrop.className = 'modal-backdrop';
-                    backdrop.style.cssText = `
-                        position: fixed !important;
-                        top: 0 !important;
-                        left: 0 !important;
-                        width: 100vw !important;
-                        height: 100vh !important;
-                        background: rgba(0,0,0,0.7) !important;
-                        z-index: 9999 !important;
-                        display: block !important;
-                    `;
-                    backdrop.onclick = function() {
-                        showScreen('mainScreen');
-                    };
-                    document.body.appendChild(backdrop);
-                    backdrop.classList.add('active');
-                }
-                
-                console.log('✅ Pantalla activada:', screenId);
-            }
-        }
-    </script>
+
 
     <!-- 🚗 TU SCRIPT ACTUAL -->
     <script src="app.js"></script>
@@ -650,6 +602,7 @@
 </script>
 </body>
 </html>
+
 
 
 
