@@ -1152,3 +1152,38 @@ body {
 
     position: relative !important;
 }
+/* ===============================
+   FIX HEADER PANTALLA GUARDIAS
+   =============================== */
+
+#guardScreen .screen-header {
+    position: relative;
+    width: 100%;
+    height: auto;
+    min-height: unset;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 15px;
+    padding: 20px;
+    border-radius: 20px 20px 0 0;
+}
+
+/* Evita el panel violeta lateral */
+#guardScreen .screen-header::before {
+    display: none !important;
+}
+
+/* Título */
+#guardScreen .screen-header h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: white;
+    white-space: nowrap;
+}
+
+/* Botón volver */
+#guardScreen .btn-back {
+    position: static;
+}
