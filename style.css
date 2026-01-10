@@ -254,3 +254,69 @@ textarea {
     box-shadow: none !important;
   }
 }
+/* ===============================
+   HOME SCREEN – MOBILE FIX
+   =============================== */
+
+@media (max-width: 768px) {
+
+  /* Fondo general */
+  #mainScreen {
+    padding: 20px 15px 40px;
+  }
+
+  /* Título */
+  #mainScreen h1 {
+    font-size: 1.8rem;
+    margin-bottom: 5px;
+  }
+
+  #mainScreen p {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-bottom: 15px;
+  }
+
+  /* Contenedor de botones */
+  .button-grid,
+  .menu-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    margin-top: 20px;
+  }
+
+  /* Botones como cards */
+  .menu-btn,
+  .menu-card {
+    background: white !important;
+    border-radius: 16px !important;
+    padding: 18px 20px !important;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+    text-align: left !important;
+    border: none !important;
+  }
+
+  /* Iconos */
+  .menu-btn i,
+  .menu-card i {
+    font-size: 1.8rem !important;
+    min-width: 32px;
+  }
+
+  /* Texto */
+  .menu-btn span,
+  .menu-card .menu-title {
+    font-size: 1.1rem !important;
+    font-weight: 600;
+    color: #2d3748;
+  }
+
+  .menu-desc {
+    font-size: 0.9rem;
+    color: #64748b;
+  }
+}
