@@ -183,6 +183,7 @@
             <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
             <h2>🚗 Nuevo Viaje</h2>
         </div>
+        <div class="form-container">
        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
     <button type="button" onclick="agregarDestinoManual()" class="btn-secondary">
         ➕ Agregar Nuevo Destino
@@ -191,7 +192,7 @@
     <!-- Selector de fecha -->
     <input type="date" id="travelDate" class="input-date btn-secondary" />
 </div>
-        <div class="form-container">
+        
             <!-- SELECTOR DE MODO -->
             <div class="mode-selector" style="margin-bottom: 20px;">
                 <button type="button" id="btnRegular" class="mode-btn active" onclick="setMode('regular')">
@@ -618,6 +619,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
 
 
 
