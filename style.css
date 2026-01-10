@@ -359,3 +359,26 @@ textarea {
     opacity: 0;
     pointer-events: none;
 }
+/* ===============================
+   SPLASH SCREEN – FADE OUT SUAVE
+   =============================== */
+
+#splashScreen {
+    position: fixed;
+    inset: 0;
+    background: white;
+    z-index: 99999;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    opacity: 1;
+    transition: opacity 0.8s ease;
+}
+
+/* cuando se apaga */
+#splashScreen.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
