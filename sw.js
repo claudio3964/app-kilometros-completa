@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'cot-app-v2';
+const CACHE_NAME = 'cot-app-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
