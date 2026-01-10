@@ -1970,3 +1970,25 @@ document.addEventListener('click', function(event) {
         }
     }
 });
+// ===============================
+// 🟣 CONTROL DEL SPLASH SCREEN
+// ===============================
+document.addEventListener('DOMContentLoaded', function () {
+    const splash = document.getElementById('splashScreen');
+    const main = document.getElementById('mainScreen');
+
+    if (!splash || !main) return;
+
+    // Asegurar que main esté listo detrás
+    main.classList.add('active');
+
+    // Apagar splash con fade
+    setTimeout(() => {
+        splash.classList.add('fade-out');
+
+        setTimeout(() => {
+            splash.classList.remove('active');
+            splash.style.display = 'none';
+        }, 800); // igual al transition del CSS
+    }, 1200); // tiempo visible del splash
+});
