@@ -1,4 +1,4 @@
-/* ===== RESET Y BASE ===== */
+6/* ===== RESET Y BASE ===== */
 * {
     margin: 0;
     padding: 0;
@@ -1108,7 +1108,7 @@ css
 /* ===============================
    RESTAURAR PANTALLA GUARDIAS
    =============================== */
-
+/*
 #guardScreen {
     position: fixed;
     inset: 0;
@@ -1125,6 +1125,7 @@ css
 body {
     border: 10px solid red !important;
 }
+/*
 /* 🔧 FIX DEFINITIVO HEADER NUEVA GUARDIA */
 #guardScreen .screen-header {
     writing-mode: horizontal-tb !important;
