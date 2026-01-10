@@ -487,3 +487,36 @@ textarea {
     padding: 10px;
   }
 }
+/* ===== FIX SCROLL + TECLADO EN NUEVO VIAJE ===== */
+
+#travelScreen {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Header fijo */
+#travelScreen .screen-header {
+    flex-shrink: 0;
+}
+
+/* Contenido scrolleable */
+#travelScreen .form-container {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 120px; /* espacio para teclado */
+}
+/* ===== LISTA DE RUTAS REGULARES ===== */
+
+.sugerencias-container {
+    position: relative;
+    max-height: 220px;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    margin-top: 6px;
+    z-index: 20;
+}
