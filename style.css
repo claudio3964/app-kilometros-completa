@@ -175,3 +175,40 @@ textarea {
         max-height: 90vh;
     }
 }
+/* ===============================
+   LISTAS (VIAJES / GUARDIAS)
+=============================== */
+.lista-container {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.item-viaje,
+.item-guardia {
+    background: white;
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    border-left: 6px solid #667eea;
+    line-height: 1.5;
+}
+
+.item-guardia {
+    border-left-color: #764ba2;
+}
+
+.item-viaje strong,
+.item-guardia strong {
+    display: block;
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+
+.item-viaje span,
+.item-guardia span {
+    display: block;
+    font-size: 0.9rem;
+    color: #4a5568;
+}
