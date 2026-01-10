@@ -382,3 +382,52 @@ textarea {
     opacity: 0;
     pointer-events: none;
 }
+.btn-secondary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 2px dashed #6c63ff;
+    background: #f5f6ff;
+    color: #4b47c8;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.btn-secondary:active {
+    transform: scale(0.97);
+}
+.input-date {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 2px solid #e0e3ff;
+    background: #ffffff;
+    font-weight: 600;
+    color: #333;
+    min-width: 140px;
+}
+.mode-selector {
+    display: flex;
+    gap: 10px;
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    border: 2px solid #ddd;
+    background: #f1f1f1;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mode-btn.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-color: transparent;
+}
