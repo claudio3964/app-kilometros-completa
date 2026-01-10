@@ -1180,3 +1180,15 @@ body {
 #guardScreen .btn-back {
     position: static;
 }
+/* 🔧 FIX REAL: hacer visible el cuerpo de Nueva Guardia */
+#guardScreen {
+    overflow: hidden !important;
+}
+
+#guardScreen .form-container {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    display: block !important;
+    background: white !important;
+}
