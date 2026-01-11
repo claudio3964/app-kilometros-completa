@@ -544,18 +544,4 @@ function deleteTravel(id) {
    INICIALIZACIÓN FINAL
    ========================================================= */
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Inicializando aplicación completa');
 
-    // Mostrar pantalla principal
-    showScreen('mainScreen');
-
-    // Modo por defecto
-    setMode('regular');
-
-    // Actualizar datos
-    updateSummary();
-    updateTravelTable();
-
-    console.log('✅ Aplicación lista');
-});
