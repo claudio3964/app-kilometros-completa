@@ -163,18 +163,26 @@ function buscarRutasPopup(termino) {
 }
 
 /* ===============================
-   6. INPUT BUSCAR RUTA
+   6. INPUT BUSCAR RUTA (DESKTOP + MOBILE)
    =============================== */
 
 document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('buscarRuta');
     if (!input) return;
 
-    input.addEventListener('focus', () => {
+    // Desktop
+    input.addEventListener('click', () => {
         abrirRutaPopup();
         buscarRutasPopup(input.value);
     });
 
+    // Mobile (clave)
+    input.addEventListener('touchstart', () => {
+        abrirRutaPopup();
+        buscarRutasPopup(input.value);
+    });
+
+    // Escritura
     input.addEventListener('input', e => {
         if (e.target.value.trim().length >= 2) {
             abrirRutaPopup();
@@ -182,7 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
 /* ===============================
    7. SELECCIÓN DE RUTA
    =============================== */
