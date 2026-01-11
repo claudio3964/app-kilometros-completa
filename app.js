@@ -424,18 +424,138 @@ function addTravel(event) {
     showScreen('mainScreen');
 }
 /* =========================================================
-   ARRANQUE FORZADO DE LA APLICACIÓN
+   APP.JS — BLOQUE 3 / 4
+   GUARDIAS · RESÚMENES · TABLAS
+   ========================================================= */
+
+/* ===============================
+   12. RESUMEN GENERAL
+   =============================== */
+
+function updateSummary() {
+    const viajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+    const guardias = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+
+    const totalKm = viajes.reduce((s, v) => s + (parseFloat(v.km) || 0), 0);
+    const totalHoras = viajes.reduce((s, v) => s + (parseFloat(v.hoursWorked) || 0), 0);
+    const totalViaticos = viajes.reduce((s, v) => s + (v.viaticos || 0), 0);
+
+    const el = (id) => document.getElementById(id);
+
+    el('totalTravels') && (el('totalTravels').textContent = viajes.length);
+    el('totalKm') && (el('totalKm').textContent = totalKm.toFixed(1));
+    el('totalHours') && (el('totalHours').textContent = totalHoras.toFixed(1));
+    el('totalViaticos') && (el('totalViaticos').textContent = totalViaticos);
+    el('totalGuards') && (el('totalGuards').textContent = guardias.length);
+}
+
+/* ===============================
+   13. TABLA DE VIAJES
+   =============================== */
+
+function updateTravelTable() {
+    const tbody = document.getElementById('travelList');
+    if (!tbody) return;
+
+    const viajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+    tbody.innerHTML = '';
+
+    if (viajes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8">No hay viajes</td></tr>';
+        return;
+    }
+
+    viajes
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        .forEach(v => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${v.date}</td>
+                <td>${v.orderNumber}</td>
+                <td>${v.origin}</td>
+                <td>${v.destination}</td>
+                <td>${v.km}</td>
+                <td>${v.departureTime} - ${v.arrivalTime}</td>
+                <td>${v.viaticos ? '✅' : '❌'}</td>
+                <td>
+                    <button onclick="deleteTravel(${v.id})">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+}
+
+/* ===============================
+   14. GUARDIAS
+   =============================== */
+
+function addGuard(event) {
+    event.preventDefault();
+
+    const orderNumber = document.getElementById('guardOrderNumber').value;
+    const start = document.getElementById('guardStartTime').value;
+    const end = document.getElementById('guardEndTime').value;
+    const tarifa = parseFloat(document.getElementById('guardTarifa').value || 30);
+
+    if (!orderNumber || !start || !end) {
+        alert('Faltan datos');
+        return;
+    }
+
+    const inicio = new Date(`2000-01-01T${start}`);
+    const fin = new Date(`2000-01-01T${end}`);
+    let horas = (fin - inicio) / 36e5;
+    if (horas < 0) horas += 24;
+
+    const guardia = {
+        id: Date.now(),
+        orderNumber,
+        startTime: start,
+        endTime: end,
+        hours: horas.toFixed(2),
+        monto: (horas * tarifa).toFixed(2),
+        date: new Date().toISOString().split('T')[0],
+        timestamp: new Date().toISOString()
+    };
+
+    const guardias = JSON.parse(localStorage.getItem('bus_guards') || '[]');
+    guardias.push(guardia);
+    localStorage.setItem('bus_guards', JSON.stringify(guardias));
+
+    updateSummary();
+    alert('✅ Guardia agregada');
+    showScreen('mainScreen');
+}
+
+/* ===============================
+   15. ELIMINAR VIAJE
+   =============================== */
+
+function deleteTravel(id) {
+    if (!confirm('¿Eliminar viaje?')) return;
+    let viajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+    viajes = viajes.filter(v => v.id !== id);
+    localStorage.setItem('bus_travels', JSON.stringify(viajes));
+    updateTravelTable();
+    updateSummary();
+}
+/* =========================================================
+   APP.JS — BLOQUE 4 / 4
+   INICIALIZACIÓN FINAL
    ========================================================= */
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 App iniciando…');
+    console.log('🚀 Inicializando aplicación completa');
 
     // Mostrar pantalla principal
     showScreen('mainScreen');
 
-    // Inicializaciones básicas
+    // Modo por defecto
     setMode('regular');
-    updateSummary();
 
-    console.log('✅ App lista');
+    // Actualizar datos
+    updateSummary();
+    updateTravelTable();
+
+    console.log('✅ Aplicación lista');
 });
