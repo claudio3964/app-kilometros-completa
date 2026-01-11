@@ -601,35 +601,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 </script>
-<!-- ✅ FUNCIÓN showScreen ÚNICA Y SIMPLE -->
-<script>
-function showScreen(screenId) {
-    console.log('🎯 Mostrando pantalla:', screenId);
 
-    document.querySelectorAll('.screen').forEach(screen => {
-        screen.classList.remove('active');
-    });
-
-    const target = document.getElementById(screenId);
-    if (target) {
-        target.classList.add('active');
-    }
-}
-</script>
-
-<!-- 🚗 TU SCRIPT ACTUAL -->
-<script src="app.js"></script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const travelDateInput = document.getElementById('travelDate');
-    if (travelDateInput) {
-        travelDateInput.value = new Date().toISOString().split('T')[0];
-    }
-});
-</script>
 </body>
 </html>
+
 
 
 
