@@ -549,66 +549,58 @@
         </div>
     </div>
 </div>
-    <script>
-        // 🎯 FUNCIÓN PARA GUARDAR USUARIO (LOGIN)
-        function guardarUsuario() {
-            const numero = document.getElementById('userNumber').value.trim();
-            const nombre = document.getElementById('userName').value.trim();
-            const rol = document.getElementById('userRole').value;
-            
-            if (!numero) {
-                alert('Por favor ingresa tu número de funcionario');
-                return;
-            }
-            
-            if (!nombre) {
-                alert('Por favor ingresa tu nombre');
-                return;
-            }
-            
-            usuario = { 
-                numero: numero, 
-                nombre: nombre, 
-                rol: rol 
-            };
-            
-            localStorage.setItem('travelUser', JSON.stringify(usuario));
-            
-            document.getElementById('loginScreen').classList.remove('active');
-            document.getElementById('mainScreen').classList.add('active');
-            
-            console.log('✅ Usuario guardado:', usuario);
+    <!-- =========================
+     LOGIN / USUARIO
+========================= -->
+<script>
+    function guardarUsuario() {
+        const numero = document.getElementById('userNumber').value.trim();
+        const nombre = document.getElementById('userName').value.trim();
+        const rol = document.getElementById('userRole').value;
+
+        if (!numero || !nombre) {
+            alert('Completa todos los datos');
+            return;
         }
 
-        // 🎯 FUNCIÓN PARA CARGAR USUARIO AL INICIAR
-        function cargarUsuario() {
-            const usuarioGuardado = localStorage.getItem('travelUser');
-            
-            if (usuarioGuardado) {
-                usuario = JSON.parse(usuarioGuardado);
-                console.log('✅ Usuario cargado:', usuario);
-                
-                setTimeout(() => {
-                    document.getElementById('splashScreen').classList.remove('active');
-                    document.getElementById('mainScreen').classList.add('active');
-                }, 1000);
-                
-            } else {
-                setTimeout(() => {
-                    document.getElementById('splashScreen').classList.remove('active');
-                    document.getElementById('loginScreen').classList.add('active');
-                }, 2000);
-            }
-        }
+        usuario = { numero, nombre, rol };
+        localStorage.setItem('travelUser', JSON.stringify(usuario));
 
-        // 🎯 INICIAR LA APLICACIÓN
-        <script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Iniciando aplicación...');
-    cargarUsuario();
-});
+        showScreen('mainScreen');
+        console.log('✅ Usuario guardado:', usuario);
+    }
+
+    function cargarUsuario() {
+        const usuarioGuardado = localStorage.getItem('travelUser');
+
+        if (usuarioGuardado) {
+            usuario = JSON.parse(usuarioGuardado);
+            setTimeout(() => showScreen('mainScreen'), 1000);
+        } else {
+            setTimeout(() => showScreen('loginScreen'), 1500);
+        }
+    }
 </script>
 
+<!-- =========================
+     APP PRINCIPAL
+========================= -->
+<script src="app.js"></script>
+
+<!-- =========================
+     ARRANQUE DE LA APP
+========================= -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('🚀 Iniciando aplicación...');
+    cargarUsuario();
+
+    const travelDateInput = document.getElementById('travelDate');
+    if (travelDateInput) {
+        travelDateInput.value = new Date().toISOString().split('T')[0];
+    }
+});
+</script>
 <!-- ✅ FUNCIÓN showScreen ÚNICA Y SIMPLE -->
 <script>
 function showScreen(screenId) {
@@ -638,6 +630,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
 
 
 
