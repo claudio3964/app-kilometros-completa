@@ -586,24 +586,25 @@
      APP PRINCIPAL
 ========================= -->
 <script src="app.js"></script>
-
-<!-- =========================
-     ARRANQUE DE LA APP
-========================= -->
-<script>
+    <script>
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('🚀 Iniciando aplicación...');
-    cargarUsuario();
+    console.log('🚀 Iniciando aplicación con splash');
 
-    const travelDateInput = document.getElementById('travelDate');
-    if (travelDateInput) {
-        travelDateInput.value = new Date().toISOString().split('T')[0];
-    }
+    // Asegurar splash visible
+    showScreen('splashScreen');
+
+    // Pausa visual del splash
+    setTimeout(() => {
+        cargarUsuario();
+    }, 1200); // 1.2 segundos (ajustable)
 });
 </script>
 
+
+
 </body>
 </html>
+
 
 
 
