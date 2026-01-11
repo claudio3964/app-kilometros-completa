@@ -1992,3 +1992,49 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 800); // igual al transition del CSS
     }, 1200); // tiempo visible del splash
 });
+// ===============================
+// 📍 POPUP SELECCIÓN DE RUTAS
+// ===============================
+
+function abrirPopupRutas() {
+    const popup = document.getElementById('popupRutas');
+    if (!popup) return;
+
+    renderizarListaRutas();
+    popup.classList.add('active');
+    document.body.style.overflow = 'hidden'; // bloquear scroll fondo
+}
+
+function cerrarPopupRutas() {
+    const popup = document.getElementById('popupRutas');
+    if (!popup) return;
+
+    popup.classList.remove('active');
+    document.body.style.overflow = ''; // restaurar scroll
+}
+
+function renderizarListaRutas() {
+    const container = document.getElementById('popupRutasList');
+    if (!container) return;
+
+    const rutas = Object.entries(serviciosDB);
+
+    if (rutas.length === 0) {
+        container.innerHTML = '<div class="no-data">No hay rutas guardadas</div>';
+        return;
+    }
+
+    container.innerHTML = rutas.map(([key, ruta]) => `
+        <div class="popup-ruta-item" onclick="seleccionarRutaDesdePopup('${key}')">
+            <div class="ruta-nombre">${ruta.nombre}</div>
+            <div class="ruta-servicios">
+                Servicios: ${ruta.servicios.map(s => s.numero).join(', ')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function seleccionarRutaDesdePopup(rutaKey) {
+    seleccionarRuta(rutaKey);   // 👉 usa tu lógica actual
+    cerrarPopupRutas();
+}
