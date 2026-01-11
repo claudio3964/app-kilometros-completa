@@ -423,3 +423,19 @@ function addTravel(event) {
     alert('✅ Viaje agregado');
     showScreen('mainScreen');
 }
+/* =========================================================
+   ARRANQUE FORZADO DE LA APLICACIÓN
+   ========================================================= */
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 App iniciando…');
+
+    // Mostrar pantalla principal
+    showScreen('mainScreen');
+
+    // Inicializaciones básicas
+    setMode('regular');
+    updateSummary();
+
+    console.log('✅ App lista');
+});
