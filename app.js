@@ -2038,9 +2038,21 @@ function buscarRutasPopup(termino) {
     const lista = document.getElementById('listaRutasPopup');
     if (!lista) return;
 
-    const resultados = Object.entries(serviciosDB).filter(([_, ruta]) =>
-        ruta.nombre.toLowerCase().includes(termino.toLowerCase())
-    );
+    const texto = termino.toLowerCase().trim();
+
+    if (texto.length < 2) {
+        lista.innerHTML = '<div class="no-data">Escribí para buscar rutas</div>';
+        return;
+    }
+
+    const resultados = Object.entries(serviciosDB).filter(([_, ruta]) => {
+        return ruta.nombre.toLowerCase().includes(texto);
+    });
+
+    if (resultados.length === 0) {
+        lista.innerHTML = '<div class="no-data">No hay rutas que coincidan</div>';
+        return;
+    }
 
     lista.innerHTML = resultados.map(([key, ruta]) => `
         <div class="ruta-popup-item"
