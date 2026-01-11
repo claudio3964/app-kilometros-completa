@@ -529,7 +529,26 @@
             </div>
         </div>
     </div>
+<!-- POPUP SELECCIÓN DE RUTA -->
+<div id="rutaPopup" class="ruta-popup">
+    <div class="ruta-popup-content">
+        <div class="ruta-popup-header">
+            <h3>🛣️ Seleccionar Ruta</h3>
+            <button onclick="cerrarRutaPopup()">✖</button>
+        </div>
 
+        <input 
+            type="text" 
+            id="buscarRutaPopup"
+            placeholder="Buscar destino..."
+            oninput="buscarRutasPopup(this.value)"
+        >
+
+        <div id="listaRutasPopup" class="ruta-popup-lista">
+            <!-- rutas aquí -->
+        </div>
+    </div>
+</div>
     <script>
         // 🎯 FUNCIÓN PARA GUARDAR USUARIO (LOGIN)
         function guardarUsuario() {
@@ -619,6 +638,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
 
 
 
