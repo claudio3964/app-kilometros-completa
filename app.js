@@ -5,6 +5,28 @@ let travels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
 let favoriteDestinations = JSON.parse(localStorage.getItem('bus_favorites') || '[]');
 let usuario = JSON.parse(localStorage.getItem('travelUser') || '{"nombre": "Conductor", "numero": "000", "rol": "driver"}');
 
+// ===============================
+// 🛣️ INPUT BUSCAR RUTA → ABRE POPUP
+// ===============================
+document.addEventListener('DOMContentLoaded', () => {
+    const inputBuscarRuta = document.getElementById('buscarRuta');
+
+    if (!inputBuscarRuta) return;
+
+    inputBuscarRuta.addEventListener('input', (e) => {
+        const valor = e.target.value.trim();
+
+        if (valor.length >= 2) {
+            abrirRutaPopup();
+            buscarRutasPopup(valor);
+        }
+    });
+
+    inputBuscarRuta.addEventListener('focus', () => {
+        abrirRutaPopup();
+        buscarRutasPopup(inputBuscarRuta.value);
+    });
+});
 // ===== SISTEMA INTELIGENTE DE VIAJES =====
 const serviciosDB = {
     // DESDE MONTEVIDEO
@@ -186,16 +208,32 @@ function setMode(modo) {
 }
 
 function buscarRutas(termino) {
-    const sugerencias = document.getElementById('sugerenciasRutas');
-    const inputBusqueda = document.getElementById('buscarRuta');
-    
-    if (!sugerencias || !inputBusqueda) return;
-    
-    if (!termino || termino.length < 2) {
-        sugerencias.style.display = 'none';
-        sugerencias.innerHTML = '';
+    // Si está abierto el popup, usamos el popup
+    const popup = document.getElementById('rutaPopup');
+    if (popup && popup.classList.contains('active')) {
+        buscarRutasPopup(termino);
         return;
     }
+
+    // --- comportamiento original ---
+    const sugerencias = document.getElementById('sugerenciasRutas');
+    if (!sugerencias || termino.length < 2) {
+        sugerencias.style.display = 'none';
+        return;
+    }
+
+    const resultados = Object.entries(serviciosDB).filter(([_, ruta]) =>
+        ruta.nombre.toLowerCase().includes(termino.toLowerCase())
+    );
+
+    sugerencias.innerHTML = resultados.map(([key, ruta]) => `
+        <div class="sugerencia-item" onclick="seleccionarRuta('${key}')">
+            ${ruta.nombre}
+        </div>
+    `).join('');
+
+    sugerencias.style.display = 'block';
+}
     
     // 🆕 POSICIONAMIENTO PARA MÓVIL
     if (window.innerWidth <= 768) {
@@ -1993,48 +2031,42 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 1200); // tiempo visible del splash
 });
 // ===============================
-// 📍 POPUP SELECCIÓN DE RUTAS
+// 🛣️ POPUP SELECCIÓN DE RUTA
 // ===============================
 
-function abrirPopupRutas() {
-    const popup = document.getElementById('popupRutas');
-    if (!popup) return;
+function buscarRutasPopup(termino) {
+    const lista = document.getElementById('listaRutasPopup');
+    if (!lista) return;
 
-    renderizarListaRutas();
-    popup.classList.add('active');
-    document.body.style.overflow = 'hidden'; // bloquear scroll fondo
-}
+    const resultados = Object.entries(serviciosDB).filter(([_, ruta]) =>
+        ruta.nombre.toLowerCase().includes(termino.toLowerCase())
+    );
 
-function cerrarPopupRutas() {
-    const popup = document.getElementById('popupRutas');
-    if (!popup) return;
-
-    popup.classList.remove('active');
-    document.body.style.overflow = ''; // restaurar scroll
-}
-
-function renderizarListaRutas() {
-    const container = document.getElementById('popupRutasList');
-    if (!container) return;
-
-    const rutas = Object.entries(serviciosDB);
-
-    if (rutas.length === 0) {
-        container.innerHTML = '<div class="no-data">No hay rutas guardadas</div>';
-        return;
-    }
-
-    container.innerHTML = rutas.map(([key, ruta]) => `
-        <div class="popup-ruta-item" onclick="seleccionarRutaDesdePopup('${key}')">
-            <div class="ruta-nombre">${ruta.nombre}</div>
-            <div class="ruta-servicios">
+    lista.innerHTML = resultados.map(([key, ruta]) => `
+        <div class="ruta-popup-item"
+             onclick="seleccionarRuta('${key}'); cerrarRutaPopup();">
+            <strong>${ruta.nombre}</strong>
+            <div style="font-size:0.85em; opacity:.7">
                 Servicios: ${ruta.servicios.map(s => s.numero).join(', ')}
             </div>
         </div>
     `).join('');
 }
 
-function seleccionarRutaDesdePopup(rutaKey) {
-    seleccionarRuta(rutaKey);   // 👉 usa tu lógica actual
-    cerrarPopupRutas();
+function abrirRutaPopup() {
+    const popup = document.getElementById('rutaPopup');
+    if (!popup) return;
+
+    popup.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    buscarRutasPopup('');
 }
+
+function cerrarRutaPopup() {
+    const popup = document.getElementById('rutaPopup');
+    if (!popup) return;
+
+    popup.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
