@@ -119,9 +119,16 @@ function abrirRutaPopup() {
     if (!popup) return;
 
     popup.classList.add('active');
-    document.body.style.overflow = 'hidden';
+
+    // 🔴 IMPORTANTE: NO bloquear el body en mobile
+    if (window.innerWidth > 768) {
+        document.body.style.overflow = 'hidden';
+    }
+
     buscarRutasPopup('');
+    console.log('📱 abrirRutaPopup ejecutado');
 }
+
 
 function cerrarRutaPopup() {
     const popup = document.getElementById('rutaPopup');
