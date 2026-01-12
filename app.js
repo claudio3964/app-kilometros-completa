@@ -177,26 +177,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('buscarRuta');
     if (!input) return;
 
-    // Desktop
-    input.addEventListener('click', () => {
+    const abrir = () => {
         abrirRutaPopup();
         buscarRutasPopup(input.value);
-    });
+    };
 
-    // Mobile (clave)
-    input.addEventListener('touchstart', () => {
-        abrirRutaPopup();
-        buscarRutasPopup(input.value);
-    });
+    input.addEventListener('click', abrir);
 
-    // Escritura
+    input.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // 🔥 CLAVE
+        abrir();
+    }, { passive: false });
+
     input.addEventListener('input', e => {
         if (e.target.value.trim().length >= 2) {
-            abrirRutaPopup();
-            buscarRutasPopup(e.target.value);
+            abrir();
         }
     });
 });
+
 /* ===============================
    7. SELECCIÓN DE RUTA
    =============================== */
