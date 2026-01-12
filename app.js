@@ -167,6 +167,11 @@ function buscarRutasPopup(termino) {
             </div>
         </div>
     `).join('');
+   console.log(
+  '📋 items popup:',
+  document.querySelectorAll('#listaRutasPopup .ruta-popup-item').length
+);
+
 }
 
 /* ===============================
