@@ -144,17 +144,14 @@ function buscarRutasPopup(termino) {
 
     const texto = termino.toLowerCase().trim();
 
-    if (texto.length < 2) {
-        lista.innerHTML = '<div class="no-data">Escribí para buscar rutas</div>';
-        return;
-    }
-
-    const resultados = Object.entries(serviciosDB).filter(([_, ruta]) =>
-        ruta.nombre.toLowerCase().includes(texto)
-    );
+    const resultados = texto.length < 1
+        ? Object.entries(serviciosDB)
+        : Object.entries(serviciosDB).filter(([_, ruta]) =>
+            ruta.nombre.toLowerCase().includes(texto)
+          );
 
     if (resultados.length === 0) {
-        lista.innerHTML = '<div class="no-data">No hay rutas que coincidan</div>';
+        lista.innerHTML = '<div class="no-data">No hay rutas</div>';
         return;
     }
 
@@ -167,6 +164,7 @@ function buscarRutasPopup(termino) {
             </div>
         </div>
     `).join('');
+}
    console.log(
   '📋 items popup:',
   document.querySelectorAll('#listaRutasPopup .ruta-popup-item').length
@@ -187,17 +185,12 @@ document.addEventListener('DOMContentLoaded', () => {
         buscarRutasPopup(input.value);
     };
 
+    input.addEventListener('focus', abrir);
     input.addEventListener('click', abrir);
-
-    input.addEventListener('touchstart', (e) => {
-        e.preventDefault(); // 🔥 CLAVE
-        abrir();
-    }, { passive: false });
+    input.addEventListener('touchend', abrir);
 
     input.addEventListener('input', e => {
-        if (e.target.value.trim().length >= 2) {
-            abrir();
-        }
+        buscarRutasPopup(e.target.value);
     });
 });
 
