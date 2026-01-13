@@ -731,3 +731,126 @@ body {
   );
   color: var(--text-main);
 }
+/* =========================================
+   🎨 MAINSCREEN – ESTILO SUAVE / PASTEL
+   ========================================= */
+
+/* Fondo general */
+body {
+    background: linear-gradient(180deg, #f6f8fb 0%, #eef2f7 100%);
+}
+
+/* Icono decorativo de fondo */
+.background-icon {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.background-icon i {
+    font-size: 260px;
+    color: rgba(60, 120, 180, 0.08);
+}
+
+/* Contenedor principal */
+#mainScreen {
+    position: relative;
+    z-index: 1;
+}
+
+/* Logo */
+.app-logo {
+    background: #ffffff;
+    color: #4a7bd0;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    margin-bottom: 10px;
+}
+
+/* Títulos */
+.app-title {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.app-subtitle {
+    color: #6b7c93;
+}
+
+/* Contenedor botones */
+.menu-container {
+    margin-top: 25px;
+}
+
+/* Grid botones */
+.button-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+/* Botones base */
+.menu-btn {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 18px;
+    text-align: left;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+/* Hover suave */
+.menu-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 35px rgba(0,0,0,0.12);
+}
+
+/* Texto */
+.menu-btn .btn-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.menu-btn .btn-desc {
+    font-size: 13px;
+    color: #6b7c93;
+}
+
+/* Icono */
+.menu-btn .btn-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Variantes de color (pastel) */
+.menu-btn.primary { border-left: 6px solid #6fa8dc; }
+.menu-btn.secondary { border-left: 6px solid #93c47d; }
+.menu-btn.info { border-left: 6px solid #8e7cc3; }
+.menu-btn.warning { border-left: 6px solid #f6b26b; }
+.menu-btn.success { border-left: 6px solid #76a5af; }
+.menu-btn.dark { border-left: 6px solid #a4a4a4; }
+
+/* Mobile ajustes */
+@media (max-width: 768px) {
+    .background-icon i {
+        font-size: 200px;
+    }
+
+    .menu-btn {
+        padding: 16px;
+    }
+}
