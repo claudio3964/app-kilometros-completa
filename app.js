@@ -231,75 +231,28 @@ function seleccionarRuta(rutaKey) {
    =============================== */
 
 function showScreen(screenId) {
-    console.log('🎯 Mostrando pantalla:', screenId);
+    console.log('📺 Mostrando pantalla:', screenId);
 
-    document.querySelectorAll('.screen').forEach(s => {
-        s.style.display = 'none';
-        s.classList.remove('active');
+    const screens = document.querySelectorAll('.screen');
+
+    screens.forEach(screen => {
+        screen.classList.remove('active');
+        screen.style.display = 'none';
     });
 
-    document.querySelectorAll('.modal-backdrop').forEach(b => {
-        b.style.display = 'none';
-        b.classList.remove('active');
-    });
+    const target = document.getElementById(screenId);
 
-    const screen = document.getElementById(screenId);
-    if (!screen) {
-        console.error('Pantalla no encontrada:', screenId);
+    if (!target) {
+        console.error('❌ Pantalla no encontrada:', screenId);
         return;
     }
 
-    if (['travelScreen', 'guardScreen'].includes(screenId)) {
-        Object.assign(screen.style, {
-            position: 'fixed',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '90%',
-            maxWidth: screenId === 'travelScreen' ? '900px' : '500px',
-            maxHeight: '85vh',
-            background: '#fff',
-            borderRadius: '20px',
-            padding: '20px',
-            zIndex: '2147483647',
-            display: 'block',
-            overflowY: 'auto'
-        });
+    target.style.display = 'block';
+    target.classList.add('active');
 
-        const backdropId = screenId + '-backdrop';
-        let backdrop = document.getElementById(backdropId);
-
-        if (!backdrop) {
-            backdrop = document.createElement('div');
-            backdrop.id = backdropId;
-            backdrop.className = 'modal-backdrop';
-            Object.assign(backdrop.style, {
-                position: 'fixed',
-                inset: 0,
-                background: 'rgba(0,0,0,.5)',
-                zIndex: '2147483646'
-            });
-            backdrop.onclick = () => showScreen('mainScreen');
-            document.body.appendChild(backdrop);
-        }
-
-        backdrop.style.display = 'block';
-        backdrop.classList.add('active');
-
-    } else {
-        screen.style.display = 'block';
-    }
-
-    screen.classList.add('active');
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
-
-    setTimeout(() => {
-        if (screenId === 'mainScreen') updateSummary();
-        if (screenId === 'travelScreen') updateTravelTable();
-    }, 50);
+    // Scroll arriba (clave en móviles)
+    window.scrollTo(0, 0);
 }
-
 function cerrarModal() {
     showScreen('mainScreen');
 }
