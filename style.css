@@ -854,3 +854,132 @@ body {
         padding: 16px;
     }
 }
+/* =========================================
+   🌤️ SPLASH SCREEN
+   ========================================= */
+
+#splashScreen {
+    background: linear-gradient(180deg, #f6f8fb 0%, #e9eef5 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.splash-container {
+    text-align: center;
+    animation: splashFade 0.8s ease-out;
+}
+
+.splash-logo {
+    font-size: 72px;
+    margin-bottom: 15px;
+    color: #6fa8dc;
+}
+
+.splash-container h1 {
+    font-size: 26px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.splash-container p {
+    font-size: 14px;
+    color: #6b7c93;
+}
+
+/* Animación suave */
+@keyframes splashFade {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================
+   👋 LOGIN SCREEN
+   ========================================= */
+
+#loginScreen {
+    background: linear-gradient(180deg, #f6f8fb 0%, #eef2f7 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-container {
+    background: #ffffff;
+    border-radius: 22px;
+    padding: 28px;
+    width: 90%;
+    max-width: 360px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+    text-align: center;
+    animation: loginFade 0.6s ease-out;
+}
+
+.login-container h2 {
+    color: #2c3e50;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+/* Inputs */
+.login-container input,
+.login-container select {
+    width: 100%;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    border-radius: 12px;
+    border: 1px solid #dce3ec;
+    font-size: 14px;
+    background: #f9fbfd;
+}
+
+.login-container input:focus,
+.login-container select:focus {
+    outline: none;
+    border-color: #6fa8dc;
+    background: #ffffff;
+}
+
+/* Botón login */
+.login-container button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 14px;
+    border: none;
+    background: #6fa8dc;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.login-container button:hover {
+    background: #5c95cb;
+    transform: translateY(-1px);
+}
+
+/* Nota */
+.login-container .note {
+    margin-top: 12px;
+    font-size: 12px;
+    color: #6b7c93;
+}
+
+/* Animación */
+@keyframes loginFade {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
