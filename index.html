@@ -306,6 +306,28 @@
                 <button type="submit" class="btn-primary">➕ Agregar Viaje</button>
             </form>
         </div>
+        <!-- =============================== -->
+<!-- POPUP SELECCIÓN DE RUTA -->
+<!-- =============================== -->
+<div id="rutaPopup" class="ruta-popup">
+    <div class="ruta-popup-content">
+        <div class="ruta-popup-header">
+            <h3>🛣️ Seleccionar Ruta</h3>
+            <button type="button" onclick="cerrarRutaPopup()">✖</button>
+        </div>
+
+        <input 
+            type="text" 
+            id="buscarRutaPopup"
+            placeholder="Buscar destino..."
+            oninput="buscarRutasPopup(this.value)"
+        >
+
+        <div id="listaRutasPopup" class="ruta-popup-lista">
+            <!-- rutas aquí -->
+        </div>
+    </div>
+</div>
     </div>
 
     <!-- PANTALLA GUARDIAS (MODAL) -->
@@ -607,6 +629,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </body>
 </html>
+
 
 
 
