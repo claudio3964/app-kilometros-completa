@@ -85,77 +85,80 @@
     </div>
 
     <!-- =========================================== -->
-    <!-- 🎯 MAINSCREEN (SOLO BOTONES) - DENTRO DEL CONTAINER -->
-    <!-- =========================================== -->
-    <div class="container">
-       <div id="mainScreen" class="screen active">
+<!-- 🎯 MAINSCREEN -->
+<!-- =========================================== -->
+<div id="mainScreen" class="screen">
 
     <!-- ICONO DE FONDO -->
     <div class="background-icon">
         <i class="fas fa-route"></i>
     </div>
 
-    <!-- CABECERA -->
-    <div class="logo-container">
-        <div class="app-logo">
-            <i class="fas fa-bus"></i>
+    <div class="container">
+
+        <!-- CABECERA -->
+        <div class="logo-container">
+            <div class="app-logo">
+                <i class="fas fa-bus"></i>
+            </div>
+            <h1 class="app-title">Gestión de Viajes</h1>
+            <p class="app-subtitle">Sistema de control de flota</p>
         </div>
-        <h1 class="app-title">Gestión de Viajes</h1>
-        <p class="app-subtitle">Sistema de control de flota</p>
-    </div>
 
-    <!-- MENÚ -->
-    <div class="menu-container">
-        <h2 class="title-section">
-            <i class="fas fa-compass"></i>
-            ¿Qué deseas hacer?
-        </h2>
+        <!-- MENÚ -->
+        <div class="menu-container">
+            <h2 class="title-section">
+                <i class="fas fa-compass"></i>
+                ¿Qué deseas hacer?
+            </h2>
 
-        <div class="button-grid">
+            <div class="button-grid">
 
-            <button class="menu-btn primary" onclick="showScreen('travelScreen')">
-                <span class="btn-icon">🚗</span>
-                <span class="btn-text">Nuevo Viaje</span>
-                <span class="btn-desc">Registrar nuevo viaje</span>
-            </button>
+                <button class="menu-btn primary" onclick="showScreen('travelScreen')">
+                    <span class="btn-icon">🚗</span>
+                    <span class="btn-text">Nuevo Viaje</span>
+                    <span class="btn-desc">Registrar nuevo viaje</span>
+                </button>
 
-            <button class="menu-btn secondary" onclick="showScreen('guardScreen')">
-                <span class="btn-icon">🛡️</span>
-                <span class="btn-text">Nueva Guardia</span>
-                <span class="btn-desc">Agregar turno de guardia</span>
-            </button>
+                <button class="menu-btn secondary" onclick="showScreen('guardScreen')">
+                    <span class="btn-icon">🛡️</span>
+                    <span class="btn-text">Nueva Guardia</span>
+                    <span class="btn-desc">Agregar turno de guardia</span>
+                </button>
 
-            <button class="menu-btn info" onclick="showScreen('travelListScreen')">
-                <span class="btn-icon">📋</span>
-                <span class="btn-text">Ver Viajes</span>
-                <span class="btn-desc">Lista de viajes registrados</span>
-            </button>
+                <button class="menu-btn info" onclick="showScreen('travelListScreen')">
+                    <span class="btn-icon">📋</span>
+                    <span class="btn-text">Ver Viajes</span>
+                    <span class="btn-desc">Lista de viajes registrados</span>
+                </button>
 
-            <button class="menu-btn warning" onclick="showScreen('guardListScreen')">
-                <span class="btn-icon">👥</span>
-                <span class="btn-text">Ver Guardias</span>
-                <span class="btn-desc">Guardias activas</span>
-            </button>
+                <button class="menu-btn warning" onclick="showScreen('guardListScreen')">
+                    <span class="btn-icon">👥</span>
+                    <span class="btn-text">Ver Guardias</span>
+                    <span class="btn-desc">Guardias activas</span>
+                </button>
 
-            <button class="menu-btn info" onclick="showScreen('semanaScreen')">
-                <span class="btn-icon">📅</span>
-                <span class="btn-text">Mi Semana</span>
-                <span class="btn-desc">Resumen semanal</span>
-            </button>
+                <button class="menu-btn info" onclick="showScreen('semanaScreen')">
+                    <span class="btn-icon">📅</span>
+                    <span class="btn-text">Mi Semana</span>
+                    <span class="btn-desc">Resumen semanal</span>
+                </button>
 
-            <button class="menu-btn success" onclick="showScreen('reportsScreen')">
-                <span class="btn-icon">📊</span>
-                <span class="btn-text">Reportes</span>
-                <span class="btn-desc">Estadísticas</span>
-            </button>
+                <button class="menu-btn success" onclick="showScreen('reportsScreen')">
+                    <span class="btn-icon">📊</span>
+                    <span class="btn-text">Reportes</span>
+                    <span class="btn-desc">Estadísticas</span>
+                </button>
 
-            <button class="menu-btn dark" onclick="showScreen('backupScreen')">
-                <span class="btn-icon">💾</span>
-                <span class="btn-text">Backup</span>
-                <span class="btn-desc">Exportar / Importar</span>
-            </button>
+                <button class="menu-btn dark" onclick="showScreen('backupScreen')">
+                    <span class="btn-icon">💾</span>
+                    <span class="btn-text">Backup</span>
+                    <span class="btn-desc">Exportar / Importar</span>
+                </button>
 
+            </div>
         </div>
+
     </div>
 </div>
             <!-- RESUMEN RÁPIDO -->
@@ -627,6 +630,7 @@ document.addEventListener('DOMContentLoaded', function () {
 </body>
 
 </html>
+
 
 
 
