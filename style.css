@@ -1097,3 +1097,49 @@ body {
 .menu-btn.warning { border-left: 6px solid #f4b400; }
 .menu-btn.success { border-left: 6px solid #58d68d; }
 .menu-btn.dark { border-left: 6px solid #85929e; }
+/* ==============================
+   FONDO PRINCIPAL – ESTILO PASTEL
+   ============================== */
+
+body {
+    background: linear-gradient(
+        135deg,
+        #eef2ff 0%,
+        #e6ebff 35%,
+        #dde3ff 70%,
+        #d6dcff 100%
+    );
+    min-height: 100vh;
+}
+
+/* Contenedor principal */
+.container {
+    background: transparent;
+}
+
+/* Main screen */
+#mainScreen {
+    position: relative;
+    padding: 40px 30px 60px;
+    background: transparent;
+}
+/* ==============================
+   ICONO DE FONDO DECORATIVO
+   ============================== */
+
+.background-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 380px;
+    color: rgba(90, 110, 255, 0.08);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Asegurar que el contenido quede arriba */
+#mainScreen > *:not(.background-icon) {
+    position: relative;
+    z-index: 1;
+}
