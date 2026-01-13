@@ -164,12 +164,12 @@ function buscarRutasPopup(termino) {
             </div>
         </div>
     `).join('');
-}
-   console.log(
-  '📋 items popup:',
-  document.querySelectorAll('#listaRutasPopup .ruta-popup-item').length
-);
 
+    console.log(
+        '📋 items popup:',
+        document.querySelectorAll('#listaRutasPopup .ruta-popup-item').length
+    );
+}
 
 /* ===============================
    6. INPUT BUSCAR RUTA (DESKTOP + MOBILE)
