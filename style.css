@@ -708,3 +708,26 @@ textarea {
         border-radius: 0;
     }
 }
+/* =========================================
+   🎨 FASE 1 — FONDO GENERAL PASTEL
+   ========================================= */
+
+:root {
+  --bg-1: #f5f7fb;
+  --bg-2: #e9eef9;
+  --accent: #6c8cff;
+  --accent-2: #7dd3c7;
+  --accent-3: #f4b183;
+  --text-main: #2f2f2f;
+  --text-soft: #6b7280;
+}
+
+/* Fondo general */
+body {
+  background: linear-gradient(
+    180deg,
+    var(--bg-1) 0%,
+    var(--bg-2) 100%
+  );
+  color: var(--text-main);
+}
