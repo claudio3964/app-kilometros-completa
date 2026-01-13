@@ -208,9 +208,13 @@
                 <div id="modoRegular">
                     <div class="form-group">
                         <label>🔍 Buscar Ruta Regular:</label>
-                        <input type="text" id="buscarRuta" class="form-control" 
-                               placeholder="Ej: Punta del Este, Colonia, Chuy..." 
-                               oninput="buscarRutas(this.value)">
+                       <input
+    type="text"
+    id="buscarRuta"
+    class="form-control"
+    placeholder="Ej: Punta del Este, Colonia, Chuy..."
+    readonly
+    onclick="abrirRutaPopup()">
                         <div id="sugerenciasRutas" class="sugerencias-container"></div>
                     </div>
 
@@ -628,6 +632,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 </body>
 </html>
+
 
 
 
