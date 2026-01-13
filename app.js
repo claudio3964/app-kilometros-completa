@@ -170,7 +170,6 @@ function buscarRutasPopup(termino) {
   document.querySelectorAll('#listaRutasPopup .ruta-popup-item').length
 );
 
-}
 
 /* ===============================
    6. INPUT BUSCAR RUTA (DESKTOP + MOBILE)
