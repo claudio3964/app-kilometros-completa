@@ -606,3 +606,105 @@ textarea {
     border-radius: 16px;
     -webkit-overflow-scrolling: touch;
 }
+/* ===============================
+   POPUP SELECCIÓN DE RUTA
+   =============================== */
+
+.ruta-popup {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999999; /* más alto que cualquier screen */
+}
+
+/* cuando está activo */
+.ruta-popup.active {
+    display: flex;
+}
+
+/* caja del popup */
+.ruta-popup-content {
+    background: #ffffff;
+    width: 95%;
+    max-width: 520px;
+    max-height: 85vh;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+}
+
+/* header */
+.ruta-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #ddd;
+}
+
+.ruta-popup-header h3 {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.ruta-popup-header button {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+/* input buscar */
+#buscarRutaPopup {
+    margin: 12px;
+    padding: 10px 12px;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+/* lista */
+.ruta-popup-lista {
+    padding: 8px 12px 16px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* item ruta */
+.ruta-popup-item {
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 6px;
+    transition: background 0.15s ease;
+}
+
+.ruta-popup-item:hover {
+    background: #f0f0f0;
+}
+
+/* texto vacío */
+.no-data {
+    text-align: center;
+    color: #777;
+    padding: 20px;
+}
+
+/* ===============================
+   AJUSTES MOBILE
+   =============================== */
+@media (max-width: 480px) {
+    .ruta-popup-content {
+        width: 100%;
+        max-width: none;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+    }
+}
