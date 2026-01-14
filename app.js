@@ -1,3 +1,23 @@
+// ===== DEBUG VISUAL =====
+function debug(msg) {
+  let box = document.getElementById('debugBox');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'debugBox';
+    box.style.position = 'fixed';
+    box.style.top = '0';
+    box.style.left = '0';
+    box.style.right = '0';
+    box.style.background = '#111';
+    box.style.color = '#0f0';
+    box.style.fontSize = '12px';
+    box.style.zIndex = '9999';
+    box.style.padding = '6px';
+    document.body.appendChild(box);
+  }
+  box.innerHTML += msg + '<br>';
+}
+
 alert('APP.JS NUEVO CARGADO');
  
 
@@ -17,6 +37,9 @@ const KM_POR_HORA_GUARDIA = 20;
    =============================== */
 
 let travels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
+debug('travels existe: ' + (travels !== null));
+debug('travels length: ' + travels.length);
+
 let favoriteDestinations = JSON.parse(localStorage.getItem('bus_favorites') || '[]');
 let usuario = JSON.parse(
     localStorage.getItem('travelUser') ||
@@ -179,6 +202,8 @@ function buscarRutasPopup(termino) {
    =============================== */
 
 document.addEventListener('DOMContentLoaded', () => {
+ debug('➡️ Entró a renderPantallaPrincipal');
+
     const input = document.getElementById('buscarRuta');
     if (!input) return;
 
@@ -421,6 +446,7 @@ function updateTravelTable() {
 
     const viajes = JSON.parse(localStorage.getItem('bus_travels') || '[]');
     tbody.innerHTML = '';
+debug('🔎 Evaluando viajes: length=' + travels.length);
 
     if (viajes.length === 0) {
         tbody.innerHTML = '<tr><td colspan="8">No hay viajes</td></tr>';
