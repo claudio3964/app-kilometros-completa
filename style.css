@@ -27,9 +27,10 @@ body {
 /* /* ===============================
    SISTEMA DE PANTALLAS (FIX)
 =============================== */
-.screen {
+..screen {
     display: none;
-    min-height: 100vh;
+    min-height: 100%;
+    position: relative;
 }
 
 .screen.active {
@@ -1159,4 +1160,19 @@ body {
 .screen.modal {
     position: fixed;
     z-index: 1000;
+}
+/* ===== FIX DEFINITIVO MAIN SCREEN ===== */
+#mainScreen {
+    min-height: auto !important;
+    height: auto !important;
+    overflow-y: auto;
+}
+.logo-container {
+    position: relative;
+    margin-bottom: 30px;
+}
+#splashScreen.fade-out {
+    opacity: 0;
+    pointer-events: none;
+    display: none;
 }
