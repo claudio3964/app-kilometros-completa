@@ -24,13 +24,16 @@ body {
     position: relative;
 }
 
-/* ===============================
-   SISTEMA DE PANTALLAS
+/* /* ===============================
+   SISTEMA DE PANTALLAS (FIX)
 =============================== */
 .screen {
     display: none;
     padding: 30px;
     background: white;
+
+    position: relative;   /* 🔑 CLAVE */
+    z-index: 10;          /* 🔑 CLAVE */
 }
 
 .screen.active {
