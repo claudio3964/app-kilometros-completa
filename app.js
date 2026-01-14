@@ -233,9 +233,7 @@ function seleccionarRuta(rutaKey) {
 function showScreen(screenId) {
     console.log('📺 Mostrando pantalla:', screenId);
 
-    const screens = document.querySelectorAll('.screen');
-
-    screens.forEach(screen => {
+    document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
         screen.style.display = 'none';
     });
@@ -250,11 +248,7 @@ function showScreen(screenId) {
     target.style.display = 'block';
     target.classList.add('active');
 
-    // Scroll arriba (clave en móviles)
     window.scrollTo(0, 0);
-}
-function cerrarModal() {
-    showScreen('mainScreen');
 }
 
 /* ===============================
