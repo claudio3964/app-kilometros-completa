@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cot-app-v4';
+const CACHE_NAME = 'cot-app-v99';
 
 const STATIC_ASSETS = [
   './icons/icon-72.png',
