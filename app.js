@@ -1,3 +1,6 @@
+alert('APP.JS NUEVO CARGADO');
+ 
+
 /* =========================================================
    APP.JS — BLOQUE 1 / 4
    Configuración · Estado · Rutas · Popup de Rutas
