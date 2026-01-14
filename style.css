@@ -29,16 +29,13 @@ body {
 =============================== */
 .screen {
     display: none;
-    padding: 30px;
-    background: white;
-
-    position: relative;   /* 🔑 CLAVE */
-    z-index: 10;          /* 🔑 CLAVE */
+    min-height: 100vh;
 }
 
 .screen.active {
     display: block;
 }
+
 
 /* ===============================
    PANTALLA PRINCIPAL
