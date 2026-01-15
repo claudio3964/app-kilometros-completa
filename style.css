@@ -1069,3 +1069,45 @@ body {
     overflow-y: auto;
     z-index: 1;
 }
+/* ===============================
+   MODALES COMO APP NATIVA (MOBILE)
+=============================== */
+
+@media (max-width: 768px) {
+
+  #travelScreen,
+  #guardScreen {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+    box-shadow: none;
+    display: none;
+    background: #fff;
+  }
+
+  #travelScreen.active,
+  #guardScreen.active {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #travelScreen .screen-header,
+  #guardScreen .screen-header {
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  #travelScreen .form-container,
+  #guardScreen .form-container {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 120px;
+  }
+}
