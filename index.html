@@ -2,632 +2,184 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+
+    <!-- VIEWPORT BLINDADO -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <!-- META PWA CRÍTICOS -->
+
+    <!-- PWA -->
     <meta name="theme-color" content="#D4A017">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Control Kilómetros">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="COT">
-    
-    <!-- ÍCONOS APPLE -->
+
+    <!-- ICONOS -->
     <link rel="apple-touch-icon" href="./icons/icon-192.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="./icons/icon-152.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-180.png">
-    
-    <!-- MANIFEST PWA -->
     <link rel="manifest" href="./manifest.json">
-    
-    <!-- FONTAWESOME PARA ÍCONOS -->
+
+    <!-- ICONOS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- TU CSS -->
+
+    <!-- CSS -->
     <link rel="stylesheet" href="./style.css">
-    
+
     <title>Gestión de Viajes</title>
-    
-    <style>
-        /* 🆕 ESTILOS PARA LAS PANTALLAS NUEVAS */
-        /* Tus estilos inline pueden quedarse aquí */
-    </style>
-    
-    <!-- REGISTRO AUTOMÁTICO DEL SERVICE WORKER -->
-    <script>
-        // Registro del Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(function(registration) {
-                        console.log('ServiceWorker registrado con éxito: ', registration.scope);
-                    })
-                    .catch(function(error) {
-                        console.log('Error al registrar ServiceWorker: ', error);
-                    });
-            });
-        }
-        
-        // Detectar si es standalone (app instalada)
-        window.addEventListener('DOMContentLoaded', function() {
-            if (window.matchMedia('(display-mode: standalone)').matches) {
-                console.log('App ejecutándose en modo standalone');
-                document.body.classList.add('standalone-mode');
-            }
-        });
-    </script>
 </head>
+
 <body>
-        <div class="background-icon">
-  <i class="fas fa-route"></i>
+
+<!-- FONDO DECORATIVO (ÚNICO) -->
+<div class="background-icon">
+    <i class="fas fa-route"></i>
 </div>
-    <!-- 🆕 PANTALLAS NUEVAS -->
-    <div id="splashScreen" class="screen active">
-        <div class="splash-container">
-            <div class="splash-logo">🚌</div>
-            <h1>Gestión de Viajes</h1>
-            <p>Cargando aplicación...</p>
-        </div>
-    </div>
 
-    <div id="loginScreen" class="screen">
-        <div class="login-container">
-            <h2>👋 ¡Bienvenido!</h2>
-            <input type="text" id="userNumber" placeholder="Nº de Funcionario" maxlength="10">
-            <input type="text" id="userName" placeholder="Nombre completo">
-            <select id="userRole">
-                <option value="conductor">Conductor</option>
-                <option value="administrativo">Administrativo</option>
-            </select>
-            <button onclick="guardarUsuario()">Comenzar a Usar</button>
-            <p class="note">* Estos datos se guardarán localmente en tu dispositivo</p>
-        </div>
+<!-- ================= SPLASH ================= -->
+<div id="splashScreen" class="screen">
+    <div class="splash-container">
+        <div class="splash-logo">🚌</div>
+        <h1>Gestión de Viajes</h1>
+        <p>Cargando aplicación...</p>
     </div>
+</div>
 
-    <!<!-- =========================================== -->
-<!-- 🎯 MAINSCREEN -->
-<!-- =========================================== -->
+<!-- ================= LOGIN ================= -->
+<div id="loginScreen" class="screen">
+    <div class="login-container">
+        <h2>👋 ¡Bienvenido!</h2>
+        <input type="text" id="userNumber" placeholder="Nº de Funcionario">
+        <input type="text" id="userName" placeholder="Nombre completo">
+        <select id="userRole">
+            <option value="conductor">Conductor</option>
+            <option value="administrativo">Administrativo</option>
+        </select>
+        <button onclick="guardarUsuario()">Comenzar</button>
+        <p class="note">Datos guardados localmente</p>
+    </div>
+</div>
+
+<!-- ================= MAIN ================= -->
 <div id="mainScreen" class="screen">
-
-    <!-- ICONO DE FONDO -->
-    <div class="background-icon">
-        <i class="fas fa-route"></i>
-    </div>
-
-    <!-- CABECERA -->
     <div class="logo-container">
-        <div class="app-logo">
-            <i class="fas fa-bus"></i>
-        </div>
+        <div class="app-logo"><i class="fas fa-bus"></i></div>
         <h1 class="app-title">Gestión de Viajes</h1>
         <p class="app-subtitle">Sistema de control de flota</p>
     </div>
 
-    <!-- MENÚ -->
     <div class="menu-container">
         <h2 class="title-section">
-            <i class="fas fa-compass"></i>
-            ¿Qué deseas hacer?
+            <i class="fas fa-compass"></i> ¿Qué deseas hacer?
         </h2>
 
         <div class="button-grid">
-
-            <button class="menu-btn primary" onclick="showScreen('travelScreen')">
-                <span class="btn-icon">🚗</span>
-                <span class="btn-text">Nuevo Viaje</span>
-                <span class="btn-desc">Registrar nuevo viaje</span>
-            </button>
-
-            <button class="menu-btn secondary" onclick="showScreen('guardScreen')">
-                <span class="btn-icon">🛡️</span>
-                <span class="btn-text">Nueva Guardia</span>
-                <span class="btn-desc">Agregar turno de guardia</span>
-            </button>
-
-            <button class="menu-btn info" onclick="showScreen('travelListScreen')">
-                <span class="btn-icon">📋</span>
-                <span class="btn-text">Ver Viajes</span>
-                <span class="btn-desc">Lista de viajes registrados</span>
-            </button>
-
-            <button class="menu-btn warning" onclick="showScreen('guardListScreen')">
-                <span class="btn-icon">👥</span>
-                <span class="btn-text">Ver Guardias</span>
-                <span class="btn-desc">Guardias activas</span>
-            </button>
-
-            <button class="menu-btn info" onclick="showScreen('semanaScreen')">
-                <span class="btn-icon">📅</span>
-                <span class="btn-text">Mi Semana</span>
-                <span class="btn-desc">Resumen semanal</span>
-            </button>
-
-            <button class="menu-btn success" onclick="showScreen('reportsScreen')">
-                <span class="btn-icon">📊</span>
-                <span class="btn-text">Reportes</span>
-                <span class="btn-desc">Estadísticas</span>
-            </button>
-
-            <button class="menu-btn dark" onclick="showScreen('backupScreen')">
-                <span class="btn-icon">💾</span>
-                <span class="btn-text">Backup</span>
-                <span class="btn-desc">Exportar / Importar</span>
-            </button>
-
-        </div>
-    </div>
-
-</div>
-
-            <!-- RESUMEN RÁPIDO -->
-            <div class="quick-stats" style="display: none;">
-                <div class="stat-item">
-                    <span class="stat-number" id="totalTravels">0</span>
-                    <span class="stat-label">Total Viajes</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" id="totalKm">0</span>
-                    <span class="stat-label">KM Totales</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" id="totalViaticos">0</span>
-                    <span class="stat-label">Viáticos</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" id="totalGuards">0</span>
-                    <span class="stat-label">Guardias</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" id="totalGuardHours">0</span>
-                    <span class="stat-label">Horas Guardia</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" id="todayTravels">0</span>
-                    <span class="stat-label">Viajes Hoy</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- =========================================== -->
-    <!-- 🎯 PANTALLAS MODALES - FUERA DEL CONTAINER -->
-    <!-- =========================================== -->
-    
-    <!-- PANTALLA VIAJES (MODAL) -->
-    <div id="travelScreen" class="screen">
-        <div class="screen-header">
-            <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
-            <h2>🚗 Nuevo Viaje</h2>
-        </div>
-        <div class="form-container">
-       <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
-    <button type="button" onclick="agregarDestinoManual()" class="btn-secondary">
-        ➕ Agregar Nuevo Destino
-    </button>
-
-    <!-- Selector de fecha -->
-    <input type="date" id="travelDate" class="input-date btn-secondary" />
-</div>
-        
-            <!-- SELECTOR DE MODO -->
-            <div class="mode-selector" style="margin-bottom: 20px;">
-                <button type="button" id="btnRegular" class="mode-btn active" onclick="setMode('regular')">
-                    🚌 SERVICIO REGULAR
-                </button>
-                <button type="button" id="btnContratado" class="mode-btn" onclick="setMode('contratado')">
-                    📝 SERVICIO CONTRATADO
-                </button>
-            </div>
-
-            <form id="travelFormDetailed" onsubmit="addTravel(event)">
-                <!-- MODO REGULAR -->
-                <div id="modoRegular">
-                    <div class="form-group">
-                        <label>🔍 Buscar Ruta Regular:</label>
-                       <input
-    type="text"
-    id="buscarRuta"
-    class="form-control"
-    placeholder="Ej: Punta del Este, Colonia, Chuy..."
-    readonly
-    onclick="abrirRutaPopup()">
-                        <div id="sugerenciasRutas" class="sugerencias-container"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>🚌 Servicio:</label>
-                        <select id="numeroServicio" class="form-control" onchange="actualizarInfoServicio()">
-                            <option value="">Primero elegí una ruta...</option>
-                        </select>
-                    </div>
-
-                    <!-- INFO AUTOMÁTICA -->
-                    <div id="infoAuto" class="info-auto" style="display: none;">
-                        <div class="info-item">
-                            <span class="info-label">Tipo de Servicio:</span>
-                            <span id="autoTipo" class="info-value">-</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Acoplado:</span>
-                            <span id="autoAcoplado" class="info-value">-</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Reglas:</span>
-                            <span id="autoReglas" class="info-value">-</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MODO CONTRATADO -->
-                <div id="modoContratado" style="display: none;">
-                    <div class="form-group">
-                        <label>📍 Destino Contratado:</label>
-                        <input type="text" id="destinoContratado" class="form-control" 
-                               placeholder="Ej: Hotel XYZ, Empresa ABC...">
-                    </div>
-
-                    <div class="form-group">
-                        <label>🔢 Número de Servicio:</label>
-                        <input type="text" id="numeroContratado" class="form-control" 
-                               placeholder="Número específico...">
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                        <div class="form-group">
-                            <label>🎫 Tipo de Servicio:</label>
-                            <select id="tipoContratado" class="form-control">
-                                <option value="DIRECTO">DIRECTO</option>
-                                <option value="SEMI-DIRECTO">SEMI-DIRECTO</option>
-                                <option value="TURNO">TURNO</option>
-                                <option value="REGULAR">REGULAR</option>
-                                <option value="ESPECIAL">ESPECIAL</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>🔧 Acoplado:</label>
-                            <select id="acopladoContratado" class="form-control">
-                                <option value="false">NO</option>
-                                <option value="true">SÍ</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- CAMPOS COMUNES -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
-                    <div class="form-group">
-                        <label for="orderNumberTravels">Número de Orden *</label>
-                        <input type="text" id="orderNumberTravels" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="originTravels">Origen *</label>
-                        <input type="text" id="originTravels" required readonly style="background-color: #f8f9fa;">
-                    </div>
-                    <div class="form-group">
-                        <label for="destinationTravels">Destino *</label>
-                        <input type="text" id="destinationTravels" required readonly style="background-color: #f8f9fa;">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="kmTravels">Kilómetros *</label>
-                        <input type="number" id="kmTravels" step="0.1" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="departureTimeTravels">Hora Salida *</label>
-                        <input type="time" id="departureTimeTravels" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="arrivalTimeTravels">Hora Llegada *</label>
-                        <input type="time" id="arrivalTimeTravels" required>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-primary">➕ Agregar Viaje</button>
-            </form>
-        </div>
-  
-    <!-- PANTALLA GUARDIAS (MODAL) -->
-   <div id="guardScreen" class="screen modal">
-        <div class="screen-header">
-           <button class="btn-back" onclick="showScreen('mainScreen')">← Volver</button>
-            <h1>🛡️ Nueva Guardia</h1>
-        </div>
-        <div class="form-container">
-            <form id="guardForm" onsubmit="addGuard(event)">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                    <div class="form-group">
-                        <label for="guardOrderNumber">Número de Orden *</label>
-                        <input type="text" id="guardOrderNumber" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="guardStartTime">Hora Inicio *</label>
-                        <input type="time" id="guardStartTime" required>
-                    </div>
-                    <div class="form-group">
-    <label for="guardDate">📅 Fecha de la guardia</label>
-    <input type="date" id="guardDate" required>
-</div>
-                    <div class="form-group">
-                        <label for="guardEndTime">Hora Fin *</label>
-                        <input type="time" id="guardEndTime" required>
-                    </div>
-                     <!-- CAMPO DE TARIFA -->
-                    <div class="form-group">
-                        <label for="guardTarifa">Tipo de Guardia</label>
-                        <select id="guardTarifa" onchange="actualizarDescripcionGuardia()">
-                            <option value="30">Común - $30/hora</option>
-                            <option value="40">Especial - $40/hora</option>
-                        </select>
-                    </div>
-                </div>
-                <!-- CAMPO DE TEXTO PARA DESCRIPCIÓN -->
-                <div id="campoDescripcion" class="form-group" style="display: none;">
-                    <label for="guardDescripcion">📝 Descripción del Movimiento Especial *</label>
-                    <textarea id="guardDescripcion" rows="3" placeholder="Ej: Traslado especial a hotel, Servicio fuera de horario, Movimiento extra..."></textarea>
-                    <small style="color: #666;">Describe brevemente por qué es una guardia especial</small>
-                </div>
-                <button type="submit" class="btn-primary">➕ Agregar Guardia</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- =========================================== -->
-    <!-- 🎯 PANTALLAS COMPLETAS - FUERA DEL CONTAINER -->
-    <!-- =========================================== -->
-    
-    <!-- LISTA DE VIAJES -->
-    <div id="travelListScreen" class="screen">
-        <div class="screen-header">
-            <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
-            <h2>📋 Lista de Viajes</h2>
-        </div>
-        
-        <div class="lista-container" id="allTravelsList">
-            <div class="no-data">No hay viajes registrados</div>
-        </div>
-    </div>
-
-    <!-- LISTA DE GUARDIAS -->
-    <div id="guardListScreen" class="screen">
-        <div class="screen-header">
-            <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
-            <h2>👥 Lista de Guardias</h2>
-        </div>
-        
-        <div class="lista-container" id="allGuardsList">
-            <div class="no-data">No hay guardias registradas</div>
-        </div>
-    </div>
-    
-    <!-- PANTALLA DE REPORTES -->
-    <div id="reportsScreen" class="screen">
-        <div class="screen-header">
-            <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
-            <h2>📊 Reportes y Búsquedas</h2>
-        </div>
-
-        <!-- 🎛️ PANEL DE FILTROS -->
-        <div class="filters-panel">
-            <div class="filter-group">
-                <label>📅 Fecha Desde:</label>
-                <input type="date" id="filterDateFrom" class="form-control">
-            </div>
-            <div class="filter-group">
-                <label>📅 Fecha Hasta:</label>
-                <input type="date" id="filterDateTo" class="form-control">
-            </div>
-            <div class="filter-group">
-                <label>🔢 Nº de Orden:</label>
-                <input type="text" id="filterOrderNumber" class="form-control" placeholder="Ej: ORD-001">
-            </div>
-            <div class="filter-group">
-                <label>👤 Conductor:</label>
-                <input type="text" id="filterDriver" class="form-control" placeholder="Buscar conductor...">
-            </div>
-            <div class="filter-actions">
-                <button class="btn-primary" onclick="generarReporte()">🔍 Generar Reporte</button>
-                <button class="btn-secondary" onclick="limpiarFiltros()">🔄 Limpiar</button>
-            </div>
-        </div>
-
-        <!-- 📊 RESUMEN RÁPIDO -->
-        <div class="report-summary">
-            <div class="summary-item">
-                <span class="summary-label">Total Viajes:</span>
-                <span class="summary-value" id="totalViajesReport">0</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Total KM:</span>
-                <span class="summary-value" id="totalKmReport">0</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Total Horas:</span>
-                <span class="summary-value" id="totalHorasReport">0</span>
-            </div>
-            <div class="summary-item">
-                <span class="summary-label">Total Viáticos:</span>
-                <span class="summary-value" id="totalViaticosReport">$0</span>
-            </div>
-        </div>
-
-        <!-- 📋 TABLA DE RESULTADOS (ESTILO PROFESIONAL) -->
-        <div class="report-results">
-            <div class="report-header">
-                <h3>📋 Resultados del Reporte</h3>
-                <div class="report-actions">
-                    <span id="resultCount" class="result-count">0 registros encontrados</span>
-                    <button class="btn-success" onclick="exportarReporte()">📄 Exportar a PDF</button>
-                </div>
-            </div>
-            
-            <div class="table-container">
-                <table class="report-table">
-                    <thead>
-                        <tr>
-                            <th>Fecha</th>
-                            <th>Nº Orden</th>
-                            <th>Conductor</th>
-                            <th>Ruta</th>
-                            <th>KM</th>
-                            <th>Horas</th>
-                            <th>Viáticos</th>
-                            <th>Tipo Servicio</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reportResultsBody">
-                        <tr>
-                            <td colspan="8" class="no-data">Usa los filtros para generar un reporte</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    
-    <!-- PANTALLA BACKUP -->
-    <div id="backupScreen" class="screen">
-        <div class="screen-header">
-            <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
-            <h2>💾 Backup y Restauración</h2>
-        </div>
-        <div class="form-container">
-            <!-- EXPORTAR DATOS -->
-            <div style="margin-bottom: 30px;">
-                <h4 style="color: #27ae60; margin-bottom: 15px;">📤 Exportar Datos</h4>
-                <div class="backup-actions">
-                    <button class="backup-btn" onclick="exportData()">💾 Backup Completo</button>
-                    <button class="backup-btn" onclick="exportTravels()">🚗 Solo Viajes</button>
-                    <button class="backup-btn" onclick="exportGuards()">🛡️ Solo Guardias</button>
-                </div>
-            </div>
-            
-            <!-- IMPORTAR DATOS -->
-            <div style="margin-bottom: 30px;">
-                <h4 style="color: #3498db; margin-bottom: 15px;">📥 Importar Datos</h4>
-                <div class="form-group">
-                    <label for="backupFile">Seleccionar archivo JSON de backup</label>
-                    <input type="file" id="backupFile" accept=".json">
-                    <div id="importStatus" style="margin-top: 10px; font-weight: bold;"></div>
-                </div>
-                <button class="backup-btn" onclick="importData()" style="margin-top: 10px;">🔄 Restaurar Backup</button>
-            </div>
-            
-            <!-- HERRAMIENTAS -->
-            <div>
-                <h4 style="color: #e74c3c; margin-bottom: 15px;">⚙️ Herramientas</h4>
-                <div class="backup-actions">
-                    <button class="backup-btn warning" onclick="generateSampleData()">🎯 Generar Datos de Ejemplo</button>
-                    <button class="backup-btn danger" onclick="clearAllData()">🗑️ Eliminar Todos los Datos</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- PANTALLA MI SEMANA -->
-    <div id="semanaScreen" class="screen">
-        <div class="screen-header">
-            <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
-            <h2>📅 Mi Semana</h2>
-            <p>Resumen de todos tus viajes de esta semana</p>
-        </div>
-
-        <div class="container" style="background: white; padding: 20px;">
-            <!-- ESTADÍSTICAS SEMANALES -->
-            <div class="stats-grid" id="semanaStats" style="background: white;">
-                <!-- Las estadísticas se cargarán aquí con JavaScript -->
-            </div>
-            
-            <!-- LISTA DE VIAJES DE LA SEMANA -->
-            <div class="viajes-container" style="background: white;">
-                <h3>📋 Viajes de la Semana</h3>
-                <div id="semanaViajesList" class="lista-container">
-                    <div class="no-data">Cargando viajes de la semana...</div>
-                </div>
-            </div>
-        </div>
-    </div>
-<!-- POPUP SELECCIÓN DE RUTA -->
-<div id="rutaPopup" class="ruta-popup">
-    <div class="ruta-popup-content">
-        <div class="ruta-popup-header">
-            <h3>🛣️ Seleccionar Ruta</h3>
-            <button onclick="cerrarRutaPopup()">✖</button>
-        </div>
-
-        <input 
-            type="text" 
-            id="buscarRutaPopup"
-            placeholder="Buscar destino..."
-            oninput="buscarRutasPopup(this.value)"
-        >
-
-        <div id="listaRutasPopup" class="ruta-popup-lista">
-            <!-- rutas aquí -->
+            <button class="menu-btn primary" onclick="showScreen('travelScreen')">🚗 Nuevo Viaje</button>
+            <button class="menu-btn secondary" onclick="showScreen('guardScreen')">🛡️ Nueva Guardia</button>
+            <button class="menu-btn info" onclick="showScreen('travelListScreen')">📋 Ver Viajes</button>
+            <button class="menu-btn warning" onclick="showScreen('guardListScreen')">👥 Ver Guardias</button>
+            <button class="menu-btn info" onclick="showScreen('semanaScreen')">📅 Mi Semana</button>
+            <button class="menu-btn success" onclick="showScreen('reportsScreen')">📊 Reportes</button>
+            <button class="menu-btn dark" onclick="showScreen('backupScreen')">💾 Backup</button>
         </div>
     </div>
 </div>
-    <!-- =========================
-     LOGIN / USUARIO
-========================= -->
-<script>
-    function guardarUsuario() {
-        const numero = document.getElementById('userNumber').value.trim();
-        const nombre = document.getElementById('userName').value.trim();
-        const rol = document.getElementById('userRole').value;
 
-        if (!numero || !nombre) {
-            alert('Completa todos los datos');
-            return;
-        }
+<!-- ================= MODALES ================= -->
+<div id="travelScreen" class="screen">
+    <div class="screen-header">
+        <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
+        <h2>🚗 Nuevo Viaje</h2>
+    </div>
+    <div class="form-container">
+        <form onsubmit="addTravel(event)">
+            <input id="orderNumberTravels" placeholder="Orden" required>
+            <input id="kmTravels" type="number" placeholder="KM" required>
+            <input id="departureTimeTravels" type="time" required>
+            <input id="arrivalTimeTravels" type="time" required>
+            <button class="btn-primary">Agregar</button>
+        </form>
+    </div>
+</div>
 
-        usuario = { numero, nombre, rol };
-        localStorage.setItem('travelUser', JSON.stringify(usuario));
+<div id="guardScreen" class="screen">
+    <div class="screen-header">
+        <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
+        <h2>🛡️ Nueva Guardia</h2>
+    </div>
+    <div class="form-container">
+        <form onsubmit="addGuard(event)">
+            <input id="guardOrderNumber" placeholder="Orden" required>
+            <input id="guardStartTime" type="time" required>
+            <input id="guardEndTime" type="time" required>
+            <button class="btn-primary">Agregar</button>
+        </form>
+    </div>
+</div>
 
-        showScreen('mainScreen');
-        console.log('✅ Usuario guardado:', usuario);
-    }
+<!-- ================= LISTAS ================= -->
+<div id="travelListScreen" class="screen">
+    <div class="screen-header">
+        <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
+        <h2>📋 Viajes</h2>
+    </div>
+    <div class="lista-container" id="allTravelsList"></div>
+</div>
 
-    function cargarUsuario() {
-        const usuarioGuardado = localStorage.getItem('travelUser');
+<div id="guardListScreen" class="screen">
+    <div class="screen-header">
+        <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
+        <h2>👥 Guardias</h2>
+    </div>
+    <div class="lista-container" id="allGuardsList"></div>
+</div>
 
-        if (usuarioGuardado) {
-            usuario = JSON.parse(usuarioGuardado);
-            setTimeout(() => showScreen('mainScreen'), 1000);
-        } else {
-            setTimeout(() => showScreen('loginScreen'), 1500);
-        }
-    }
-</script>
+<!-- ================= SEMANA ================= -->
+<div id="semanaScreen" class="screen">
+    <div class="screen-header">
+        <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
+        <h2>📅 Mi Semana</h2>
+    </div>
+    <div id="semanaStats"></div>
+    <div id="semanaViajesList"></div>
+</div>
 
-<!-- =========================
-     APP PRINCIPAL
-========================= -->
+<!-- ================= REPORTES ================= -->
+<div id="reportsScreen" class="screen">
+    <div class="screen-header">
+        <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
+        <h2>📊 Reportes</h2>
+    </div>
+    <div class="form-container">Reportes</div>
+</div>
+
+<!-- ================= BACKUP ================= -->
+<div id="backupScreen" class="screen">
+    <div class="screen-header">
+        <button class="back-btn" onclick="showScreen('mainScreen')">← Volver</button>
+        <h2>💾 Backup</h2>
+    </div>
+    <div class="form-container"></div>
+</div>
+
+<!-- ================= JS ================= -->
 <script src="app.js"></script>
-  
-    <!-- =========================
-     ARRANQUE DE LA APP (ÚNICO)
-========================= -->
-    <script>
-document.addEventListener('DOMContentLoaded', function () {
-    console.log('🚀 Iniciando aplicación con splash');
 
-    // Asegurar splash visible
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // BLINDAJE INICIAL
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     showScreen('splashScreen');
 
-    // Pausa visual del splash
     setTimeout(() => {
-        cargarUsuario();
-    }, 1200); // 1.2 segundos (ajustable)
+        const user = localStorage.getItem('travelUser');
+        showScreen(user ? 'mainScreen' : 'loginScreen');
+    }, 1200);
 });
 </script>
 
-
-
 </body>
-
 </html>
+
+
 
 
 
