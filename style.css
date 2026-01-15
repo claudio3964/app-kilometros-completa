@@ -1111,3 +1111,25 @@ body {
     padding-bottom: 120px;
   }
 }
+/* ===============================
+   FIX ESCALA MOBILE (ANTI-ZOOM RARO)
+=============================== */
+
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Evitar que algún contenedor agrande el layout */
+.screen,
+.container,
+#mainScreen {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
