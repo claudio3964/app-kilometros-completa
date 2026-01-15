@@ -259,28 +259,30 @@ function seleccionarRuta(rutaKey) {
    =============================== */
 
 function showScreen(screenId) {
-    console.log('👉 showScreen:', screenId);
+    console.log('🎯 showScreen →', screenId);
 
-    const all = document.querySelectorAll('.screen');
-    console.log('Pantallas encontradas:', all.length);
+    // 1️⃣ Desactivar todas las pantallas
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+    });
 
-    all.forEach(s => s.style.display = 'none');
+    // 2️⃣ Ocultar backdrops
+    document.querySelectorAll('.modal-backdrop').forEach(bd => {
+        bd.remove();
+    });
 
+    // 3️⃣ Activar pantalla objetivo
     const target = document.getElementById(screenId);
-
     if (!target) {
-        alert('❌ NO EXISTE: ' + screenId);
-        console.error('No existe:', screenId);
+        console.error('❌ Pantalla no encontrada:', screenId);
         return;
     }
 
-    target.style.display = 'block';
     target.classList.add('active');
 
-    console.log('✅ Mostrada:', screenId);
+    // 4️⃣ Reset scroll
+    window.scrollTo(0, 0);
 }
-
-
 /* ===============================
    9. MODOS REGULAR / CONTRATADO
    =============================== */
