@@ -24,17 +24,32 @@ body {
     position: relative;
 }
 
-/* /* ===============================
-   SISTEMA DE PANTALLAS (FIX)
+/* ===============================
+   SISTEMA DE PANTALLAS – BASE ÚNICA
 =============================== */
-..screen {
+
+.screen {
     display: none;
-    min-height: 100%;
     position: relative;
+    z-index: 10;
 }
 
 .screen.active {
     display: block;
+}
+/* ===============================
+   MODALES (VIAJES / GUARDIAS)
+=============================== */
+
+#travelScreen,
+#guardScreen {
+    display: none;
+}
+
+#travelScreen.active,
+#guardScreen.active {
+    display: flex;
+    flex-direction: column;
 }
 
 
@@ -322,58 +337,17 @@ textarea {
   }
 }
 /* ===============================
-   SPLASH SCREEN (NO OCUPA ESPACIO)
-   =============================== */
-#splashScreen {
-    position: fixed;
-    inset: 0;
-    z-index: 99999;
-    background: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#splashScreen:not(.active) {
-    display: none;
-}
-/* ===============================
-   SPLASH SCREEN - TRANSICIÓN SUAVE
-   =============================== */
+   SPLASH SCREEN (BLINDADO)
+=============================== */
 
 #splashScreen {
     position: fixed;
     inset: 0;
     background: white;
     z-index: 99999;
-
     display: flex;
     align-items: center;
     justify-content: center;
-
-    opacity: 1;
-    transition: opacity 0.8s ease;
-}
-
-/* Estado cuando empieza a desaparecer */
-#splashScreen.fade-out {
-    opacity: 0;
-    pointer-events: none;
-}
-/* ===============================
-   SPLASH SCREEN – FADE OUT SUAVE
-   =============================== */
-
-#splashScreen {
-    position: fixed;
-    inset: 0;
-    background: white;
-    z-index: 99999;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
     opacity: 1;
     transition: opacity 0.8s ease;
 }
@@ -382,111 +356,8 @@ textarea {
 #splashScreen.fade-out {
     opacity: 0;
     pointer-events: none;
-}
-.btn-secondary {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 2px dashed #6c63ff;
-    background: #f5f6ff;
-    color: #4b47c8;
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-}
-
-.btn-secondary:active {
-    transform: scale(0.97);
-}
-.input-date {
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 2px solid #e0e3ff;
-    background: #ffffff;
-    font-weight: 600;
-    color: #333;
-    min-width: 140px;
-}
-.mode-selector {
-    display: flex;
-    gap: 10px;
-}
-
-.mode-btn {
-    flex: 1;
-    padding: 12px;
-    border-radius: 12px;
-    border: 2px solid #ddd;
-    background: #f1f1f1;
-    font-weight: 700;
-    font-size: 0.85rem;
-    color: #555;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.mode-btn.active {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    border-color: transparent;
-}
-.filters-panel {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 16px;
-  margin: 16px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-}
-
-.filter-group {
-  margin-bottom: 12px;
-}
-.filter-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.filter-actions button {
-  height: 48px;
-  border-radius: 14px;
-  font-weight: 600;
-}
-.report-summary {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin: 16px;
-}
-
-.summary-item {
-  background: #f8f9fb;
-  border-radius: 14px;
-  padding: 12px;
-  text-align: center;
-}
-
-.summary-label {
-  font-size: 0.85rem;
-  color: #666;
-}
-
-.summary-value {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin-top: 4px;
-}
-@media (max-width: 768px) {
-  .report-table {
     display: none;
-  }
-
-  .report-results {
-    padding: 10px;
-  }
+}
 }
 /* ===== FIX SCROLL + TECLADO EN NUEVO VIAJE ===== */
 
@@ -1162,17 +1033,39 @@ body {
     z-index: 1000;
 }
 /* ===== FIX DEFINITIVO MAIN SCREEN ===== */
-#mainScreen {
-    min-height: auto !important;
-    height: auto !important;
-    overflow-y: auto;
-}
+
 .logo-container {
     position: relative;
     margin-bottom: 30px;
 }
-#splashScreen.fade-out {
-    opacity: 0;
-    pointer-events: none;
-    display: none;
+
+/* ===============================
+   BODY – BASE DEFINITIVA
+=============================== */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(
+        135deg,
+        #eef2ff 0%,
+        #e6ebff 35%,
+        #dde3ff 70%,
+        #d6dcff 100%
+    );
+    color: #2f2f2f;
+}
+/* ===============================
+   MAIN SCREEN – DEFINITIVO
+=============================== */
+
+#mainScreen {
+    position: relative;
+    min-height: 100vh;
+    padding: 40px 20px 60px;
+    background: transparent;
+    overflow-y: auto;
+    z-index: 1;
 }
