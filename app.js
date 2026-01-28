@@ -1,3 +1,4 @@
+console.log("🔥 ESTE ES EL APP.JS REAL");
 
 // VARIABLES GLOBALES
 let travels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
@@ -295,22 +296,24 @@ function limpiarSeleccionRegular() {
 }
 
 // FUNCIONES DE NAVEGACIÓN - VERSIÓN CORREGIDA
-function showScreen(screenId) {
-    console.log('🎯 Mostrando pantalla:', screenId);
-    
-    // 1. Ocultar TODAS las pantallas
-    const allScreens = document.querySelectorAll('.screen');
-    allScreens.forEach(screen => {
-        screen.style.display = 'none';
-        screen.classList.remove('active');
+function showScreen(id) {
+    console.log("➡ Mostrando pantalla:", id);
+
+    document.querySelectorAll(".screen").forEach(screen => {
+        screen.style.display = "none";
+        screen.classList.remove("active");
     });
-    
-    // 2. Mostrar pantalla objetivo
-    const targetScreen = document.getElementById(screenId);
-    if (targetScreen) {
-        targetScreen.style.display = 'block';
-        targetScreen.classList.add('active');
-        console.log('✅ Pantalla activada:', screenId);
+
+    const target = document.getElementById(id);
+    if (target) {
+        target.style.display = "block";
+        target.classList.add("active");
+        console.log("✅ Pantalla activa:", id);
+    } else {
+        console.error("❌ Pantalla no encontrada:", id);
+    }
+}
+
         
         // 3. Actualizar datos específicos de cada pantalla
         if (screenId === 'mainScreen') {
@@ -1574,13 +1577,7 @@ function restaurarVistaNormal() {
     }
 }
 
-// 🎯 INICIALIZACIÓN SEGURA 
-document.addEventListener('DOMContentLoaded', function() {
-    window.reportesManager = new ReportesManager();
-    setTimeout(function() {
-        console.log('📊 Reportes de usuario inicializados');
-    }, 1000);
-});
+
 
 // 🆕 FUNCIONES PARA "MI SEMANA"
 function obtenerInicioSemana(fecha) {
@@ -1737,17 +1734,53 @@ function renderizarSemana() {
     }
 }
 
-// INICIALIZACIÓN
+
+// ============================================
+// 🚀 INICIALIZACIÓN ÚNICA Y CORREGIDA
+// ============================================
+
+let viajeActivo = JSON.parse(localStorage.getItem("viajeActivo") || "null");
+
+function iniciarViaje() {
+    const hora = new Date().toTimeString().slice(0,5);
+    viajeActivo = { departureTime: hora };
+    localStorage.setItem("viajeActivo", JSON.stringify(viajeActivo));
+    alert("🚍 Viaje iniciado a las " + hora);
+}
+
+function cerrarViaje() {
+    if (!viajeActivo) {
+        alert("❌ No hay viaje activo");
+        return;
+    }
+
+    const horaLlegada = new Date().toTimeString().slice(0,5);
+
+    const dep = document.getElementById("departureTimeTravels");
+    const arr = document.getElementById("arrivalTimeTravels");
+
+    if (dep && arr) {
+        dep.value = viajeActivo.departureTime;
+        arr.value = horaLlegada;
+    }
+
+    localStorage.removeItem("viajeActivo");
+    viajeActivo = null;
+
+    alert("🛑 Viaje cerrado a las " + horaLlegada);
+}
+
+// 🔥 INICIO GLOBAL DE LA APP
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📱 App.js cargado correctamente');
+
     updateTodayDate();
     updateSummary();
-    
-    // Configurar evento para importar datos
-    document.getElementById('backupFile')?.addEventListener('change', handleFileSelect);
-    
-    // Inicializar modo
     setMode('regular');
-    
-    console.log('✅ App completamente inicializada');
+
+    document.getElementById('backupFile')?.addEventListener('change', handleFileSelect);
+
+    // Inicializar reportes
+    window.reportesManager = new ReportesManager();
+    console.log('📊 Reportes listos');
 });
