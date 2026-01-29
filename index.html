@@ -557,81 +557,76 @@
 </div>
 
 <script>
-        <!-- 🆕 SCRIPT NUEVO PARA EL LOGIN -->
- // 🎯 FUNCIÓN PARA GUARDAR USUARIO (LOGIN)
-    function guardarUsuario() {
-        const numero = document.getElementById('userNumber').value.trim();
-        const nombre = document.getElementById('userName').value.trim();
-        const rol = document.getElementById('userRole').value;
-        
-        // Validar campos
-        if (!numero) {
-            alert('Por favor ingresa tu número de funcionario');
-            return;
-        }
-        
-        if (!nombre) {
-            alert('Por favor ingresa tu nombre');
-            return;
-        }
-        
-        // Guardar datos del usuario (usuario ya está declarado en app.js)
-        usuario = { 
-            numero: numero, 
-            nombre: nombre, 
-            rol: rol 
-        };
-        
-        // Guardar en localStorage
-        localStorage.setItem('travelUser', JSON.stringify(usuario));
-        
-        // Ocultar login y mostrar app principal
-        document.getElementById('loginScreen').classList.remove('active');
-        document.getElementById('mainScreen').classList.add('active');
-        
-        console.log('✅ Usuario guardado:', usuario);
+  
+// 🆕 SCRIPT LOGIN
+
+// 🎯 GUARDAR USUARIO
+function guardarUsuario() {
+    const numero = document.getElementById('userNumber').value.trim();
+    const nombre = document.getElementById('userName').value.trim();
+    const rol = document.getElementById('userRole').value;
+
+    if (!numero) {
+        alert('Por favor ingresa tu número de funcionario');
+        return;
     }
 
-    // 🎯 FUNCIÓN PARA CARGAR USUARIO AL INICIAR
-    function cargarUsuario() {
-        const usuarioGuardado = localStorage.getItem('travelUser');
-        
-        if (usuarioGuardado) {
-            // Usuario ya existe, cargar datos
-            usuario = JSON.parse(usuarioGuardado);
-            console.log('✅ Usuario cargado:', usuario);
-            
-            // Ocultar splash y mostrar app principal directamente
-            setTimeout(() => {
-                document.getElementById('splashScreen').classList.remove('active');
-                document.getElementById('mainScreen').classList.add('active');
-            }, 1000);
-            
-        } else {
-            // Primer uso, mostrar login después del splash
-            setTimeout(() => {
-                document.getElementById('splashScreen').classList.remove('active');
-                document.getElementById('loginScreen').classList.add('active');
-            }, 2000);
-        }
+    if (!nombre) {
+        alert('Por favor ingresa tu nombre');
+        return;
     }
 
-    // 🎯 FUNCIÓN PARA CORREGIR USUARIO (OPCIONAL)
-    function corregirUsuario() {
-        if (confirm('¿Deseas cambiar tus datos de usuario?\n\nEsto te llevará a la pantalla de configuración inicial.')) {
-            // Eliminar usuario guardado
-            localStorage.removeItem('travelUser');
-            // Ocultar app y mostrar login
-            document.getElementById('mainScreen').classList.remove('active');
+    usuario = { numero, nombre, rol };
+    localStorage.setItem('travelUser', JSON.stringify(usuario));
+
+    document.getElementById('loginScreen').classList.remove('active');
+    document.getElementById('mainScreen').classList.add('active');
+
+    console.log('Usuario guardado:', usuario);
+}
+
+// 🎯 CARGAR USUARIO
+function cargarUsuario() {
+    const usuarioGuardado = localStorage.getItem('travelUser');
+
+    if (usuarioGuardado) {
+        usuario = JSON.parse(usuarioGuardado);
+        console.log('Usuario cargado:', usuario);
+
+        setTimeout(() => {
+            document.getElementById('splashScreen').classList.remove('active');
+            document.getElementById('mainScreen').classList.add('active');
+        }, 1000);
+    } else {
+        setTimeout(() => {
+            document.getElementById('splashScreen').classList.remove('active');
             document.getElementById('loginScreen').classList.add('active');
-        }
+        }, 2000);
     }
+}
 
-   
-<!-- 🚗 TU SCRIPT ACTUAL -->
+// 🎯 RESETEAR USUARIO
+function corregirUsuario() {
+    if (confirm('¿Deseas cambiar tus datos?')) {
+        localStorage.removeItem('travelUser');
+        document.getElementById('mainScreen').classList.remove('active');
+        document.getElementById('loginScreen').classList.add('active');
+    }
+}
+</script> 
+
+
+<script src="core.js"></script>
+<!-- <script src="ui.js"></script> -->
+<!-- <script src="auth.js"></script> -->
+
+<script src="app_motor.js"></script>
 <script src="app.js"></script>
+
+
 </body>
 </html>
+
 
 
 
