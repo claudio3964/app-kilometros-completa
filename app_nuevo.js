@@ -1,212 +1,481 @@
-console.log("APP OK");
-alert("APP_NUEVO CARGADO OK");
+console.log("APP_NUEVO CARGADO (SERVICIOS LEGIBLES EN TABLA)");
 
-// ================== SISTEMA DE PANTALLAS ==================
-function showScreen(screenId) {
-  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-  const screen = document.getElementById(screenId);
-  if (screen) screen.classList.add("active");
+// =====================================================
+// ESTADO DE UI (solo visual)
+// =====================================================
+
+let servicioSeleccionado = null;
+
+// =====================================================
+// NAVEGACIÓN
+// =====================================================
+
+function showScreen(id){
+  document.querySelectorAll(".screen")
+    .forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
 }
 
-// ================== INICIO APP ==================
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("DOM READY");
+// =====================================================
+// NORMALIZACIÓN (DEBE IR ARRIBA)
+// =====================================================
 
-  // ===== REGISTRO / HOME =====
-  const driver = getDriver();
-  if (!driver) showScreen("registerScreen");
-  else showScreen("mainScreen");
+function normalizarTexto(txt) {
+  if (!txt) return "";
 
-  refreshOrderUI();
-  showDriver();
+  return txt
+    .toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
-  // ================== NAVEGACIÓN PRINCIPAL ==================
-  const btnNuevoViaje = document.getElementById("btnNuevoViaje");
-  if (btnNuevoViaje) btnNuevoViaje.onclick = () => showScreen("travelScreen");
+// =====================================================
+// JORNADA
+// =====================================================
 
-  const btnNuevaGuardia = document.getElementById("btnNuevaGuardia");
-  if (btnNuevaGuardia) btnNuevaGuardia.onclick = () => showScreen("guardScreen");
+function createOrderUI(){
+  const o = createOrder();   // CORE
 
-  const btnListaViajes = document.getElementById("btnListaViajes");
-  if (btnListaViajes) btnListaViajes.onclick = () => {
-    renderListaViajes();
-    showScreen("listaViajesScreen");
-  };
+  document.getElementById("ordenActivaInfo").innerText =
+    "🟢 Jornada activa: " + o.orderNumber;
 
-  const btnListaGuardias = document.getElementById("btnListaGuardias");
-  if (btnListaGuardias) btnListaGuardias.onclick = () => {
-    renderListaGuardias();
-    showScreen("listaGuardiasScreen");
-  };
+  alert("Jornada iniciada");
+}
 
-  const btnResumenDia = document.getElementById("btnResumenDia");
-  if (btnResumenDia) btnResumenDia.onclick = () => {
-    renderResumenDia();
-    showScreen("resumenDiaScreen");
-  };
+function closeActiveOrderUI(){
+  const o = closeActiveOrder(); // CORE
 
-  // ================== BOTONES VOLVER ==================
-  document.querySelectorAll(".btnVolverMain").forEach(btn => {
-    btn.onclick = () => showScreen("mainScreen");
-  });
+  if(!o){
+    alert("No hay jornada activa");
+    return;
+  }
 
-  // ================== JORNADA ==================
-  const btnStartDay = document.getElementById("btnStartDay");
-  if (btnStartDay) btnStartDay.onclick = () => {
-    const o = createOrder();
-    alert("Jornada iniciada: " + o.orderNumber);
-    refreshOrderUI();
-  };
+  document.getElementById("ordenActivaInfo").innerText =
+    "🔴 Sin jornada activa";
 
-  const btnEndDay = document.getElementById("btnEndDay");
-  if (btnEndDay) btnEndDay.onclick = () => {
-    if (!getActiveOrder()) return alert("No hay jornada activa");
-    if (!confirm("Finalizar jornada?")) return;
-    const o = closeActiveOrder();
-    alert("Jornada cerrada: " + o.orderNumber);
-    refreshOrderUI();
-  };
+  alert("Jornada cerrada");
+}
 
-  // ================== REGISTRO TERMINAL ==================
-  const btnRegister = document.getElementById("btnRegister");
-  if (btnRegister) btnRegister.onclick = () => {
-    const name = regName.value.trim();
-    const legajo = regLegajo.value.trim();
-    const company = regCompany.value.trim();
-    const pin = regPin.value.trim();
+// =====================================================
+// NUEVO VIAJE (ABRIR PANTALLA)
+// =====================================================
 
-    if (!name || !legajo || pin.length !== 4) return alert("Datos inválidos");
+function abrirViajeSimple(){
+  const o = getActiveOrder(); // CORE
 
-    initDriverProfile({ name, legajo, company, pin });
-    alert("Terminal registrada");
-    showScreen("mainScreen");
-  };
+  if(!o){
+    alert("Primero iniciá la jornada");
+    return;
+  }
 
-  // ================== VIAJES ==================
-  const destinoInput = document.getElementById("destinoInput");
-  const turnoInput = document.getElementById("turnoInput");
+  showScreen("travelScreen");
 
-  const btnGuardarViaje = document.getElementById("btnGuardarViaje");
-  if (btnGuardarViaje) btnGuardarViaje.onclick = () => {
-    if (!getActiveOrder()) return alert("No hay jornada activa");
+  document.getElementById("orderNumberTravels").value =
+    o.orderNumber;
 
-    const destino = destinoInput.value;
-    const turno = Number(turnoInput.value);
+  document.getElementById("originTravels").value = "Montevideo";
+  document.getElementById("destinationTravels").value = "";
+  document.getElementById("kmTravels").value = "";
+  document.getElementById("numeroServicio").value = "";
 
-    if (!destino) return alert("Seleccione destino");
+  servicioSeleccionado = null;
+}
 
-    // Primer viaje del día = toma Tome/Cese automático
-    const order = getActiveOrder();
-    const esPrimerViaje = order.travels.length === 0;
+// =====================================================
+// BUSCADOR DE RUTAS MEJORADO
+// =====================================================
 
-    addTravel(destino, turno, null);
+function buscarRutaCoincidente(textoUsuario) {
+  const buscado = normalizarTexto(textoUsuario);
 
-    if (esPrimerViaje) {
-      setTomeCese(true);
-      console.log("TOME/CESE AUTOMÁTICO ACTIVADO");
+  let candidataExacta = null;
+  let candidataConX = null;
+  let candidataParcial = null;
+
+  for (const ruta in ROUTES_CATALOG) {
+    const rutaNorm = normalizarTexto(ruta);
+    const partes = rutaNorm.split("→");
+    const destinoFinal = partes[1] ? partes[1].trim() : rutaNorm;
+
+    // === PRIORIDAD 1: DESTINO FINAL LIMPIO (sin "x") ===
+    if (destinoFinal.includes(buscado) && !destinoFinal.includes(" x ")) {
+      candidataExacta = {
+        ruta,
+        km: ROUTES_CATALOG[ruta]
+      };
+      break; // esta es la mejor posible
     }
 
-    alert("Viaje guardado");
-    showScreen("mainScreen");
-  };
+    // === PRIORIDAD 2: DESTINO FINAL CON "x" ===
+    if (destinoFinal.includes(buscado) && destinoFinal.includes(" x ")) {
+      candidataConX = {
+        ruta,
+        km: ROUTES_CATALOG[ruta]
+      };
+    }
 
-  // ================== GUARDIAS ==================
-  const btnGuardarGuardia = document.getElementById("btnGuardarGuardia");
-  if (btnGuardarGuardia) btnGuardarGuardia.onclick = () => {
-    if (!getActiveOrder()) return alert("No hay jornada activa");
+    // === PRIORIDAD 3: COINCIDENCIA EN TODA LA RUTA ===
+    if (rutaNorm.includes(buscado)) {
+      candidataParcial = {
+        ruta,
+        km: ROUTES_CATALOG[ruta]
+      };
+    }
+  }
 
-    const type = guardType.value;
-    const hours = parseFloat(guardHours.value);
-    if (!hours || hours <= 0) return alert("Ingrese horas válidas");
+  return candidataExacta || candidataConX || candidataParcial;
+}
+// =====================================================
+// BUSCAR MÚLTIPLES RUTAS PARA SUGERENCIAS
+// =====================================================
 
-    addGuard(type, hours);
-    alert("Guardia guardada");
-    showScreen("mainScreen");
-  };
-});
+function buscarMultiplesRutas(textoUsuario) {
+  const buscado = normalizarTexto(textoUsuario);
+  let resultados = [];
 
-// ================== UI INFO ==================
-function refreshOrderUI() {
-  const o = getActiveOrder();
-  const info = document.getElementById("ordenActivaInfo");
-  if (info) info.innerText = o ? "🟢 Jornada activa: " + o.orderNumber : "🔴 Sin jornada activa";
+  for (const ruta in ROUTES_CATALOG) {
+    const rutaNorm = normalizarTexto(ruta);
+    const partes = rutaNorm.split("→");
+    const destinoFinal = partes[1] ? partes[1].trim() : rutaNorm;
+
+    if (destinoFinal.includes(buscado) || rutaNorm.includes(buscado)) {
+      resultados.push({
+        rutaOriginal: ruta,
+        destinoFinal: destinoFinal,
+        km: ROUTES_CATALOG[ruta]
+      });
+    }
+  }
+
+  return resultados;
 }
 
-function showDriver() {
-  const d = getDriver();
-  const driverInfo = document.getElementById("driverInfo");
-  if (d && driverInfo) driverInfo.innerText = `Chofer: ${d.name} | Legajo: ${d.legajo}`;
-}
 
-// ================== LISTA VIAJES ==================
-function renderListaViajes() {
-  const container = document.getElementById("listaViajesContainer");
-  const order = getActiveOrder();
 
-  if (!order || order.travels.length === 0) {
-    container.innerHTML = "<p>No hay viajes registrados.</p>";
+function autoKmPorDestino(terminoDeEscribir = false) {
+  const input = document.getElementById("destinationTravels");
+  const texto = input.value;
+  const box = document.getElementById("sugerenciasRutas");
+
+  if (!texto) {
+    box.style.display = "none";
+    box.innerHTML = "";
     return;
   }
 
-  let html = `
-  <table width="100%" border="1" style="border-collapse:collapse;font-size:14px;">
-  <tr>
-    <th>#</th>
-    <th>Hora</th>
-    <th>Destino</th>
-    <th>Km Empresa</th>
-    <th>Acoplado</th>
-  </tr>`;
+  const matches = buscarMultiplesRutas(texto);
 
-  order.travels.forEach((v, i) => {
-    const hora = new Date(v.createdAt).toLocaleTimeString("es-UY", { hour: "2-digit", minute: "2-digit" });
+  if (matches.length === 0) {
+    box.style.display = "none";
+    box.innerHTML = "";
+    return;
+  }
 
-    html += `
-    <tr>
-      <td>${i + 1}</td>
-      <td>${hora}</td>
+  box.style.display = "block";
+  box.innerHTML = "";
+
+  matches.forEach(m => {
+    const div = document.createElement("div");
+    div.style.padding = "8px";
+    div.style.cursor = "pointer";
+    div.style.borderBottom = "1px solid #eee";
+
+    div.innerText = `${m.destinoFinal} (${m.km} km)`;
+
+    div.onclick = () => {
+      input.value = m.destinoFinal;
+      document.getElementById("kmTravels").value = m.km;
+      box.style.display = "none";
+      box.innerHTML = "";
+    };
+
+    box.appendChild(div);
+  });
+
+  const matchUnico = buscarRutaCoincidente(texto);
+  if (matchUnico) {
+    document.getElementById("kmTravels").value = matchUnico.km;
+
+    if (terminoDeEscribir) {
+      const partes = matchUnico.ruta.split("→");
+      const destinoFinal = partes[1].trim();
+      input.value = destinoFinal;
+      box.style.display = "none";
+    }
+  }
+}
+
+
+
+
+// =====================================================
+// SERVICIO (UI → CORE)
+// =====================================================
+
+function actualizarInfoServicio(){
+  const sel = document.getElementById("numeroServicio").value;
+
+  if(!sel){
+    servicioSeleccionado = null;
+    return;
+  }
+
+  let turno = 1;
+  let esGuardiaEspecial = false;
+
+  if(sel === "SEMI") turno = 2;
+  if(sel === "DIRECTO") turno = 3;
+
+  if(sel === "EXPRESO"){
+    turno = 1;
+  }
+
+  if(sel === "CONTRATADO"){
+    turno = 1; 
+    esGuardiaEspecial = true;
+  }
+
+  servicioSeleccionado = {
+    tipo: sel,
+    turno,
+    esGuardiaEspecial
+  };
+}
+
+// =====================================================
+// GUARDAR VIAJE → CORE
+// =====================================================
+
+function addTravelUI(event){
+  event.preventDefault();
+
+  const o = getActiveOrder();
+  if(!o){
+    alert("No hay jornada activa");
+    return;
+  }
+
+  if(!servicioSeleccionado){
+    alert("Seleccioná un servicio válido");
+    return;
+  }
+
+  const destino =
+    document.getElementById("destinationTravels").value.trim();
+
+  if(!destino){
+    alert("Escribí el destino");
+    return;
+  }
+
+  const ok = addTravel(destino, servicioSeleccionado.turno);
+
+  if(!ok){
+    alert("No se pudo guardar el viaje en el core");
+    return;
+  }
+
+  if(servicioSeleccionado.esGuardiaEspecial){
+    addGuard("especial", 1);
+  }
+
+  const orders = getOrders();
+  const ultima = orders[orders.length - 1];
+  const ultimoViaje = ultima.travels[ultima.travels.length - 1];
+
+  ultimoViaje.servicioUI = servicioSeleccionado.tipo;
+  saveOrders(orders);
+
+  renderListaViajes();
+  renderResumenDia();
+
+  alert("Viaje guardado en la jornada real");
+
+  showScreen("mainScreen");
+}
+
+// =====================================================
+// LISTA DE VIAJES
+// =====================================================
+
+function renderListaViajes(){
+  const tbody =
+    document.getElementById("listaViajesContainer");
+
+  tbody.innerHTML = "";
+
+  const orders = getOrders();
+  if(!orders || orders.length === 0) return;
+
+  const o = orders[orders.length - 1];
+  if(!o.travels || o.travels.length === 0) return;
+
+  o.travels.forEach((v,i) => {
+
+    let servicioTexto = v.servicioUI;
+
+    if(!servicioTexto){
+      if(v.turno === 1) servicioTexto = "TURNO";
+      if(v.turno === 2) servicioTexto = "SEMI";
+      if(v.turno === 3) servicioTexto = "DIRECTO";
+    }
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td>${new Date(v.createdAt).toLocaleTimeString()}</td>
       <td>${v.destino}</td>
       <td>${v.kmEmpresa}</td>
-      <td>${v.acoplado ? "🚌 SI" : "NO"}</td>
-    </tr>`;
-  });
+      <td>${servicioTexto}</td>
+      <td>${v.acoplado ? "SI" : "NO"}</td>
+      <td>—</td>
+    `;
 
-  html += "</table>";
-  container.innerHTML = html;
+    tbody.appendChild(tr);
+  });
 }
 
-// ================== LISTA GUARDIAS ==================
-function renderListaGuardias() {
-  const container = document.getElementById("listaGuardiasContainer");
-  const order = getActiveOrder();
+// =====================================================
+// RESUMEN DEL DÍA
+// =====================================================
 
-  if (!order || order.guards.length === 0) {
-    container.innerHTML = "<p>No hay guardias registradas.</p>";
+function renderResumenDia(){
+  const s = getTodaySummary(); // CORE
+
+  const resumen = `
+    <p><b>Kilómetros totales:</b> ${s.kmTotal}</p>
+    <p><b>Viajes con acoplado:</b> ${s.acoplados}</p>
+    <p><b>Horas de guardia:</b> ${s.guardiasHoras}</p>
+    <p><b>Monto del día:</b> $${Math.round(s.monto)}</p>
+  `;
+
+  const box = document.getElementById("resumenDia");
+  if(box) box.innerHTML = resumen;
+}
+
+// =====================================================
+// CARGA INICIAL
+// =====================================================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  const o = getActiveOrder();
+
+  if(o){
+    document.getElementById("ordenActivaInfo").innerText =
+      "🟢 Jornada activa: " + o.orderNumber;
+  }
+
+  // ✅ PONEMOS HOY POR DEFECTO EN GUARDIAS
+  const diaInput = document.getElementById("diaGuardia");
+if(diaInput){
+  diaInput.value = new Date().toISOString().split("T")[0];
+}
+
+
+  renderListaViajes();
+  renderResumenDia();
+});
+
+
+// =====================================================
+// GUARDIAS (UI → CORE)
+// =====================================================
+
+function addGuardUI(event){
+  event.preventDefault();
+
+  const o = getActiveOrder();
+  if(!o){
+    alert("Primero iniciá la jornada");
     return;
   }
 
-  let html = "<table border='1' width='100%'><tr><th>#</th><th>Tipo</th><th>Horas</th></tr>";
-  order.guards.forEach((g, i) => {
-    html += `<tr>
-      <td>${i + 1}</td>
-      <td>${g.type}</td>
-      <td>${g.hours}</td>
-    </tr>`;
+  const dia = document.getElementById("diaGuardia").value;
+  const inicio = document.getElementById("horaInicioGuardia").value;
+  const fin = document.getElementById("horaFinGuardia").value;
+  const tipo = document.getElementById("tipoGuardia").value;
+
+  if(!dia){
+    alert("Seleccioná el día");
+    return;
+  }
+
+  if(!inicio || !fin){
+    alert("Ingresá hora inicio y fin");
+    return;
+  }
+
+  if(!tipo){
+    alert("Elegí tipo de guardia");
+    return;
+  }
+
+  // 👉 ÚNICO cálculo que hace la UI: convertir inicio/fin → horas
+  const [hI, mI] = inicio.split(":").map(Number);
+  const [hF, mF] = fin.split(":").map(Number);
+
+  let horas = (hF + mF/60) - (hI + mI/60);
+
+  if(horas <= 0){
+    alert("La hora fin debe ser mayor que la de inicio");
+    return;
+  }
+
+  // 👉 Mandamos al CORE exactamente lo que espera
+  addGuard(tipo, horas);
+
+  renderResumenDia();
+  renderListaGuardias();
+
+  alert(`Guardia ${tipo} de ${horas.toFixed(2)} hs registrada`);
+
+  showScreen("mainScreen");
+}
+
+
+// =====================================================
+// LISTA DE GUARDIAS
+// =====================================================
+
+function renderListaGuardias(){
+  const tbody =
+    document.getElementById("listaGuardiasContainer");
+
+  tbody.innerHTML = "";
+
+  const orders = getOrders(); // CORE
+  if(!orders || orders.length === 0) return;
+
+  const o = orders[orders.length - 1]; // última jornada
+  if(!o.guards || o.guards.length === 0) return;
+
+  o.guards.forEach((g,i) => {
+
+    const tipoTexto =
+      g.type === "especial" ? "Especial" : "Común";
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td>${new Date(g.createdAt).toLocaleTimeString()}</td>
+      <td>${tipoTexto}</td>
+      <td>${g.hours.toFixed(2)}</td>
+    `;
+
+    tbody.appendChild(tr);
   });
-  html += "</table>";
-
-  container.innerHTML = html;
 }
 
-// ================== RESUMEN DEL DÍA ==================
-function renderResumenDia() {
-  const container = document.getElementById("resumenDiaContainer");
-  const s = getTodaySummary();
 
-  container.innerHTML = `
-    <p><b>Kilómetros:</b> ${s.kmTotal}</p>
-    <p><b>Acoplados:</b> ${s.acoplados}</p>
-    <p><b>Guardias (horas):</b> ${s.guardiasHoras}</p>
-    <p><b>Monto total:</b> $${Math.round(s.monto)}</p>
-  `;
-}
+
+
+
+
+
+
+
+
