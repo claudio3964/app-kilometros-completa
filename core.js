@@ -1,5 +1,5 @@
 "use strict";
-alert("CORE CARGADO");
+
 console.log("CORE OK");
 
 
@@ -17,21 +17,35 @@ const TOME_CESE_KM = 42.5;
 const ACOPLADO_EXTRA_KM = 30;
 const MONTO_VIATICO = 455;
 
-// ===== RUTAS EMPRESA =====
+// ===== RUTAS EMPRESA (CATÁLOGO BASE VALIDADO POR TABLA REAL) =====
 const ROUTES_CATALOG = {
+
+  // -------- PUNTA DEL ESTE --------
   "Montevideo → Punta del Este": 140,
   "Montevideo → Punta del Este x Piriápolis": 145,
   "Montevideo → Punta del Este x Pan de Azúcar y San Carlos": 155,
   "Montevideo → Punta del Este x Ruta 8 y 9": 165,
-  "Montevideo → Colonia": 178,
+
+  // -------- COSTA ESTE (CORREGIDOS) --------
   "Montevideo → Laguna Garzón": 183,
+  "Montevideo → Punta Negra": 112,
+  "Montevideo → Piriápolis": 97,
   "Montevideo → La Pedrera": 250,
+  "Montevideo → La Paloma": 280,
+
+  // -------- LARGA DISTANCIA --------
   "Montevideo → Chuy": 345,
-  "Punta del Este → Montevideo": 140,
-  "Colonia → Montevideo": 178,
-  "La Pedrera → Montevideo": 250,
-  "Chuy → Montevideo": 345
+  "Montevideo → Colonia": 178,
+
+  // -------- TRAMOS CORTOS DESDE PDP --------
+  "Punta del Este → Piriápolis": 48,
+  "Punta del Este → La Pedrera": 150,
+  "Punta del Este → Chuy": 235,
+  "Piriápolis → Cuchilla Alta": 30,
+  "Punta del Este → San Carlos (alcance)": 30
 };
+
+
 
 // ===== STORAGE =====
 const Storage = {
