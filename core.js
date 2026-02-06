@@ -2,11 +2,10 @@
 
 console.log("CORE OK");
 
-
-
 /* ================================
-   COT DRIVER CORE ENGINE v1.0
-   © Claudio Andrés 2026
+   COT DRIVER CORE ENGINE v1.2
+   (viáticos por jornada real,
+    usando horas de viajes + guardias)
 ================================ */
 
 // ===== CONFIG =====
@@ -17,7 +16,7 @@ const TOME_CESE_KM = 42.5;
 const ACOPLADO_EXTRA_KM = 30;
 const MONTO_VIATICO = 455;
 
-// ===== RUTAS EMPRESA (CATÁLOGO BASE VALIDADO POR TABLA REAL) =====
+// ===== RUTAS EMPRESA =====
 const ROUTES_CATALOG = {
 
   // -------- PUNTA DEL ESTE --------
@@ -26,7 +25,7 @@ const ROUTES_CATALOG = {
   "Montevideo → Punta del Este x Pan de Azúcar y San Carlos": 155,
   "Montevideo → Punta del Este x Ruta 8 y 9": 165,
 
-  // -------- COSTA ESTE (CORREGIDOS) --------
+  // -------- COSTA ESTE --------
   "Montevideo → Laguna Garzón": 183,
   "Montevideo → Punta Negra": 112,
   "Montevideo → Piriápolis": 97,
@@ -37,15 +36,13 @@ const ROUTES_CATALOG = {
   "Montevideo → Chuy": 345,
   "Montevideo → Colonia": 178,
 
-  // -------- TRAMOS CORTOS DESDE PDP --------
+  // -------- TRAMOS CORTOS --------
   "Punta del Este → Piriápolis": 48,
   "Punta del Este → La Pedrera": 150,
   "Punta del Este → Chuy": 235,
   "Piriápolis → Cuchilla Alta": 30,
   "Punta del Este → San Carlos (alcance)": 30
 };
-
-
 
 // ===== STORAGE =====
 const Storage = {
@@ -106,25 +103,36 @@ function closeActiveOrder(){
   return o;
 }
 
-// ===== VIAJES =====
-function addTravel(destino, turno){
-  const o=getActiveOrder();
+// ===== VIAJES (tu versión con origen) =====
+function addTravel(origen, destino, turno, departureTime, arrivalTime, hoursWorked){
+  const o = getActiveOrder();
   if(!o || o.closed) return false;
 
-  const kmEmpresa=ROUTES_CATALOG[destino]||0;
-  const acoplado=turno>=2;
-  const esPrimer=o.travels.length===0;
+  const rutaDirecta = `${origen} → ${destino}`;
+  const rutaInversa = `${destino} → ${origen}`;
+
+  let kmEmpresa = ROUTES_CATALOG[rutaDirecta];
+  if(!kmEmpresa){
+    kmEmpresa = ROUTES_CATALOG[rutaInversa] || 0;
+  }
+
+  const acoplado = turno >= 2;
+  const esPrimer = o.travels.length === 0;
 
   o.travels.push({
+    origen,
     destino,
     turno,
     kmEmpresa,
     acoplado,
     tomeCese: esPrimer,
+    departureTime,
+    arrivalTime,
+    hoursWorked,
     createdAt: Date.now()
   });
 
-  saveOrders(getOrders().map(x=>x.orderNumber===o.orderNumber?o:x));
+  saveOrders(getOrders().map(x=>x.orderNumber===o.orderNumber ? o : x));
   setActiveOrder(o);
   return true;
 }
@@ -139,24 +147,75 @@ function addGuard(type,hours){
   setActiveOrder(o);
 }
 
-// ===== CÁLCULOS =====
+// =====================================================
+// 🆕 CÁLCULO REAL DE JORNADA (viajes + guardias)
+// =====================================================
 function calcularHorasJornada(o){
-  if(o.travels.length===0) return 0;
-  const t=o.travels.map(v=>v.createdAt);
-  return (Math.max(...t)-Math.min(...t))/(1000*60*60);
+
+  let todasHoras = [];
+
+  // Horas de viajes
+  o.travels.forEach(v=>{
+    if(v.departureTime) todasHoras.push(v.departureTime);
+    if(v.arrivalTime) todasHoras.push(v.arrivalTime);
+  });
+
+  // Horas de guardias (si vienen de la UI)
+  o.guards.forEach(g=>{
+    if(g.inicio) todasHoras.push(g.inicio);
+    if(g.fin) todasHoras.push(g.fin);
+  });
+
+  if(todasHoras.length < 2) return 0;
+
+  todasHoras.sort();
+
+  const inicio = new Date(`2000-01-01T${todasHoras[0]}`);
+  const fin    = new Date(`2000-01-01T${todasHoras[todasHoras.length-1]}`);
+
+  let horasTrabajadas = (fin - inicio)/(1000*60*60);
+  if(horasTrabajadas < 0) horasTrabajadas += 24;
+
+  return horasTrabajadas;
 }
 
-function tocaFranja(o,h){ return o.travels.some(v=>new Date(v.createdAt).getHours()>=h); }
+// ¿Toca franja 14 o 23?
+function tocaFranja(o,h){
+  return o.travels.some(v => {
+    const hr = Number(v.departureTime?.split(":")[0] || 0);
+    return hr >= h;
+  });
+}
 
-// VIÁTICO REALISTA
+// =====================================================
+// 🆕 VIÁTICOS POR JORNADA (tu regla empresarial)
+// =====================================================
 function determinarViatico(o){
-  if(o.travels.length<2) return false;
-  const h=calcularHorasJornada(o);
-  const f14=tocaFranja(o,14);
-  const f23=tocaFranja(o,23);
-  return h>=9 || (f14&&h>=4) || (f23&&h>=4);
+
+  if(o.travels.length === 0) return 0;
+
+  const horasJornada = calcularHorasJornada(o);
+  const toca14 = tocaFranja(o,14);
+  const toca23 = tocaFranja(o,23);
+
+  let viaticos = 0;
+
+  // 1 viático si ≥ 9 horas
+  if(horasJornada >= 9){
+    viaticos = 1;
+  }
+
+  // 2 viáticos si ≥ 9 horas Y toca 14 Y toca 23
+  if(horasJornada >= 9 && toca14 && toca23){
+    viaticos = 2;
+  }
+
+  return viaticos;
 }
 
+// =====================================================
+// TOTALES DE LA ORDEN (CORREGIDO)
+// =====================================================
 function calculateOrderTotals(o){
   let kmViajes=0, kmAcoplados=0, kmGuardias=0;
 
@@ -166,21 +225,38 @@ function calculateOrderTotals(o){
   });
 
   o.guards.forEach(g=>{
-    kmGuardias+=g.hours*(g.type==="especial"?GUARDIA_ESPECIAL_KM_HORA:GUARDIA_COMUN_KM_HORA);
+    kmGuardias+=g.hours*(g.type==="especial"
+      ? GUARDIA_ESPECIAL_KM_HORA
+      : GUARDIA_COMUN_KM_HORA);
   });
 
-  const kmTomeCese=o.travels.some(t=>t.tomeCese)?TOME_CESE_KM:0;
-  const kmTotal=kmViajes+kmAcoplados+kmGuardias+kmTomeCese;
-  const montoKm=kmTotal*LAUDO_KM;
-  const viatico=determinarViatico(o)?MONTO_VIATICO:0;
+  const kmTomeCese =
+    o.travels.some(t=>t.tomeCese)?TOME_CESE_KM:0;
 
-  return {kmViajes,kmAcoplados,kmGuardias,kmTomeCese,kmTotal,monto:montoKm+viatico,viatico};
+  const kmTotal =
+    kmViajes + kmAcoplados + kmGuardias + kmTomeCese;
+
+  const montoKm = kmTotal * LAUDO_KM;
+
+  const cantidadViaticos = determinarViatico(o);
+  const viatico = cantidadViaticos * MONTO_VIATICO;
+
+  return {
+    kmViajes,
+    kmAcoplados,
+    kmGuardias,
+    kmTomeCese,
+    kmTotal,
+    monto: montoKm + viatico,
+    viaticos: cantidadViaticos
+  };
 }
 
-// ===== SUMMARY =====
+// ===== SUMMARY DEL DÍA =====
 function getTodaySummary(){
   const today=new Date().toISOString().split("T")[0];
   const orders=getOrders().filter(o=>o.date===today);
+
   let s={kmTotal:0,acoplados:0,guardiasHoras:0,monto:0};
 
   orders.forEach(o=>{

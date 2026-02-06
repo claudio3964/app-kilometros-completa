@@ -74,12 +74,20 @@
     <input id="orderNumberTravels" readonly>
 
     <label>Origen</label>
-    <input id="originTravels" value="Montevideo" readonly>
+<select id="originTravels">
+  <option value="Montevideo" selected>Montevideo</option>
+  <option value="Chuy">Chuy</option>
+  <option value="Punta del Este">Punta del Este</option>
+  <option value="Colonia">Colonia</option>
+  <option value="Piriápolis">Piriápolis</option>
+  <option value="Otro">Otro</option>
+</select>
+
 
     <label>Destino (escribí o pegá)</label>
     <input id="destinationTravels"
-           oninput="autoKmPorDestino(false)"
-           onblur="autoKmPorDestino(true)">
+       oninput="autoKmPorDestino(false)">
+
 
     <div id="sugerenciasRutas"
          style="border:1px solid #ccc;
@@ -103,6 +111,13 @@
 
     <label>Kilómetros (auto)</label>
     <input id="kmTravels" type="number" readonly>
+
+    <!-- ✅ NUEVO: HORAS DE VIAJE (CLAVE PARA VIÁTICOS) -->
+    <label>Hora salida</label>
+    <input id="departureTimeTravels" type="time">
+
+    <label>Hora llegada</label>
+    <input id="arrivalTimeTravels" type="time">
 
     <button type="submit">Guardar Viaje</button>
   </form>

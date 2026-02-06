@@ -127,6 +127,44 @@ function buscarRutaCoincidente(textoUsuario) {
   return candidataExacta || candidataConX || candidataParcial;
 }
 // =====================================================
+// CONECTOR DE KM (IDA / VUELTA) → UI
+// =====================================================
+function buscarKmRuta(origen, destino){
+  const rutaDirecta = `${origen} → ${destino}`;
+  const rutaInversa = `${destino} → ${origen}`;
+
+  if (ROUTES_CATALOG[rutaDirecta]) {
+    return ROUTES_CATALOG[rutaDirecta];
+  }
+
+  if (ROUTES_CATALOG[rutaInversa]) {
+    return ROUTES_CATALOG[rutaInversa];
+  }
+
+  // Si no existe, devolvemos 0 (pero no debería pasar)
+  console.warn("Ruta no encontrada:", rutaDirecta, "ni", rutaInversa);
+  return 0;
+}
+
+// =====================================================
+// NORMALIZAR Y DETECTAR RUTA DIRECTA O INVERSA
+// =====================================================
+function buscarKmRuta(origen, destino){
+  const rutaDirecta = `${origen} → ${destino}`;
+  const rutaInversa = `${destino} → ${origen}`;
+
+  if (ROUTES_CATALOG[rutaDirecta]) {
+    return ROUTES_CATALOG[rutaDirecta];
+  }
+
+  if (ROUTES_CATALOG[rutaInversa]) {
+    return ROUTES_CATALOG[rutaInversa];
+  }
+
+  return 0;
+}
+
+// =====================================================
 // BUSCAR MÚLTIPLES RUTAS PARA SUGERENCIAS
 // =====================================================
 
@@ -137,12 +175,24 @@ function buscarMultiplesRutas(textoUsuario) {
   for (const ruta in ROUTES_CATALOG) {
     const rutaNorm = normalizarTexto(ruta);
     const partes = rutaNorm.split("→");
-    const destinoFinal = partes[1] ? partes[1].trim() : rutaNorm;
 
-    if (destinoFinal.includes(buscado) || rutaNorm.includes(buscado)) {
+    const origen = partes[0]?.trim();
+    const destinoFinal = partes[1]?.trim();
+
+    // 👉 Coincidencia con destino final (ida)
+    if (destinoFinal && destinoFinal.includes(buscado)) {
       resultados.push({
         rutaOriginal: ruta,
         destinoFinal: destinoFinal,
+        km: ROUTES_CATALOG[ruta]
+      });
+    }
+
+    // 👉 NUEVO: también sugerir ORIGEN (clave para regresos)
+    if (origen && origen.includes(buscado)) {
+      resultados.push({
+        rutaOriginal: ruta,
+        destinoFinal: origen,   // 👈 lo mostramos como posible destino
         km: ROUTES_CATALOG[ruta]
       });
     }
@@ -153,10 +203,14 @@ function buscarMultiplesRutas(textoUsuario) {
 
 
 
+
 function autoKmPorDestino(terminoDeEscribir = false) {
   const input = document.getElementById("destinationTravels");
   const texto = input.value;
   const box = document.getElementById("sugerenciasRutas");
+
+  const origenActual =
+    document.getElementById("originTravels")?.value || "Montevideo";
 
   if (!texto) {
     box.style.display = "none";
@@ -175,6 +229,7 @@ function autoKmPorDestino(terminoDeEscribir = false) {
   box.style.display = "block";
   box.innerHTML = "";
 
+  // ======= LISTA DE SUGERENCIAS (CLIC FUNCIONAL) =======
   matches.forEach(m => {
     const div = document.createElement("div");
     div.style.padding = "8px";
@@ -183,9 +238,21 @@ function autoKmPorDestino(terminoDeEscribir = false) {
 
     div.innerText = `${m.destinoFinal} (${m.km} km)`;
 
-    div.onclick = () => {
+    div.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+
       input.value = m.destinoFinal;
-      document.getElementById("kmTravels").value = m.km;
+
+      let kmCalculado = buscarKmRuta(origenActual, m.destinoFinal);
+
+      // 👉 Si no existe ruta inversa, usamos el km del catálogo
+      if (!kmCalculado || kmCalculado === 0) {
+        kmCalculado = m.km;
+      }
+
+      document.getElementById("kmTravels").value = kmCalculado;
+
       box.style.display = "none";
       box.innerHTML = "";
     };
@@ -193,18 +260,31 @@ function autoKmPorDestino(terminoDeEscribir = false) {
     box.appendChild(div);
   });
 
+  // ======= COINCIDENCIA ÚNICA (AUTOCOMPLETADO) =======
   const matchUnico = buscarRutaCoincidente(texto);
   if (matchUnico) {
-    document.getElementById("kmTravels").value = matchUnico.km;
+    const partes = matchUnico.ruta.split("→");
+    const destinoFinal = partes[1].trim();
+
+    let kmCalculado = buscarKmRuta(origenActual, destinoFinal);
+
+    // 👉 Si no existe ruta inversa, usamos el km del catálogo
+    if (!kmCalculado || kmCalculado === 0) {
+      kmCalculado = matchUnico.km;
+    }
+
+    document.getElementById("kmTravels").value = kmCalculado;
 
     if (terminoDeEscribir) {
-      const partes = matchUnico.ruta.split("→");
-      const destinoFinal = partes[1].trim();
       input.value = destinoFinal;
       box.style.display = "none";
     }
   }
 }
+
+
+
+
 
 
 
@@ -256,30 +336,61 @@ function addTravelUI(event){
     return;
   }
 
+  const origen =
+    document.getElementById("originTravels").value.trim();   // ✅ NUEVO
+
+  const destino =
+    document.getElementById("destinationTravels").value.trim();
+
+  const departureTime =
+    document.getElementById("departureTimeTravels").value;
+
+  const arrivalTime =
+    document.getElementById("arrivalTimeTravels").value;
+
   if(!servicioSeleccionado){
     alert("Seleccioná un servicio válido");
     return;
   }
 
-  const destino =
-    document.getElementById("destinationTravels").value.trim();
-
-  if(!destino){
-    alert("Escribí el destino");
+  if(!origen || !destino){
+    alert("Completá origen y destino");
     return;
   }
 
-  const ok = addTravel(destino, servicioSeleccionado.turno);
+  if(!departureTime || !arrivalTime){
+    alert("Ingresá hora de salida y llegada");
+    return;
+  }
+
+  // === Cálculo de horas ===
+  const start = new Date(`2000-01-01T${departureTime}`);
+  const end   = new Date(`2000-01-01T${arrivalTime}`);
+
+  let hoursWorked = (end - start) / (1000 * 60 * 60);
+  if (hoursWorked < 0) hoursWorked += 24;
+
+  if (hoursWorked <= 0) {
+    alert("La hora de llegada debe ser posterior a la de salida");
+    return;
+  }
+
+  // 👉 AHORA ENVIAMOS ORIGEN TAMBIÉN AL CORE
+  const ok = addTravel(
+    origen,                 // ✅ NUEVO
+    destino,
+    servicioSeleccionado.turno,
+    departureTime,
+    arrivalTime,
+    hoursWorked
+  );
 
   if(!ok){
-    alert("No se pudo guardar el viaje en el core");
+    alert("No se pudo guardar el viaje");
     return;
   }
 
-  if(servicioSeleccionado.esGuardiaEspecial){
-    addGuard("especial", 1);
-  }
-
+  // Guardamos etiqueta de servicio para la tabla
   const orders = getOrders();
   const ultima = orders[orders.length - 1];
   const ultimoViaje = ultima.travels[ultima.travels.length - 1];
@@ -290,52 +401,12 @@ function addTravelUI(event){
   renderListaViajes();
   renderResumenDia();
 
-  alert("Viaje guardado en la jornada real");
+  alert("Viaje guardado en la jornada");
 
   showScreen("mainScreen");
 }
 
-// =====================================================
-// LISTA DE VIAJES
-// =====================================================
 
-function renderListaViajes(){
-  const tbody =
-    document.getElementById("listaViajesContainer");
-
-  tbody.innerHTML = "";
-
-  const orders = getOrders();
-  if(!orders || orders.length === 0) return;
-
-  const o = orders[orders.length - 1];
-  if(!o.travels || o.travels.length === 0) return;
-
-  o.travels.forEach((v,i) => {
-
-    let servicioTexto = v.servicioUI;
-
-    if(!servicioTexto){
-      if(v.turno === 1) servicioTexto = "TURNO";
-      if(v.turno === 2) servicioTexto = "SEMI";
-      if(v.turno === 3) servicioTexto = "DIRECTO";
-    }
-
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${i+1}</td>
-      <td>${new Date(v.createdAt).toLocaleTimeString()}</td>
-      <td>${v.destino}</td>
-      <td>${v.kmEmpresa}</td>
-      <td>${servicioTexto}</td>
-      <td>${v.acoplado ? "SI" : "NO"}</td>
-      <td>—</td>
-    `;
-
-    tbody.appendChild(tr);
-  });
-}
 
 // =====================================================
 // RESUMEN DEL DÍA
@@ -344,16 +415,31 @@ function renderListaViajes(){
 function renderResumenDia(){
   const s = getTodaySummary(); // CORE
 
+  // Calculamos cuántos viáticos hubo hoy sumando por orden
+  const today = new Date().toISOString().split("T")[0];
+  const ordersHoy = getOrders().filter(o => o.date === today);
+
+  let totalViaticosHoy = 0;
+
+  ordersHoy.forEach(o => {
+    if (o) {
+      const totales = calculateOrderTotals(o);
+      totalViaticosHoy += totales.viaticos || 0;
+    }
+  });
+
   const resumen = `
     <p><b>Kilómetros totales:</b> ${s.kmTotal}</p>
     <p><b>Viajes con acoplado:</b> ${s.acoplados}</p>
-    <p><b>Horas de guardia:</b> ${s.guardiasHoras}</p>
+    <p><b>Horas de guardia:</b> ${s.guardiasHoras.toFixed(2)}</p>
+    <p><b>Viáticos generados hoy:</b> ${totalViaticosHoy}</p>
     <p><b>Monto del día:</b> $${Math.round(s.monto)}</p>
   `;
 
   const box = document.getElementById("resumenDia");
   if(box) box.innerHTML = resumen;
 }
+
 
 // =====================================================
 // CARGA INICIAL
@@ -439,7 +525,7 @@ function addGuardUI(event){
     return;
   }
 
-  // ======= NUEVO: manejo de descripción para guardia especial =======
+  // ======= Manejo de descripción para guardia especial =======
   let descripcion = "";
 
   if(tipo === "especial"){
@@ -454,7 +540,7 @@ function addGuardUI(event){
   // 👉 Mandamos al CORE lo mínimo que espera (sin cambiar core)
   addGuard(tipo, horas);
 
-  // 👉 Ahora enriquecemos la última guardia con más datos útiles
+  // 👉 Enriquecemos la última guardia con más datos útiles
   const orders = getOrders();
   const ultima = orders[orders.length - 1];
   const ultimaGuardia = ultima.guards[ultima.guards.length - 1];
@@ -469,12 +555,86 @@ function addGuardUI(event){
   renderResumenDia();
   renderListaGuardias();
 
-  alert(`Guardia ${tipo} de ${horas.toFixed(2)} hs registrada`);
+  // ======= NUEVO: mensaje con viático en el alert =======
+  const totals = calculateOrderTotals(o);
+  const mensajeViatico =
+    totals.viatico > 0
+      ? "\n✅ Viático generado en esta jornada"
+      : "\nℹ️ Aún sin viático";
+
+  alert(
+    `Guardia ${tipo} de ${horas.toFixed(2)} hs registrada` +
+    mensajeViatico
+  );
 
   showScreen("mainScreen");
 }
+// =====================================================
+// LISTA DE VIAJES  (NUEVA VERSIÓN CON VIÁTICOS)
+// =====================================================
+function renderListaViajes(){
+  const tbody =
+    document.getElementById("listaViajesContainer");
 
+  tbody.innerHTML = "";
 
+  const orders = getOrders();
+  if(!orders || orders.length === 0) return;
+
+  const o = orders[orders.length - 1]; // última jornada activa
+  if(!o.travels || o.travels.length === 0) return;
+
+  // 👉 Viáticos calculados POR ORDEN desde el CORE
+  const totalesOrden = calculateOrderTotals(o);
+  const viaticosDeEstaOrden = totalesOrden.viatico || 0;
+
+  o.travels.forEach((v,i) => {
+
+    let servicioTexto = v.servicioUI;
+
+    if(!servicioTexto){
+      if(v.turno === 1) servicioTexto = "TURNO";
+      if(v.turno === 2) servicioTexto = "SEMI";
+      if(v.turno === 3) servicioTexto = "DIRECTO";
+    }
+
+    const esUltimoViaje = (i === o.travels.length - 1);
+
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${i+1}</td>
+
+      <td>
+        ${v.departureTime || new Date(v.createdAt).toLocaleTimeString()}
+        -
+        ${v.arrivalTime || ""}
+      </td>
+
+      <td>
+        ${v.origen || "Montevideo"} → ${v.destino}
+      </td>
+
+      <td>${v.kmEmpresa}</td>
+
+      <td>${servicioTexto}</td>
+
+      <td>${v.acoplado ? "SI" : "NO"}</td>
+
+      <td>
+        ${
+          esUltimoViaje && viaticosDeEstaOrden > 0
+          ? `<span style="color:green;font-weight:bold;">
+               💰 Viáticos: ${viaticosDeEstaOrden}
+             </span>`
+          : "—"
+        }
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
 
 // =====================================================
 // LISTA DE GUARDIAS
