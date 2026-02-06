@@ -157,11 +157,20 @@
     <input id="horaFinGuardia" type="time">
 
     <label>Tipo de guardia</label>
-    <select id="tipoGuardia">
+    <select id="tipoGuardia" onchange="manejarDescripcionGuardia()">
+
       <option value="">Elegí tipo...</option>
       <option value="comun">Guardia común</option>
       <option value="especial">Guardia especial</option>
     </select>
+
+    <!-- 👉 NUEVO: descripción solo para guardia especial -->
+    <div id="boxDescripcionGuardia" style="display:none; margin-top:10px;">
+      <label>Descripción (solo para guardia especial)</label>
+      <input 
+        id="descripcionGuardia"
+        placeholder="Ej: Pista, Taller, Espera, etc.">
+    </div>
 
     <button type="submit">Guardar Guardia</button>
 
@@ -177,13 +186,17 @@
 
   <table border="1" width="100%">
     <thead>
-      <tr>
-        <th>#</th>
-        <th>Hora</th>
-        <th>Tipo</th>
-        <th>Horas</th>
-      </tr>
-    </thead>
+  <tr>
+    <th>#</th>
+    <th>Día</th>
+    <th>Horario</th>
+    <th>Horas</th>
+    <th>Km Guardia</th>
+    <th>Tipo</th>
+    <th>Descripción</th>
+  </tr>
+</thead>
+
     <tbody id="listaGuardiasContainer"></tbody>
   </table>
 

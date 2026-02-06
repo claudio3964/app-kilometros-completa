@@ -379,6 +379,21 @@ if(diaInput){
   renderResumenDia();
 });
 
+// =====================================================
+// CONTROL VISUAL DE DESCRIPCIÓN DE GUARDIA
+// =====================================================
+
+function manejarDescripcionGuardia(){
+  const tipo = document.getElementById("tipoGuardia").value;
+  const box = document.getElementById("boxDescripcionGuardia");
+
+  if(tipo === "especial"){
+    box.style.display = "block";
+  } else {
+    box.style.display = "none";
+    document.getElementById("descripcionGuardia").value = "";
+  }
+}
 
 // =====================================================
 // GUARDIAS (UI → CORE)
@@ -424,8 +439,32 @@ function addGuardUI(event){
     return;
   }
 
-  // 👉 Mandamos al CORE exactamente lo que espera
+  // ======= NUEVO: manejo de descripción para guardia especial =======
+  let descripcion = "";
+
+  if(tipo === "especial"){
+    descripcion = document.getElementById("descripcionGuardia").value.trim();
+
+    if(!descripcion){
+      alert("Si es guardia especial, debés completar la descripción");
+      return;
+    }
+  }
+
+  // 👉 Mandamos al CORE lo mínimo que espera (sin cambiar core)
   addGuard(tipo, horas);
+
+  // 👉 Ahora enriquecemos la última guardia con más datos útiles
+  const orders = getOrders();
+  const ultima = orders[orders.length - 1];
+  const ultimaGuardia = ultima.guards[ultima.guards.length - 1];
+
+  ultimaGuardia.descripcion = descripcion;
+  ultimaGuardia.dia = dia;
+  ultimaGuardia.inicio = inicio;
+  ultimaGuardia.fin = fin;
+
+  saveOrders(orders);
 
   renderResumenDia();
   renderListaGuardias();
@@ -434,6 +473,7 @@ function addGuardUI(event){
 
   showScreen("mainScreen");
 }
+
 
 
 // =====================================================
@@ -457,13 +497,26 @@ function renderListaGuardias(){
     const tipoTexto =
       g.type === "especial" ? "Especial" : "Común";
 
+    // 👉 Cálculo de KM por guardia (sin tocar el core)
+    const kmGuardia =
+      g.hours * (g.type === "especial" ? 40 : 30);
+
+    // Formateo de horario (si existen inicio/fin)
+    const horario =
+      g.inicio && g.fin
+        ? `${g.inicio} – ${g.fin}`
+        : new Date(g.createdAt).toLocaleTimeString();
+
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
       <td>${i+1}</td>
-      <td>${new Date(g.createdAt).toLocaleTimeString()}</td>
-      <td>${tipoTexto}</td>
+      <td>${g.dia || new Date(g.createdAt).toLocaleDateString()}</td>
+      <td>${horario}</td>
       <td>${g.hours.toFixed(2)}</td>
+      <td>${kmGuardia.toFixed(0)} km</td>
+      <td>${tipoTexto}</td>
+      <td>${g.descripcion || "—"}</td>
     `;
 
     tbody.appendChild(tr);
