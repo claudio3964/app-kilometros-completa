@@ -100,14 +100,16 @@
     </div>
 
     <label>Servicio</label>
-    <select id="numeroServicio" onchange="actualizarInfoServicio()">
-      <option value="">Elegí servicio...</option>
-      <option value="TURNO">Turno</option>
-      <option value="SEMI">Semi-directo</option>
-      <option value="DIRECTO">Directo (con acoplado)</option>
-      <option value="EXPRESO">Expreso / Vacío</option>
-      <option value="CONTRATADO">Contratado (Guardia especial)</option>
-    </select>
+<select id="numeroServicio" onchange="actualizarInfoServicio()">
+  <option value="">Elegí servicio...</option>
+  <option value="TURNO">Turno</option>
+  <option value="SEMI">Semi-directo</option>
+  <option value="DIRECTO">Directo (con acoplado)</option>
+  <option value="EXPRESO">Expreso / Vacío</option>
+  <option value="CONTRATADO">Contratado (Guardia especial)</option>
+  <option value="PASAJERO">Pasajero</option>
+</select>
+
 
     <label>Kilómetros (auto)</label>
     <input id="kmTravels" type="number" readonly>
@@ -118,6 +120,13 @@
 
     <label>Hora llegada</label>
     <input id="arrivalTimeTravels" type="time">
+<!-- ✅ NUEVO: opción ida y vuelta automática -->
+<div style="margin:10px 0; padding:8px; border:1px solid #ddd; border-radius:6px;">
+  <label>
+    <input type="checkbox" id="idaYVueltaAuto">
+    Generar vuelta automática
+  </label>
+</div>
 
     <button type="submit">Guardar Viaje</button>
   </form>

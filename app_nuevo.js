@@ -215,7 +215,7 @@ function autoKmPorDestino(terminoDeEscribir = false) {
   if (!texto) {
     box.style.display = "none";
     box.innerHTML = "";
-    return;
+    return;gi
   }
 
   const matches = buscarMultiplesRutas(texto);
@@ -316,6 +316,12 @@ function actualizarInfoServicio(){
     esGuardiaEspecial = true;
   }
 
+  // 👉 NUEVO: CASO PASAJERO (mínimo y limpio)
+  if(sel === "PASAJERO"){
+    turno = 1;          // viaje normal en km
+    esGuardiaEspecial = false; // no es guardia
+  }
+
   servicioSeleccionado = {
     tipo: sel,
     turno,
@@ -337,7 +343,7 @@ function addTravelUI(event){
   }
 
   const origen =
-    document.getElementById("originTravels").value.trim();   // ✅ NUEVO
+    document.getElementById("originTravels").value.trim();
 
   const destino =
     document.getElementById("destinationTravels").value.trim();
@@ -347,6 +353,9 @@ function addTravelUI(event){
 
   const arrivalTime =
     document.getElementById("arrivalTimeTravels").value;
+
+  const idaYVueltaAuto =
+    document.getElementById("idaYVueltaAuto").checked;
 
   if(!servicioSeleccionado){
     alert("Seleccioná un servicio válido");
@@ -363,7 +372,7 @@ function addTravelUI(event){
     return;
   }
 
-  // === Cálculo de horas ===
+  // === Cálculo de horas de la IDA ===
   const start = new Date(`2000-01-01T${departureTime}`);
   const end   = new Date(`2000-01-01T${arrivalTime}`);
 
@@ -375,9 +384,9 @@ function addTravelUI(event){
     return;
   }
 
-  // 👉 AHORA ENVIAMOS ORIGEN TAMBIÉN AL CORE
+  // ===== 1) GUARDAMOS LA IDA =====
   const ok = addTravel(
-    origen,                 // ✅ NUEVO
+    origen,
     destino,
     servicioSeleccionado.turno,
     departureTime,
@@ -390,23 +399,64 @@ function addTravelUI(event){
     return;
   }
 
-  // Guardamos etiqueta de servicio para la tabla
+  // Etiqueta UI
+  const orders = getOrders();
+  const ultima = orders[orders.length - 1];
+  const ultimoViaje = ultima.travels[ultima.travels.length - 1];
+  ultimoViaje.servicioUI = servicioSeleccionado.tipo;
+  saveOrders(orders);
+
+  // ===== 2) SI PIDIÓ VUELTA AUTOMÁTICA =====
+  if(idaYVueltaAuto){
+
+    // Calculamos hora sugerida de salida (5 min después)
+    const salidaVuelta = arrivalTime;
+
+    // Sugerimos misma duración que la ida
+    const llegadaSugerida = new Date(
+      new Date(`2000-01-01T${arrivalTime}`).getTime() +
+      hoursWorked * 60 * 60 * 1000
+    )
+    .toISOString()
+    .substring(11,16);
+
+    // Cargamos formulario para la vuelta
+    document.getElementById("originTravels").value = destino;
+    document.getElementById("destinationTravels").value = origen;
+    document.getElementById("departureTimeTravels").value = salidaVuelta;
+    document.getElementById("arrivalTimeTravels").value = llegadaSugerida;
+
+    // Recalculamos km con tu buscador ida/vuelta
+    const kmCalculado = buscarKmRuta(destino, origen);
+    document.getElementById("kmTravels").value = kmCalculado;
+
+    alert("👉 Ahora registrá la VUELTA automática y guardá.");
+    return; // NO volvemos al main
+  }
+
+  // ===== SI NO QUIERE VUELTA =====
+  renderListaViajes();
+  renderResumenDia();
+  alert("Viaje guardado en la jornada");
+  showScreen("mainScreen");
+}
+
+
+  // Guardamos etiqueta visible para la tabla
   const orders = getOrders();
   const ultima = orders[orders.length - 1];
   const ultimoViaje = ultima.travels[ultima.travels.length - 1];
 
-  ultimoViaje.servicioUI = servicioSeleccionado.tipo;
+  ultimoViaje.servicioUI = servicioSeleccionado.tipo; // TURNO / DIRECTO / PASAJERO / etc.
   saveOrders(orders);
 
   renderListaViajes();
   renderResumenDia();
 
-  alert("Viaje guardado en la jornada");
+  alert(`Viaje ${servicioSeleccionado.tipo} guardado en la jornada`);
 
   showScreen("mainScreen");
 }
-
-
 
 // =====================================================
 // RESUMEN DEL DÍA
