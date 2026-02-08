@@ -1,39 +1,65 @@
 {
-  "name": "Control de Kilómetros",
-  "short_name": "COT",
-  "description": "App para registrar kilómetros, guardias y generar reportes",
-  "start_url": "./",
-  "scope": "./",
+  "name": "Gestión de Viajes",
+  "short_name": "GViajes",
+  "description": "Sistema profesional para control de kilómetros, viajes y guardias",
+  "start_url": "/app-kilometros-completa/",
+  "scope": "/app-kilometros-completa/",
   "display": "standalone",
   "background_color": "#FFFFFF",
-  "theme_color": "#D4A017",
+  "theme_color": "#667eea",
   "orientation": "portrait-primary",
-  "categories": ["productivity", "business"],
-  "prefer_related_applications": false,
-  "icons": [
+  "categories": ["business", "productivity", "utilities"],
+ "icons": [
+  {
+    "src": "icons/icon-72.png",
+    "sizes": "72x72",
+    "type": "image/png",
+    "purpose": "any"
+  },
+  {
+    "src": "icons/icon-192.png",
+    "sizes": "192x192", 
+    "type": "image/png",
+    "purpose": "any maskable"
+  },
+  {
+    "src": "icons/icon-512.png",
+    "sizes": "512x512",
+    "type": "image/png", 
+    "purpose": "any maskable"
+  },
+  {
+    "src": "icons/maskable-512.png",
+    "sizes": "512x512",
+    "type": "image/png",
+    "purpose": "maskable"
+  }
+],
+  "screenshots": [
     {
-      "src": "icons/icon-72.png",
-      "sizes": "72x72",
+      "src": "screenshots/screenshot1.png",
+      "sizes": "1280x720",
       "type": "image/png",
-      "purpose": "any"
+      "description": "Pantalla principal de la aplicación"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nuevo Viaje",
+      "short_name": "Viaje",
+      "description": "Registrar un nuevo viaje",
+      "url": "/app-kilometros-completa/?screen=travel",
+      "icons": [{ "src": "icons/route-icon.png", "sizes": "96x96" }]
     },
     {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable any"
+      "name": "Nueva Guardia",
+      "short_name": "Guardia",
+      "description": "Registrar una nueva guardia",
+      "url": "/app-kilometros-completa/?screen=guard",
+      "icons": [{ "src": "icons/guard-icon.png", "sizes": "96x96" }]
     }
   ]
 }
+
+
+

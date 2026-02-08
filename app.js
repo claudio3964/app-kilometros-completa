@@ -1,291 +1,156 @@
 console.log("🔥 ESTE ES EL APP.JS REAL");
 
-// VARIABLES GLOBALES
 let travels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
-let favoriteDestinations = JSON.parse(localStorage.getItem('bus_favorites') || '[]');
-let usuario = JSON.parse(localStorage.getItem('travelUser') || '{"nombre": "Conductor", "numero": "000", "rol": "driver"}');
+let guards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
 
-// ===== SISTEMA INTELIGENTE DE VIAJES =====
-const serviciosDB = {
-    // DESDE MONTEVIDEO
-    "MVD-PDE": {
-        nombre: "Montevideo → Punta del Este",
-        servicios: [
-            { numero: "Turno", tipo: "TURNO", acoplado: false, reglas: "Primer coche - No genera acoplado" },
-            { numero: "2", tipo: "SEMI-DIRECTO", acoplado: false, reglas: "Semi directo - No genera acoplado" },
-            { numero: "3", tipo: "DIRECTO", acoplado: true, reglas: "Directo Pde - Genera acoplado" },
-            { numero: "51", tipo: "PAN AZUCAR - SAN CARLOS", acoplado: true, reglas: "Por Pan de Azúcar y San Carlos" },
-            { numero: "31", tipo: "RUTA 8/9 - PAN AZUCAR - SAN CARLOS", acoplado: true, reglas: "Por Ruta 8 y 9, Pan de Azúcar y San Carlos" }
-        ]
-    },
-    "MVD-PIRIAPOLIS": {
-        nombre: "Montevideo → Piriapolis",
-        servicios: [
-            { numero: "1", tipo: "TURNO", acoplado: false, reglas: "Primer coche - No genera acoplado" },
-            { numero: "4", tipo: "DIRECTO", acoplado: true, reglas: "Directo a Piriapolis - Genera acoplado" }
-        ]
-    },
-    "MVD-COLONIA": {
-        nombre: "Montevideo → Colonia",
-        servicios: [
-            { numero: "11", tipo: "TURNO", acoplado: false, reglas: "Servicio regular - No genera acoplado" },
-            { numero: "12", tipo: "DIRECTO", acoplado: true, reglas: "Directo a Colonia - Genera acoplado" }
-        ]
-    },
-    "MVD-CHUY": {
-        nombre: "Montevideo → Chuy",
-        servicios: [
-            { numero: "41", tipo: "TURNO", acoplado: false, reglas: "Servicio regular - No genera acoplado" },
-            { numero: "42", tipo: "DIRECTO", acoplado: true, reglas: "Directo a Chuy - Genera acoplado" }
-        ]
-    },
-    "MVD-PEDRERA": {
-        nombre: "Montevideo → La Pedrera",
-        servicios: [
-            { numero: "21", tipo: "TURNO", acoplado: false, reglas: "Servicio regular - No genera acoplado" },
-            { numero: "22", tipo: "DIRECTO", acoplado: true, reglas: "Directo a La Pedrera - Genera acoplado" }
-        ]
-    },
-    "MVD-GARZON": {
-        nombre: "Montevideo → Laguna Garzón",
-        servicios: [
-            { numero: "2", tipo: "TURNO", acoplado: false, reglas: "Servicio regular - No genera acoplado" }
-        ]
-    },
-    "MVD-PUNTA-NEGRA": {
-        nombre: "Montevideo → Punta Negra",
-        servicios: [
-            { numero: "1", tipo: "TURNO", acoplado: false, reglas: "Directo a Punta Negra - No genera acoplado" }
-        ]
-    },
+let usuario = JSON.parse(
+    localStorage.getItem('travelUser') || 'null'
+);
 
-    // HACIA MONTEVIDEO
-    "PDE-MVD": {
-        nombre: "Punta del Este → Montevideo",
-        servicios: [
-            { numero: "Turno", tipo: "TURNO", acoplado: false, reglas: "Primer coche - No genera acoplado" },
-            { numero: "2", tipo: "SEMI-DIRECTO", acoplado: false, reglas: "Semi directo - No genera acoplado" },
-            { numero: "3", tipo: "DIRECTO", acoplado: true, reglas: "Directo a Montevideo - Genera acoplado" },
-            { numero: "31", tipo: "RUTA 8/9", acoplado: true, reglas: "Por Ruta 8 y 9 - Genera acoplado" },
-            { numero: "51", tipo: "SAN CARLOS - PAN AZUCAR", acoplado: true, reglas: "Por San Carlos y Pan de Azúcar - Genera acoplado" }
-        ]
-    },
-    "PIRIAPOLIS-MVD": {
-        nombre: "Piriapolis → Montevideo",
-        servicios: [
-            { numero: "41", tipo: "TURNO", acoplado: false, reglas: "Servicio regular - No genera acoplado" }
-        ]
-    },
-    "COLONIA-MVD": {
-        nombre: "Colonia → Montevideo",
-        servicios: [
-            { numero: "1", tipo: "TURNO", acoplado: false, reglas: "Servicio regular - No genera acoplado" },
-            { numero: "2", tipo: "DIRECTO", acoplado: true, reglas: "Directo a Montevideo - Genera acoplado" }
-        ]
-    },
-    "CHUY-MVD": {
-        nombre: "Chuy → Montevideo",
-        servicios: [
-            { numero: "61", tipo: "TURNO", acoplado: false, reglas: "Servicio regular - No genera acoplado" }
-        ]
-    },
-    "PEDRERA-MVD": {
-        nombre: "La Pedrera → Montevideo",
-        servicios: [
-            { numero: "1", tipo: "TURNO", acoplado: false, reglas: "Directo a Montevideo - No genera acoplado" }
-        ]
-    },
-    "GARZON-MVD": {
-        nombre: "Laguna Garzón → Montevideo",
-        servicios: [
-            { numero: "81", tipo: "TURNO", acoplado: false, reglas: "Servicio regular - No genera acoplado" }
-        ]
-    },
-    "PUNTA-NEGRA-MVD": {
-        nombre: "Punta Negra → Montevideo",
-        servicios: [
-            { numero: "11", tipo: "TURNO", acoplado: false, reglas: "Directo a Montevideo - No genera acoplado" }
-        ]
-    },
-    "MALDONADO-MVD": {
-        nombre: "Maldonado Terminal → Montevideo",
-        servicios: [
-            { numero: "21", tipo: "DIRECTO", acoplado: true, reglas: "Directo desde Maldonado" },
-            { numero: "22", tipo: "DIRECTO", acoplado: true, reglas: "Directo desde Maldonado" }
-        ]
-    }
-};
-
-// VARIABLES DEL SISTEMA INTELIGENTE
+// estado de viaje
 let rutaSeleccionada = null;
 let servicioSeleccionado = null;
 let modoActual = 'regular';
 
-// 🆕 SISTEMA DE AUTO-DETECCIÓN DE RUTAS
-function detectarYCrearRuta(origin, destination, numeroServicio, tipoServicio, conAcoplado) {
-    const rutaKey = `${origin.toUpperCase().replace(/ /g, '_')}-${destination.toUpperCase().replace(/ /g, '_')}`;
-    
-    // Si la ruta ya existe, no hacer nada
-    if (serviciosDB[rutaKey]) {
-        return rutaKey;
-    }
-    
-    // CREAR NUEVA RUTA AUTOMÁTICAMENTE
-    serviciosDB[rutaKey] = {
-        nombre: `${origin} → ${destination}`,
-        servicios: [
-            { 
-                numero: numeroServicio, 
-                tipo: tipoServicio, 
-                acoplado: conAcoplado, 
-                reglas: "Ruta creada automáticamente por el sistema" 
-            }
-        ]
-    };
-    
-    console.log(`✅ Nueva ruta creada: ${rutaKey}`);
-    return rutaKey;
-}
+/* ===============================
+   3. SISTEMA DE PANTALLAS (BLINDADO)
+=============================== */
 
-// 🆕 FUNCIÓN PARA AGREGAR DESTINO MANUAL
-function agregarDestinoManual() {
-    const origin = prompt('Origen (ej: Montevideo):');
-    const destination = prompt('Destino (ej: Punta Negra):');
-    const numeroServicio = prompt('Número de servicio (ej: 11):');
-    const tipoServicio = prompt('Tipo de servicio (ej: TURNO, DIRECTO):') || 'TURNO';
-    const conAcoplado = confirm('¿Genera acoplado?');
-    
-    if (origin && destination && numeroServicio) {
-        const rutaKey = detectarYCrearRuta(origin, destination, numeroServicio, tipoServicio, conAcoplado);
-        alert(`✅ Destino agregado: ${origin} → ${destination}`);
-        
-        // Opcional: Cambiar a modo regular y seleccionar la nueva ruta
-        setMode('regular');
-        seleccionarRuta(rutaKey);
-    } else {
-        alert('❌ Faltan datos obligatorios');
-    }
-}
+function showScreen(screenId) {
+    console.log('🎯 showScreen →', screenId);
 
-// FUNCIONES DEL SISTEMA INTELIGENTE
-function setMode(modo) {
-    modoActual = modo;
-    
-    // Actualizar botones
-    document.getElementById('btnRegular').classList.toggle('active', modo === 'regular');
-    document.getElementById('btnContratado').classList.toggle('active', modo === 'contratado');
-    
-    // Mostrar/ocultar secciones
-    document.getElementById('modoRegular').style.display = modo === 'regular' ? 'block' : 'none';
-    document.getElementById('modoContratado').style.display = modo === 'contratado' ? 'block' : 'none';
-    
-    // Limpiar selecciones al cambiar modo
-    if (modo === 'contratado') {
-        limpiarSeleccionRegular();
-    }
-}
+    // apagar todas
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+        screen.style.display = 'none';
+    });
 
-function buscarRutas(termino) {
-    const sugerencias = document.getElementById('sugerenciasRutas');
-    sugerencias.innerHTML = '';
-    
-    if (!termino || termino.length < 2) {
-        sugerencias.style.display = 'none';
+    const target = document.getElementById(screenId);
+    if (!target) {
+        console.error('❌ Pantalla no encontrada:', screenId);
         return;
     }
-    
-    const busqueda = termino.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const resultados = [];
-    
-    for (const [key, ruta] of Object.entries(serviciosDB)) {
-        const nombreBusqueda = ruta.nombre.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        
-        // FILTRAR MEJORADO: Mostrar Piriapolis como destino independiente
-        if (nombreBusqueda.includes(busqueda)) {
-            // EVITAR mostrar rutas PDE que mencionen Piriapolis cuando se busca específicamente Piriapolis
-            if (busqueda.includes('piriapolis') && nombreBusqueda.includes('punta del este')) {
-                continue; // Saltar estas rutas
-            }
-            
-            // EVITAR mostrar rutas Piriapolis cuando se busca específicamente Punta del Este
-            if (busqueda.includes('punta del este') && nombreBusqueda.includes('piriapolis') && !nombreBusqueda.includes('punta del este')) {
-                continue; // Saltar estas rutas
-            }
-            
-            resultados.push({ key, ruta });
+
+    target.style.display = 'block';
+    target.classList.add('active');
+
+    requestAnimationFrame(() => {
+        target.scrollTop = 0;
+        document.body.scrollTop = 0;
+        document.documentElement.scrollTop = 0;
+    });
+}
+
+/* ===============================
+   4. INICIALIZACIÓN APP
+=============================== */
+
+document.addEventListener('DOMContentLoaded', () => {
+    // reset total
+    document.querySelectorAll('.screen').forEach(s => {
+        s.classList.remove('active');
+        s.style.display = 'none';
+    });
+
+    // splash
+    showScreen('splashScreen');
+
+    setTimeout(() => {
+        if (usuario) {
+            showScreen('mainScreen');
+        } else {
+            showScreen('loginScreen');
         }
-    }
-    
-    if (resultados.length === 0) {
-        sugerencias.style.display = 'none';
+    }, 1200);
+});
+
+/* ===============================
+   5. LOGIN / USUARIO
+=============================== */
+
+function guardarUsuario() {
+    const numero = document.getElementById('userNumber').value.trim();
+    const nombre = document.getElementById('userName').value.trim();
+    const rol = document.getElementById('userRole').value;
+
+    if (!numero || !nombre) {
+        alert('Completa todos los datos');
         return;
     }
-    
-    sugerencias.innerHTML = resultados.map(({ key, ruta }) => `
-        <div class="sugerencia-item" onclick="seleccionarRuta('${key}')">
-            <div class="sugerencia-nombre">${ruta.nombre}</div>
-            <div class="sugerencia-codigos">Servicios: ${ruta.servicios.map(s => s.numero).join(', ')}</div>
+
+    usuario = { numero, nombre, rol };
+    localStorage.setItem('travelUser', JSON.stringify(usuario));
+
+    showScreen('mainScreen');
+}
+
+/* ===============================
+   6. BASE DE RUTAS Y SERVICIOS
+=============================== */
+
+const serviciosDB = {
+    "MVD-PDE": {
+        nombre: "Montevideo → Punta del Este",
+        servicios: [
+            { numero: "Turno", tipo: "TURNO", acoplado: false },
+            { numero: "2", tipo: "SEMI-DIRECTO", acoplado: false },
+            { numero: "3", tipo: "DIRECTO", acoplado: true }
+        ]
+    },
+    "PDE-MVD": {
+        nombre: "Punta del Este → Montevideo",
+        servicios: [
+            { numero: "Turno", tipo: "TURNO", acoplado: false },
+            { numero: "3", tipo: "DIRECTO", acoplado: true }
+        ]
+    }
+};
+
+/* ===============================
+   7. POPUP RUTAS
+=============================== */
+
+function abrirRutaPopup() {
+    const popup = document.getElementById('rutaPopup');
+    if (!popup) return;
+    popup.classList.add('active');
+    buscarRutasPopup('');
+}
+
+function cerrarRutaPopup() {
+    const popup = document.getElementById('rutaPopup');
+    if (!popup) return;
+    popup.classList.remove('active');
+}
+
+function buscarRutasPopup(termino) {
+    const lista = document.getElementById('listaRutasPopup');
+    if (!lista) return;
+
+    const t = termino.toLowerCase();
+    const rutas = Object.entries(serviciosDB).filter(
+        ([_, r]) => r.nombre.toLowerCase().includes(t)
+    );
+
+    lista.innerHTML = rutas.map(([key, ruta]) => `
+        <div class="ruta-popup-item"
+             onclick="seleccionarRuta('${key}'); cerrarRutaPopup();">
+            ${ruta.nombre}
         </div>
     `).join('');
-    
-    sugerencias.style.display = 'block';
 }
 
-function seleccionarRuta(rutaKey) {
-    rutaSeleccionada = serviciosDB[rutaKey];
-    
-    // Actualizar campos de origen y destino
+function seleccionarRuta(key) {
+    rutaSeleccionada = serviciosDB[key];
+    if (!rutaSeleccionada) return;
+
     const [origen, destino] = rutaSeleccionada.nombre.split(' → ');
     document.getElementById('originTravels').value = origen;
     document.getElementById('destinationTravels').value = destino;
-    
-    // Llenar selector de servicios
-    const selectServicio = document.getElementById('numeroServicio');
-    selectServicio.innerHTML = '<option value="">Elegí el servicio...</option>';
-    
-    rutaSeleccionada.servicios.forEach(servicio => {
-        const option = document.createElement('option');
-        option.value = servicio.numero;
-        option.textContent = `[${servicio.numero}] ${servicio.tipo} ${servicio.acoplado ? '✅' : ''}`;
-        option.setAttribute('data-tipo', servicio.tipo);
-        option.setAttribute('data-acoplado', servicio.acoplado);
-        option.setAttribute('data-reglas', servicio.reglas);
-        selectServicio.appendChild(option);
-    });
-    
-    // Ocultar sugerencias
-    document.getElementById('sugerenciasRutas').style.display = 'none';
     document.getElementById('buscarRuta').value = rutaSeleccionada.nombre;
-    
-    // Mostrar selector de servicios
-    selectServicio.style.display = 'block';
-}
 
-function actualizarInfoServicio() {
-    const selectServicio = document.getElementById('numeroServicio');
-    const selectedOption = selectServicio.options[selectServicio.selectedIndex];
-    
-    if (!selectedOption.value) {
-        document.getElementById('infoAuto').style.display = 'none';
-        servicioSeleccionado = null;
-        return;
-    }
-    
-    servicioSeleccionado = {
-        numero: selectedOption.value,
-        tipo: selectedOption.getAttribute('data-tipo'),
-        acoplado: selectedOption.getAttribute('data-acoplado') === 'true',
-        reglas: selectedOption.getAttribute('data-reglas')
-    };
-    
-    // Actualizar info automática
-    document.getElementById('autoTipo').textContent = servicioSeleccionado.tipo;
-    document.getElementById('autoAcoplado').textContent = servicioSeleccionado.acoplado ? 'SÍ ✅' : 'NO ❌';
-    document.getElementById('autoAcoplado').className = servicioSeleccionado.acoplado ? 'info-value acoplado-si' : 'info-value acoplado-no';
-    document.getElementById('autoReglas').textContent = servicioSeleccionado.reglas;
-    
-    document.getElementById('infoAuto').style.display = 'block';
-}
+    const select = document.getElementById('numeroServicio');
+    select.innerHTML = '<option value="">Elegí servicio</option>';
 
 function limpiarSeleccionRegular() {
     rutaSeleccionada = null;
@@ -363,217 +228,114 @@ function showScreen(id) {
     }
 }
 
-// FUNCIONES DE VIAJES - VERSIÓN MEJORADA CON AUTO-DETECCIÓN
+/* ===============================
+   8. MODOS DE VIAJE
+=============================== */
+
+function setMode(modo) {
+    modoActual = modo;
+
+    document.getElementById('modoRegular').style.display =
+        modo === 'regular' ? 'block' : 'none';
+
+    document.getElementById('modoContratado').style.display =
+        modo === 'contratado' ? 'block' : 'none';
+}
+
+/* ===============================
+   9. ALTA DE VIAJES
+=============================== */
+
 function addTravel(event) {
     event.preventDefault();
-    
-    const orderNumber = document.getElementById('orderNumberTravels')?.value || '';
-    const km = parseFloat(document.getElementById('kmTravels')?.value) || 0;
-    const departureTime = document.getElementById('departureTimeTravels')?.value || '';
-    const arrivalTime = document.getElementById('arrivalTimeTravels')?.value || '';
-    
-    let origin, destination, tipoServicio, conAcoplado, numeroServicio;
-    
+
+    const orderNumber = orderNumberTravels.value;
+    const km = parseFloat(kmTravels.value);
+    const dep = departureTimeTravels.value;
+    const arr = arrivalTimeTravels.value;
+
+    if (!orderNumber || !km || !dep || !arr) {
+        alert('Faltan datos');
+        return;
+    }
+
+    let origin, destination, tipoServicio, acoplado, numeroServicio;
+
     if (modoActual === 'regular') {
-        // MODO REGULAR - usar datos automáticos
-        if (!rutaSeleccionada || !servicioSeleccionado) {
-            alert('Por favor selecciona una ruta y servicio válidos');
+        if (!rutaSeleccionada || !numeroServicio) {
+            alert('Seleccioná ruta y servicio');
             return;
         }
-        
-        const [origen, destino] = rutaSeleccionada.nombre.split(' → ');
-        origin = origen;
-        destination = destino;
-        tipoServicio = servicioSeleccionado.tipo;
-        conAcoplado = servicioSeleccionado.acoplado;
-        numeroServicio = servicioSeleccionado.numero;
-        
+        [origin, destination] = rutaSeleccionada.nombre.split(' → ');
     } else {
-        // MODO CONTRATADO - usar datos manuales CON AUTO-DETECCIÓN
-        origin = 'Montevideo'; // Por defecto desde MVD
-        destination = document.getElementById('destinoContratado')?.value || '';
-        tipoServicio = document.getElementById('tipoContratado')?.value || 'ESPECIAL';
-        conAcoplado = document.getElementById('acopladoContratado')?.value === 'true';
-        numeroServicio = document.getElementById('numeroContratado')?.value || '';
-        
-        if (!destination) {
-            alert('Por favor ingresa el destino contratado');
-            return;
-        }
-        
-        // 🆕 AUTO-DETECCIÓN: Si no existe la ruta, crearla automáticamente
-        const rutaKey = detectarYCrearRuta(origin, destination, numeroServicio, tipoServicio, conAcoplado);
-        
-        // Opcional: Seleccionar automáticamente la ruta creada
-        seleccionarRuta(rutaKey);
+        origin = 'Montevideo';
+        destination = destinoContratado.value;
+        tipoServicio = tipoContratado.value;
+        acoplado = acopladoContratado.value === 'true';
+        numeroServicio = numeroContratado.value;
     }
-    
-    if (!orderNumber || !km || !departureTime || !arrivalTime) {
-        alert('Complete todos los campos obligatorios');
-        return;
-    }
-    
-    // Calcular horas trabajadas
-    const start = new Date(`2000-01-01T${departureTime}`);
-    const end = new Date(`2000-01-01T${arrivalTime}`);
-    let hoursWorked = (end - start) / (1000 * 60 * 60);
-    if (hoursWorked < 0) hoursWorked += 24;
-    
-    if (hoursWorked <= 0) {
-        alert('La hora de llegada debe ser posterior a la de salida');
-        return;
-    }
-    
-    // 🆕 VIAJE CON DATOS DE USUARIO INCORPORADOS
+
+    const inicio = new Date(`2000-01-01T${dep}`);
+    const fin = new Date(`2000-01-01T${arr}`);
+    let horas = (fin - inicio) / 36e5;
+    if (horas < 0) horas += 24;
+
     const travel = {
         id: Date.now(),
-        orderNumber, 
-        origin, 
-        destination, 
+        orderNumber,
+        origin,
+        destination,
         km,
-        departureTime, 
-        arrivalTime, 
-        hoursWorked: hoursWorked.toFixed(2),
-        date: new Date().toLocaleDateString('es-ES'),
-        viaticos: hoursWorked >= 9 ? 1 : 0,
-        timestamp: new Date().toISOString(),
-        // NUEVOS CAMPOS DEL SISTEMA INTELIGENTE
-        modo: modoActual,
-        tipoServicio: tipoServicio,
-        conAcoplado: conAcoplado,
-        numeroServicio: numeroServicio,
-        
-        // ============================================
-        // 🆕 CAMPOS DEL USUARIO (AGREGAR ESTOS)
-        // ============================================
-        conductor: usuario.nombre,
-        numeroFuncionario: usuario.numero,
-        rolUsuario: usuario.rol,
-        fechaRegistroCompleta: new Date().toLocaleString()
-        // ============================================
+        dep,
+        arr,
+        horas: horas.toFixed(2),
+        conductor: usuario?.nombre || '—',
+        timestamp: new Date().toISOString()
     };
-    
+
     travels.push(travel);
     localStorage.setItem('bus_travels', JSON.stringify(travels));
-    
-    // Limpiar formulario
-    if (event.target.reset) event.target.reset();
-    limpiarSeleccionRegular();
-    
-    updateSummary();
-    updateTravelTable();
-    
-    alert('✅ Viaje agregado exitosamente!');
+
+    alert('✅ Viaje agregado');
     showScreen('mainScreen');
-    
-    return false;
 }
 
-// 🆕 FUNCIÓN PARA AGREGAR GUARDIA (FALTABA)
+/* ===============================
+   10. GUARDIAS
+=============================== */
+
 function addGuard(event) {
     event.preventDefault();
-    console.log('🛡️ Agregando guardia...');
-    
-    const orderNumber = document.getElementById('guardOrderNumber')?.value || '';
-    const startTime = document.getElementById('guardStartTime')?.value || '';
-    const endTime = document.getElementById('guardEndTime')?.value || '';
-    const tarifa = document.getElementById('guardTarifa')?.value || '30';
-    const descripcion = document.getElementById('guardDescripcion')?.value || '';
-    
-    if (!orderNumber || !startTime || !endTime) {
-        alert('Complete todos los campos obligatorios');
+
+    const orderNumber = guardOrderNumber.value;
+    const start = guardStartTime.value;
+    const end = guardEndTime.value;
+    const tarifa = parseFloat(guardTarifa.value || 30);
+
+    if (!orderNumber || !start || !end) {
+        alert('Faltan datos');
         return;
     }
-    
-    // Calcular horas
-    const start = new Date(`2000-01-01T${startTime}`);
-    const end = new Date(`2000-01-01T${endTime}`);
-    let hours = (end - start) / (1000 * 60 * 60);
-    if (hours < 0) hours += 24;
-    
-    if (hours <= 0) {
-        alert('La hora de fin debe ser posterior a la de inicio');
-        return;
-    }
-    
-    // Calcular monto
-    const monto = (hours * parseFloat(tarifa)).toFixed(2);
-    
-    // Determinar tipo basado en tarifa
-    const tipo = tarifa === '40' ? 'Especial' : 'Común';
-    
-    const guard = {
+
+    const inicio = new Date(`2000-01-01T${start}`);
+    const fin = new Date(`2000-01-01T${end}`);
+    let horas = (fin - inicio) / 36e5;
+    if (horas < 0) horas += 24;
+
+    guards.push({
         id: Date.now(),
         orderNumber,
-        driverName: usuario.nombre,
-        startTime,
-        endTime,
-        hours: hours.toFixed(2),
-        tarifa: tarifa,
-        monto: monto,
-        tipo: tipo,
-        descripcion: descripcion,
-        date: new Date().toLocaleDateString('es-ES'),
-        timestamp: new Date().toISOString(),
-        viaticos: hours >= 9 ? 1 : 0
-    };
-    
-    let savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
-    savedGuards.push(guard);
-    localStorage.setItem('bus_guards', JSON.stringify(savedGuards));
-    
-    // Limpiar formulario
-    if (event.target.reset) event.target.reset();
-    document.getElementById('campoDescripcion').style.display = 'none';
-    
-    updateSummary();
-    updateGuardList();
-    
-    alert('✅ Guardia agregada exitosamente!');
-    showScreen('mainScreen');
-    
-    return false;
-}
-
-// 🆕 FUNCIÓN PARA MOSTRAR/OCULTAR CAMPO DE DESCRIPCIÓN
-function actualizarDescripcionGuardia() {
-    const tarifa = document.getElementById('guardTarifa').value;
-    const campoDescripcion = document.getElementById('campoDescripcion');
-    const inputDescripcion = document.getElementById('guardDescripcion');
-    
-    if (tarifa === '40') {
-        campoDescripcion.style.display = 'block';
-        inputDescripcion.required = true;
-    } else {
-        campoDescripcion.style.display = 'none';
-        inputDescripcion.required = false;
-        inputDescripcion.value = ''; // Limpiar campo
-    }
-}
-
-// ACTUALIZAR INTERFACES
-function updateSummary() {
-    const savedTravels = JSON.parse(localStorage.getItem('bus_travels') || '[]');
-    const savedGuards = JSON.parse(localStorage.getItem('bus_guards') || '[]');
-    
-    // Elementos del resumen
-    const elements = {
-        'totalTravels': savedTravels.length,
-        'totalKm': savedTravels.reduce((sum, travel) => sum + travel.km, 0).toFixed(0),
-        'totalViaticos': savedTravels.filter(travel => travel.viaticos).length,
-        'totalGuards': savedGuards.length,
-        'totalGuardHours': savedGuards.reduce((sum, guard) => sum + parseFloat(guard.hours), 0).toFixed(2),
-        'todayTravels': savedTravels.filter(travel => travel.date === new Date().toLocaleDateString('es-ES')).length
-    };
-    
-    // Actualizar solo los elementos que existen
-    Object.keys(elements).forEach(id => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = elements[id];
-        }
+        horas: horas.toFixed(2),
+        monto: (horas * tarifa).toFixed(2),
+        timestamp: new Date().toISOString()
     });
+
+    localStorage.setItem('bus_guards', JSON.stringify(guards));
+    alert('✅ Guardia agregada');
+    showScreen('mainScreen');
 }
+
+
 
 function updateTravelTable() {
     const travelList = document.getElementById('travelList');
