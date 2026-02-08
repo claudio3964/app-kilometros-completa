@@ -74,13 +74,18 @@ function abrirViajeSimple(){
   document.getElementById("orderNumberTravels").value =
     o.orderNumber;
 
+  // 👉 LIMPIEZA TOTAL DEL FORMULARIO (clave)
   document.getElementById("originTravels").value = "Montevideo";
   document.getElementById("destinationTravels").value = "";
   document.getElementById("kmTravels").value = "";
   document.getElementById("numeroServicio").value = "";
+  document.getElementById("departureTimeTravels").value = "";
+  document.getElementById("arrivalTimeTravels").value = "";
+  document.getElementById("idaYVueltaAuto").checked = false;
 
   servicioSeleccionado = null;
 }
+
 
 // =====================================================
 // BUSCADOR DE RUTAS MEJORADO
@@ -213,10 +218,11 @@ function autoKmPorDestino(terminoDeEscribir = false) {
     document.getElementById("originTravels")?.value || "Montevideo";
 
   if (!texto) {
-    box.style.display = "none";
-    box.innerHTML = "";
-    return;gi
-  }
+  box.style.display = "none";
+  box.innerHTML = "";
+  return;
+}
+
 
   const matches = buscarMultiplesRutas(texto);
 
@@ -252,6 +258,8 @@ function autoKmPorDestino(terminoDeEscribir = false) {
       }
 
       document.getElementById("kmTravels").value = kmCalculado;
+      mostrarHorariosOficiales(origenActual, m.destinoFinal);
+
 
       box.style.display = "none";
       box.innerHTML = "";
@@ -274,6 +282,8 @@ function autoKmPorDestino(terminoDeEscribir = false) {
     }
 
     document.getElementById("kmTravels").value = kmCalculado;
+    mostrarHorariosOficiales(origenActual, destinoFinal);
+
 
     if (terminoDeEscribir) {
       input.value = destinoFinal;
@@ -330,7 +340,7 @@ function actualizarInfoServicio(){
 }
 
 // =====================================================
-// GUARDAR VIAJE → CORE
+// GUARDAR VIAJE → CORE (VERSIÓN FINAL CORREGIDA)
 // =====================================================
 
 function addTravelUI(event){
@@ -342,6 +352,7 @@ function addTravelUI(event){
     return;
   }
 
+  // === CAPTURAMOS LA IDA DE FORMA SEGURA ===
   const origen =
     document.getElementById("originTravels").value.trim();
 
@@ -399,7 +410,7 @@ function addTravelUI(event){
     return;
   }
 
-  // Etiqueta UI
+  // Guardamos etiqueta UI del servicio (una sola vez)
   const orders = getOrders();
   const ultima = orders[orders.length - 1];
   const ultimoViaje = ultima.travels[ultima.travels.length - 1];
@@ -409,10 +420,12 @@ function addTravelUI(event){
   // ===== 2) SI PIDIÓ VUELTA AUTOMÁTICA =====
   if(idaYVueltaAuto){
 
-    // Calculamos hora sugerida de salida (5 min después)
+    // 👉 CLAVE: congelamos la IDA para invertirla sin errores
+    const origenIda = origen;
+    const destinoIda = destino;
+
     const salidaVuelta = arrivalTime;
 
-    // Sugerimos misma duración que la ida
     const llegadaSugerida = new Date(
       new Date(`2000-01-01T${arrivalTime}`).getTime() +
       hoursWorked * 60 * 60 * 1000
@@ -420,15 +433,20 @@ function addTravelUI(event){
     .toISOString()
     .substring(11,16);
 
-    // Cargamos formulario para la vuelta
-    document.getElementById("originTravels").value = destino;
-    document.getElementById("destinationTravels").value = origen;
+    // 👉 Invertimos usando valores seguros de la IDA
+    document.getElementById("originTravels").value = destinoIda;
+    document.getElementById("destinationTravels").value = origenIda;
     document.getElementById("departureTimeTravels").value = salidaVuelta;
     document.getElementById("arrivalTimeTravels").value = llegadaSugerida;
 
-    // Recalculamos km con tu buscador ida/vuelta
-    const kmCalculado = buscarKmRuta(destino, origen);
+    // Recalculamos km correctamente
+    const kmCalculado = buscarKmRuta(destinoIda, origenIda);
     document.getElementById("kmTravels").value = kmCalculado;
+
+    // Mantenemos servicio y checkbox
+    document.getElementById("numeroServicio").value =
+      servicioSeleccionado.tipo;
+    document.getElementById("idaYVueltaAuto").checked = true;
 
     alert("👉 Ahora registrá la VUELTA automática y guardá.");
     return; // NO volvemos al main
@@ -438,23 +456,6 @@ function addTravelUI(event){
   renderListaViajes();
   renderResumenDia();
   alert("Viaje guardado en la jornada");
-  showScreen("mainScreen");
-}
-
-
-  // Guardamos etiqueta visible para la tabla
-  const orders = getOrders();
-  const ultima = orders[orders.length - 1];
-  const ultimoViaje = ultima.travels[ultima.travels.length - 1];
-
-  ultimoViaje.servicioUI = servicioSeleccionado.tipo; // TURNO / DIRECTO / PASAJERO / etc.
-  saveOrders(orders);
-
-  renderListaViajes();
-  renderResumenDia();
-
-  alert(`Viaje ${servicioSeleccionado.tipo} guardado en la jornada`);
-
   showScreen("mainScreen");
 }
 
@@ -620,71 +621,14 @@ function addGuardUI(event){
   showScreen("mainScreen");
 }
 // =====================================================
-// LISTA DE VIAJES  (NUEVA VERSIÓN CON VIÁTICOS)
+// LISTA DE VIAJES  (COMPATIBLE CON TARJETAS)
 // =====================================================
 function renderListaViajes(){
-  const tbody =
-    document.getElementById("listaViajesContainer");
 
-  tbody.innerHTML = "";
-
-  const orders = getOrders();
-  if(!orders || orders.length === 0) return;
-
-  const o = orders[orders.length - 1]; // última jornada activa
-  if(!o.travels || o.travels.length === 0) return;
-
-  // 👉 Viáticos calculados POR ORDEN desde el CORE
-  const totalesOrden = calculateOrderTotals(o);
-  const viaticosDeEstaOrden = totalesOrden.viatico || 0;
-
-  o.travels.forEach((v,i) => {
-
-    let servicioTexto = v.servicioUI;
-
-    if(!servicioTexto){
-      if(v.turno === 1) servicioTexto = "TURNO";
-      if(v.turno === 2) servicioTexto = "SEMI";
-      if(v.turno === 3) servicioTexto = "DIRECTO";
-    }
-
-    const esUltimoViaje = (i === o.travels.length - 1);
-
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${i+1}</td>
-
-      <td>
-        ${v.departureTime || new Date(v.createdAt).toLocaleTimeString()}
-        -
-        ${v.arrivalTime || ""}
-      </td>
-
-      <td>
-        ${v.origen || "Montevideo"} → ${v.destino}
-      </td>
-
-      <td>${v.kmEmpresa}</td>
-
-      <td>${servicioTexto}</td>
-
-      <td>${v.acoplado ? "SI" : "NO"}</td>
-
-      <td>
-        ${
-          esUltimoViaje && viaticosDeEstaOrden > 0
-          ? `<span style="color:green;font-weight:bold;">
-               💰 Viáticos: ${viaticosDeEstaOrden}
-             </span>`
-          : "—"
-        }
-      </td>
-    `;
-
-    tbody.appendChild(tr);
-  });
+  // Si ya estamos usando tarjetas, NO tocamos tablas:
+  renderTarjetasPorDia();
 }
+
 
 // =====================================================
 // LISTA DE GUARDIAS
@@ -732,6 +676,238 @@ function renderListaGuardias(){
     tbody.appendChild(tr);
   });
 }
+// =====================================================
+// 🔌 HOOK PARA FUTURA INTEGRACIÓN (GPS / TERMINAL / BACKEND)
+// =====================================================
+// Este método podrá ser llamado por:
+// - Un módulo de geolocalización
+// - Un backend de la empresa
+// - Un sistema de terminales o MTOP
+
+function cargarViajeRetornoAutomatico(data){
+
+  console.log("📡 Recibiendo retorno automático:", data);
+
+  // 1) Abrimos pantalla de viaje (si no está abierta)
+  showScreen("travelScreen");
+
+  // 2) Cargamos datos enviados por el sistema externo
+  document.getElementById("originTravels").value = data.origen;
+  document.getElementById("destinationTravels").value = data.destino;
+  document.getElementById("departureTimeTravels").value = data.horaSalida;
+  document.getElementById("arrivalTimeTravels").value = data.horaLlegadaEstimada;
+
+  // 3) Mapeamos servicio si viene
+  if(data.servicio){
+    document.getElementById("numeroServicio").value = data.servicio;
+    actualizarInfoServicio(); // sincroniza con UI → CORE
+  }
+
+  // 4) Recalculamos km con tu lógica actual
+  const km = buscarKmRuta(data.origen, data.destino);
+  document.getElementById("kmTravels").value = km;
+
+  // 5) Mensaje visual claro para el chofer
+  const aviso = document.createElement("div");
+  aviso.style.cssText = `
+    padding:10px;
+    margin-bottom:10px;
+    background:#e8f3ff;
+    border-left:5px solid #2f80ed;
+    border-radius:6px;
+  `;
+  aviso.innerHTML = `
+    <b>🔁 Retorno cargado automáticamente por sistema</b><br>
+    Revisá horas y tocá <b>Guardar Viaje</b>.
+  `;
+
+  const form = document.querySelector("#travelScreen form");
+  form.prepend(aviso);
+}
+// =====================================================
+// HORARIOS OFICIALES (UI - SOLO SUGERENCIAS EDITABLES)
+// =====================================================
+function mostrarHorariosOficiales(origen, destino){
+  const ruta = `${origen} → ${destino}`;
+  const horarios = SCHEDULE_COT[ruta];
+  const box = document.getElementById("horariosOficiales");
+
+  if(!horarios){
+    box.style.display = "none";
+    box.innerHTML = "";
+    return;
+  }
+
+  // --- CABECERA ---
+  box.innerHTML = "<b>Horarios COT sugeridos:</b>";
+
+  // --- CONTENEDOR EN UNA SOLA LÍNEA DESLIZABLE ---
+  box.style.display = "flex";
+  box.style.flexDirection = "row";
+  box.style.gap = "8px";
+  box.style.overflowX = "auto";      // permite deslizar horizontalmente
+  box.style.whiteSpace = "nowrap";   // evita saltos de línea
+  box.style.padding = "8px 4px";
+  box.style.alignItems = "center";
+
+  // Limpiamos solo botones previos (dejamos el título)
+  const oldButtons = box.querySelectorAll("button");
+  oldButtons.forEach(b => b.remove());
+
+  // --- BOTONES DE HORARIOS (EN FILA) ---
+  horarios.forEach(h => {
+    const btn = document.createElement("button");
+    btn.type = "button";                // 🔑 evita submit del formulario
+    btn.textContent = `${h.salida} → ${h.llegada}`;
+
+    // Estilo compacto y prolijo
+    btn.style.padding = "8px 12px";
+    btn.style.borderRadius = "6px";
+    btn.style.border = "1px solid #ccc";
+    btn.style.background = "#f5f5f5";
+    btn.style.cursor = "pointer";
+    btn.style.whiteSpace = "nowrap";    // clave para que no se parta el texto
+
+    btn.onclick = () => {
+      document.getElementById("departureTimeTravels").value = h.salida;
+      document.getElementById("arrivalTimeTravels").value = h.llegada;
+    };
+
+    box.appendChild(btn);
+  });
+}
+function renderTarjetasGuardiasPorDia(){
+  const container = document.getElementById("cardsGuardiasContainer");
+  container.innerHTML = "";
+
+  const orders = getOrders();
+  if(!orders || orders.length === 0) return;
+
+  // Agrupar guardias por fecha
+  const porDia = {};
+
+  orders.forEach(o => {
+    const d = o.date;
+    if(!porDia[d]) porDia[d] = [];
+    porDia[d].push(o);
+  });
+
+  // Últimos 5 días por defecto
+  const fechas = Object.keys(porDia)
+    .sort((a,b) => new Date(b) - new Date(a))
+    .slice(0,5);
+
+  fechas.forEach(fecha => {
+
+    const listaGuardias = [];
+
+    porDia[fecha].forEach(o => {
+      o.guards.forEach(g => {
+        listaGuardias.push(
+          `${g.inicio || "--:--"} – ${g.fin || "--:--"} | ` +
+          `${g.hours.toFixed(2)} h | ${g.type}` +
+          (g.desc ? ` (${g.desc})` : "")
+        );
+      });
+    });
+
+    const card = document.createElement("div");
+    card.style.cssText = `
+      border:1px solid #ddd;
+      border-radius:12px;
+      padding:12px;
+      background:white;
+      box-shadow:0 2px 6px rgba(0,0,0,.1);
+    `;
+
+    card.innerHTML = `
+      <b>📅 ${fecha}</b><br><br>
+      <b>Guardias:</b><br>
+      ${listaGuardias.join("<br>") || "—"}
+    `;
+
+    container.appendChild(card);
+  });
+}
+// =====================================================
+// TARJETAS DE VIAJES POR DÍA (ESTILO MOBILE)
+// =====================================================
+function renderTarjetasPorDia(){
+  const container = document.getElementById("cardsViajesContainer");
+  if(!container){
+    console.warn("No existe #cardsViajesContainer");
+    return;
+  }
+
+  container.innerHTML = "";
+
+  const orders = getOrders();
+  if(!orders || orders.length === 0) return;
+
+  // Agrupar por fecha
+  const porDia = {};
+
+  orders.forEach(o => {
+    const d = o.date;
+    if(!porDia[d]) porDia[d] = [];
+    porDia[d].push(o);
+  });
+
+  // Mostrar últimos 5 días por defecto
+  const fechas = Object.keys(porDia)
+    .sort((a,b) => new Date(b) - new Date(a))
+    .slice(0,5);
+
+  fechas.forEach(fecha => {
+
+    let kmDia = 0;
+    let viaticosDia = 0;
+    let montoDia = 0;
+
+    const listaViajes = [];
+
+    porDia[fecha].forEach(o => {
+      const tot = calculateOrderTotals(o);
+      kmDia += tot.kmTotal || 0;
+      viaticosDia += tot.viaticos || 0;
+      montoDia += tot.monto || 0;
+
+      o.travels.forEach(v => {
+        listaViajes.push(
+          `${v.origen} → ${v.destino} ` +
+          `${v.departureTime}-${v.arrivalTime} ` +
+          `${v.acoplado ? "(Acoplado)" : "(Sin acoplado)"}`
+        );
+      });
+    });
+
+    const card = document.createElement("div");
+    card.style.cssText = `
+      border:1px solid #ddd;
+      border-radius:12px;
+      padding:12px;
+      background:white;
+      box-shadow:0 2px 6px rgba(0,0,0,.1);
+    `;
+
+    card.innerHTML = `
+      <b>📅 ${fecha}</b><br>
+      <b>KM del día:</b> ${Math.round(kmDia)} km<br>
+      <b>Viáticos:</b> ${viaticosDia}<br>
+      <b>Monto del día:</b> $${Math.round(montoDia)}<br><br>
+
+      <b>Viajes:</b><br>
+      ${listaViajes.join("<br>") || "—"}
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+
+
+
+
 
 
 

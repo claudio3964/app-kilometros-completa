@@ -39,32 +39,35 @@
 
   <button onclick="abrirViajeSimple()">🚗 Nuevo Viaje</button>
 
-  <button onclick="showScreen('listaViajesScreen'); 
-                   renderListaViajes(); 
-                   renderResumenDia();">
-    📋 Ver Viajes
-  </button>
-
-  <!-- ✅ GUARDIAS SEPARADAS (CORRECTO) -->
-  <button onclick="showScreen('nuevaGuardiaScreen')">
-  ➕ Registrar Guardia
+  <button onclick="showScreen('listaViajesScreen'); renderTarjetasPorDia();">
+📄 Ver Viajes
 </button>
 
 
-  <button onclick="showScreen('listaGuardiasScreen');
-                   renderListaGuardias();
-                   renderResumenDia();">
-    🕒 Ver Guardias
+
+  <!-- ✅ GUARDIAS (esto lo dejamos igual que antes) -->
+  <button onclick="showScreen('nuevaGuardiaScreen')">
+    ➕ Registrar Guardia
   </button>
 
-</div> <!-- ✅ CIERRE CLAVE DEL MAIN SCREEN -->
+  <button onclick="
+  showScreen('listaGuardiasScreen');
+  renderTarjetasGuardiasPorDia();
+">
+  🕒 Ver Guardias
+</button>
+
+
+</div>
+<!-- ✅ CIERRE CLAVE DEL MAIN SCREEN -->
+
 
 <!-- ================== NUEVO VIAJE ================== -->
 <div id="travelScreen" class="screen">
 
-  <button onclick="showScreen('mainScreen'); renderResumenDia();">
-    ← Volver
-  </button>
+ <button onclick="showScreen('mainScreen'); renderResumenDia();">
+  ← Volver
+</button>
 
   <h2>Nuevo Viaje</h2>
 
@@ -87,6 +90,10 @@
     <label>Destino (escribí o pegá)</label>
     <input id="destinationTravels"
        oninput="autoKmPorDestino(false)">
+<div id="horariosOficiales"
+     style="display:none; margin:10px 0; padding:8px;
+            border:1px solid #ddd; border-radius:6px;">
+</div>
 
 
     <div id="sugerenciasRutas"
@@ -142,20 +149,13 @@
 
   <h2>Lista de Viajes</h2>
 
-  <table border="1" width="100%">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Hora</th>
-        <th>Destino</th>
-        <th>KM</th>
-        <th>Servicio</th>
-        <th>Acoplado</th>
-        <th>Monto</th>
-      </tr>
-    </thead>
-    <tbody id="listaViajesContainer"></tbody>
-  </table>
+  <div id="cardsViajesContainer"
+     style="display:flex;
+            flex-direction:column;
+            gap:12px;
+            padding:10px;">
+</div>
+
 
   <h3 style="margin-top:20px;">Resumen del día</h3>
   <div id="resumenDia"></div>
@@ -201,33 +201,29 @@
   </form>
 </div>
 
-<!-- ================== LISTA GUARDIAS ================== -->
+<!-- ================== LISTA GUARDIAS (TARJETAS) ================== -->
 <div id="listaGuardiasScreen" class="screen">
 
-  <button onclick="showScreen('mainScreen')">← Volver</button>
+  <button onclick="showScreen('mainScreen')">
+    ← Volver
+  </button>
 
-  <h2>Guardias registradas</h2>
+  <h2>Guardias por día</h2>
 
-  <table border="1" width="100%">
-    <thead>
-  <tr>
-    <th>#</th>
-    <th>Día</th>
-    <th>Horario</th>
-    <th>Horas</th>
-    <th>Km Guardia</th>
-    <th>Tipo</th>
-    <th>Descripción</th>
-  </tr>
-</thead>
-
-    <tbody id="listaGuardiasContainer"></tbody>
-  </table>
+  <!-- CONTENEDOR DE TARJETAS -->
+  <div id="cardsGuardiasContainer"
+       style="display:flex;
+              flex-direction:column;
+              gap:12px;
+              padding:10px;">
+  </div>
 
 </div>
 
-<!-- ======= MUY IMPORTANTE: SCRIPTS VAN AL FINAL DE TODO ======= -->
+
+<!-- ====== MUY IMPORTANTE: SCRIPTS VAN AL FINAL DE TODO ====== -->
 <script src="core.js"></script>
+<script src="schedules_cot.js"></script>
 <script src="app_nuevo.js"></script>
 
 </body>
