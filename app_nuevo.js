@@ -493,13 +493,12 @@ function renderResumenDia(){
 
 
 // =====================================================
-// CARGA INICIAL
+// FLUJO DE ARRANQUE DEFINITIVO
 // =====================================================
 
 document.addEventListener("DOMContentLoaded", () => {
 
   const o = getActiveOrder();
-
   if(o){
     document.getElementById("ordenActivaInfo").innerText =
       "🟢 Jornada activa: " + o.orderNumber;
@@ -507,14 +506,50 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ✅ PONEMOS HOY POR DEFECTO EN GUARDIAS
   const diaInput = document.getElementById("diaGuardia");
-if(diaInput){
-  diaInput.value = new Date().toISOString().split("T")[0];
-}
-
+  if(diaInput){
+    diaInput.value = new Date().toISOString().split("T")[0];
+  }
 
   renderListaViajes();
   renderResumenDia();
-});
+
+  // ===== FLUJO DE ARRANQUE REAL (CON SPLASH) =====
+  window.addEventListener("load", () => {
+    setTimeout(() => {
+      const driver = getDriver();
+
+      console.log("ARRANQUE FINAL - driver:", driver);
+
+      // 1) Limpiamos todas las pantallas
+      document.querySelectorAll(".screen")
+        .forEach(s => s.classList.remove("active"));
+
+      // 2) Decidimos a dónde ir
+      if (!driver) {
+        console.log("→ Voy a LOGIN (primer uso)");
+        document.getElementById("loginScreen")
+          .classList.add("active");
+      } else {
+        console.log("→ Voy a MAIN (usuario ya existe)");
+        document.getElementById("mainScreen")
+          .classList.add("active");
+      }
+
+      // 3) FADE-OUT del splash (clave)
+      const splash = document.getElementById("splashScreen");
+      if (splash) {
+        splash.classList.add("fade-out");
+
+        setTimeout(() => {
+          splash.style.display = "none";
+        }, 400);
+      }
+
+    }, 600);
+  });
+
+}); // ✅ CIERRA DOMContentLoaded
+
 
 // =====================================================
 // CONTROL VISUAL DE DESCRIPCIÓN DE GUARDIA
