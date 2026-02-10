@@ -1,3 +1,7 @@
+window.onerror = function(msg, url, line) {
+  alert("ERROR: " + msg + " en línea " + line);
+};
+
 console.log("APP_NUEVO CARGADO (SERVICIOS LEGIBLES EN TABLA)");
 
 // =====================================================
