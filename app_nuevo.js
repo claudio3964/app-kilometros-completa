@@ -543,16 +543,28 @@ document.addEventListener("DOMContentLoaded", () => {
         .forEach(s => s.classList.remove("active"));
 
       // 2) Decidimos a dónde ir
-      if (!driver) {
-        console.log("→ Voy a LOGIN (primer uso)");
-        document.getElementById("loginScreen")
-          .classList.add("active");
-      } else {
-        console.log("→ Voy a MAIN (usuario ya existe)");
-        document.getElementById("mainScreen")
-          .classList.add("active");
-      }
+     if (!driver) {
+  console.log("→ Voy a LOGIN (primer uso)");
 
+  const login = document.getElementById("loginScreen");
+  const main  = document.getElementById("mainScreen");
+
+  // Si existe loginScreen, mostramos login; si no, caemos a mainScreen
+  if (login) {
+    login.classList.add("active");
+  } else if (main) {
+    console.warn("loginScreen no existe → cayendo a mainScreen");
+    main.classList.add("active");
+  }
+
+} else {
+  console.log("→ Voy a MAIN (usuario ya existe)");
+
+  const main = document.getElementById("mainScreen");
+  if (main) {
+    main.classList.add("active");
+  }
+}
       // 3) FADE-OUT del splash (clave)
       const splash = document.getElementById("splashScreen");
       if (splash) {
