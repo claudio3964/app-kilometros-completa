@@ -7,143 +7,185 @@
 <link rel="stylesheet" href="style.css">
 
 <style>
+/* ===== BASE DE PANTALLAS (CORREGIDA) ===== */
+
 .screen {
   display: none;
-  position: fixed;
+  position: absolute; 
   top: 0; left: 0;
-  width: 100%; height: 100%;
-  overflow: auto;
+  width: 100%;
+  min-height: 100vh;
+  overflow-y: auto;
   background: white;
 }
-.screen.active { display: block; }
+.screen.active {
+  display: block;
+}
+
 </style>
 </head>
 <body>
 
-<!-- ================== MAIN SCREEN ================== -->
-<div id="mainScreen" class="screen active">
 
-  <div class="logo-container">
-    <h1>Gestión de Viajes</h1>
-    <p>Sistema de control de flota</p>
-  </div>
-
-  <h2>¿Qué deseas hacer?</h2>
-
-  <p id="ordenActivaInfo">🔴 Sin jornada activa</p>
-
-  <button onclick="createOrderUI()">▶️ Iniciar Jornada</button>
-  <button onclick="closeActiveOrderUI()">⏹️ Cerrar Jornada</button>
-
-  <hr>
-
-  <button onclick="abrirViajeSimple()">🚗 Nuevo Viaje</button>
-
-  <button onclick="showScreen('listaViajesScreen'); renderTarjetasPorDia();">
-📄 Ver Viajes
-</button>
+<!-- ================== MAIN SCREEN (ORDENADO PARA CSS LIMPIO) ================== -->
+<div id="mainScreen" class="screen page-home active">
 
 
+  <div class="inner">
 
-  <!-- ✅ GUARDIAS (esto lo dejamos igual que antes) -->
-  <button onclick="showScreen('nuevaGuardiaScreen')">
-    ➕ Registrar Guardia
-  </button>
+    <!-- HEADER / LOGO -->
+    <div class="logo-container">
+      <h1>Gestión de Viajes</h1>
+      <p>Sistema de control de flota</p>
+    </div>
 
-  <button onclick="
-  showScreen('listaGuardiasScreen');
-  renderTarjetasGuardiasPorDia();
-">
-  🕒 Ver Guardias
-</button>
+    <!-- ESTADO DE JORNADA -->
+    <h2>Estado de la jornada</h2>
 
+    <p id="ordenActivaInfo" class="estado-jornada">
+      🔴 Sin jornada activa
+    </p>
+
+    <!-- BOTONES DE JORNADA -->
+    <div class="fila-acciones">
+      <button class="btn-jornada" onclick="createOrderUI()">
+        ▶️ Iniciar Jornada
+      </button>
+
+      <button class="btn-jornada" onclick="closeActiveOrderUI()">
+        ⏹️ Cerrar Jornada
+      </button>
+    </div>
+
+    <div class="separador"></div>
+
+    <!-- OPERACIONES DEL DÍA -->
+    <h2>Operaciones del día</h2>
+
+    <div class="menu-tarjetas">
+
+      <button class="card-btn" onclick="abrirViajeSimple()">
+        🚗 Nuevo Viaje
+      </button>
+
+      <button class="card-btn" onclick="showScreen('listaViajesScreen')">
+        📄 Ver Viajes
+      </button>
+
+      <button class="card-btn" onclick="showScreen('nuevaGuardiaScreen')">
+        ➕ Registrar Guardia
+      </button>
+
+      <button class="card-btn" onclick="showScreen('listaGuardiasScreen')">
+        🕒 Ver Guardias
+      </button>
+
+    </div>
+
+  </div> <!-- cierre .inner -->
 
 </div>
-<!-- ✅ CIERRE CLAVE DEL MAIN SCREEN -->
+<!-- ✅ FIN DEL MAIN SCREEN -->
+
 
 
 <!-- ================== NUEVO VIAJE ================== -->
-<div id="travelScreen" class="screen">
+<!-- ================== NUEVO VIAJE ================== -->
+<div id="travelScreen" class="screen page-form">
 
- <button onclick="showScreen('mainScreen'); renderResumenDia();">
-  ← Volver
-</button>
+  <!-- BARRA SUPERIOR -->
+  <div class="screen-header">
+    <button class="btn-back" onclick="showScreen('mainScreen')">
+      ← Volver
+    </button>
+  </div>
 
-  <h2>Nuevo Viaje</h2>
+  <!-- CONTENIDO CENTRADO -->
+  <div class="screen-container">
 
-  <form onsubmit="addTravelUI(event); return false;">
+    <div class="card">
 
-    <label>Nº Orden</label>
-    <input id="orderNumberTravels" readonly>
+      <h2>Nuevo Viaje</h2>
 
-    <label>Origen</label>
-<select id="originTravels">
-  <option value="Montevideo" selected>Montevideo</option>
-  <option value="Chuy">Chuy</option>
-  <option value="Punta del Este">Punta del Este</option>
-  <option value="Colonia">Colonia</option>
-  <option value="Piriápolis">Piriápolis</option>
-  <option value="Otro">Otro</option>
-</select>
+      <form onsubmit="addTravelUI(event); return false;">
 
+        <label>Nº Orden</label>
+        <input id="orderNumberTravels" readonly>
 
-    <label>Destino (escribí o pegá)</label>
-    <input id="destinationTravels"
-       oninput="autoKmPorDestino(false)">
-<div id="horariosOficiales"
-     style="display:none; margin:10px 0; padding:8px;
-            border:1px solid #ddd; border-radius:6px;">
+        <label>Origen</label>
+        <select id="originTravels">
+          <option value="Montevideo" selected>Montevideo</option>
+          <option value="Chuy">Chuy</option>
+          <option value="Punta del Este">Punta del Este</option>
+          <option value="Colonia">Colonia</option>
+          <option value="Piriápolis">Piriápolis</option>
+          <option value="Otro">Otro</option>
+        </select>
+
+        <label>Destino (escribí o pegá)</label>
+        <input id="destinationTravels"
+               oninput="autoKmPorDestino(false)">
+
+        <div id="horariosOficiales"
+             style="display:none; margin:10px 0; padding:8px;
+                    border:1px solid #ddd; border-radius:6px;">
+        </div>
+
+        <div id="sugerenciasRutas"
+             style="border:1px solid #ccc;
+                    display:none;
+                    background:white;
+                    max-height:180px;
+                    overflow:auto;
+                    margin-top:5px;
+                    border-radius:6px;">
+        </div>
+
+        <label>Servicio</label>
+        <select id="numeroServicio" onchange="actualizarInfoServicio()">
+          <option value="">Elegí servicio...</option>
+          <option value="TURNO">Turno</option>
+          <option value="SEMI">Semi-directo</option>
+          <option value="DIRECTO">Directo (con acoplado)</option>
+          <option value="EXPRESO">Expreso / Vacío</option>
+          <option value="CONTRATADO">Contratado (Guardia especial)</option>
+          <option value="PASAJERO">Pasajero</option>
+        </select>
+
+        <label>Kilómetros (auto)</label>
+        <input id="kmTravels" type="number" readonly>
+
+        <label>Hora salida</label>
+        <input id="departureTimeTravels" type="time">
+
+        <label>Hora llegada</label>
+        <input id="arrivalTimeTravels" type="time">
+
+        <div style="margin:10px 0; padding:8px; border:1px solid #ddd; border-radius:6px;">
+          <label>
+            <input type="checkbox" id="idaYVueltaAuto">
+            Generar vuelta automática
+          </label>
+        </div>
+
+        <button type="submit" class="btn-primary">
+          Guardar Viaje
+        </button>
+
+      </form>
+
+    </div> <!-- fin card -->
+
+  </div> <!-- fin screen-container -->
+
 </div>
 
 
-    <div id="sugerenciasRutas"
-         style="border:1px solid #ccc;
-                display:none;
-                background:white;
-                max-height:180px;
-                overflow:auto;
-                margin-top:5px;
-                border-radius:6px;">
-    </div>
-
-    <label>Servicio</label>
-<select id="numeroServicio" onchange="actualizarInfoServicio()">
-  <option value="">Elegí servicio...</option>
-  <option value="TURNO">Turno</option>
-  <option value="SEMI">Semi-directo</option>
-  <option value="DIRECTO">Directo (con acoplado)</option>
-  <option value="EXPRESO">Expreso / Vacío</option>
-  <option value="CONTRATADO">Contratado (Guardia especial)</option>
-  <option value="PASAJERO">Pasajero</option>
-</select>
-
-
-    <label>Kilómetros (auto)</label>
-    <input id="kmTravels" type="number" readonly>
-
-    <!-- ✅ NUEVO: HORAS DE VIAJE (CLAVE PARA VIÁTICOS) -->
-    <label>Hora salida</label>
-    <input id="departureTimeTravels" type="time">
-
-    <label>Hora llegada</label>
-    <input id="arrivalTimeTravels" type="time">
-<!-- ✅ NUEVO: opción ida y vuelta automática -->
-<div style="margin:10px 0; padding:8px; border:1px solid #ddd; border-radius:6px;">
-  <label>
-    <input type="checkbox" id="idaYVueltaAuto">
-    Generar vuelta automática
-  </label>
-</div>
-
-    <button type="submit">Guardar Viaje</button>
-  </form>
-
-</div>
 
 <!-- ================== LISTA VIAJES ================== -->
 <div id="listaViajesScreen" class="screen">
 
-  <button onclick="showScreen('mainScreen'); renderResumenDia();">
+  <button onclick="showScreen('mainScreen')">
     ← Volver
   </button>
 
@@ -154,15 +196,14 @@
             flex-direction:column;
             gap:12px;
             padding:10px;">
-</div>
-
+  </div>
 
   <h3 style="margin-top:20px;">Resumen del día</h3>
   <div id="resumenDia"></div>
 
 </div>
 
-<!-- ================== GUARDIAS (NUEVA VERSION) ================== -->
+<!-- ================== GUARDIAS ================== -->
 <div id="nuevaGuardiaScreen" class="screen">
 
   <button onclick="showScreen('mainScreen')">← Volver</button>
@@ -182,13 +223,11 @@
 
     <label>Tipo de guardia</label>
     <select id="tipoGuardia" onchange="manejarDescripcionGuardia()">
-
       <option value="">Elegí tipo...</option>
       <option value="comun">Guardia común</option>
       <option value="especial">Guardia especial</option>
     </select>
 
-    <!-- 👉 NUEVO: descripción solo para guardia especial -->
     <div id="boxDescripcionGuardia" style="display:none; margin-top:10px;">
       <label>Descripción (solo para guardia especial)</label>
       <input 
@@ -201,7 +240,7 @@
   </form>
 </div>
 
-<!-- ================== LISTA GUARDIAS (TARJETAS) ================== -->
+<!-- ================== LISTA GUARDIAS ================== -->
 <div id="listaGuardiasScreen" class="screen">
 
   <button onclick="showScreen('mainScreen')">
@@ -210,7 +249,6 @@
 
   <h2>Guardias por día</h2>
 
-  <!-- CONTENEDOR DE TARJETAS -->
   <div id="cardsGuardiasContainer"
        style="display:flex;
               flex-direction:column;
@@ -220,16 +258,16 @@
 
 </div>
 
+<!-- ✅ SPLASH QUE FALTABA (CLAVE PARA EL FIX) -->
+<div id="splashScreen"></div>
 
-<!-- ====== MUY IMPORTANTE: SCRIPTS VAN AL FINAL DE TODO ====== -->
+<!-- ====== SCRIPTS AL FINAL ====== -->
 <script src="core.js"></script>
 <script src="schedules_cot.js"></script>
 <script src="app_nuevo.js"></script>
 
 </body>
 </html>
-
-
 
 
 

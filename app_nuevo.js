@@ -11,10 +11,24 @@ let servicioSeleccionado = null;
 // =====================================================
 
 function showScreen(id){
-  document.querySelectorAll(".screen")
-    .forEach(s => s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+  console.clear();
+  console.log("👉 Quiero mostrar:", id);
+
+  document.querySelectorAll(".screen").forEach(s => {
+    s.classList.remove("active");
+    console.log("Oculto:", s.id);
+  });
+
+  const target = document.getElementById(id);
+  if (!target) {
+    console.error("❌ NO EXISTE LA PANTALLA:", id);
+    return;
+  }
+
+  target.classList.add("active");
+  console.log("✅ Activada:", id);
 }
+
 
 // =====================================================
 // NORMALIZACIÓN (DEBE IR ARRIBA)
@@ -939,17 +953,77 @@ function renderTarjetasPorDia(){
   });
 }
 
+// =====================================================
+// TARJETAS DE GUARDIAS POR DÍA (ESTILO MOBILE)
+// =====================================================
+function renderListaGuardias(){
 
+  // 👉 Si existen tarjetas, delegamos ahí
+  if (document.getElementById("cardsGuardiasContainer")) {
+    renderTarjetasGuardiasPorDia();
+    return;
+  }
 
+  // --- vieja lógica de tabla (solo por compatibilidad) ---
+  const tbody = document.getElementById("listaGuardiasContainer");
+  if(!tbody) return;
 
+  tbody.innerHTML = "";
 
+  const orders = getOrders();
+  if(!orders || orders.length === 0) return;
 
+  const o = orders[orders.length - 1]; 
+  if(!o.guards || o.guards.length === 0) return;
 
+  o.guards.forEach((g,i) => {
 
+    const tipoTexto =
+      g.type === "especial" ? "Especial" : "Común";
 
+    const kmGuardia =
+      g.hours * (g.type === "especial" ? 40 : 30);
 
+    const horario =
+      g.inicio && g.fin
+        ? `${g.inicio} – ${g.fin}`
+        : new Date(g.createdAt).toLocaleTimeString();
 
+    const tr = document.createElement("tr");
 
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td>${g.dia || new Date(g.createdAt).toLocaleDateString()}</td>
+      <td>${horario}</td>
+      <td>${g.hours.toFixed(2)}</td>
+      <td>${kmGuardia.toFixed(0)} km</td>
+      <td>${tipoTexto}</td>
+      <td>${g.descripcion || "—"}</td>
+    `;
 
+    tbody.appendChild(tr);
+  });
+}
+// =====================================================
+// 🔒 BLINDAJE FINAL DE NAVEGACIÓN (HOOK CENTRALIZADO)
+// =====================================================
 
+const originalShowScreen = showScreen;
+
+showScreen = function(id){
+  originalShowScreen(id);
+
+  // Hooks automáticos por pantalla
+  if (id === "listaViajesScreen") {
+    renderTarjetasPorDia();
+  }
+
+  if (id === "listaGuardiasScreen") {
+    renderTarjetasGuardiasPorDia();
+  }
+
+  if (id === "mainScreen") {
+    renderResumenDia();
+  }
+};
 
