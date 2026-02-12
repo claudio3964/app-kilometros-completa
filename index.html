@@ -7,43 +7,129 @@
 <link rel="stylesheet" href="style.css">
 
 <style>
+/* ========== PANTALLAS GENERALES ========== */
 .screen{
   display:none;
-  position:absolute;
+  position:fixed;
   top:0; left:0;
   width:100%;
-  min-height:100vh;
+  height:100%;
   overflow-y:auto;
   background:white;
 }
+
 .screen.active{ display:block; }
 
-/* El “splash” ahora es solo el header azul de main */
-.app-header{
-  background:#6a5cff;
-  color:white;
-  padding:14px;
+/* ========== SPLASH DISCRETO ========== */
+#splashScreen{
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  align-items:center;
+  padding-bottom:30px;
+  background:white;
 }
+
+.splash-text{
+  font-size:14px;
+  color:#777;
+}
+
+/* ========== HEADER AZUL (nuestro “splash visual”) ========== */
+.header-bar{
+  background:#6b5cff;
+  color:white;
+  padding:18px 16px;
+}
+
+.header-bar h1{
+  margin:0;
+  font-size:20px;
+}
+
+.header-bar p{
+  margin:4px 0 0 0;
+  font-size:14px;
+}
+
+/* ========== TARJETAS DEL MENÚ ========== */
+.menu-tarjetas{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:0 16px;
+}
+
+.card-btn{
+  background:#f5f5f5;
+  border:1px solid #e0e0e0;
+  border-radius:10px;
+  padding:16px;
+  text-align:left;
+  font-size:16px;
+}
+
+/* ========== HEADER CON BOTÓN REDONDO ========== */
+.screen-header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 16px;
+  border-bottom:1px solid #eee;
+}
+
+.btn-back{
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  border:none;
+  background:#6b5cff;
+  color:white;
+  font-size:18px;
+}
+
+/* ========== FORMULARIO NUEVO VIAJE ========== */
+.screen-container{
+  padding:16px;
+}
+
+.card{
+  border:1px solid #eee;
+  border-radius:12px;
+  padding:16px;
+}
+
+input, select{
+  width:100%;
+  padding:10px;
+  margin:6px 0 12px 0;
+  border:1px solid #ccc;
+  border-radius:8px;
+}
+
 </style>
 </head>
 
 <body>
 
-<!-- ================== REGISTRO INICIAL ================== -->
-<div id="registroScreen" class="screen center-flex">
+<!-- ================= SPLASH ================= -->
+<div id="splashScreen" class="screen active">
+  <div class="splash-text">Cargando aplicación…</div>
+</div>
 
-  <h2>Registro del Chofer</h2>
-
-  <div style="width:100%; max-width:320px; text-align:left;">
+<!-- ================= REGISTRO ================= -->
+<div id="registroScreen" class="screen">
+  <div class="screen-container">
+    <h2>Registro del Chofer</h2>
 
     <label>Legajo</label>
-    <input id="regLegajo" style="width:100%">
+    <input id="regLegajo">
 
-    <label style="margin-top:10px; display:block;">Nombre</label>
-    <input id="regNombre" style="width:100%">
+    <label>Nombre</label>
+    <input id="regNombre">
 
-    <label style="margin-top:10px; display:block;">Base / Punta de inicio</label>
-    <select id="regBase" style="width:100%">
+    <label>Base / Punta de inicio</label>
+    <select id="regBase">
       <option value="Montevideo">Montevideo</option>
       <option value="Colonia">Colonia</option>
       <option value="Maldonado">Maldonado</option>
@@ -53,36 +139,30 @@
       <option value="Otro">Otro</option>
     </select>
 
-    <button style="margin-top:15px; width:100%" onclick="registrarChofer()">
-      Guardar y continuar
-    </button>
+    <button onclick="registrarChofer()">Guardar y continuar</button>
   </div>
 </div>
 
-<!-- ================== MAIN SCREEN (CON “SPLASH” INTEGRADO) ================== -->
-<div id="mainScreen" class="screen page-home">
+<!-- ================= MAIN SCREEN ================= -->
+<div id="mainScreen" class="screen">
 
-  <div class="app-header">
+  <div class="header-bar">
     <h1>Gestión de Viajes</h1>
     <p>Sistema de control de flota</p>
-    <p id="baseChoferBadge" style="font-size:14px;"></p>
+    <p id="baseChoferBadge">Base: —</p>
   </div>
 
-  <div class="inner">
+  <div class="screen-container">
+    <h3>Estado de la jornada</h3>
+    <p id="ordenActivaInfo">🔴 Sin jornada activa</p>
 
-    <h2>Estado de la jornada</h2>
-    <p id="ordenActivaInfo" class="estado-jornada">
-      🔴 Sin jornada activa
-    </p>
-
-    <div class="fila-acciones">
-      <button class="btn-jornada" onclick="createOrderUI()">▶️ Iniciar Jornada</button>
-      <button class="btn-jornada" onclick="closeActiveOrderUI()">⏹️ Cerrar Jornada</button>
+    <div style="display:flex; gap:8px; margin-bottom:16px;">
+      <button onclick="createOrderUI()">▶️ Iniciar Jornada</button>
+      <button onclick="closeActiveOrderUI()">⏹️ Cerrar Jornada</button>
     </div>
 
-    <div class="separador"></div>
+    <h3>Operaciones del día</h3>
 
-    <h2>Operaciones del día</h2>
     <div class="menu-tarjetas">
       <button class="card-btn" onclick="abrirViajeSimple()">🚗 Nuevo Viaje</button>
       <button class="card-btn" onclick="showScreen('listaViajesScreen')">📄 Ver Viajes</button>
@@ -92,116 +172,101 @@
   </div>
 </div>
 
-<!-- ================== NUEVO VIAJE ================== -->
-<div id="travelScreen" class="screen page-form">
+<!-- ================= NUEVO VIAJE ================= -->
+<div id="travelScreen" class="screen">
 
   <div class="screen-header">
-    <button class="btn-back" onclick="showScreen('mainScreen')">← Volver</button>
+    <button class="btn-back" onclick="showScreen('mainScreen')">←</button>
+    <div>
+      <h3 style="margin:0;">Nuevo Viaje</h3>
+      <small id="orderNumberTravels"></small>
+    </div>
   </div>
 
   <div class="screen-container">
     <div class="card">
-      <h2>Nuevo Viaje</h2>
+      <label>Origen</label>
+      <select id="originTravels"></select>
 
-      <form onsubmit="addTravelUI(event); return false;">
+      <label>Destino</label>
+      <input id="destinationTravels" oninput="autoKmPorDestino(false)">
 
-        <!-- ORDEN + LEGAJO EN MISMA LÍNEA -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <div>
-            <strong>Nº Orden:</strong>
-            <span id="orderNumberTravels"></span>
-          </div>
+      <!-- SUGERENCIAS PRIMERO -->
+      <div id="sugerenciasRutas"
+           style="display:none; border:1px solid #ddd; border-radius:8px;
+                  max-height:160px; overflow:auto; margin-bottom:10px;">
+      </div>
 
-          <div style="font-size:13px; color:#666;">
-            Legajo: <span id="orderLegajoTravels"></span>
-          </div>
-        </div>
+      <!-- HORARIOS COT DESPUÉS -->
+      <div id="horariosOficiales"
+           style="display:none; border:1px solid #ddd; border-radius:8px;
+                  padding:8px; margin-bottom:10px;">
+      </div>
 
-        <input type="hidden" id="orderLegajoTravelsInput">
+      <label>Servicio</label>
+      <select id="numeroServicio" onchange="actualizarInfoServicio()">
+        <option value="">Elegí servicio...</option>
+        <option value="TURNO">Turno</option>
+        <option value="SEMI">Semi-directo</option>
+        <option value="DIRECTO">Directo</option>
+        <option value="EXPRESO">Expreso</option>
+        <option value="CONTRATADO">Contratado</option>
+        <option value="PASAJERO">Pasajero</option>
+      </select>
 
-        <label>Origen</label>
-        <select id="originTravels"></select>
+      <label>Kilómetros (auto)</label>
+      <input id="kmTravels" type="number" readonly>
 
-        <label>Destino (escribí o pegá)</label>
-        <input id="destinationTravels" oninput="autoKmPorDestino(false)">
+      <label>Hora salida</label>
+      <input id="departureTimeTravels" type="time">
 
-        <!-- HORARIOS OFICIALES (esto evitó tu error) -->
-        <div id="horariosOficiales"
-             style="display:none; margin:10px 0; padding:8px;
-                    border:1px solid #ddd; border-radius:6px;">
-        </div>
+      <label>Hora llegada</label>
+      <input id="arrivalTimeTravels" type="time">
 
-        <div id="sugerenciasRutas"
-             style="border:1px solid #ccc; display:none;
-                    background:white; max-height:180px;
-                    overflow:auto; margin-top:5px;
-                    border-radius:6px;">
-        </div>
+      <label>
+        <input type="checkbox" id="idaYVueltaAuto">
+        Generar vuelta automática
+      </label>
 
-        <label>Servicio</label>
-        <select id="numeroServicio" onchange="actualizarInfoServicio()">
-          <option value="">Elegí servicio...</option>
-          <option value="TURNO">Turno</option>
-          <option value="SEMI">Semi-directo</option>
-          <option value="DIRECTO">Directo (con acoplado)</option>
-          <option value="EXPRESO">Expreso / Vacío</option>
-          <option value="CONTRATADO">Contratado (Guardia especial)</option>
-          <option value="PASAJERO">Pasajero</option>
-        </select>
-
-        <label>Kilómetros (auto)</label>
-        <input id="kmTravels" type="number" readonly>
-
-        <label>Hora salida</label>
-        <input id="departureTimeTravels" type="time">
-
-        <label>Hora llegada</label>
-        <input id="arrivalTimeTravels" type="time">
-
-        <div style="margin:10px 0; padding:8px; border:1px solid #ddd; border-radius:6px;">
-          <label>
-            <input type="checkbox" id="idaYVueltaAuto">
-            Generar vuelta automática
-          </label>
-        </div>
-
-        <button type="submit" class="btn-primary">Guardar Viaje</button>
-
-      </form>
+      <button onclick="addTravelUI(event)">Guardar Viaje</button>
     </div>
   </div>
 </div>
 
-<!-- ================== LISTA VIAJES ================== -->
+<!-- ================= LISTA VIAJES ================= -->
 <div id="listaViajesScreen" class="screen">
   <button onclick="showScreen('mainScreen')">← Volver</button>
   <h2>Lista de Viajes</h2>
-  <div id="cardsViajesContainer"
-       style="display:flex; flex-direction:column; gap:12px; padding:10px;">
-  </div>
-  <h3 style="margin-top:20px;">Resumen del día</h3>
+  <div id="cardsViajesContainer"></div>
+  <h3>Resumen del día</h3>
   <div id="resumenDia"></div>
 </div>
 
-<!-- ================== GUARDIAS ================== -->
+<!-- ================= GUARDIAS ================= -->
 <div id="nuevaGuardiaScreen" class="screen">
   <button onclick="showScreen('mainScreen')">← Volver</button>
   <h2>Registrar Guardia</h2>
-  <form onsubmit="addGuardUI(event); return false;">
-    <label>Día</label><input id="diaGuardia" type="date">
-    <label>Hora inicio</label><input id="horaInicioGuardia" type="time">
-    <label>Hora fin</label><input id="horaFinGuardia" type="time">
 
-    <label>Tipo de guardia</label>
+  <form onsubmit="addGuardUI(event); return false;">
+    <label>Día</label>
+    <input id="diaGuardia" type="date">
+
+    <label>Hora inicio</label>
+    <input id="horaInicioGuardia" type="time">
+
+    <label>Hora fin</label>
+    <input id="horaFinGuardia" type="time">
+
+    <label>Tipo</label>
     <select id="tipoGuardia" onchange="manejarDescripcionGuardia()">
       <option value="">Elegí tipo...</option>
       <option value="comun">Guardia común</option>
       <option value="especial">Guardia especial</option>
     </select>
 
-    <div id="boxDescripcionGuardia" style="display:none; margin-top:10px;">
-      <label>Descripción (solo para guardia especial)</label>
-      <input id="descripcionGuardia" placeholder="Ej: Pista, Taller, Espera, etc.">
+    <div id="boxDescripcionGuardia" style="display:none;">
+      <label>Descripción</label>
+      <input id="descripcionGuardia">
     </div>
 
     <button type="submit">Guardar Guardia</button>
@@ -211,9 +276,7 @@
 <div id="listaGuardiasScreen" class="screen">
   <button onclick="showScreen('mainScreen')">← Volver</button>
   <h2>Guardias por día</h2>
-  <div id="cardsGuardiasContainer"
-       style="display:flex; flex-direction:column; gap:12px; padding:10px;">
-  </div>
+  <div id="cardsGuardiasContainer"></div>
 </div>
 
 <script src="core.js"></script>
@@ -221,33 +284,34 @@
 <script src="app_nuevo.js"></script>
 
 <script>
-// ===== FLUJO DE ARRANQUE LIMPIO (SIN PARPADEO) =====
-document.addEventListener("DOMContentLoaded", ()=>{
+// ===== FLUJO DE ARRANQUE CORRECTO =====
+document.addEventListener('DOMContentLoaded', ()=>{
+  showScreen('splashScreen');
 
-  const driver = getDriver();
+  setTimeout(()=>{
+    const driver = getDriver();
 
-  if(!driver){
-    showScreen("registroScreen");
-  } else {
-    // cargar badge y origen por defecto
-    document.getElementById("baseChoferBadge").innerText =
-      "Base: " + (driver.base || "Montevideo");
+    if(!driver){
+      showScreen('registroScreen');
+    } else {
+      document.getElementById('baseChoferBadge').innerText =
+        "Base: " + (driver.base || "Montevideo");
 
-    const sel = document.getElementById("originTravels");
-    const bases = ["Montevideo","Colonia","Maldonado","Punta del Este","Rocha","Chuy","Otro"];
+      const sel = document.getElementById('originTravels');
+      const bases = ['Montevideo','Colonia','Maldonado','Punta del Este','Rocha','Chuy','Otro'];
+      sel.innerHTML = bases.map(b =>
+        `<option value="${b}" ${b===driver.base?'selected':''}>${b}</option>`
+      ).join('');
 
-    sel.innerHTML = bases.map(b =>
-      `<option value="${b}" ${b===driver.base?"selected":""}>${b}</option>`
-    ).join("");
-
-    showScreen("mainScreen");
-  }
+      showScreen('mainScreen');
+    }
+  }, 900);
 });
 
 function registrarChofer(){
-  const legajo = document.getElementById("regLegajo").value.trim();
-  const nombre = document.getElementById("regNombre").value.trim();
-  const base = document.getElementById("regBase").value;
+  const legajo = regLegajo.value.trim();
+  const nombre = regNombre.value.trim();
+  const base = regBase.value;
 
   if(!legajo || !nombre){
     alert("Completá legajo y nombre");
@@ -255,23 +319,21 @@ function registrarChofer(){
   }
 
   initDriverProfile({legajo, nombre, base});
+  document.getElementById('baseChoferBadge').innerText = "Base: " + base;
 
-  document.getElementById("baseChoferBadge").innerText =
-    "Base: " + base;
-
-  const sel = document.getElementById("originTravels");
-  const bases = ["Montevideo","Colonia","Maldonado","Punta del Este","Rocha","Chuy","Otro"];
-
+  const sel = document.getElementById('originTravels');
+  const bases = ['Montevideo','Colonia','Maldonado','Punta del Este','Rocha','Chuy','Otro'];
   sel.innerHTML = bases.map(b =>
-    `<option value="${b}" ${b===base?"selected":""}>${b}</option>`
-  ).join("");
+    `<option value="${b}" ${b===base?'selected':''}>${b}</option>`
+  ).join('');
 
-  showScreen("mainScreen");
+  showScreen('mainScreen');
 }
 </script>
 
 </body>
 </html>
+
 
 
 
