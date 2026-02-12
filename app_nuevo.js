@@ -89,11 +89,25 @@ function abrirViajeSimple(){
 
   showScreen("travelScreen");
 
-  document.getElementById("orderNumberTravels").value =
+  // --- CARGA DE DATOS VISUALES (orden + legajo) ---
+  const driver = getDriver();
+
+  // Mostrar orden en el SPAN (UI)
+  document.getElementById("orderNumberTravels").innerText =
     o.orderNumber;
 
+  // Mostrar legajo chiquito en la misma línea (UI)
+  document.getElementById("orderLegajoTravels").innerText =
+    driver ? driver.legajo : "";
+
+  // Guardar legajo en input oculto SOLO para el sistema
+  document.getElementById("orderLegajoTravelsInput").value =
+    driver ? driver.legajo : "";
+
   // 👉 LIMPIEZA TOTAL DEL FORMULARIO (clave)
-  document.getElementById("originTravels").value = "Montevideo";
+  document.getElementById("originTravels").value =
+    driver?.base || "Montevideo";
+
   document.getElementById("destinationTravels").value = "";
   document.getElementById("kmTravels").value = "";
   document.getElementById("numeroServicio").value = "";
@@ -103,6 +117,7 @@ function abrirViajeSimple(){
 
   servicioSeleccionado = null;
 }
+
 
 
 // =====================================================
