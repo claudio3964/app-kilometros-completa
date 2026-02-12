@@ -76,7 +76,7 @@ function closeActiveOrderUI(){
 }
 
 // =====================================================
-// NUEVO VIAJE (ABRIR PANTALLA)
+// NUEVO VIAJE (ABRIR PANTALLA) — VERSIÓN CORREGIDA
 // =====================================================
 
 function abrirViajeSimple(){
@@ -89,22 +89,26 @@ function abrirViajeSimple(){
 
   showScreen("travelScreen");
 
-  // --- CARGA DE DATOS VISUALES (orden + legajo) ---
   const driver = getDriver();
 
-  // Mostrar orden en el SPAN (UI)
-  document.getElementById("orderNumberTravels").innerText =
-    o.orderNumber;
+  // ---- ORDEN (si existe el elemento, lo usamos) ----
+  const spanOrden = document.getElementById("orderNumberTravels");
+  if (spanOrden) {
+    spanOrden.innerText = o.orderNumber;
+  }
 
-  // Mostrar legajo chiquito en la misma línea (UI)
-  document.getElementById("orderLegajoTravels").innerText =
-    driver ? driver.legajo : "";
+  // ---- LEGAJO: solo si existen los elementos (evita tu error) ----
+  const spanLegajo = document.getElementById("orderLegajoTravels");
+  if (spanLegajo && driver) {
+    spanLegajo.innerText = driver.legajo;
+  }
 
-  // Guardar legajo en input oculto SOLO para el sistema
-  document.getElementById("orderLegajoTravelsInput").value =
-    driver ? driver.legajo : "";
+  const inputLegajo = document.getElementById("orderLegajoTravelsInput");
+  if (inputLegajo && driver) {
+    inputLegajo.value = driver.legajo;
+  }
 
-  // 👉 LIMPIEZA TOTAL DEL FORMULARIO (clave)
+  // 👉 LIMPIEZA TOTAL DEL FORMULARIO
   document.getElementById("originTravels").value =
     driver?.base || "Montevideo";
 
@@ -115,9 +119,15 @@ function abrirViajeSimple(){
   document.getElementById("arrivalTimeTravels").value = "";
   document.getElementById("idaYVueltaAuto").checked = false;
 
+  // ocultamos horarios hasta que el usuario ELIGA destino
+  const boxHorarios = document.getElementById("horariosOficiales");
+  if (boxHorarios) {
+    boxHorarios.style.display = "none";
+    boxHorarios.innerHTML = "";
+  }
+
   servicioSeleccionado = null;
 }
-
 
 
 // =====================================================
@@ -251,11 +261,10 @@ function autoKmPorDestino(terminoDeEscribir = false) {
     document.getElementById("originTravels")?.value || "Montevideo";
 
   if (!texto) {
-  box.style.display = "none";
-  box.innerHTML = "";
-  return;
-}
-
+    box.style.display = "none";
+    box.innerHTML = "";
+    return;
+  }
 
   const matches = buscarMultiplesRutas(texto);
 
@@ -285,17 +294,19 @@ function autoKmPorDestino(terminoDeEscribir = false) {
 
       let kmCalculado = buscarKmRuta(origenActual, m.destinoFinal);
 
-      // 👉 Si no existe ruta inversa, usamos el km del catálogo
+      // Si no existe ruta inversa, usamos el km del catálogo
       if (!kmCalculado || kmCalculado === 0) {
         kmCalculado = m.km;
       }
 
       document.getElementById("kmTravels").value = kmCalculado;
-      mostrarHorariosOficiales(origenActual, m.destinoFinal);
 
-
+      // 👉 OCULTAMOS sugerencias al elegir
       box.style.display = "none";
       box.innerHTML = "";
+
+      // 👉 RECIÉN AHORA mostramos horarios
+      mostrarHorariosOficiales(origenActual, m.destinoFinal);
     };
 
     box.appendChild(div);
@@ -309,21 +320,22 @@ function autoKmPorDestino(terminoDeEscribir = false) {
 
     let kmCalculado = buscarKmRuta(origenActual, destinoFinal);
 
-    // 👉 Si no existe ruta inversa, usamos el km del catálogo
     if (!kmCalculado || kmCalculado === 0) {
       kmCalculado = matchUnico.km;
     }
 
     document.getElementById("kmTravels").value = kmCalculado;
-    mostrarHorariosOficiales(origenActual, destinoFinal);
-
 
     if (terminoDeEscribir) {
       input.value = destinoFinal;
       box.style.display = "none";
+
+      // 👉 SOLO acá mostramos horarios
+      mostrarHorariosOficiales(origenActual, destinoFinal);
     }
   }
 }
+
 
 
 
@@ -526,74 +538,96 @@ function renderResumenDia(){
 
 
 // =====================================================
-// FLUJO DE ARRANQUE DEFINITIVO
+// FLUJO DE ARRANQUE DEFINITIVO (CORREGIDO)
 // =====================================================
 
 document.addEventListener("DOMContentLoaded", () => {
 
+  // 1️⃣ — Estado inicial de la jornada (se mantiene igual)
   const o = getActiveOrder();
   if(o){
     document.getElementById("ordenActivaInfo").innerText =
       "🟢 Jornada activa: " + o.orderNumber;
   }
 
-  // ✅ PONEMOS HOY POR DEFECTO EN GUARDIAS
+  // 2️⃣ — Hoy por defecto en guardias (se mantiene)
   const diaInput = document.getElementById("diaGuardia");
   if(diaInput){
     diaInput.value = new Date().toISOString().split("T")[0];
   }
 
+  // 3️⃣ — Render inicial (se mantiene)
   renderListaViajes();
   renderResumenDia();
 
-  // ===== FLUJO DE ARRANQUE REAL (CON SPLASH) =====
-  window.addEventListener("load", () => {
-    setTimeout(() => {
-      const driver = getDriver();
+  // ======== 🔥 ARRANQUE REAL CON SPLASH (NUEVO Y ORDENADO) ========
 
+  window.addEventListener("load", () => {
+
+    // 👉 Mostramos splash de entrada (evita pantalla blanca)
+    const splash = document.getElementById("splashScreen");
+    if (splash) {
+      splash.classList.add("active");
+    }
+
+    setTimeout(() => {
+
+      const driver = getDriver();
       console.log("ARRANQUE FINAL - driver:", driver);
 
-      // 1) Limpiamos todas las pantallas
+      // Limpiamos todas las pantallas
       document.querySelectorAll(".screen")
         .forEach(s => s.classList.remove("active"));
 
-      // 2) Decidimos a dónde ir
-     if (!driver) {
-  console.log("→ Voy a LOGIN (primer uso)");
+      if (!driver) {
+        // 👉 PRIMER USO → registro
+        console.log("→ Voy a REGISTRO (primer uso)");
+        const login = document.getElementById("loginScreen");
 
-  const login = document.getElementById("loginScreen");
-  const main  = document.getElementById("mainScreen");
+        if (login) {
+          login.classList.add("active");
+        } else {
+          console.warn("loginScreen no existe → cayendo a mainScreen");
+          document.getElementById("mainScreen")?.classList.add("active");
+        }
 
-  // Si existe loginScreen, mostramos login; si no, caemos a mainScreen
-  if (login) {
-    login.classList.add("active");
-  } else if (main) {
-    console.warn("loginScreen no existe → cayendo a mainScreen");
-    main.classList.add("active");
-  }
+      } else {
+        // 👉 USUARIO YA REGISTRADO → directo a MAIN
 
-} else {
-  console.log("→ Voy a MAIN (usuario ya existe)");
+        console.log("→ Voy a MAIN (usuario ya existe)");
 
-  const main = document.getElementById("mainScreen");
-  if (main) {
-    main.classList.add("active");
-  }
-}
-      // 3) FADE-OUT del splash (clave)
-      const splash = document.getElementById("splashScreen");
-      if (splash) {
-        splash.classList.add("fade-out");
+        // Mostramos base arriba (tu encabezado azul)
+        const badge = document.getElementById("baseChoferBadge");
+        if (badge) {
+          badge.innerText = "Base: " + (driver.base || "Montevideo");
+        }
 
-        setTimeout(() => {
-          splash.style.display = "none";
-        }, 400);
+        // Preseleccionamos base como origen por defecto
+        const sel = document.getElementById("originTravels");
+        if (sel) {
+          const bases = ["Montevideo","Colonia","Maldonado",
+                          "Punta del Este","Rocha","Chuy","Otro"];
+
+          sel.innerHTML = bases.map(b =>
+            `<option value="${b}" ${b===driver.base?'selected':''}>${b}</option>`
+          ).join("");
+        }
+
+        document.getElementById("mainScreen")?.classList.add("active");
       }
 
-    }, 600);
+      // 👉 Ocultamos splash limpio
+      if (splash) {
+        splash.classList.add("fade-out");
+        setTimeout(() => splash.style.display = "none", 400);
+      }
+
+    }, 900); // ⏱️ 900ms de splash
+
   });
 
-}); // ✅ CIERRA DOMContentLoaded
+});
+
 
 
 // =====================================================
