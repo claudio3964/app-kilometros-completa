@@ -60,11 +60,13 @@ function saveOrders(l){ Storage.set("orders",l); }
 
 // ===== ORDER NUMBER =====
 function generateOrderNumber(){
-  const d=getDriver()||{legajo:"0000"};
-  let c=Storage.get("orderCounter",0)+1;
-  Storage.set("orderCounter",c);
-  return `${d.legajo}-${String(c).padStart(8,"0")}`;
+  let c = Storage.get("orderCounter", 0) + 1;
+  Storage.set("orderCounter", c);
+
+  const hoy = new Date().getFullYear();
+  return `ORD-${hoy}-${String(c).padStart(6,"0")}`;
 }
+
 
 // ===== ACTIVE ORDER =====
 function getActiveOrder(){ return Storage.get("activeOrder"); }
@@ -75,8 +77,12 @@ function clearActiveOrder(){ Storage.remove("activeOrder"); }
 function createOrder(){
   if(getActiveOrder()) return getActiveOrder();
 
-  const o={
-    orderNumber: generateOrderNumber(),
+  const driver = getDriver() || {legajo:"0000", base:"Montevideo"};
+
+  const o = {
+    orderNumber: generateOrderNumber(),   // 👈 orden limpia
+    legajo: driver.legajo,                // 👈 guardamos legajo aparte
+    baseInicio: driver.base || "Montevideo",
     date: new Date().toISOString().split("T")[0],
     travels: [],
     guards: [],
@@ -84,12 +90,13 @@ function createOrder(){
     createdAt: Date.now()
   };
 
-  const all=getOrders();
+  const all = getOrders();
   all.push(o);
   saveOrders(all);
   setActiveOrder(o);
   return o;
 }
+
 
 // ===== CLOSE ORDER =====
 function closeActiveOrder(){
