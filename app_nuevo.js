@@ -39,7 +39,7 @@ function createOrderUI(){
 
   alert("Jornada iniciada");
 }
-
+window.createOrderUI = createOrderUI;
 function closeActiveOrderUI(){
   const o = closeActiveOrder(); // CORE
 
@@ -53,6 +53,9 @@ function closeActiveOrderUI(){
 
   alert("Jornada cerrada");
 }
+
+window.closeActiveOrderUI = closeActiveOrderUI;
+
 
 // =====================================================
 // NUEVO VIAJE (ABRIR PANTALLA) — VERSIÓN CORREGIDA
@@ -107,6 +110,7 @@ function abrirViajeSimple(){
 
   servicioSeleccionado = null;
 }
+window.abrirViajeSimple = abrirViajeSimple;
 
 
 // =====================================================
