@@ -582,12 +582,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!driver) {
         // 👉 PRIMER USO → registro
         console.log("→ Voy a REGISTRO (primer uso)");
-        const login = document.getElementById("loginScreen");
+        const login = document.getElementById("registroScreen");
 
         if (login) {
           login.classList.add("active");
         } else {
-          console.warn("loginScreen no existe → cayendo a mainScreen");
+          console.warn("lregistroScreen no existe → cayendo a mainScreen");
           document.getElementById("mainScreen")?.classList.add("active");
         }
 
