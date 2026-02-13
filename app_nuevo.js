@@ -10,28 +10,7 @@ console.log("APP_NUEVO CARGADO (SERVICIOS LEGIBLES EN TABLA)");
 
 let servicioSeleccionado = null;
 
-// =====================================================
-// NAVEGACIÓN
-// =====================================================
 
-function showScreen(id){
-  console.clear();
-  console.log("👉 Quiero mostrar:", id);
-
-  document.querySelectorAll(".screen").forEach(s => {
-    s.classList.remove("active");
-    console.log("Oculto:", s.id);
-  });
-
-  const target = document.getElementById(id);
-  if (!target) {
-    console.error("❌ NO EXISTE LA PANTALLA:", id);
-    return;
-  }
-
-  target.classList.add("active");
-  console.log("✅ Activada:", id);
-}
 
 
 // =====================================================
@@ -1073,22 +1052,4 @@ function renderListaGuardias(){
 // 🔒 BLINDAJE FINAL DE NAVEGACIÓN (HOOK CENTRALIZADO)
 // =====================================================
 
-const originalShowScreen = showScreen;
-
-showScreen = function(id){
-  originalShowScreen(id);
-
-  // Hooks automáticos por pantalla
-  if (id === "listaViajesScreen") {
-    renderTarjetasPorDia();
-  }
-
-  if (id === "listaGuardiasScreen") {
-    renderTarjetasGuardiasPorDia();
-  }
-
-  if (id === "mainScreen") {
-    renderResumenDia();
-  }
-};
 
