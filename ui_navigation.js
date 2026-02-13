@@ -1,1 +1,2 @@
-console.log("ui_navigation cargado");
+window.showScreen = showScreen;
+
