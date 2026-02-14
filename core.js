@@ -75,7 +75,10 @@ function clearActiveOrder(){ Storage.remove("activeOrder"); }
 
 // ===== CREATE ORDER =====
 function createOrder(){
-  if(getActiveOrder()) return getActiveOrder();
+  if (getActiveOrder()) {
+  throw new Error("YA_EXISTE_JORNADA_ACTIVA");
+}
+
 
   const driver = getDriver() || {legajo:"0000", base:"Montevideo"};
 

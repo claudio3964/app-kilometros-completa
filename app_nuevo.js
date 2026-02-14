@@ -32,29 +32,26 @@ function normalizarTexto(txt) {
 // =====================================================
 
 function createOrderUI(){
-  const o = createOrder();   // CORE
+  try {
 
-  document.getElementById("ordenActivaInfo").innerText =
-    "🟢 Jornada activa: " + o.orderNumber;
+    const o = createOrder();  // CORE
 
-  alert("Jornada iniciada");
-}
-window.createOrderUI = createOrderUI;
-function closeActiveOrderUI(){
-  const o = closeActiveOrder(); // CORE
+    document.getElementById("ordenActivaInfo").innerText =
+      "🟢 Jornada activa: " + o.orderNumber;
 
-  if(!o){
-    alert("No hay jornada activa");
-    return;
+    alert("Jornada iniciada");
+
+  } catch (e) {
+
+    if (e.message === "YA_EXISTE_JORNADA_ACTIVA") {
+      alert("Ya existe una jornada activa.");
+    } else {
+      throw e;
+    }
+
   }
-
-  document.getElementById("ordenActivaInfo").innerText =
-    "🔴 Sin jornada activa";
-
-  alert("Jornada cerrada");
 }
 
-window.closeActiveOrderUI = closeActiveOrderUI;
 
 
 // =====================================================
