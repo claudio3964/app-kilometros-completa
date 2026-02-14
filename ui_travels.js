@@ -38,7 +38,14 @@ function closeActiveOrderUI(){
 
   alert("Jornada cerrada");
 }
+// =====================================================
+// LISTA DE VIAJES  (COMPATIBLE CON TARJETAS)
+// =====================================================
+function renderListaViajes(){
+
+  // Si ya estamos usando tarjetas, NO tocamos tablas:
+  renderTarjetasPorDia();
+}
 
 // Exponer global (porque el HTML usa onclick)
-window.createOrderUI = createOrderUI;
-window.closeActiveOrderUI = closeActiveOrderUI;
+window.renderListaViajes = renderListaViajes;

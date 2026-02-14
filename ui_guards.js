@@ -32,7 +32,6 @@ function addGuardUI(event){
     return;
   }
 
-  // 👉 ÚNICO cálculo que hace la UI: convertir inicio/fin → horas
   const [hI, mI] = inicio.split(":").map(Number);
   const [hF, mF] = fin.split(":").map(Number);
 
@@ -43,7 +42,6 @@ function addGuardUI(event){
     return;
   }
 
-  // ======= Manejo de descripción para guardia especial =======
   let descripcion = "";
 
   if(tipo === "especial"){
@@ -55,10 +53,10 @@ function addGuardUI(event){
     }
   }
 
-  // 👉 Mandamos al CORE lo mínimo que espera (sin cambiar core)
+  // CORE
   addGuard(tipo, horas);
 
-  // 👉 Enriquecemos la última guardia con más datos útiles
+  // Enriquecemos guardia
   const orders = getOrders();
   const ultima = orders[orders.length - 1];
   const ultimaGuardia = ultima.guards[ultima.guards.length - 1];
@@ -70,11 +68,14 @@ function addGuardUI(event){
 
   saveOrders(orders);
 
+  // 🔥 AHORA sí obtenemos la orden actualizada
+  const updatedOrder = getActiveOrder();
+
   renderResumenDia();
   renderListaGuardias();
 
-  // ======= NUEVO: mensaje con viático en el alert =======
-  const totals = calculateOrderTotals(o);
+  const totals = calculateOrderTotals(updatedOrder);
+
   const mensajeViatico =
     totals.viatico > 0
       ? "\n✅ Viático generado en esta jornada"
@@ -87,14 +88,7 @@ function addGuardUI(event){
 
   showScreen("mainScreen");
 }
-// =====================================================
-// LISTA DE VIAJES  (COMPATIBLE CON TARJETAS)
-// =====================================================
-function renderListaViajes(){
 
-  // Si ya estamos usando tarjetas, NO tocamos tablas:
-  renderTarjetasPorDia();
-}
 
 
 // =====================================================
@@ -141,6 +135,77 @@ function renderListaGuardias(){
     `;
 
     tbody.appendChild(tr);
+  });
+}
+// =====================================================
+// CONTROL VISUAL DE DESCRIPCIÓN DE GUARDIA
+// =====================================================
+
+function manejarDescripcionGuardia(){
+  const tipo = document.getElementById("tipoGuardia").value;
+  const box = document.getElementById("boxDescripcionGuardia");
+
+  if(tipo === "especial"){
+    box.style.display = "block";
+  } else {
+    box.style.display = "none";
+    document.getElementById("descripcionGuardia").value = "";
+  }
+}
+// =====================================================
+// TARJETAS DE GUARDIAS POR DÍA (ESTILO MOBILE)
+// =====================================================
+function renderTarjetasGuardiasPorDia(){
+  const container = document.getElementById("cardsGuardiasContainer");
+  container.innerHTML = "";
+
+  const orders = getOrders();
+  if(!orders || orders.length === 0) return;
+
+  // Agrupar guardias por fecha
+  const porDia = {};
+
+  orders.forEach(o => {
+    const d = o.date;
+    if(!porDia[d]) porDia[d] = [];
+    porDia[d].push(o);
+  });
+
+  // Últimos 5 días por defecto
+  const fechas = Object.keys(porDia)
+    .sort((a,b) => new Date(b) - new Date(a))
+    .slice(0,5);
+
+  fechas.forEach(fecha => {
+
+    const listaGuardias = [];
+
+    porDia[fecha].forEach(o => {
+      o.guards.forEach(g => {
+        listaGuardias.push(
+          `${g.inicio || "--:--"} – ${g.fin || "--:--"} | ` +
+          `${g.hours.toFixed(2)} h | ${g.type}` +
+          (g.desc ? ` (${g.desc})` : "")
+        );
+      });
+    });
+
+    const card = document.createElement("div");
+    card.style.cssText = `
+      border:1px solid #ddd;
+      border-radius:12px;
+      padding:12px;
+      background:white;
+      box-shadow:0 2px 6px rgba(0,0,0,.1);
+    `;
+
+    card.innerHTML = `
+      <b>📅 ${fecha}</b><br><br>
+      <b>Guardias:</b><br>
+      ${listaGuardias.join("<br>") || "—"}
+    `;
+
+    container.appendChild(card);
   });
 }
 window.addGuardUI = addGuardUI;
