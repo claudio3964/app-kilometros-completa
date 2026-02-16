@@ -155,23 +155,31 @@ function manejarDescripcionGuardia(){
 // =====================================================
 // TARJETAS DE GUARDIAS POR DÍA (ESTILO MOBILE)
 // =====================================================
+
 function renderTarjetasGuardiasPorDia(){
-  const container = document.getElementById("cardsGuardiasContainer");
+
+  const container =
+    document.getElementById("cardsGuardiasContainer");
+
+  if(!container) return;
+
   container.innerHTML = "";
 
   const orders = getOrders();
+
   if(!orders || orders.length === 0) return;
 
-  // Agrupar guardias por fecha
   const porDia = {};
 
   orders.forEach(o => {
+
     const d = o.date;
+
     if(!porDia[d]) porDia[d] = [];
+
     porDia[d].push(o);
   });
 
-  // Últimos 5 días por defecto
   const fechas = Object.keys(porDia)
     .sort((a,b) => new Date(b) - new Date(a))
     .slice(0,5);
@@ -181,22 +189,27 @@ function renderTarjetasGuardiasPorDia(){
     const listaGuardias = [];
 
     porDia[fecha].forEach(o => {
+
       o.guards.forEach(g => {
+
         listaGuardias.push(
           `${g.inicio || "--:--"} – ${g.fin || "--:--"} | ` +
           `${g.hours.toFixed(2)} h | ${g.type}` +
-          (g.desc ? ` (${g.desc})` : "")
+          (g.descripcion ? ` (${g.descripcion})` : "")
         );
       });
+
     });
 
     const card = document.createElement("div");
+
     card.style.cssText = `
       border:1px solid #ddd;
       border-radius:12px;
       padding:12px;
       background:white;
       box-shadow:0 2px 6px rgba(0,0,0,.1);
+      margin-bottom:10px;
     `;
 
     card.innerHTML = `
@@ -207,6 +220,24 @@ function renderTarjetasGuardiasPorDia(){
 
     container.appendChild(card);
   });
+
 }
+
+// =====================================================
+// FUNCIÓN PRINCIPAL LLAMADA POR LA APP
+// =====================================================
+
+function renderListaGuardias(){
+
+  renderTarjetasGuardiasPorDia();
+
+}
+
+// =====================================================
+// EXPORTS
+// =====================================================
+
 window.addGuardUI = addGuardUI;
 window.renderListaGuardias = renderListaGuardias;
+window.renderTarjetasGuardiasPorDia = renderTarjetasGuardiasPorDia;
+window.manejarDescripcionGuardia = manejarDescripcionGuardia;

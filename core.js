@@ -113,49 +113,67 @@ function closeActiveOrder(){
   return o;
 }
 
-// ===== VIAJES (tu versión con origen) =====
+// =====================================================
+// VIAJES (CORE OFICIAL CON KM AUTO)
+// =====================================================
 function addTravel(origen, destino, turno, departureTime, arrivalTime, hoursWorked){
+
   const o = getActiveOrder();
+
   if(!o || o.closed) return false;
 
   const rutaDirecta = `${origen} → ${destino}`;
   const rutaInversa = `${destino} → ${origen}`;
 
   let kmEmpresa = ROUTES_CATALOG[rutaDirecta];
+
   if(!kmEmpresa){
     kmEmpresa = ROUTES_CATALOG[rutaInversa] || 0;
   }
 
+  // 🔥 LEER KM REAL DESDE UI
+  const kmAuto =
+    Number(document.getElementById("kmTravels")?.value) || kmEmpresa;
+
   const acoplado = turno >= 2;
   const esPrimer = o.travels.length === 0;
 
-  o.travels.push({
+  const nuevoViaje = {
+
     origen,
     destino,
+
     turno,
+
     kmEmpresa,
+    kmAuto,   // 🔥 ESTA ES LA CLAVE
+
     acoplado,
     tomeCese: esPrimer,
+
     departureTime,
     arrivalTime,
     hoursWorked,
-    createdAt: Date.now()
-  });
 
-  saveOrders(getOrders().map(x=>x.orderNumber===o.orderNumber ? o : x));
+    createdAt: Date.now()
+  };
+
+  o.travels.push(nuevoViaje);
+
+  saveOrders(
+    getOrders().map(x =>
+      x.orderNumber === o.orderNumber ? o : x
+    )
+  );
+
   setActiveOrder(o);
+
+  console.log("💾 Guardado en CORE:", nuevoViaje);
+
   return true;
 }
 
-// ===== GUARDIAS =====
-function addGuard(type,hours){
-  const o=getActiveOrder();
-  if(!o || o.closed) return false;
 
-  o.guards.push({type,hours,createdAt:Date.now()});
-  saveOrders(getOrders().map(x=>x.orderNumber===o.orderNumber?o:x));
-  setActiveOrder(o);
-}
 
 // =====================================================
 // 🆕 CÁLCULO REAL DE JORNADA (viajes + guardias)
