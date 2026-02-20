@@ -1,0 +1,217 @@
+[33mdc42399[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdev-rebuild-core[m[33m, [m[1;31morigin/dev-rebuild-core[m[33m)[m fix(core): cálculo correcto usando kmAuto en totales, resumen del día completo con tome y cese, acoplados y viáticos
+[33m9279b57[m Sistema de viajes estable - km guardados y mostrados correctamente
+[33m408d461[m fix(core): corregido cálculo de viáticos incluyendo guardias en jornada
+[33m4b493e4[m refactor: migración de UI jornada y guardias a módulos correspondientes
+[33mee5994c[m Agrego carga de app_nuevo.js en index
+[33m151e967[m Reagrego app_nuevo y exporto funciones globales
+[33m55fde1f[m Quitado hook showScreen de app_nuevo
+[33mc5d8a53[m Expose showScreen globally
+[33m6cc8cea[m Reorganización arquitectura UI modular (navigation, travels, guards, bootstrap)
+[33m8ccb34e[m Ajustes flujo de inicio y orden sugerencias-destino
+[33m629cdbd[m Refactor UI: splash discreto + flujo correcto + orden sugerencias
+[33m31d62e9[m Refactor: flujo sin splash + registro limpio + nuevo viaje compacto
+[33m6dffa62[m Fix: nuevo viaje sin error + legajo compacto en UI
+[33m5ecbc6b[m Nueva numeración de orden + splash y base del chofer
+[33mb5081e8[m Fix error pantalla blanca en mobile
+[33m06ca80d[m Mostrar errores en mobile
+[33md12f044[m Ajustes responsive y centrado de pantallas
+[33m3f36970[m Limpieza de workflows antiguos
+[33m53211a1[m Fix splash and startup flow
+[33m324b66a[m targetas de gsuardias y viajes funcionando sin errores
+[33ma9abaff[m Ajustes finales buscador + UI destino
+[33m5d391cd[m Buscador de destinos con ida y vuelta automático
+[33m8b45c7f[m feat: mejorar registro y listado de guardias
+[33mf7e9e66[m Ajustes core y HTML sin romper funcionalidad
+[33m92d7341[m Punto estable: app funcional con viajes y guardias
+[33m1424a7e[m Punto estable: app funcionando mainScreen y bootstrap OK
+[33m3b7444d[m[33m ([m[1;32mstable-core[m[33m)[m Checkpoint antes de reconstruir core app
+[33m4e97889[m STABLE checkpoint kilometros funcionando
+[33ma29516b[m Update style.css
+[33m945c217[m Update style.css
+[33m67c335c[m Update style.css
+[33m73aab52[m Update style.css
+[33mdcbc5a6[m Update style.css
+[33m0a475a9[m Update style.css
+[33m7d8c16f[m Update app.js
+[33m12a9851[m Update style.css
+[33m8b2052b[m Update app.js
+[33m8a5c15e[m Update app.js
+[33m4a21256[m Update app.js
+[33m579712c[m Update index.html
+[33m7cd6958[m Update index.html
+[33m31b5c15[m Update app.js
+[33md72178a[m Update index.html
+[33m22f5880[m Update app.js
+[33m8d925f8[m Update index.html
+[33m0ef15f6[m Update app.js
+[33mcd571e0[m Update style.css
+[33m04d30e6[m Update style.css
+[33m84adaae[m Update style.css
+[33m9330f1d[m Update style.css
+[33me72c4a1[m Update style.css
+[33mba4575a[m Update style.css
+[33mc3420bd[m Update style.css
+[33m5fa83eb[m Update style.css
+[33m8e45a92[m Update style.css
+[33m4891efa[m Update index.html
+[33mcf0947a[m Update style.css
+[33m879ea8d[m Update index.html
+[33ma7c91fa[m Update index.html
+[33m56754c3[m Update index.html
+[33mf204f1e[m Update app.js
+[33m0071eb2[m Update app.js
+[33md1ee42c[m Update app.js
+[33m646bdaf[m Update app.js
+[33mecfcb61[m Update app.js
+[33m8624cc4[m Update style.css
+[33m1339abf[m Update app.js
+[33ma1a3301[m Update app.js
+[33m692fcac[m Update index.html
+[33m37178c4[m Update app.js
+[33me79cc30[m Update app.js
+[33m7ddddcf[m Update app.js
+[33m3f00a1b[m Update app.js
+[33m8dc9976[m Update app.js
+[33m9142850[m Update app.js
+[33m8169628[m Update app.js
+[33m396e2d1[m Update app.js
+[33m6b33adc[m Update app.js
+[33md87cab6[m Update app.js
+[33m6d1400b[m Update app.js
+[33mc1b5a0e[m Update app.js
+[33m93ee41e[m Update app.js
+[33ma5fd1cb[m Update app.js
+[33m0bbb260[m Update app.js
+[33mda8e437[m Update style.css
+[33mf9464b6[m Update app.js
+[33mbc50225[m Update style.css
+[33m2d6c8e5[m Update app.js
+[33me7f3223[m Update app.js
+[33m9a04831[m Update app.js
+[33mda659cb[m Update app.js
+[33m3b15f6c[m Update app.js
+[33mc97d77c[m Update app.js
+[33m2e8b963[m Update app.js
+[33m8556a5e[m Update app.js
+[33m180a8db[m Update style.css
+[33m432dac2[m Update index.html
+[33m61635ac[m Update app.js
+[33m8751ad6[m Update style.css
+[33m5347d53[m Update index.html
+[33m4558d33[m Update index.html
+[33m69f010e[m Update style.css
+[33me851c0a[m Update index.html
+[33m9586fcd[m Update app.js
+[33m1a723ac[m Update app.js
+[33m8273248[m Update app.js
+[33m2dae146[m Update index.html
+[33mec16524[m Update index.html
+[33m74843b8[m Update index.html
+[33m77e1ea3[m Update app.js
+[33m031d3fe[m Update index.html
+[33mc7511c5[m Update app.js
+[33m8c66bda[m Update index.html
+[33mb344f72[m Update app.js
+[33m8953ae8[m Update index.html
+[33meefb12d[m Update app.js
+[33me728828[m Update index.html
+[33m4ebbbc5[m Update app.js
+[33mcc333ad[m Update index.html
+[33m8aafd46[m Update style.css
+[33md369a38[m Update style.css
+[33mecd0a8c[m Update style.css
+[33m0a68710[m Update index.html
+[33m2aaf7d1[m Update app.js
+[33m187c8b0[m Update style.css
+[33md5d6351[m Update index.html
+[33ma96b829[m Update app.js
+[33mc608725[m Update style.css
+[33mc97dc49[m Update index.html
+[33m9d19fd8[m Update style.css
+[33m71b09ca[m Update style.css
+[33mc4fd526[m Add files via upload
+[33m36970c8[m Update index.html
+[33m30be76c[m Update app.js
+[33m6c2d1b6[m Update sw.js
+[33m45bfab6[m Update app.js
+[33m7391234[m Update index.html
+[33mf440ae1[m Update style.css
+[33mcb934ac[m Update style.css
+[33m21c3eeb[m Update index.html
+[33m8e0700c[m Update style.css
+[33mc97d4a3[m Update style.css
+[33ma54d3db[m Update index.html
+[33m7b0f2cc[m Update index.html
+[33m142d77e[m Create style.css
+[33m8f972db[m Delete css/style.css
+[33md90d35d[m Delete js/app.js
+[33m917945c[m Update index.html
+[33m9043dad[m Create app.js
+[33m72cb580[m Update style.css
+[33md38e198[m Rename styles.css to style.css
+[33mb949885[m Update index.html
+[33m3ce9f02[m Update index.html
+[33m074e867[m Update index.html
+[33m82c2629[m Update index.html
+[33m303bd0b[m Update index.html
+[33m2c79828[m Update app.js
+[33m0e44510[m Update styles.css
+[33m7d44f8c[m Update index.html
+[33mb477b66[m Update app.js
+[33m7ade35a[m Update app.js
+[33ma175388[m Update index.html
+[33m8b80862[m Update styles.css
+[33mc8aece3[m Update app.js
+[33m2392358[m Update app.js
+[33m3611bdf[m Update app.js
+[33m36366fd[m Update app.js
+[33md8feb48[m Update app.js
+[33m68be604[m Update app.js
+[33mef1dc52[m Update index.html
+[33m6589dd0[m Update app.js
+[33m2b18019[m Create app.js
+[33ma344975[m Update styles.css
+[33mb3435df[m Create styles.css
+[33m376b198[m Update index.html
+[33mb6c6aa2[m Update index.html
+[33m7038cec[m Update index.html
+[33m5460f59[m Update index.html
+[33mdef788e[m Update index.html
+[33m2087be5[m Update index.html
+[33m922d843[m Update index.html
+[33m503184b[m Update index.html
+[33m1e20de0[m Update index.html
+[33mbe734b5[m Update index.html
+[33mdecc46e[m Update index.html
+[33m26b390b[m Update index.html
+[33m1ad564f[m Update index.html
+[33md378f5e[m Update index.html
+[33m0616e5a[m Update index.html
+[33mae75eea[m Update index.html
+[33m3c2ce36[m Update index.html
+[33m2d89aab[m Update index.html
+[33m11cc631[m Update index.html
+[33m3292d55[m Update index.html
+[33m155cffa[m Update index.html
+[33ma36a8be[m Update index.html
+[33mc3d46b1[m Update index.html
+[33mc5a584b[m Update index.html
+[33meaefcee[m Update index.html
+[33m58e819f[m Update index.html
+[33m39c75ae[m Update index.html
+[33mcfe9ecc[m Update index.html
+[33m6c90891[m Update index.html
+[33m6149faf[m Update index.html
+[33mbc4b674[m Update index.html
+[33mac6350f[m Update index.html
+[33mbe4df2e[m Update index.html
+[33m83d26d6[m Update index.html
+[33m2ec2c27[m Update index.html
+[33m4702a5c[m Update index.html
+[33m8a9a409[m Update index.html
+[33m750f236[m Update index.html
+[33m52feb54[m Delete service-worker.js
+[33m0d77108[m Update sw.js
+[33m50efc75[m Update index.html
+[33m0d484d1[m Update service-worker.js
+[33m71dcfb3[m Crea

@@ -53,20 +53,23 @@ function addGuardUI(event){
     }
   }
 
-  // CORE
-  addGuard(tipo, horas);
+// CORE (agregar guardia manualmente en este commit)
+const orders = getOrders();
+const ultima = orders[orders.length - 1];
 
-  // Enriquecemos guardia
-  const orders = getOrders();
-  const ultima = orders[orders.length - 1];
-  const ultimaGuardia = ultima.guards[ultima.guards.length - 1];
+if (!ultima.guards) ultima.guards = [];
 
-  ultimaGuardia.descripcion = descripcion;
-  ultimaGuardia.dia = dia;
-  ultimaGuardia.inicio = inicio;
-  ultimaGuardia.fin = fin;
+ultima.guards.push({
+  type: tipo,
+  hours: horas,
+  descripcion: descripcion,
+  dia: dia,
+  inicio: inicio,
+  fin: fin,
+  createdAt: new Date().toISOString()
+});
 
-  saveOrders(orders);
+saveOrders(orders);
 
   // 🔥 AHORA sí obtenemos la orden actualizada
   const updatedOrder = getActiveOrder();
