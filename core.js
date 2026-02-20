@@ -60,11 +60,20 @@ function saveOrders(l){ Storage.set("orders",l); }
 
 // ===== ORDER NUMBER =====
 function generateOrderNumber(){
-  let c = Storage.get("orderCounter", 0) + 1;
-  Storage.set("orderCounter", c);
 
-  const hoy = new Date().getFullYear();
-  return `ORD-${hoy}-${String(c).padStart(6,"0")}`;
+  const driver = getDriver() || { legajo: "0000" };
+
+  const legajo = driver.legajo;
+
+  const hoy = new Date();
+
+  const yyyy = hoy.getFullYear();
+  const mm = String(hoy.getMonth() + 1).padStart(2,"0");
+  const dd = String(hoy.getDate()).padStart(2,"0");
+
+  const fecha = `${yyyy}${mm}${dd}`;
+
+  return `${legajo}-${fecha}`;
 }
 
 
