@@ -70,6 +70,7 @@ ultima.guards.push({
 });
 
 saveOrders(orders);
+setActiveOrder(ultima);
 
   // 🔥 AHORA sí obtenemos la orden actualizada
   const updatedOrder = getActiveOrder();

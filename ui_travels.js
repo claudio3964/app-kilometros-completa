@@ -312,29 +312,26 @@ function addTravelUI(event){
 // =====================================================
 
 function renderResumenDia(){
+  const container=document.getElementById("resumenDia");
+  if(!container)return;
 
-  const container = document.getElementById("resumenDia");
-
-  if(!container) return;
-
-  const order = getActiveOrder();
-
+  const order=getActiveOrder();
   if(!order){
-    container.innerHTML = "Sin jornada activa";
+    container.innerHTML="Sin jornada activa";
     return;
   }
 
-  const totals = calculateOrderTotals(order);
+  const totals=calculateOrderTotals(order);
 
-  container.innerHTML = `
+  container.innerHTML=`
     <div class="card">
-      <b>Resumen jornada</b><br><br>
-
-      KM totales: ${totals.kmTotal}<br>
-      Viajes: ${order.travels.length}<br>
-      Guardias: ${order.guards.length}<br>
-      Viáticos: ${totals.viaticos}<br>
-      Total $: ${totals.monto.toFixed(0)}
+      <b>Resumen jornada activa</b><br>
+      KM totales: <b>${totals.kmTotal.toFixed(1)}</b><br>
+      KM tome y cese: <b>${totals.kmTomeCese.toFixed(1)}</b><br>
+      KM guardias: <b>${totals.kmGuardias.toFixed(1)}</b><br>
+      KM acoplados: <b>${totals.kmAcoplados.toFixed(1)}</b><br>
+      Viáticos generados: <b>${totals.viaticos}</b><br>
+      Total $: <b>${totals.monto.toFixed(0)}</b>
     </div>
   `;
 }

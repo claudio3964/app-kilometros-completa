@@ -242,11 +242,25 @@ input, select{
 
 <!-- ================= LISTA VIAJES ================= -->
 <div id="listaViajesScreen" class="screen">
-  <button onclick="showScreen('mainScreen')">← Volver</button>
-  <h2>Lista de Viajes</h2>
-  <div id="cardsViajesContainer"></div>
-  <h3>Resumen del día</h3>
-  <div id="resumenDia"></div>
+
+  <!-- HEADER FIJO -->
+  <div class="header-fijo">
+
+    <button onclick="showScreen('mainScreen')">← Volver</button>
+
+    <h2>Lista de Viajes</h2>
+
+    <div id="resumenDia"></div>
+
+  </div>
+
+  <!-- CONTENIDO CON SCROLL -->
+  <div class="contenido-scroll">
+
+    <div id="cardsViajesContainer"></div>
+
+  </div>
+
 </div>
 
 <!-- ================= GUARDIAS ================= -->
