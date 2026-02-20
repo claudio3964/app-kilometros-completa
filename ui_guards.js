@@ -1,15 +1,15 @@
 console.log("ui_guards cargado");
 // =====================================================
-// GUARDIAS (UI → CORE)
+// GUARDIAS (UI → CORE) JORNADA AUTOMÁTICA
 // =====================================================
-
 function addGuardUI(event){
   event.preventDefault();
 
-  const o = getActiveOrder();
+  // 🔥 CREACIÓN AUTOMÁTICA DE JORNADA
+  let o = getActiveOrder();
   if(!o){
-    alert("Primero iniciá la jornada");
-    return;
+    o = createOrder();
+    console.log("Jornada creada automáticamente:", o.orderNumber);
   }
 
   const dia = document.getElementById("diaGuardia").value;
@@ -45,7 +45,8 @@ function addGuardUI(event){
   let descripcion = "";
 
   if(tipo === "especial"){
-    descripcion = document.getElementById("descripcionGuardia").value.trim();
+    descripcion =
+      document.getElementById("descripcionGuardia").value.trim();
 
     if(!descripcion){
       alert("Si es guardia especial, debés completar la descripción");
@@ -53,35 +54,32 @@ function addGuardUI(event){
     }
   }
 
-// CORE (agregar guardia manualmente en este commit)
-const orders = getOrders();
-const ultima = orders[orders.length - 1];
+  // 🔥 GUARDADO COMPATIBLE CON CORE
+  const orders = getOrders();
+  const ultima = orders[orders.length - 1];
 
-if (!ultima.guards) ultima.guards = [];
+  if (!ultima.guards) ultima.guards = [];
 
-ultima.guards.push({
-  type: tipo,
-  hours: horas,
-  descripcion: descripcion,
-  dia: dia,
-  inicio: inicio,
-  fin: fin,
-  createdAt: new Date().toISOString()
-});
+  ultima.guards.push({
+    type: tipo,
+    hours: horas,
+    descripcion: descripcion,
+    dia: dia,
+    inicio: inicio,
+    fin: fin,
+    createdAt: Date.now()
+  });
 
-saveOrders(orders);
-setActiveOrder(ultima);
-
-  // 🔥 AHORA sí obtenemos la orden actualizada
-  const updatedOrder = getActiveOrder();
+  saveOrders(orders);
+  setActiveOrder(ultima);
 
   renderResumenDia();
   renderListaGuardias();
 
-  const totals = calculateOrderTotals(updatedOrder);
+  const totals = calculateOrderTotals(ultima);
 
   const mensajeViatico =
-    totals.viatico > 0
+    totals.viaticos > 0
       ? "\n✅ Viático generado en esta jornada"
       : "\nℹ️ Aún sin viático";
 
@@ -92,9 +90,6 @@ setActiveOrder(ultima);
 
   showScreen("mainScreen");
 }
-
-
-
 // =====================================================
 // LISTA DE GUARDIAS
 // =====================================================

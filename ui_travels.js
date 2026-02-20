@@ -178,19 +178,18 @@ function cargarViajeRetornoAutomatico(data){
   form.prepend(aviso);
 }
 // =====================================================
-// GUARDAR VIAJE → CORE (VERSIÓN FINAL CORREGIDA)
+// GUARDAR VIAJE → CORE (JORNADA AUTOMÁTICA)
 // =====================================================
-
 function addTravelUI(event){
   event.preventDefault();
 
-  const o = getActiveOrder();
+  // 🔥 CREACIÓN AUTOMÁTICA DE JORNADA
+  let o = getActiveOrder();
   if(!o){
-    alert("No hay jornada activa");
-    return;
+    o = createOrder();
+    console.log("Jornada creada automáticamente:", o.orderNumber);
   }
 
-  // === CAPTURAMOS LA IDA ===
   const origen =
     document.getElementById("originTravels").value.trim();
 
@@ -221,7 +220,6 @@ function addTravelUI(event){
     return;
   }
 
-  // === CALCULO HORAS IDA ===
   const start = new Date(`2000-01-01T${departureTime}`);
   const end   = new Date(`2000-01-01T${arrivalTime}`);
 
@@ -234,7 +232,6 @@ function addTravelUI(event){
     return;
   }
 
-  // ===== GUARDAMOS IDA =====
   const ok = addTravel(
     origen,
     destino,
@@ -249,7 +246,6 @@ function addTravelUI(event){
     return;
   }
 
-  // Guardamos etiqueta UI del servicio
   const orders = getOrders();
   const ultima = orders[orders.length - 1];
   const ultimoViaje = ultima.travels[ultima.travels.length - 1];
@@ -257,8 +253,8 @@ function addTravelUI(event){
   ultimoViaje.servicioUI = servicioSeleccionado.tipo;
 
   saveOrders(orders);
+  setActiveOrder(ultima);
 
-  // ===== VUELTA AUTOMÁTICA =====
   if(idaYVueltaAuto){
 
     const origenIda = origen;
@@ -273,9 +269,7 @@ function addTravelUI(event){
     .toISOString()
     .substring(11,16);
 
-    // 🔁 Invertimos origen y destino
     document.getElementById("originTravels").value = destinoIda;
-
     document.getElementById("destinationTravels").value = origenIda;
 
     document.getElementById("departureTimeTravels").value =
@@ -284,7 +278,6 @@ function addTravelUI(event){
     document.getElementById("arrivalTimeTravels").value =
       llegadaSugerida;
 
-    // 🔥 ESTA LÍNEA ES LA CLAVE → recalcula km correctamente
     autoKmPorDestino(true);
 
     document.getElementById("numeroServicio").value =
@@ -297,10 +290,7 @@ function addTravelUI(event){
     return;
   }
 
-  // ===== SIN VUELTA =====
-
   renderListaViajes();
-
   renderResumenDia();
 
   alert("Viaje guardado en la jornada");
