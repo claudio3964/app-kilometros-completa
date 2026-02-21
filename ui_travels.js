@@ -183,11 +183,11 @@ function cargarViajeRetornoAutomatico(data){
 function addTravelUI(event){
   event.preventDefault();
 
-  // 🔥 CREACIÓN AUTOMÁTICA DE JORNADA
-  let o = getActiveOrder();
-  if(!o){
-    o = createOrder();
-    console.log("Jornada creada automáticamente:", o.orderNumber);
+  let order = getActiveOrder();
+
+  // 🔥 AUTO CREAR JORNADA SI NO EXISTE
+  if(!order){
+    order = createOrder();
   }
 
   const origen =
@@ -195,15 +195,6 @@ function addTravelUI(event){
 
   const destino =
     document.getElementById("destinationTravels").value.trim();
-
-  const departureTime =
-    document.getElementById("departureTimeTravels").value;
-
-  const arrivalTime =
-    document.getElementById("arrivalTimeTravels").value;
-
-  const idaYVueltaAuto =
-    document.getElementById("idaYVueltaAuto").checked;
 
   if(!servicioSeleccionado){
     alert("Seleccioná un servicio válido");
@@ -215,23 +206,24 @@ function addTravelUI(event){
     return;
   }
 
-  if(!departureTime || !arrivalTime){
-    alert("Ingresá hora de salida y llegada");
-    return;
-  }
+  // 🔥 HORA REAL DEL SISTEMA
+  const ahora = new Date();
 
-  const start = new Date(`2000-01-01T${departureTime}`);
-  const end   = new Date(`2000-01-01T${arrivalTime}`);
+  const departureTime =
+    ahora.toTimeString().substring(0,5);
 
-  let hoursWorked = (end - start) / (1000 * 60 * 60);
+  // duración estimada inicial simple (podemos mejorar luego)
+  const duracionEstimadaHoras = 2;
 
-  if (hoursWorked < 0) hoursWorked += 24;
+  const llegadaEstimadaDate =
+    new Date(ahora.getTime() + duracionEstimadaHoras*60*60*1000);
 
-  if (hoursWorked <= 0) {
-    alert("La hora de llegada debe ser posterior a la de salida");
-    return;
-  }
+  const arrivalTime =
+    llegadaEstimadaDate.toTimeString().substring(0,5);
 
+  const hoursWorked = duracionEstimadaHoras;
+
+  // GUARDAR VIAJE EN CORE
   const ok = addTravel(
     origen,
     destino,
@@ -242,60 +234,33 @@ function addTravelUI(event){
   );
 
   if(!ok){
-    alert("No se pudo guardar el viaje");
+    alert("No se pudo iniciar el viaje");
     return;
   }
 
+  // marcar como en curso
   const orders = getOrders();
   const ultima = orders[orders.length - 1];
   const ultimoViaje = ultima.travels[ultima.travels.length - 1];
 
+  ultimoViaje.estado = "en_curso";
+  ultimoViaje.inicioReal = ahora.getTime();
+  ultimoViaje.llegadaEstimada = llegadaEstimadaDate.getTime();
   ultimoViaje.servicioUI = servicioSeleccionado.tipo;
 
   saveOrders(orders);
   setActiveOrder(ultima);
 
-  if(idaYVueltaAuto){
-
-    const origenIda = origen;
-    const destinoIda = destino;
-
-    const salidaVuelta = arrivalTime;
-
-    const llegadaSugerida = new Date(
-      new Date(`2000-01-01T${arrivalTime}`).getTime() +
-      hoursWorked * 60 * 60 * 1000
-    )
-    .toISOString()
-    .substring(11,16);
-
-    document.getElementById("originTravels").value = destinoIda;
-    document.getElementById("destinationTravels").value = origenIda;
-
-    document.getElementById("departureTimeTravels").value =
-      salidaVuelta;
-
-    document.getElementById("arrivalTimeTravels").value =
-      llegadaSugerida;
-
-    autoKmPorDestino(true);
-
-    document.getElementById("numeroServicio").value =
-      servicioSeleccionado.tipo;
-
-    document.getElementById("idaYVueltaAuto").checked = true;
-
-    alert("👉 Ahora registrá la VUELTA automática y guardá.");
-
-    return;
-  }
-
-  renderListaViajes();
   renderResumenDia();
+  renderListaViajes();
 
-  alert("Viaje guardado en la jornada");
+  alert(
+    "Viaje iniciado\n" +
+    "Salida registrada automáticamente: " + departureTime
+  );
 
   showScreen("mainScreen");
+  mostrarViajeEnCursoUI();
 }
 // =====================================================
 // RESUMEN DEL DIA (FUNCION FALTANTE)
@@ -331,24 +296,22 @@ function renderResumenDia(){
 
 function abrirViajeSimple(){
 
-  const o = getActiveOrder();
+  let o = getActiveOrder();
 
+  // 🔥 AUTO CREAR JORNADA
   if(!o){
-    alert("Primero iniciá una jornada");
-    return;
+    o = createOrder();
+    console.log("Jornada creada automáticamente:", o.orderNumber);
   }
 
-  // Mostrar número de orden
   document.getElementById("orderNumberTravels").innerText =
     "Orden: " + o.orderNumber;
 
-  // Limpiar campos
   document.getElementById("destinationTravels").value = "";
   document.getElementById("kmTravels").value = "";
   document.getElementById("departureTimeTravels").value = "";
   document.getElementById("arrivalTimeTravels").value = "";
 
-  // Ir a pantalla
   showScreen("travelScreen");
 }
 // =====================================================
@@ -438,6 +401,94 @@ function renderTarjetasPorDia(){
 
   });
 
+}
+// =====================================================
+// VIAJE EN CURSO UI
+// =====================================================
+
+function mostrarViajeEnCursoUI(){
+
+  const container =
+    document.getElementById("viajeEnCursoContainer");
+
+  if(!container) return;
+
+  const travel = getTravelEnCurso();
+
+  // limpiar
+  container.innerHTML = "";
+
+  if(!travel) return;
+
+  const card = document.createElement("div");
+
+  card.style.cssText = `
+    background:#e8f5e9;
+    border:1px solid #4caf50;
+    border-radius:12px;
+    padding:12px;
+    margin-bottom:12px;
+  `;
+
+  // calcular duración transcurrida
+  const ahora = new Date();
+
+  const salida = new Date();
+  const [h,m] = travel.departureTime.split(":");
+  salida.setHours(h,m,0,0);
+
+  const diffMs = ahora - salida;
+  const diffMin = Math.floor(diffMs / 60000);
+
+  const horas = Math.floor(diffMin / 60);
+  const mins  = diffMin % 60;
+
+  card.innerHTML = `
+    <b>🟢 Viaje en curso</b><br><br>
+
+    🚍 ${travel.origen} → ${travel.destino}<br>
+    🕒 Salida: ${travel.departureTime}<br>
+    ⏱ Transcurrido: ${horas}h ${mins}m<br><br>
+
+    <button onclick="finalizarViajeUI()">
+      Finalizar viaje
+    </button>
+  `;
+
+  container.appendChild(card);
+// 🔄 auto actualizar cada 60 segundos
+if(window.__viajeTimer) clearTimeout(window.__viajeTimer);
+
+window.__viajeTimer = setTimeout(() => {
+  mostrarViajeEnCursoUI();
+}, 60000);
+}
+
+
+// =====================================================
+// FINALIZAR VIAJE DESDE UI
+// =====================================================
+
+function finalizarViajeUI(){
+
+  const travel = getTravelEnCurso();
+
+  if(!travel){
+    alert("No hay viaje activo");
+    return;
+  }
+
+  const ahora = new Date();
+
+  const arrivalTime =
+    ahora.toTimeString().substring(0,5);
+
+  finalizarViajeActual(arrivalTime);
+
+  alert("Viaje finalizado\nHora llegada: " + arrivalTime);
+
+  mostrarViajeEnCursoUI();
+  renderResumenDia?.();
 }
 
 

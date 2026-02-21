@@ -9,7 +9,7 @@ function showScreen(id){
   document.querySelectorAll(".screen").forEach(s => {
     s.classList.remove("active");
   });
-
+mostrarViajeEnCursoUI();
   const target = document.getElementById(id);
 
   if (!target) {

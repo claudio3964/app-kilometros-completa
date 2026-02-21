@@ -127,57 +127,49 @@ function closeActiveOrder(){
 // =====================================================
 function addTravel(origen, destino, turno, departureTime, arrivalTime, hoursWorked){
 
-  const o = getActiveOrder();
+  const order = getActiveOrder();
+  if(!order) return false;
 
-  if(!o || o.closed) return false;
+  const ahora = Date.now();
 
-  const rutaDirecta = `${origen} → ${destino}`;
-  const rutaInversa = `${destino} → ${origen}`;
+  const kmEmpresa = buscarKmRuta(origen, destino) || 0;
 
-  let kmEmpresa = ROUTES_CATALOG[rutaDirecta];
-
-  if(!kmEmpresa){
-    kmEmpresa = ROUTES_CATALOG[rutaInversa] || 0;
-  }
-
-  // 🔥 LEER KM REAL DESDE UI
-  const kmAuto =
-    Number(document.getElementById("kmTravels")?.value) || kmEmpresa;
-
-  const acoplado = turno >= 2;
-  const esPrimer = o.travels.length === 0;
-
-  const nuevoViaje = {
+  const travel = {
+    id: "TRV-" + ahora,
 
     origen,
     destino,
-
     turno,
-
-    kmEmpresa,
-    kmAuto,   // 🔥 ESTA ES LA CLAVE
-
-    acoplado,
-    tomeCese: esPrimer,
 
     departureTime,
     arrivalTime,
+
+    kmEmpresa,
+    kmAuto: kmEmpresa,
+
     hoursWorked,
 
-    createdAt: Date.now()
+    createdAt: ahora,
+
+    // 🔥 NUEVO
+    status: "en_curso",
+    inicioReal: ahora,
+
+    llegadaEstimada:
+      ahora + (hoursWorked * 60 * 60 * 1000)
   };
 
-  o.travels.push(nuevoViaje);
+  if(!order.travels) order.travels = [];
 
-  saveOrders(
-    getOrders().map(x =>
-      x.orderNumber === o.orderNumber ? o : x
-    )
-  );
+  order.travels.push(travel);
 
-  setActiveOrder(o);
+  saveOrders(getOrders().map(o =>
+    o.orderNumber === order.orderNumber ? order : o
+  ));
 
-  console.log("💾 Guardado en CORE:", nuevoViaje);
+  setActiveOrder(order);
+
+  console.log("Viaje iniciado:", travel);
 
   return true;
 }
@@ -312,4 +304,36 @@ function initDriverProfile(d){
   if(Storage.get("driverProfile")) return false;
   Storage.set("driverProfile",{...d,createdAt:Date.now()});
   return true;
+}
+// ------función para obtener viaje en curso------
+function getTravelEnCurso(){
+
+  const order = getActiveOrder();
+
+  if(!order || !order.travels) return null;
+
+  return order.travels.find(t => t.status === "en_curso") || null;
+}
+// ------función para finalizar viaje------
+function finalizarViajeActual(){
+
+  const order = getActiveOrder();
+  if(!order) return null;
+
+  const travel = order.travels.find(t => t.status === "en_curso");
+
+  if(!travel) return null;
+
+  const ahora = Date.now();
+
+  travel.status = "finalizado";
+  travel.llegadaReal = ahora;
+
+  saveOrders(getOrders().map(o =>
+    o.orderNumber === order.orderNumber ? order : o
+  ));
+
+  setActiveOrder(order);
+
+  return travel;
 }
