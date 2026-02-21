@@ -112,6 +112,30 @@ function limpiarFiltrosResumen(){
 
   renderResumenGeneral();
 }
+// ======================================
+// MOSTRAR ORDEN ACTIVA EN UI
+// ======================================
+
+function renderOrdenActivaUI(){
+
+  const box =
+    document.getElementById("ordenActivaInfo");
+
+  if(!box) return;
+
+  const order = getActiveOrder();
+
+  if(!order){
+
+    box.innerHTML = "🔴 Sin jornada activa";
+    return;
+  }
+
+  box.innerHTML = `
+    🟢 Orden activa: <b>${order.orderNumber}</b><br>
+    Base: ${order.baseInicio}
+  `;
+}
 
 // EXPORT GLOBAL
 window.renderResumenGeneral=renderResumenGeneral;

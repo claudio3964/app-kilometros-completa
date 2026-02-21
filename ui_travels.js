@@ -445,18 +445,28 @@ function mostrarViajeEnCursoUI(){
   const mins  = diffMin % 60;
 
 
+
+
   // ================================
-  // DURACIÓN ESTIMADA
-  // ================================
+// DURACIÓN ESTIMADA INTELIGENTE
+// ================================
 
-  const velocidadPromedio = 60;
+// usar promedio real aprendido
+let duracionEstimadaMin =
+  obtenerDuracionPromedio(travel.origen, travel.destino);
 
-  const duracionEstimadaMin =
-    Math.floor((travel.kmEmpresa || 0) / velocidadPromedio * 60);
+// fallback si no hay datos aún
+if(!duracionEstimadaMin){
 
-  const excedidoMin = diffMin - duracionEstimadaMin;
+  const velocidadPromedioFallback = 60;
 
-  let estadoDuracionHTML = "";
+  duracionEstimadaMin =
+    Math.floor((travel.kmEmpresa || 0) / velocidadPromedioFallback * 60);
+}
+
+const excedidoMin = diffMin - duracionEstimadaMin;
+
+ let estadoDuracionHTML = "";
 
   if(duracionEstimadaMin > 0){
 
@@ -624,7 +634,10 @@ function finalizarViajeUI(){
   saveOrders(orders);
 
   finalizarViajeActual(arrivalTime);
-
+registrarEstadisticaViaje({
+  ...travel,
+  arrivalTime
+});
   alert(
     "Viaje finalizado\n" +
     "Duración: " + duracionMin + " min\n" +
