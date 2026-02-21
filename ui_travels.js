@@ -39,8 +39,10 @@ function closeActiveOrderUI(){
   alert("Jornada cerrada");
 }
 // =====================================================
-// LISTA DE VIAJES  (COMPATIBLE CON TARJETAS)
+// LISTA DE VIAJES — VERSION FINAL CORRECTA
+// Compatible 100% con CORE COT DRIVER ENGINE
 // =====================================================
+
 function renderListaViajes(){
 
   const container =
@@ -50,70 +52,144 @@ function renderListaViajes(){
 
   container.innerHTML = "";
 
-  const orders = getOrders();
+  let orders = getOrders();
 
   if(!orders || orders.length === 0){
-    container.innerHTML = "Sin viajes registrados";
+
+    container.innerHTML = `
+      <div style="padding:20px;color:#666">
+        Sin jornadas registradas
+      </div>
+    `;
+
     return;
   }
 
-  const porDia = {};
+  // ordenar por fecha descendente
+  orders.sort((a,b)=> new Date(b.date) - new Date(a.date));
 
-  orders.forEach(o => {
+  // mostrar jornada actual + 5 anteriores
+  const ultimasOrdenes = orders.slice(0,6);
 
-    if(!porDia[o.date]) porDia[o.date] = [];
+  const activeOrder = getActiveOrder();
 
-    porDia[o.date].push(o);
+  ultimasOrdenes.forEach(order => {
 
-  });
+    // obtener totales oficiales desde el CORE
+    const totales = calculateOrderTotals(order);
 
-  const fechas = Object.keys(porDia)
-    .sort((a,b)=> new Date(b)-new Date(a));
-
-  fechas.forEach(fecha => {
-
-    const card = document.createElement("div");
+    const card =
+      document.createElement("div");
 
     card.style.cssText = `
       border:1px solid #ddd;
       border-radius:12px;
       padding:12px;
-      margin-bottom:10px;
+      margin-bottom:12px;
       background:white;
       box-shadow:0 2px 6px rgba(0,0,0,.1);
     `;
+card.style.cursor = "pointer";
 
-    let contenido = `<b>📅 ${fecha}</b><br><br>`;
+  card.onclick = () => {
+    abrirDetalleOrden(order.orderNumber);
+  };
+    // =========================
+    // TITULO JORNADA
+    // =========================
 
-    porDia[fecha].forEach(o => {
+    const titulo =
+      document.createElement("div");
 
-      o.travels.forEach(v => {
+    titulo.style.cssText = `
+      font-weight:bold;
+      margin-bottom:8px;
+      font-size:16px;
+    `;
 
-        const km =
-          v.kmAuto ??
-          v.kmEmpresa ??
-          0;
+    // marcar jornada activa
+    if(activeOrder &&
+       order.orderNumber === activeOrder.orderNumber){
 
-        contenido += `
-          🚍 ${v.origen} → ${v.destino}<br>
-          🕒 ${v.departureTime} - ${v.arrivalTime}<br>
-          📏 ${km} km<br><br>
-        `;
+      titulo.innerText =
+        `📅 ${order.date} — Jornada activa`;
 
-      });
+    }else{
+
+      titulo.innerText =
+        `📅 ${order.date}`;
+
+    }
+
+    card.appendChild(titulo);
+
+    // =========================
+    // RESUMEN JORNADA
+    // =========================
+
+    const resumen =
+      document.createElement("div");
+
+    resumen.style.cssText = `
+      font-size:13px;
+      margin-bottom:10px;
+      padding:8px;
+      background:#f1f3f5;
+      border-radius:8px;
+    `;
+
+    resumen.innerHTML = `
+      Tome y cese: ${totales.kmTomeCese} km<br>
+      Acoplados: ${totales.kmAcoplados} km<br>
+      Viáticos: ${totales.viaticos}<br>
+      Total jornada: ${totales.kmTotal.toFixed(1)} km
+    `;
+
+    card.appendChild(resumen);
+
+    // =========================
+    // LISTA DE VIAJES
+    // =========================
+
+    const travels = order.travels || [];
+
+    travels.sort(
+      (a,b)=>
+        a.departureTime.localeCompare(b.departureTime)
+    );
+
+    travels.forEach(v => {
+
+      const km =
+        v.kmAuto ??
+        v.kmEmpresa ??
+        0;
+
+      const item =
+        document.createElement("div");
+
+      item.style.cssText = `
+        padding:8px;
+        margin-bottom:6px;
+        border-radius:8px;
+        background:#f8f9fa;
+      `;
+
+      item.innerHTML = `
+        🚍 ${v.origen} → ${v.destino}<br>
+        🕒 ${v.departureTime} - ${v.arrivalTime}<br>
+        📏 ${km} km
+      `;
+
+      card.appendChild(item);
 
     });
-
-    card.innerHTML = contenido;
 
     container.appendChild(card);
 
   });
 
 }
-
-window.renderResumenDia = renderResumenDia;
-
 // =====================================================
 // CARGAR VIAJE DE RETORNO AUTOMÁTICO (CORREGIDO)
 // =====================================================
@@ -647,10 +723,145 @@ registrarEstadisticaViaje({
   mostrarViajeEnCursoUI();
 
   renderResumenDia?.();
+}
 
+// =====================================================
+// ABRIR DETALLE DE ORDEN
+// =====================================================
+function abrirDetalleOrden(orderNumber){
+
+  const orders = getOrders();
+
+  const order =
+    orders.find(o => o.orderNumber === orderNumber);
+
+  if(!order) return;
+
+  renderDetalleOrden(order);
+
+  showScreen("detalleOrdenScreen");
 }
 
 
+// =====================================================
+// RENDER DETALLE DE ORDEN
+// =====================================================
+function renderDetalleOrden(order){
+
+  const container =
+    document.getElementById("detalleOrdenContainer");
+
+  if(!container) return;
+
+  const totales =
+    calculateOrderTotals(order);
+
+  // =========================
+  // CABECERA Y RESUMEN
+  // =========================
+
+  container.innerHTML = `
+  
+    <div style="margin-bottom:15px">
+
+      <h3 style="margin-bottom:5px">
+        📅 Jornada ${order.date}
+      </h3>
+
+      <div style="font-size:14px;color:#555">
+        <b>Orden:</b> ${order.orderNumber}<br>
+        <b>Base:</b> ${order.baseInicio}
+      </div>
+
+    </div>
+
+    <div style="
+      background:#f1f3f5;
+      padding:12px;
+      border-radius:8px;
+      margin-bottom:15px;
+      border:1px solid #ddd;
+    ">
+
+      <b>Resumen de jornada</b><br><br>
+
+      KM viajes: ${totales.kmViajes.toFixed(1)} km<br>
+      KM guardias: ${totales.kmGuardias.toFixed(1)} km<br>
+      KM tome y cese: ${totales.kmTomeCese.toFixed(1)} km<br>
+      KM acoplados: ${totales.kmAcoplados.toFixed(1)} km<br>
+      Viáticos: ${totales.viaticos}<br>
+
+      <hr>
+
+      <b>Total KM:</b> ${totales.kmTotal.toFixed(1)} km<br>
+      <b>Total $:</b> ${totales.monto.toFixed(0)}
+
+    </div>
+
+    <h4 style="margin-bottom:10px">Viajes realizados</h4>
+
+  `;
+
+  // =========================
+  // LISTA DE VIAJES
+  // =========================
+
+  if(!order.travels || order.travels.length === 0){
+
+    const empty =
+      document.createElement("div");
+
+    empty.style.cssText = `
+      color:#666;
+      padding:10px;
+    `;
+
+    empty.innerText =
+      "No hay viajes en esta jornada";
+
+    container.appendChild(empty);
+
+    return;
+  }
+
+  order.travels.forEach(v => {
+
+    const km =
+      v.kmAuto ??
+      v.kmEmpresa ??
+      0;
+
+    const div =
+      document.createElement("div");
+
+    div.style.cssText = `
+      padding:10px;
+      margin-bottom:8px;
+      background:white;
+      border-radius:8px;
+      border:1px solid #ddd;
+      box-shadow:0 1px 3px rgba(0,0,0,.05);
+    `;
+
+    div.innerHTML = `
+      <div style="font-weight:500">
+        🚍 ${v.origen} → ${v.destino}
+      </div>
+
+      <div style="font-size:13px;color:#555">
+        🕒 ${v.departureTime} - ${v.arrivalTime}
+      </div>
+
+      <div style="font-size:13px;color:#555">
+        📏 ${km} km
+      </div>
+    `;
+
+    container.appendChild(div);
+
+  });
+
+}
 
 
 // export global
