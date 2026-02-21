@@ -160,33 +160,46 @@ input, select{
   </div>
 
   <div class="screen-container">
-    <h3>Estado de la jornada</h3>
-    <div id="ordenActivaInfo" style="
-  margin-bottom:10px;
-  padding:8px;
-  background:#eef2ff;
-  border-radius:8px;
-  font-size:14px;
-">
-  Sin jornada activa
-</div>
-    <div id="viajeEnCursoContainer"></div>
-    <p id="ordenActivaInfo">🔴 Sin jornada activa</p>
 
-    <div style="display:flex; gap:8px; margin-bottom:16px;">
-      <button onclick="createOrderUI()">▶️ Iniciar Jornada</button>
-      <button onclick="closeActiveOrderUI()">⏹️ Cerrar Jornada</button>
+    <h3>Estado de la jornada</h3>
+
+    <!-- Este div será controlado automáticamente por el CORE -->
+    <div id="ordenActivaInfo" style="
+      margin-bottom:10px;
+      padding:8px;
+      background:#eef2ff;
+      border-radius:8px;
+      font-size:14px;
+    ">
     </div>
+
+    <!-- Viaje en curso -->
+    <div id="viajeEnCursoContainer"></div>
 
     <h3>Operaciones del día</h3>
 
     <div class="menu-tarjetas">
-      <button class="card-btn" onclick="abrirViajeSimple()">🚗 Nuevo Viaje</button>
-      <button class="card-btn" onclick="showScreen('listaViajesScreen')">📄 Ver Viajes</button>
-      <button class="card-btn" onclick="showScreen('nuevaGuardiaScreen')">➕ Registrar Guardia</button>
-      <button class="card-btn" onclick="showScreen('listaGuardiasScreen')">🕒 Ver Guardias</button>
+
+      <button class="card-btn" onclick="abrirViajeSimple()">
+        🚗 Nuevo Viaje
+      </button>
+
+      <button class="card-btn" onclick="showScreen('listaViajesScreen')">
+        📄 Ver Viajes
+      </button>
+
+      <button class="card-btn" onclick="showScreen('nuevaGuardiaScreen')">
+        ➕ Registrar Guardia
+      </button>
+
+      <button class="card-btn" onclick="showScreen('listaGuardiasScreen')">
+        🕒 Ver Guardias
+      </button>
+
     </div>
+
   </div>
+
 </div>
 
 <!-- ================= NUEVO VIAJE ================= -->
