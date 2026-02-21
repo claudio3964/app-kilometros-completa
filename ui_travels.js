@@ -293,27 +293,25 @@ function renderResumenDia(){
 // =====================================================
 // ABRIR PANTALLA NUEVO VIAJE
 // =====================================================
-
 function abrirViajeSimple(){
 
-  let o = getActiveOrder();
+  const travelEnCurso = getTravelEnCurso();
 
-  // 🔥 AUTO CREAR JORNADA
-  if(!o){
-    o = createOrder();
-    console.log("Jornada creada automáticamente:", o.orderNumber);
+  if(travelEnCurso){
+
+    alert(
+      "Ya hay un viaje en curso\n\n" +
+      travelEnCurso.origen + " → " + travelEnCurso.destino +
+      "\nSalida: " + travelEnCurso.departureTime +
+      "\n\nFinalizalo antes de iniciar uno nuevo."
+    );
+
+    return;
   }
-
-  document.getElementById("orderNumberTravels").innerText =
-    "Orden: " + o.orderNumber;
-
-  document.getElementById("destinationTravels").value = "";
-  document.getElementById("kmTravels").value = "";
-  document.getElementById("departureTimeTravels").value = "";
-  document.getElementById("arrivalTimeTravels").value = "";
 
   showScreen("travelScreen");
 }
+
 // =====================================================
 // ACTUALIZAR INFO SERVICIO (UI)
 // =====================================================
@@ -403,7 +401,7 @@ function renderTarjetasPorDia(){
 
 }
 // =====================================================
-// VIAJE EN CURSO UI
+// VIAJE EN CURSO UI (VERSIÓN COMPLETA PROFESIONAL)
 // =====================================================
 
 function mostrarViajeEnCursoUI(){
@@ -430,7 +428,10 @@ function mostrarViajeEnCursoUI(){
     margin-bottom:12px;
   `;
 
-  // calcular duración transcurrida
+  // ================================
+  // DURACIÓN TRANSCURRIDA
+  // ================================
+
   const ahora = new Date();
 
   const salida = new Date();
@@ -443,30 +444,126 @@ function mostrarViajeEnCursoUI(){
   const horas = Math.floor(diffMin / 60);
   const mins  = diffMin % 60;
 
+
+  // ================================
+  // DURACIÓN ESTIMADA
+  // ================================
+
+  const velocidadPromedio = 60;
+
+  const duracionEstimadaMin =
+    Math.floor((travel.kmEmpresa || 0) / velocidadPromedio * 60);
+
+  const excedidoMin = diffMin - duracionEstimadaMin;
+
+  let estadoDuracionHTML = "";
+
+  if(duracionEstimadaMin > 0){
+
+    const estHoras = Math.floor(duracionEstimadaMin / 60);
+    const estMin   = duracionEstimadaMin % 60;
+
+    if(excedidoMin > 0){
+
+      estadoDuracionHTML = `
+        <div style="
+          margin-top:8px;
+          padding:6px;
+          background:#fff3cd;
+          border-radius:6px;
+          font-size:13px;
+        ">
+          🟡 Duración estimada: ${estHoras}h ${estMin}m<br>
+          ⏱ Excedido: ${excedidoMin} min
+        </div>
+      `;
+
+      // 🔔 ALERTA AUTOMÁTICA SOLO UNA VEZ
+      if(!travel.alertaExcesoMostrada){
+
+        setTimeout(()=>{
+
+          alert(
+            "Este viaje superó el tiempo estimado.\n" +
+            "Revise si desea finalizarlo."
+          );
+
+        }, 500);
+
+        travel.alertaExcesoMostrada = true;
+
+        const orders = getOrders();
+        saveOrders(orders);
+
+      }
+
+    }else{
+
+      estadoDuracionHTML = `
+        <div style="
+          margin-top:8px;
+          padding:6px;
+          background:#e8f5e9;
+          border-radius:6px;
+          font-size:13px;
+        ">
+          🟢 Dentro del tiempo estimado
+        </div>
+      `;
+    }
+  }
+
+
+  // ================================
+  // UI CARD
+  // ================================
+
   card.innerHTML = `
     <b>🟢 Viaje en curso</b><br><br>
 
     🚍 ${travel.origen} → ${travel.destino}<br>
     🕒 Salida: ${travel.departureTime}<br>
-    ⏱ Transcurrido: ${horas}h ${mins}m<br><br>
+    ⏱ Transcurrido: ${horas}h ${mins}m
 
+    ${estadoDuracionHTML}
+
+    <br>
     <button onclick="finalizarViajeUI()">
       Finalizar viaje
     </button>
   `;
 
   container.appendChild(card);
-// 🔄 auto actualizar cada 60 segundos
-if(window.__viajeTimer) clearTimeout(window.__viajeTimer);
 
-window.__viajeTimer = setTimeout(() => {
-  mostrarViajeEnCursoUI();
-}, 60000);
+
+  // ================================
+  // AUTO ACTUALIZAR CADA 60 SEGUNDOS
+  // ================================
+
+  if(window.__viajeTimer){
+    clearInterval(window.__viajeTimer);
+  }
+
+  window.__viajeTimer = setInterval(()=>{
+
+    const travelActivo = getTravelEnCurso();
+
+    if(!travelActivo){
+
+      clearInterval(window.__viajeTimer);
+      window.__viajeTimer = null;
+      return;
+
+    }
+
+    mostrarViajeEnCursoUI();
+
+  }, 60000);
+
 }
 
-
 // =====================================================
-// FINALIZAR VIAJE DESDE UI
+// FINALIZAR VIAJE DESDE UI (CON CÁLCULO REAL)
 // =====================================================
 
 function finalizarViajeUI(){
@@ -483,14 +580,62 @@ function finalizarViajeUI(){
   const arrivalTime =
     ahora.toTimeString().substring(0,5);
 
+  // ================================
+  // CALCULAR DURACIÓN REAL
+  // ================================
+
+  const [hS, mS] = travel.departureTime.split(":").map(Number);
+  const salida = new Date();
+  salida.setHours(hS, mS, 0, 0);
+
+  const diffMs = ahora - salida;
+
+  const duracionMin =
+    Math.max(1, Math.floor(diffMs / 60000));
+
+  // ================================
+  // CALCULAR VELOCIDAD PROMEDIO REAL
+  // ================================
+
+  const duracionHoras = duracionMin / 60;
+
+  let velocidadPromedio = 0;
+
+  if(travel.kmEmpresa && duracionHoras > 0){
+
+    velocidadPromedio =
+      Number(
+        (travel.kmEmpresa / duracionHoras).toFixed(1)
+      );
+
+  }
+
+  // ================================
+  // GUARDAR EN EL OBJETO VIAJE
+  // ================================
+
+  travel.arrivalTime = arrivalTime;
+  travel.duracionMin = duracionMin;
+  travel.velocidadPromedio = velocidadPromedio;
+
+  // actualizar en storage
+  const orders = getOrders();
+
+  saveOrders(orders);
+
   finalizarViajeActual(arrivalTime);
 
-  alert("Viaje finalizado\nHora llegada: " + arrivalTime);
+  alert(
+    "Viaje finalizado\n" +
+    "Duración: " + duracionMin + " min\n" +
+    "Velocidad promedio: " + velocidadPromedio + " km/h"
+  );
 
   mostrarViajeEnCursoUI();
-  renderResumenDia?.();
-}
 
+  renderResumenDia?.();
+
+}
 
 
 
