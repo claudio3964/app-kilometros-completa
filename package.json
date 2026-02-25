@@ -1,7 +1,32 @@
 {
   "dependencies": {
+    "@capacitor/android": "^8.1.0",
+    "@capacitor/cli": "^8.1.0",
+    "@capacitor/core": "^8.1.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-scripts": "^5.0.1"
-  }
+  },
+  "name": "app-kilometros-completa",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "devDependencies": {
+    "jest": "^27.5.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/claudio3964/app-kilometros-completa.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/claudio3964/app-kilometros-completa/issues"
+  },
+  "homepage": "https://github.com/claudio3964/app-kilometros-completa#readme"
 }

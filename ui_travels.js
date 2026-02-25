@@ -57,7 +57,7 @@ function renderListaViajes(){
   if(!orders || orders.length === 0){
 
     container.innerHTML = `
-      <div style="padding:20px;color:#666">
+      <div class="empty-state">
         Sin jornadas registradas
       </div>
     `;
@@ -65,78 +65,48 @@ function renderListaViajes(){
     return;
   }
 
-  // ordenar por fecha descendente
-  orders.sort((a,b)=> new Date(b.date) - new Date(a.date));
+  orders.sort(
+    (a,b)=> new Date(b.date) - new Date(a.date)
+  );
 
-  // mostrar jornada actual + 5 anteriores
-  const ultimasOrdenes = orders.slice(0,6);
+  const ultimasOrdenes =
+    orders.slice(0,6);
 
-  const activeOrder = getActiveOrder();
+  const activeOrder =
+    getActiveOrder();
 
   ultimasOrdenes.forEach(order => {
 
-    // obtener totales oficiales desde el CORE
-    const totales = calculateOrderTotals(order);
+    const totales =
+      calculateOrderTotals(order);
 
     const card =
       document.createElement("div");
 
-    card.style.cssText = `
-      border:1px solid #ddd;
-      border-radius:12px;
-      padding:12px;
-      margin-bottom:12px;
-      background:white;
-      box-shadow:0 2px 6px rgba(0,0,0,.1);
-    `;
-card.style.cursor = "pointer";
+    card.className = "order-card";
 
-  card.onclick = () => {
-    abrirDetalleOrden(order.orderNumber);
-  };
-    // =========================
-    // TITULO JORNADA
-    // =========================
+    card.onclick = () =>
+      abrirDetalleOrden(order.orderNumber);
 
+    // TITULO
     const titulo =
       document.createElement("div");
 
-    titulo.style.cssText = `
-      font-weight:bold;
-      margin-bottom:8px;
-      font-size:16px;
-    `;
+    titulo.className = "order-title";
 
-    // marcar jornada activa
-    if(activeOrder &&
-       order.orderNumber === activeOrder.orderNumber){
-
-      titulo.innerText =
-        `📅 ${order.date} — Jornada activa`;
-
-    }else{
-
-      titulo.innerText =
-        `📅 ${order.date}`;
-
-    }
+    titulo.innerText =
+      activeOrder &&
+      order.orderNumber === activeOrder.orderNumber
+        ? `📅 ${order.date} — Jornada activa`
+        : `📅 ${order.date}`;
 
     card.appendChild(titulo);
 
-    // =========================
-    // RESUMEN JORNADA
-    // =========================
-
+    // RESUMEN
     const resumen =
       document.createElement("div");
 
-    resumen.style.cssText = `
-      font-size:13px;
-      margin-bottom:10px;
-      padding:8px;
-      background:#f1f3f5;
-      border-radius:8px;
-    `;
+    resumen.className = "order-summary";
 
     resumen.innerHTML = `
       Tome y cese: ${totales.kmTomeCese} km<br>
@@ -147,15 +117,16 @@ card.style.cursor = "pointer";
 
     card.appendChild(resumen);
 
-    // =========================
-    // LISTA DE VIAJES
-    // =========================
-
-    const travels = order.travels || [];
+    // VIAJES
+    const travels =
+      order.travels || [];
 
     travels.sort(
       (a,b)=>
-        a.departureTime.localeCompare(b.departureTime)
+        (a.departureTime || "")
+        .localeCompare(
+          b.departureTime || ""
+        )
     );
 
     travels.forEach(v => {
@@ -165,20 +136,72 @@ card.style.cursor = "pointer";
         v.kmEmpresa ??
         0;
 
+      const estado =
+        v.status || "finalizado";
+
       const item =
         document.createElement("div");
 
-      item.style.cssText = `
-        padding:8px;
-        margin-bottom:6px;
-        border-radius:8px;
-        background:#f8f9fa;
-      `;
+      item.className =
+        `travel-card ${estado}`;
+
+      let estadoTexto =
+        "⚫ FINALIZADO";
+
+      if(estado === "programado")
+        estadoTexto = "🟡 PROGRAMADO";
+
+      if(estado === "en_curso")
+        estadoTexto = "🟢 EN CURSO";
+
+      let tiempoHTML = "";
+
+      if(
+        estado === "en_curso"
+        &&
+        v.inicioReal
+      ){
+
+        const diffMin =
+          Math.floor(
+            (Date.now() - v.inicioReal)
+            / 60000
+          );
+
+        const h =
+          Math.floor(diffMin / 60);
+
+        const m =
+          diffMin % 60;
+
+        tiempoHTML = `
+          <div class="travel-time">
+            ⏱ ${h}h ${m}m transcurridos
+          </div>
+        `;
+      }
 
       item.innerHTML = `
-        🚍 ${v.origen} → ${v.destino}<br>
-        🕒 ${v.departureTime} - ${v.arrivalTime}<br>
-        📏 ${km} km
+
+        <div class="travel-status ${estado}">
+          ${estadoTexto}
+        </div>
+
+        <div>
+          🚍 ${v.origen} → ${v.destino}
+        </div>
+
+        <div>
+          🕒 ${v.departureTime}
+          - ${v.arrivalTime || "--:--"}
+        </div>
+
+        ${tiempoHTML}
+
+        <div>
+          📏 ${km} km
+        </div>
+
       `;
 
       card.appendChild(item);
@@ -257,11 +280,11 @@ function cargarViajeRetornoAutomatico(data){
 // GUARDAR VIAJE → CORE (JORNADA AUTOMÁTICA)
 // =====================================================
 function addTravelUI(event){
+
   event.preventDefault();
 
   let order = getActiveOrder();
 
-  // 🔥 AUTO CREAR JORNADA SI NO EXISTE
   if(!order){
     order = createOrder();
   }
@@ -273,70 +296,78 @@ function addTravelUI(event){
     document.getElementById("destinationTravels").value.trim();
 
   if(!servicioSeleccionado){
+
     alert("Seleccioná un servicio válido");
     return;
+
   }
 
   if(!origen || !destino){
+
     alert("Completá origen y destino");
     return;
+
   }
 
-  // 🔥 HORA REAL DEL SISTEMA
-  const ahora = new Date();
-
+  // USAR HORA INGRESADA POR EL USUARIO
   const departureTime =
-    ahora.toTimeString().substring(0,5);
+    document.getElementById("departureTimeTravels").value;
 
-  // duración estimada inicial simple (podemos mejorar luego)
+  if(!departureTime){
+
+    alert("Ingresá hora de salida");
+    return;
+
+  }
+
   const duracionEstimadaHoras = 2;
 
-  const llegadaEstimadaDate =
-    new Date(ahora.getTime() + duracionEstimadaHoras*60*60*1000);
+  const [h,m] =
+    departureTime.split(":").map(Number);
+
+  const salidaDate = new Date();
+
+  salidaDate.setHours(h,m,0,0);
+
+  const llegadaDate =
+    new Date(
+      salidaDate.getTime() +
+      duracionEstimadaHoras * 60 * 60 * 1000
+    );
 
   const arrivalTime =
-    llegadaEstimadaDate.toTimeString().substring(0,5);
+    llegadaDate.toTimeString().substring(0,5);
 
-  const hoursWorked = duracionEstimadaHoras;
+  // ESTA ES LA CLAVE
+  const ok = addTravelProgramado(
 
-  // GUARDAR VIAJE EN CORE
-  const ok = addTravel(
     origen,
     destino,
     servicioSeleccionado.turno,
     departureTime,
     arrivalTime,
-    hoursWorked
+    duracionEstimadaHoras
+
   );
 
   if(!ok){
-    alert("No se pudo iniciar el viaje");
+
+    alert("No se pudo programar el viaje");
     return;
+
   }
-
-  // marcar como en curso
-  const orders = getOrders();
-  const ultima = orders[orders.length - 1];
-  const ultimoViaje = ultima.travels[ultima.travels.length - 1];
-
-  ultimoViaje.estado = "en_curso";
-  ultimoViaje.inicioReal = ahora.getTime();
-  ultimoViaje.llegadaEstimada = llegadaEstimadaDate.getTime();
-  ultimoViaje.servicioUI = servicioSeleccionado.tipo;
-
-  saveOrders(orders);
-  setActiveOrder(ultima);
 
   renderResumenDia();
   renderListaViajes();
 
   alert(
-    "Viaje iniciado\n" +
-    "Salida registrada automáticamente: " + departureTime
+    "Viaje programado correctamente\n" +
+    "Inicio automático a las " +
+    departureTime
   );
 
   showScreen("mainScreen");
-  mostrarViajeEnCursoUI();
+
 }
 // =====================================================
 // RESUMEN DEL DIA (FUNCION FALTANTE)
@@ -377,8 +408,10 @@ function abrirViajeSimple(){
 
     alert(
       "Ya hay un viaje en curso\n\n" +
-      travelEnCurso.origen + " → " + travelEnCurso.destino +
-      "\nSalida: " + travelEnCurso.departureTime +
+      travelEnCurso.origen + " → " +
+      travelEnCurso.destino +
+      "\nSalida: " +
+      travelEnCurso.departureTime +
       "\n\nFinalizalo antes de iniciar uno nuevo."
     );
 
@@ -386,8 +419,8 @@ function abrirViajeSimple(){
   }
 
   showScreen("travelScreen");
-}
 
+}
 // =====================================================
 // ACTUALIZAR INFO SERVICIO (UI)
 // =====================================================
@@ -487,164 +520,162 @@ function mostrarViajeEnCursoUI(){
 
   if(!container) return;
 
-  const travel = getTravelEnCurso();
-
   // limpiar
   container.innerHTML = "";
 
+  const order = getActiveOrder();
+
+  if(!order || !order.travels) return;
+
+  // buscar primero en curso, sino programado
+  let travel =
+    order.travels.find(t => t.status === "en_curso");
+
+  if(!travel){
+    travel =
+      order.travels.find(t => t.status === "programado");
+  }
+
   if(!travel) return;
+
+  const esProgramado =
+    travel.status === "programado";
 
   const card = document.createElement("div");
 
   card.style.cssText = `
-    background:#e8f5e9;
-    border:1px solid #4caf50;
+    background:${esProgramado ? "#fff3cd" : "#e8f5e9"};
+    border:1px solid ${esProgramado ? "#ffc107" : "#4caf50"};
     border-radius:12px;
     padding:12px;
     margin-bottom:12px;
   `;
 
-  // ================================
-  // DURACIÓN TRANSCURRIDA
-  // ================================
+  // ============================
+  // CALCULAR TIEMPO SOLO SI EN CURSO
+  // ============================
 
-  const ahora = new Date();
+  let tiempoHTML = "";
+  let estadoDuracionHTML = "";
 
-  const salida = new Date();
-  const [h,m] = travel.departureTime.split(":");
-  salida.setHours(h,m,0,0);
+  if(!esProgramado){
 
-  const diffMs = ahora - salida;
-  const diffMin = Math.floor(diffMs / 60000);
+    const ahora = new Date();
 
-  const horas = Math.floor(diffMin / 60);
-  const mins  = diffMin % 60;
+    const salida = new Date();
+    const [h,m] = travel.departureTime.split(":");
+    salida.setHours(h,m,0,0);
 
+    const diffMs = ahora - salida;
+    const diffMin = Math.floor(diffMs / 60000);
 
+    const horas = Math.floor(diffMin / 60);
+    const mins  = diffMin % 60;
 
+    tiempoHTML = `
+      🕒 Salida: ${travel.departureTime}<br>
+      ⏱ Transcurrido: ${horas}h ${mins}m
+    `;
 
-  // ================================
-// DURACIÓN ESTIMADA INTELIGENTE
-// ================================
+    let duracionEstimadaMin =
+      obtenerDuracionPromedio(travel.origen, travel.destino);
 
-// usar promedio real aprendido
-let duracionEstimadaMin =
-  obtenerDuracionPromedio(travel.origen, travel.destino);
+    if(!duracionEstimadaMin){
 
-// fallback si no hay datos aún
-if(!duracionEstimadaMin){
+      const velocidadFallback = 60;
 
-  const velocidadPromedioFallback = 60;
-
-  duracionEstimadaMin =
-    Math.floor((travel.kmEmpresa || 0) / velocidadPromedioFallback * 60);
-}
-
-const excedidoMin = diffMin - duracionEstimadaMin;
-
- let estadoDuracionHTML = "";
-
-  if(duracionEstimadaMin > 0){
-
-    const estHoras = Math.floor(duracionEstimadaMin / 60);
-    const estMin   = duracionEstimadaMin % 60;
-
-    if(excedidoMin > 0){
-
-      estadoDuracionHTML = `
-        <div style="
-          margin-top:8px;
-          padding:6px;
-          background:#fff3cd;
-          border-radius:6px;
-          font-size:13px;
-        ">
-          🟡 Duración estimada: ${estHoras}h ${estMin}m<br>
-          ⏱ Excedido: ${excedidoMin} min
-        </div>
-      `;
-
-      // 🔔 ALERTA AUTOMÁTICA SOLO UNA VEZ
-      if(!travel.alertaExcesoMostrada){
-
-        setTimeout(()=>{
-
-          alert(
-            "Este viaje superó el tiempo estimado.\n" +
-            "Revise si desea finalizarlo."
-          );
-
-        }, 500);
-
-        travel.alertaExcesoMostrada = true;
-
-        const orders = getOrders();
-        saveOrders(orders);
-
-      }
-
-    }else{
-
-      estadoDuracionHTML = `
-        <div style="
-          margin-top:8px;
-          padding:6px;
-          background:#e8f5e9;
-          border-radius:6px;
-          font-size:13px;
-        ">
-          🟢 Dentro del tiempo estimado
-        </div>
-      `;
+      duracionEstimadaMin =
+        Math.floor((travel.kmEmpresa || 0) / velocidadFallback * 60);
     }
+
+    if(duracionEstimadaMin > 0){
+
+      const excedidoMin =
+        diffMin - duracionEstimadaMin;
+
+      if(excedidoMin > 0){
+
+        estadoDuracionHTML = `
+          <div style="
+            margin-top:8px;
+            padding:6px;
+            background:#fff3cd;
+            border-radius:6px;
+            font-size:13px;
+          ">
+            🟡 Excedido: ${excedidoMin} min
+          </div>
+        `;
+
+      }else{
+
+        estadoDuracionHTML = `
+          <div style="
+            margin-top:8px;
+            padding:6px;
+            background:#e8f5e9;
+            border-radius:6px;
+            font-size:13px;
+          ">
+            🟢 Dentro del tiempo estimado
+          </div>
+        `;
+      }
+    }
+
+  }else{
+
+    tiempoHTML = `
+      🕒 Inicio programado: ${travel.departureTime}
+    `;
   }
 
+  // ============================
+  // BOTONES
+  // ============================
 
-  // ================================
-  // UI CARD
-  // ================================
-
-  card.innerHTML = `
-    <b>🟢 Viaje en curso</b><br><br>
-
-    🚍 ${travel.origen} → ${travel.destino}<br>
-    🕒 Salida: ${travel.departureTime}<br>
-    ⏱ Transcurrido: ${horas}h ${mins}m
-
-    ${estadoDuracionHTML}
-
-    <br>
-    <button onclick="finalizarViajeUI()">
-      Finalizar viaje
+  let botonesHTML = `
+    <button
+      class="viaje-btn viaje-btn-cancelar"
+      onclick="cancelarViajeUI()">
+      Cancelar viaje
     </button>
   `;
 
-  container.appendChild(card);
+  if(!esProgramado){
 
-
-  // ================================
-  // AUTO ACTUALIZAR CADA 60 SEGUNDOS
-  // ================================
-
-  if(window.__viajeTimer){
-    clearInterval(window.__viajeTimer);
+    botonesHTML =
+      `
+      <button
+        class="viaje-btn viaje-btn-finalizar"
+        onclick="finalizarViajeUI()">
+        Finalizar viaje
+      </button>
+      `
+      + botonesHTML;
   }
 
-  window.__viajeTimer = setInterval(()=>{
+  // ============================
+  // RENDER
+  // ============================
 
-    const travelActivo = getTravelEnCurso();
+  card.innerHTML = `
 
-    if(!travelActivo){
+    <b>${esProgramado ? "🟡 Viaje programado" : "🟢 Viaje en curso"}</b><br><br>
 
-      clearInterval(window.__viajeTimer);
-      window.__viajeTimer = null;
-      return;
+    🚍 ${travel.origen} → ${travel.destino}<br>
 
-    }
+    ${tiempoHTML}
 
-    mostrarViajeEnCursoUI();
+    ${estadoDuracionHTML}
 
-  }, 60000);
+    <div style="margin-top:10px">
+      ${botonesHTML}
+    </div>
+
+  `;
+
+  container.appendChild(card);
 
 }
 
@@ -695,6 +726,7 @@ function finalizarViajeUI(){
       );
 
   }
+
 
   // ================================
   // GUARDAR EN EL OBJETO VIAJE
@@ -862,7 +894,46 @@ function renderDetalleOrden(order){
   });
 
 }
+// =========================
+// AUTO REFRESH LISTA VIAJES
+// =========================
 
+if(!window.__travelListTimer){
+
+  window.__travelListTimer =
+    setInterval(() => {
+
+      const pantalla =
+        document.getElementById("listaViajesScreen");
+
+      if(pantalla &&
+         pantalla.classList.contains("active")){
+
+        renderListaViajes();
+
+      }
+
+    }, 30000); // cada 30 segundos
+
+}
+  // =====================================================
+// CANCELAR VIAJE DESDE UI (CON CÁLCULO REAL)
+// =====================================================
+  function cancelarViajeUI(){
+
+  const travel = cancelarViajeActual();
+
+  if(!travel){
+    alert("No hay viaje activo");
+    return;
+  }
+
+  alert("Viaje cancelado");
+
+  mostrarViajeEnCursoUI();
+  renderListaViajes();
+  renderResumenDia();
+}
 
 // export global
 window.abrirViajeSimple = abrirViajeSimple;
@@ -874,3 +945,5 @@ window.closeActiveOrderUI = closeActiveOrderUI;
 window.renderListaViajes = renderListaViajes;
 window.actualizarInfoServicio = actualizarInfoServicio;
 window.renderTarjetasPorDia = renderTarjetasPorDia;
+window.mostrarViajeEnCursoUI = mostrarViajeEnCursoUI;
+window.cancelarViajeUI = cancelarViajeUI;

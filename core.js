@@ -173,8 +173,141 @@ function addTravel(origen, destino, turno, departureTime, arrivalTime, hoursWork
 
   return true;
 }
+// =====================================================
+// VIAJE PROGRAMADO (EXTENSIÓN SEGURA DEL CORE)
+// =====================================================
 
+function addTravelProgramado(
+  origen,
+  destino,
+  turno,
+  departureTime,
+  arrivalTime,
+  hoursWorked
+){
 
+  const order = getActiveOrder();
+  if(!order) return false;
+
+  const ahora = Date.now();
+
+  const kmEmpresa =
+    buscarKmRuta(origen, destino) || 0;
+
+  // convertir hora programada a timestamp real
+  const hoy = new Date();
+
+  const [h, m] =
+    departureTime.split(":").map(Number);
+
+  const inicioProgramado =
+    new Date(
+      hoy.getFullYear(),
+      hoy.getMonth(),
+      hoy.getDate(),
+      h,
+      m,
+      0,
+      0
+    ).getTime();
+
+  const travel = {
+
+    id: "TRV-" + ahora,
+
+    origen,
+    destino,
+    turno,
+
+    departureTime,
+    arrivalTime,
+
+    kmEmpresa,
+    kmAuto: kmEmpresa,
+
+    hoursWorked,
+
+    createdAt: ahora,
+
+    status: "programado",
+
+    inicioProgramado,
+    inicioReal: null,
+
+    llegadaEstimada:
+      inicioProgramado +
+      (hoursWorked * 60 * 60 * 1000)
+
+  };
+
+  if(!order.travels)
+    order.travels = [];
+
+  order.travels.push(travel);
+
+  saveOrders(
+    getOrders().map(o =>
+      o.orderNumber === order.orderNumber
+        ? order
+        : o
+    )
+  );
+
+  setActiveOrder(order);
+
+  return true;
+}
+// =====================================================
+// MOTOR DE VIAJES PROGRAMADOS
+// =====================================================
+
+function verificarViajesProgramados(){
+
+  const order = getActiveOrder();
+  if(!order || !order.travels) return;
+
+  const ahora = Date.now();
+
+  let cambio = false;
+
+  order.travels.forEach(travel => {
+
+    if(
+      travel.status === "programado"
+      &&
+      travel.inicioProgramado
+      &&
+      travel.inicioProgramado <= ahora
+    ){
+
+      travel.status = "en_curso";
+      travel.inicioReal = ahora;
+
+      cambio = true;
+
+      console.log(
+        "Viaje iniciado automáticamente:",
+        travel.id
+      );
+    }
+
+  });
+
+  if(cambio){
+
+    saveOrders(
+      getOrders().map(o =>
+        o.orderNumber === order.orderNumber
+          ? order
+          : o
+      )
+    );
+
+    setActiveOrder(order);
+
+  }
+
+}
 
 // =====================================================
 // 🆕 CÁLCULO REAL DE JORNADA (viajes + guardias)
@@ -337,3 +470,71 @@ function finalizarViajeActual(){
 
   return travel;
 }
+function getTravelActivoOProgramado(){
+
+  const order = getActiveOrder();
+
+  if(!order || !order.travels)
+    return null;
+
+  // prioridad 1: en curso
+  let travel =
+    order.travels.find(
+      t => t.status === "en_curso"
+    );
+
+  if(travel) return travel;
+
+  // prioridad 2: programado
+  travel =
+    order.travels.find(
+      t => t.status === "programado"
+    );
+
+  return travel || null;
+
+}
+//----Funcion cancelar viaje -----
+function cancelarViajeActual(){
+
+  const order = getActiveOrder();
+  if(!order) return null;
+
+  const travel = order.travels.find(
+    t => t.status === "en_curso"
+  );
+
+  if(!travel) return null;
+
+  travel.status = "cancelado";
+  travel.canceladoAt = Date.now();
+
+  saveOrders(
+    getOrders().map(o =>
+      o.orderNumber === order.orderNumber
+        ? order
+        : o
+    )
+  );
+
+  setActiveOrder(order);
+
+  return travel;
+}
+// =====================================================
+// COMPATIBILIDAD — mantener función vieja
+// =====================================================
+
+function getTravelEnCurso(){
+
+  const order = getActiveOrder();
+
+  if(!order || !order.travels)
+    return null;
+
+  return order.travels.find(
+    t => t.status === "en_curso"
+  ) || null;
+
+}
+window.getTravelEnCurso = getTravelEnCurso;

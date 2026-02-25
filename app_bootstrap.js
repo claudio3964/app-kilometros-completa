@@ -19,6 +19,26 @@ document.addEventListener("DOMContentLoaded", () => {
   renderListaViajes();
   renderResumenDia();
 
+// =====================================================
+// MOTOR AUTOMÁTICO DE VIAJES PROGRAMADOS
+// =====================================================
+
+verificarViajesProgramados();
+
+if(!window.__motorViajesProgramados){
+
+  window.__motorViajesProgramados = setInterval(() => {
+
+    verificarViajesProgramados();
+
+    renderListaViajes();
+
+    if(typeof mostrarViajeEnCursoUI === "function")
+      mostrarViajeEnCursoUI();
+
+  }, 15000);
+
+}
   window.addEventListener("load", () => {
 
     const splash = document.getElementById("splashScreen");
@@ -61,5 +81,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 900);
 
   });
+
+});
+document.addEventListener("DOMContentLoaded", () => {
+
+  renderOrdenActivaUI();
+
+  mostrarViajeEnCursoUI();
 
 });
