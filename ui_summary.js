@@ -140,3 +140,43 @@ function renderOrdenActivaUI(){
 // EXPORT GLOBAL
 window.renderResumenGeneral=renderResumenGeneral;
 window.limpiarFiltrosResumen=limpiarFiltrosResumen;
+// =====================================================
+// RESUMEN DE LA JORNADA ACTIVA (USA SOLO EL CORE)
+// =====================================================
+
+function renderResumenDia(){
+
+  const box = document.getElementById("summaryDiaBox");
+
+  if(!box) return;
+
+  const order = getActiveOrder();
+
+  if(!order){
+
+    box.innerHTML = `
+      KM totales: 0<br>
+      KM tome y cese: 0<br>
+      KM guardias: 0<br>
+      KM acoplados: 0<br>
+      Viáticos generados: 0<br>
+      Total $: 0
+    `;
+
+    return;
+  }
+
+  // USAR EL CORE (FUENTE ÚNICA DE VERDAD)
+  const t = calculateOrderTotals(order);
+
+  box.innerHTML = `
+    KM totales: <b>${t.kmViajes}</b><br>
+    KM tome y cese: <b>${t.kmTomeCese}</b><br>
+    KM guardias: <b>${t.kmGuardias}</b><br>
+    KM acoplados: <b>${t.kmAcoplados}</b><br>
+    Viáticos generados: <b>${t.viaticos}</b><br>
+    Total $: <b>${Math.round(t.monto)}</b>
+  `;
+
+}// EXPORTAR
+window.renderResumenDia = renderResumenDia;

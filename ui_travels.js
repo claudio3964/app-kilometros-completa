@@ -39,8 +39,9 @@ function closeActiveOrderUI(){
   alert("Jornada cerrada");
 }
 // =====================================================
-// LISTA DE VIAJES — VERSION FINAL CORRECTA
+// LISTA DE VIAJES — VERSION FINAL PROFESIONAL COMPLETA
 // Compatible 100% con CORE COT DRIVER ENGINE
+// Muestra tipo de servicio y acoplado correctamente
 // =====================================================
 
 function renderListaViajes(){
@@ -65,6 +66,7 @@ function renderListaViajes(){
     return;
   }
 
+  // ordenar por fecha descendente
   orders.sort(
     (a,b)=> new Date(b.date) - new Date(a.date)
   );
@@ -88,7 +90,10 @@ function renderListaViajes(){
     card.onclick = () =>
       abrirDetalleOrden(order.orderNumber);
 
+    // =========================
     // TITULO
+    // =========================
+
     const titulo =
       document.createElement("div");
 
@@ -102,31 +107,36 @@ function renderListaViajes(){
 
     card.appendChild(titulo);
 
+    // =========================
     // RESUMEN
+    // =========================
+
     const resumen =
       document.createElement("div");
 
     resumen.className = "order-summary";
 
     resumen.innerHTML = `
-      Tome y cese: ${totales.kmTomeCese} km<br>
-      Acoplados: ${totales.kmAcoplados} km<br>
+      Tome y cese: ${totales.kmTomeCese.toFixed(1)} km<br>
+      Guardias: ${totales.kmGuardias.toFixed(1)} km<br>
+      Acoplados: ${totales.kmAcoplados.toFixed(1)} km<br>
       Viáticos: ${totales.viaticos}<br>
       Total jornada: ${totales.kmTotal.toFixed(1)} km
     `;
 
     card.appendChild(resumen);
 
+    // =========================
     // VIAJES
+    // =========================
+
     const travels =
       order.travels || [];
 
     travels.sort(
       (a,b)=>
         (a.departureTime || "")
-        .localeCompare(
-          b.departureTime || ""
-        )
+        .localeCompare(b.departureTime || "")
     );
 
     travels.forEach(v => {
@@ -145,6 +155,10 @@ function renderListaViajes(){
       item.className =
         `travel-card ${estado}`;
 
+      // =========================
+      // ESTADO TEXTO
+      // =========================
+
       let estadoTexto =
         "⚫ FINALIZADO";
 
@@ -153,6 +167,22 @@ function renderListaViajes(){
 
       if(estado === "en_curso")
         estadoTexto = "🟢 EN CURSO";
+
+      // =========================
+      // SERVICIO Y ACOPLADO
+      // =========================
+
+      const tipoServicio =
+        v.tipoServicio ||
+        v.turno ||
+        "—";
+
+      const acopladoTexto =
+        v.acoplado ? "SI" : "NO";
+
+      // =========================
+      // TIEMPO TRANSCURRIDO
+      // =========================
 
       let tiempoHTML = "";
 
@@ -181,6 +211,10 @@ function renderListaViajes(){
         `;
       }
 
+      // =========================
+      // RENDER ITEM
+      // =========================
+
       item.innerHTML = `
 
         <div class="travel-status ${estado}">
@@ -189,6 +223,14 @@ function renderListaViajes(){
 
         <div>
           🚍 ${v.origen} → ${v.destino}
+        </div>
+
+        <div>
+          🚦 Servicio: <b>${tipoServicio}</b>
+        </div>
+
+        <div>
+          🔗 Acoplado: <b>${acopladoTexto}</b>
         </div>
 
         <div>
@@ -681,6 +723,7 @@ function mostrarViajeEnCursoUI(){
 
 // =====================================================
 // FINALIZAR VIAJE DESDE UI (CON CÁLCULO REAL)
+// FIX PROFESIONAL — SOPORTA CRUCE DE MEDIANOCHE
 // =====================================================
 
 function finalizarViajeUI(){
@@ -699,13 +742,21 @@ function finalizarViajeUI(){
 
   // ================================
   // CALCULAR DURACIÓN REAL
+  // SOPORTE CRUCE DE MEDIANOCHE
   // ================================
 
-  const [hS, mS] = travel.departureTime.split(":").map(Number);
+  const [hS, mS] =
+    travel.departureTime.split(":").map(Number);
+
   const salida = new Date();
   salida.setHours(hS, mS, 0, 0);
 
-  const diffMs = ahora - salida;
+  let diffMs = ahora - salida;
+
+  // ✔ FIX CRÍTICO: cruce de medianoche
+  if(diffMs < 0){
+    diffMs += 24 * 60 * 60 * 1000;
+  }
 
   const duracionMin =
     Math.max(1, Math.floor(diffMs / 60000));
@@ -722,30 +773,36 @@ function finalizarViajeUI(){
 
     velocidadPromedio =
       Number(
-        (travel.kmEmpresa / duracionHoras).toFixed(1)
+        (travel.kmEmpresa / duracionHoras)
+        .toFixed(1)
       );
 
   }
 
-
   // ================================
-  // GUARDAR EN EL OBJETO VIAJE
+  // GUARDAR DATOS EN EL VIAJE
   // ================================
 
   travel.arrivalTime = arrivalTime;
   travel.duracionMin = duracionMin;
   travel.velocidadPromedio = velocidadPromedio;
+  travel.llegadaReal = Date.now();
 
-  // actualizar en storage
+  // guardar storage seguro
   const orders = getOrders();
 
   saveOrders(orders);
 
-  finalizarViajeActual(arrivalTime);
-registrarEstadisticaViaje({
-  ...travel,
-  arrivalTime
-});
+  finalizarViajeActual();
+
+  // aprendizaje futuro (si existe)
+  if(typeof registrarEstadisticaViaje === "function"){
+    registrarEstadisticaViaje({
+      ...travel,
+      arrivalTime
+    });
+  }
+
   alert(
     "Viaje finalizado\n" +
     "Duración: " + duracionMin + " min\n" +
@@ -755,6 +812,7 @@ registrarEstadisticaViaje({
   mostrarViajeEnCursoUI();
 
   renderResumenDia?.();
+
 }
 
 // =====================================================
@@ -919,20 +977,37 @@ if(!window.__travelListTimer){
   // =====================================================
 // CANCELAR VIAJE DESDE UI (CON CÁLCULO REAL)
 // =====================================================
-  function cancelarViajeUI(){
+ function cancelarViajeUI(){
 
-  const travel = cancelarViajeActual();
+  const order = getActiveOrder();
 
-  if(!travel){
+  if(!order || !order.travels){
     alert("No hay viaje activo");
     return;
   }
 
-  alert("Viaje cancelado");
+  const travel =
+    order.travels.find(
+      t =>
+        t.status === "en_curso" ||
+        t.status === "programado"
+    );
+
+  if(!travel){
+    alert("No hay viaje para cancelar");
+    return;
+  }
+
+  cancelarViajePorId(travel.id);
+
+  alert("Viaje cancelado correctamente");
 
   mostrarViajeEnCursoUI();
+
   renderListaViajes();
+
   renderResumenDia();
+
 }
 
 // export global

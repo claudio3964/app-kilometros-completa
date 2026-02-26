@@ -78,7 +78,27 @@ function generateOrderNumber(){
 
 
 // ===== ACTIVE ORDER =====
-function getActiveOrder(){ return Storage.get("activeOrder"); }
+function getActiveOrder(){
+
+  const active = Storage.get("activeOrder");
+  if(!active) return null;
+
+  const orders = getOrders();
+
+  const real = orders.find(
+    o => o.orderNumber === active.orderNumber && !o.closed
+  );
+
+  if(!real){
+
+    // limpiar activeOrder corrupto
+    clearActiveOrder();
+
+    return null;
+  }
+
+  return real;
+}
 function setActiveOrder(o){ Storage.set("activeOrder",o); }
 function clearActiveOrder(){ Storage.remove("activeOrder"); }
 
@@ -110,62 +130,137 @@ function createOrder(){
 }
 
 
-// ===== CLOSE ORDER =====
+// =====================================================
+// CERRAR JORNADA (VERSIÓN PROFESIONAL CON SNAPSHOT)
+// =====================================================
+
 function closeActiveOrder(){
-  const o=getActiveOrder();
-  if(!o) return null;
-  o.closed=true;
-  o.closedAt=Date.now();
 
-  saveOrders(getOrders().map(x=>x.orderNumber===o.orderNumber?o:x));
+  const order = getActiveOrder();
+
+  if(!order) return null;
+
+  // evitar doble cierre
+  if(order.status === "finalizada"){
+    return order;
+  }
+
+  // calcular totales finales desde CORE
+  const totals = calculateOrderTotals(order);
+
+  // congelar snapshot contable
+  order.totalsSnapshot = {
+
+    kmViajes: totals.kmViajes,
+    kmGuardias: totals.kmGuardias,
+    kmTomeCese: totals.kmTomeCese,
+    kmAcoplados: totals.kmAcoplados,
+    kmTotal: totals.kmTotal,
+
+    viaticos: totals.viaticos,
+
+    monto: totals.monto,
+
+    cerradoAt: Date.now()
+
+  };
+
+  // marcar estado final
+  order.status = "finalizada";
+
+  order.closed = true;
+
+  order.closedAt = Date.now();
+
+  // guardar en storage
+  saveOrders(
+    getOrders().map(o =>
+      o.orderNumber === order.orderNumber
+        ? order
+        : o
+    )
+  );
+
+  // limpiar activeOrder
   clearActiveOrder();
-  return o;
-}
 
+  console.log("Jornada finalizada:", order.orderNumber);
+
+  return order;
+
+}
 // =====================================================
-// VIAJES (CORE OFICIAL CON KM AUTO)
+// VIAJES (CORE OFICIAL CON KM AUTO + TIPO + ACOPLADO)
 // =====================================================
-function addTravel(origen, destino, turno, departureTime, arrivalTime, hoursWorked){
+function addTravel(
+  origen,
+  destino,
+  turno,
+  departureTime,
+  arrivalTime,
+  hoursWorked,
+  tipo = turno,        // ← FIX
+  acoplado = false     // ← FIX
+){
+
+  if(existeViajeEnCurso()){
+
+    console.warn("No se puede programar viaje: hay uno en curso");
+
+    return false;
+  }
 
   const order = getActiveOrder();
   if(!order) return false;
 
   const ahora = Date.now();
 
-  const kmEmpresa = buscarKmRuta(origen, destino) || 0;
+  const kmEmpresa =
+    buscarKmRuta(origen, destino) || 0;
 
   const travel = {
-    id: "TRV-" + ahora,
 
-    origen,
-    destino,
-    turno,
+  id: "TRV-" + ahora,
 
-    departureTime,
-    arrivalTime,
+  origen,
+  destino,
 
-    kmEmpresa,
-    kmAuto: kmEmpresa,
+  turno,
+  tipoServicio: tipo,   // ← FIX correcto
 
-    hoursWorked,
+  departureTime,
+  arrivalTime,
 
-    createdAt: ahora,
+  kmEmpresa,
+  kmAuto: kmEmpresa,
 
-    // 🔥 NUEVO
-    status: "en_curso",
-    inicioReal: ahora,
+  hoursWorked,
 
-    llegadaEstimada:
-      ahora + (hoursWorked * 60 * 60 * 1000)
-  };
+  createdAt: ahora,
 
-  if(!order.travels) order.travels = [];
+  status: "en_curso",
+  inicioReal: ahora,
+
+  llegadaEstimada:
+    ahora + (hoursWorked * 60 * 60 * 1000),
+
+  acoplado: acoplado,   // ← FIX correcto
+
+  tomeCese: false
+};
+
+  if(!order.travels)
+    order.travels = [];
 
   order.travels.push(travel);
 
-  saveOrders(getOrders().map(o =>
-    o.orderNumber === order.orderNumber ? order : o
-  ));
+  saveOrders(
+    getOrders().map(o =>
+      o.orderNumber === order.orderNumber
+        ? order
+        : o
+    )
+  );
 
   setActiveOrder(order);
 
@@ -183,7 +278,9 @@ function addTravelProgramado(
   turno,
   departureTime,
   arrivalTime,
-  hoursWorked
+  hoursWorked,
+  tipo = turno,
+  acoplado = false
 ){
 
   const order = getActiveOrder();
@@ -194,7 +291,6 @@ function addTravelProgramado(
   const kmEmpresa =
     buscarKmRuta(origen, destino) || 0;
 
-  // convertir hora programada a timestamp real
   const hoy = new Date();
 
   const [h, m] =
@@ -211,34 +307,38 @@ function addTravelProgramado(
       0
     ).getTime();
 
-  const travel = {
+ const travel = {
 
-    id: "TRV-" + ahora,
+  id: "TRV-" + ahora,
 
-    origen,
-    destino,
-    turno,
+  origen,
+  destino,
 
-    departureTime,
-    arrivalTime,
+  turno,
+  tipoServicio: tipo,
 
-    kmEmpresa,
-    kmAuto: kmEmpresa,
+  departureTime,
+  arrivalTime,
 
-    hoursWorked,
+  kmEmpresa,
+  kmAuto: kmEmpresa,
 
-    createdAt: ahora,
+  hoursWorked,
 
-    status: "programado",
+  createdAt: ahora,
 
-    inicioProgramado,
-    inicioReal: null,
+  status: "programado",      // ← FIX CRITICO
+  inicioProgramado,
+  inicioReal: null,          // ← FIX CRITICO
 
-    llegadaEstimada:
-      inicioProgramado +
-      (hoursWorked * 60 * 60 * 1000)
+  llegadaEstimada:
+    inicioProgramado +
+    (hoursWorked * 60 * 60 * 1000),
 
-  };
+  acoplado: acoplado,
+
+  tomeCese: false
+};
 
   if(!order.travels)
     order.travels = [];
@@ -282,6 +382,20 @@ function verificarViajesProgramados(){
 
       travel.status = "en_curso";
       travel.inicioReal = ahora;
+
+      // =====================================================
+      // RESTAURAR TOME Y CESE (PRIMER VIAJE DEL DÍA)
+      // =====================================================
+
+      if(!order.tomeCeseGenerado){
+
+        travel.tomeCese = true;
+
+        order.tomeCeseGenerado = true;
+
+        console.log("Tome y Cese generado automáticamente");
+
+      }
 
       cambio = true;
 
@@ -354,7 +468,13 @@ function tocaFranja(o,h){
 // =====================================================
 function determinarViatico(o){
 
-  if(o.travels.length === 0) return 0;
+  const travelsValidos =
+  o.travels.filter(
+    t => t.status !== "cancelado"
+  );
+
+if(travelsValidos.length === 0)
+  return 0;
 
   const horasJornada = calcularHorasJornada(o);
   const toca14 = tocaFranja(o,14);
@@ -376,42 +496,121 @@ function determinarViatico(o){
 }
 
 // =====================================================
-// TOTALES DE LA ORDEN (CORREGIDO)
+// TOTALES DE LA ORDEN (VERSIÓN PROFESIONAL CON SNAPSHOT)
 // =====================================================
 function calculateOrderTotals(o){
-  let kmViajes=0, kmAcoplados=0, kmGuardias=0;
 
-  o.travels.forEach(t=>{
-    kmViajes+=t.kmEmpresa;
-    if(t.acoplado) kmAcoplados+=ACOPLADO_EXTRA_KM;
-  });
+  if(!o){
+    return {
+      kmViajes: 0,
+      kmAcoplados: 0,
+      kmGuardias: 0,
+      kmTomeCese: 0,
+      kmTotal: 0,
+      monto: 0,
+      viaticos: 0
+    };
+  }
 
-  o.guards.forEach(g=>{
-    kmGuardias+=g.hours*(g.type==="especial"
-      ? GUARDIA_ESPECIAL_KM_HORA
-      : GUARDIA_COMUN_KM_HORA);
-  });
+  // =====================================================
+  // USAR SNAPSHOT SI LA ORDEN ESTÁ FINALIZADA
+  // =====================================================
 
+  if(o.status === "finalizada" && o.totalsSnapshot){
+
+    return {
+      kmViajes: o.totalsSnapshot.kmViajes,
+      kmAcoplados: o.totalsSnapshot.kmAcoplados,
+      kmGuardias: o.totalsSnapshot.kmGuardias,
+      kmTomeCese: o.totalsSnapshot.kmTomeCese,
+      kmTotal: o.totalsSnapshot.kmTotal,
+      monto: o.totalsSnapshot.monto,
+      viaticos: o.totalsSnapshot.viaticos
+    };
+
+  }
+
+  // =====================================================
+  // CÁLCULO NORMAL (ORDEN ACTIVA)
+  // =====================================================
+
+  let kmViajes = 0;
+  let kmAcoplados = 0;
+  let kmGuardias = 0;
+
+  if(o.travels){
+
+    o.travels.forEach(t => {
+
+      if(!t) return;
+
+      // ignorar cancelados
+      if(t.status === "cancelado")
+        return;
+
+      kmViajes += Number(t.kmEmpresa || 0);
+
+      if(t.acoplado)
+        kmAcoplados += ACOPLADO_EXTRA_KM;
+
+    });
+
+  }
+
+  if(o.guards){
+
+    o.guards.forEach(g => {
+
+      if(!g) return;
+
+      const kmHora =
+        g.type === "especial"
+          ? GUARDIA_ESPECIAL_KM_HORA
+          : GUARDIA_COMUN_KM_HORA;
+
+      kmGuardias += Number(g.hours || 0) * kmHora;
+
+    });
+
+  }
+
+  // Tome y Cese
   const kmTomeCese =
-    o.travels.some(t=>t.tomeCese)?TOME_CESE_KM:0;
+    o.travels && o.travels.some(t => t.tomeCese)
+      ? TOME_CESE_KM
+      : 0;
 
+  // Total km
   const kmTotal =
-    kmViajes + kmAcoplados + kmGuardias + kmTomeCese;
+    kmViajes +
+    kmAcoplados +
+    kmGuardias +
+    kmTomeCese;
 
+  // Cálculo monetario
   const montoKm = kmTotal * LAUDO_KM;
 
-  const cantidadViaticos = determinarViatico(o);
-  const viatico = cantidadViaticos * MONTO_VIATICO;
+  const cantidadViaticos =
+    determinarViatico(o);
+
+  const viaticoMonto =
+    cantidadViaticos * MONTO_VIATICO;
 
   return {
+
     kmViajes,
     kmAcoplados,
     kmGuardias,
     kmTomeCese,
+
     kmTotal,
-    monto: montoKm + viatico,
+
+    monto: montoKm + viaticoMonto,
+
     viaticos: cantidadViaticos
+
   };
+
 }
 
 // ===== SUMMARY DEL DÍA =====
@@ -537,4 +736,63 @@ function getTravelEnCurso(){
   ) || null;
 
 }
+function existeViajeEnCurso(){
+
+  const order = getActiveOrder();
+
+  if(!order || !order.travels) return false;
+
+  return order.travels.some(
+    t => t.status === "en_curso"
+  );
+}
+// =====================================================
+// CANCELAR VIAJE POR ID (PROFESIONAL)
+// =====================================================
+
+function cancelarViajePorId(travelId){
+
+  const order = getActiveOrder();
+
+  if(!order || !order.travels)
+    return null;
+
+  const travel =
+    order.travels.find(
+      t => t.id === travelId
+    );
+
+  if(!travel)
+    return null;
+
+  // evitar cancelar si ya está cancelado
+  if(travel.status === "cancelado")
+    return travel;
+
+  travel.status = "cancelado";
+
+  travel.canceladoAt = Date.now();
+
+  // guardar cambios
+  saveOrders(
+    getOrders().map(o =>
+      o.orderNumber === order.orderNumber
+        ? order
+        : o
+    )
+  );
+
+  setActiveOrder(order);
+
+  console.log(
+    "Viaje cancelado:",
+    travel.id
+  );
+
+  return travel;
+
+}
+
+// export global
+window.cancelarViajePorId = cancelarViajePorId;
 window.getTravelEnCurso = getTravelEnCurso;
