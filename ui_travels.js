@@ -381,7 +381,7 @@ function addTravelUI(event){
     llegadaDate.toTimeString().substring(0,5);
 
   // ESTA ES LA CLAVE
-  const ok = addTravelProgramado(
+  const ok = addTravel(
 
     origen,
     destino,
@@ -562,23 +562,27 @@ function mostrarViajeEnCursoUI(){
 
   if(!container) return;
 
-  // limpiar
+  // SIEMPRE limpiar
   container.innerHTML = "";
 
   const order = getActiveOrder();
 
-  if(!order || !order.travels) return;
-
-  // buscar primero en curso, sino programado
-  let travel =
-    order.travels.find(t => t.status === "en_curso");
-
-  if(!travel){
-    travel =
-      order.travels.find(t => t.status === "programado");
+  if(!order || !order.travels || order.travels.length === 0){
+    return;
   }
 
-  if(!travel) return;
+  // Buscar en curso o programado
+  const travelEnCurso =
+    order.travels.find(t => t.status === "en_curso");
+
+  const travelProgramado =
+    order.travels.find(t => t.status === "programado");
+
+  if(!travelEnCurso && !travelProgramado){
+    return; // nada para mostrar
+  }
+
+  const travel = travelEnCurso || travelProgramado;
 
   const esProgramado =
     travel.status === "programado";
@@ -594,7 +598,7 @@ function mostrarViajeEnCursoUI(){
   `;
 
   // ============================
-  // CALCULAR TIEMPO SOLO SI EN CURSO
+  // TIEMPO
   // ============================
 
   let tiempoHTML = "";
@@ -602,17 +606,17 @@ function mostrarViajeEnCursoUI(){
 
   if(!esProgramado){
 
-    const ahora = new Date();
+    const diffMs =
+      ahoraSistema() - travel.inicioReal;
 
-    const salida = new Date();
-    const [h,m] = travel.departureTime.split(":");
-    salida.setHours(h,m,0,0);
+    const diffMin =
+      Math.max(0, Math.floor(diffMs / 60000));
 
-    const diffMs = ahora - salida;
-    const diffMin = Math.floor(diffMs / 60000);
+    const horas =
+      Math.floor(diffMin / 60);
 
-    const horas = Math.floor(diffMin / 60);
-    const mins  = diffMin % 60;
+    const mins =
+      diffMin % 60;
 
     tiempoHTML = `
       🕒 Salida: ${travel.departureTime}<br>
@@ -620,14 +624,20 @@ function mostrarViajeEnCursoUI(){
     `;
 
     let duracionEstimadaMin =
-      obtenerDuracionPromedio(travel.origen, travel.destino);
+      obtenerDuracionPromedio(
+        travel.origen,
+        travel.destino
+      );
 
     if(!duracionEstimadaMin){
 
       const velocidadFallback = 60;
 
       duracionEstimadaMin =
-        Math.floor((travel.kmEmpresa || 0) / velocidadFallback * 60);
+        Math.floor(
+          (travel.kmEmpresa || 0)
+          / velocidadFallback * 60
+        );
     }
 
     if(duracionEstimadaMin > 0){
@@ -718,7 +728,6 @@ function mostrarViajeEnCursoUI(){
   `;
 
   container.appendChild(card);
-
 }
 
 // =====================================================
@@ -735,84 +744,18 @@ function finalizarViajeUI(){
     return;
   }
 
-  const ahora = new Date();
+  // Delegar todo el cierre al CORE
+  const finalizado = finalizarViajeActual();
 
-  const arrivalTime =
-    ahora.toTimeString().substring(0,5);
-
-  // ================================
-  // CALCULAR DURACIÓN REAL
-  // SOPORTE CRUCE DE MEDIANOCHE
-  // ================================
-
-  const [hS, mS] =
-    travel.departureTime.split(":").map(Number);
-
-  const salida = new Date();
-  salida.setHours(hS, mS, 0, 0);
-
-  let diffMs = ahora - salida;
-
-  // ✔ FIX CRÍTICO: cruce de medianoche
-  if(diffMs < 0){
-    diffMs += 24 * 60 * 60 * 1000;
+  if(!finalizado){
+    alert("Error al finalizar viaje");
+    return;
   }
 
-  const duracionMin =
-    Math.max(1, Math.floor(diffMs / 60000));
-
-  // ================================
-  // CALCULAR VELOCIDAD PROMEDIO REAL
-  // ================================
-
-  const duracionHoras = duracionMin / 60;
-
-  let velocidadPromedio = 0;
-
-  if(travel.kmEmpresa && duracionHoras > 0){
-
-    velocidadPromedio =
-      Number(
-        (travel.kmEmpresa / duracionHoras)
-        .toFixed(1)
-      );
-
-  }
-
-  // ================================
-  // GUARDAR DATOS EN EL VIAJE
-  // ================================
-
-  travel.arrivalTime = arrivalTime;
-  travel.duracionMin = duracionMin;
-  travel.velocidadPromedio = velocidadPromedio;
-  travel.llegadaReal = Date.now();
-
-  // guardar storage seguro
-  const orders = getOrders();
-
-  saveOrders(orders);
-
-  finalizarViajeActual();
-
-  // aprendizaje futuro (si existe)
-  if(typeof registrarEstadisticaViaje === "function"){
-    registrarEstadisticaViaje({
-      ...travel,
-      arrivalTime
-    });
-  }
-
-  alert(
-    "Viaje finalizado\n" +
-    "Duración: " + duracionMin + " min\n" +
-    "Velocidad promedio: " + velocidadPromedio + " km/h"
-  );
+  alert("Viaje finalizado correctamente");
 
   mostrarViajeEnCursoUI();
-
   renderResumenDia?.();
-
 }
 
 // =====================================================

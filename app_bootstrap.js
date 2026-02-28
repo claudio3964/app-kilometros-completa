@@ -103,14 +103,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // MOTOR AUTOMÁTICO DE VIAJES PROGRAMADOS
   // =====================================================
 
-  verificarViajesProgramados();
+//  verificarViajesProgramados();
 
   if(!window.__motorViajesProgramados){
 
     window.__motorViajesProgramados =
       setInterval(() => {
 
-        verificarViajesProgramados();
+       // verificarViajesProgramados();
 
         renderListaViajes();
 

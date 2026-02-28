@@ -1,5 +1,11 @@
 "use strict";
+// =====================================================
+// RELOJ CENTRAL (modo simulación)
+// =====================================================
 
+function ahoraSistema(){
+  return Date.now() + (window.TIME_OFFSET || 0);
+}
 console.log("CORE OK");
 
 /* ================================
@@ -119,7 +125,7 @@ function createOrder(){
     travels: [],
     guards: [],
     closed: false,
-    createdAt: Date.now()
+    createdAt: ahoraSistema()
   };
 
   const all = getOrders();
@@ -161,7 +167,7 @@ function closeActiveOrder(){
 
     monto: totals.monto,
 
-    cerradoAt: Date.now()
+    cerradoAt: ahoraSistema()
 
   };
 
@@ -170,7 +176,7 @@ function closeActiveOrder(){
 
   order.closed = true;
 
-  order.closedAt = Date.now();
+  order.closedAt = ahoraSistema();
 
   // guardar en storage
   saveOrders(
@@ -213,7 +219,7 @@ function addTravel(
   const order = getActiveOrder();
   if(!order) return false;
 
-  const ahora = Date.now();
+  const ahora = ahoraSistema();
 
   const kmEmpresa =
     buscarKmRuta(origen, destino) || 0;
@@ -286,7 +292,7 @@ function addTravelProgramado(
   const order = getActiveOrder();
   if(!order) return false;
 
-  const ahora = Date.now();
+  const ahora = ahoraSistema();
 
   const kmEmpresa =
     buscarKmRuta(origen, destino) || 0;
@@ -366,7 +372,7 @@ function verificarViajesProgramados(){
   const order = getActiveOrder();
   if(!order || !order.travels) return;
 
-  const ahora = Date.now();
+  const ahora = ahoraSistema();
 
   let cambio = false;
 
@@ -423,78 +429,183 @@ function verificarViajesProgramados(){
 
 }
 
-// =====================================================
-// 🆕 CÁLCULO REAL DE JORNADA (viajes + guardias)
-// =====================================================
 function calcularHorasJornada(o){
 
-  let todasHoras = [];
+  if(!o) return 0;
 
-  // Horas de viajes
-  o.travels.forEach(v=>{
-    if(v.departureTime) todasHoras.push(v.departureTime);
-    if(v.arrivalTime) todasHoras.push(v.arrivalTime);
-  });
+  let totalMinutos = 0;
 
-  // Horas de guardias (si vienen de la UI)
-  o.guards.forEach(g=>{
-    if(g.inicio) todasHoras.push(g.inicio);
-    if(g.fin) todasHoras.push(g.fin);
-  });
+  // ================================
+  // VIAJES FINALIZADOS
+  // ================================
+  if(o.travels){
+    o.travels.forEach(t => {
+      if(t.status === "finalizado" && t.duracionMinutos){
+        totalMinutos += t.duracionMinutos;
+      }
+    });
+  }
 
-  if(todasHoras.length < 2) return 0;
+  // ================================
+  // GUARDIAS
+  // ================================
+  if(o.guards){
+    o.guards.forEach(g => {
 
-  todasHoras.sort();
+      if(g.inicio && g.fin){
 
-  const inicio = new Date(`2000-01-01T${todasHoras[0]}`);
-  const fin    = new Date(`2000-01-01T${todasHoras[todasHoras.length-1]}`);
+        const [h1,m1] = g.inicio.split(":").map(Number);
+        const [h2,m2] = g.fin.split(":").map(Number);
 
-  let horasTrabajadas = (fin - inicio)/(1000*60*60);
-  if(horasTrabajadas < 0) horasTrabajadas += 24;
+        let inicioMin = h1*60 + m1;
+        let finMin    = h2*60 + m2;
 
-  return horasTrabajadas;
+        // soporte cruce medianoche
+        if(finMin < inicioMin){
+          finMin += 24*60;
+        }
+
+        totalMinutos += (finMin - inicioMin);
+      }
+
+    });
+  }
+
+  return totalMinutos / 60;
 }
-
-// ¿Toca franja 14 o 23?
-function tocaFranja(o,h){
-  return o.travels.some(v => {
-    const hr = Number(v.departureTime?.split(":")[0] || 0);
-    return hr >= h;
-  });
-}
-
 // =====================================================
-// 🆕 VIÁTICOS POR JORNADA (tu regla empresarial)
+// 🆕 VIÁTICOS POR JORNADA (regla empresarial)
 // =====================================================
 function determinarViatico(o){
 
-  const travelsValidos =
-  o.travels.filter(
-    t => t.status !== "cancelado"
-  );
-
-if(travelsValidos.length === 0)
-  return 0;
+  if(!o) return 0;
 
   const horasJornada = calcularHorasJornada(o);
-  const toca14 = tocaFranja(o,14);
-  const toca23 = tocaFranja(o,23);
+  if(horasJornada <= 0) return 0;
+
+  const fechaBase = new Date(o.date + "T00:00:00").getTime();
+
+  const eventosInicio = [];
+  const eventosFin = [];
+
+  // ================================
+  // VIAJES FINALIZADOS
+  // ================================
+  const viajes = (o.travels || []).filter(t =>
+    t.status === "finalizado" &&
+    t.inicioReal &&
+    t.llegadaReal
+  );
+
+  viajes.forEach(v => {
+    eventosInicio.push({
+      tipo: "viaje",
+      timestamp: v.inicioReal,
+      tomeCese: v.tomeCese === true
+    });
+
+    eventosFin.push(v.llegadaReal);
+  });
+
+  // ================================
+  // GUARDIAS
+  // ================================
+  (o.guards || []).forEach(g => {
+
+    if(g.inicio && g.fin){
+
+      const [hI,mI] = g.inicio.split(":").map(Number);
+      const [hF,mF] = g.fin.split(":").map(Number);
+
+      let inicioMs =
+        fechaBase + ((hI * 60 + mI) * 60 * 1000);
+
+      let finMs =
+        fechaBase + ((hF * 60 + mF) * 60 * 1000);
+
+      // soporte cruce medianoche
+      if(finMs < inicioMs){
+        finMs += 24 * 60 * 60 * 1000;
+      }
+
+      eventosInicio.push({
+        tipo: "guardia",
+        timestamp: inicioMs,
+        tomeCese: false
+      });
+
+      eventosFin.push(finMs);
+    }
+
+  });
+
+  if(eventosInicio.length === 0)
+    return 0;
+
+  // ================================
+  // INICIO Y FIN REAL DE JORNADA
+  // ================================
+
+  eventosInicio.sort((a,b)=>a.timestamp-b.timestamp);
+
+  let inicioReal = eventosInicio[0].timestamp;
+  const finReal = Math.max(...eventosFin);
+
+  // Aplicar Tome y Cese SOLO si el primer evento es viaje con tomeCese
+  if(
+    eventosInicio[0].tipo === "viaje" &&
+    eventosInicio[0].tomeCese
+  ){
+    inicioReal -= (45 * 60 * 1000);
+  }
+
+  const fecha = new Date(inicioReal);
+
+  const franja14 = new Date(
+    fecha.getFullYear(),
+    fecha.getMonth(),
+    fecha.getDate(),
+    14,0,0,0
+  ).getTime();
+
+  const franja23 = new Date(
+    fecha.getFullYear(),
+    fecha.getMonth(),
+    fecha.getDate(),
+    23,0,0,0
+  ).getTime();
+
+  const TRES_Y_MEDIA = 3.5 * 60 * 60 * 1000;
 
   let viaticos = 0;
 
-  // 1 viático si ≥ 9 horas
-  if(horasJornada >= 9){
-    viaticos = 1;
+  // ================================
+  // FRANJA 14
+  // ================================
+  if(inicioReal <= franja14 && finReal >= franja14){
+    if((franja14 - inicioReal) >= TRES_Y_MEDIA){
+      viaticos++;
+    }
   }
 
-  // 2 viáticos si ≥ 9 horas Y toca 14 Y toca 23
-  if(horasJornada >= 9 && toca14 && toca23){
-    viaticos = 2;
+  // ================================
+  // FRANJA 23
+  // ================================
+  if(inicioReal <= franja23 && finReal >= franja23){
+    if((franja23 - inicioReal) >= TRES_Y_MEDIA){
+      viaticos++;
+    }
+  }
+
+  // ================================
+  // PISO MÍNIMO ≥9h
+  // ================================
+  if(viaticos === 0 && horasJornada >= 9){
+    viaticos = 1;
   }
 
   return viaticos;
 }
-
 // =====================================================
 // TOTALES DE LA ORDEN (VERSIÓN PROFESIONAL CON SNAPSHOT)
 // =====================================================
@@ -634,7 +745,7 @@ function getTodaySummary(){
 // ===== DRIVER REG =====
 function initDriverProfile(d){
   if(Storage.get("driverProfile")) return false;
-  Storage.set("driverProfile",{...d,createdAt:Date.now()});
+  Storage.set("driverProfile",{...d,createdAt:ahoraSistema()});
   return true;
 }
 // ------función para obtener viaje en curso------
@@ -652,61 +763,59 @@ function finalizarViajeActual(){
   const order = getActiveOrder();
   if(!order) return null;
 
-  const travel = order.travels.find(t => t.status === "en_curso");
-
-  if(!travel) return null;
-
-  const ahora = Date.now();
-
-  travel.status = "finalizado";
-  travel.llegadaReal = ahora;
-
-  saveOrders(getOrders().map(o =>
-    o.orderNumber === order.orderNumber ? order : o
-  ));
-
-  setActiveOrder(order);
-
-  return travel;
-}
-function getTravelActivoOProgramado(){
-
-  const order = getActiveOrder();
-
-  if(!order || !order.travels)
-    return null;
-
-  // prioridad 1: en curso
-  let travel =
-    order.travels.find(
-      t => t.status === "en_curso"
-    );
-
-  if(travel) return travel;
-
-  // prioridad 2: programado
-  travel =
-    order.travels.find(
-      t => t.status === "programado"
-    );
-
-  return travel || null;
-
-}
-//----Funcion cancelar viaje -----
-function cancelarViajeActual(){
-
-  const order = getActiveOrder();
-  if(!order) return null;
-
   const travel = order.travels.find(
     t => t.status === "en_curso"
   );
 
   if(!travel) return null;
 
-  travel.status = "cancelado";
-  travel.canceladoAt = Date.now();
+  // ====================================
+  // FIJAR HORA DE LLEGADA DECLARADA
+  // ====================================
+
+  if(!travel.arrivalTime){
+
+    const ahora = new Date();
+
+    const hh = String(ahora.getHours()).padStart(2,"0");
+    const mm = String(ahora.getMinutes()).padStart(2,"0");
+
+    travel.arrivalTime = `${hh}:${mm}`;
+  }
+
+  // ====================================
+  // CALCULAR DURACIÓN DESDE HORAS DECLARADAS
+  // ====================================
+
+  const convertirHoraAMin = (hhmm)=>{
+    const [h,m] = hhmm.split(":").map(Number);
+    return h*60 + m;
+  };
+
+  const salidaMin = convertirHoraAMin(travel.departureTime);
+  const llegadaMin = convertirHoraAMin(travel.arrivalTime);
+
+  let duracion = llegadaMin - salidaMin;
+
+  // Soporte cruce medianoche
+  if(duracion < 0){
+    duracion += 24 * 60;
+  }
+
+  travel.duracionMinutos = duracion;
+
+  // ====================================
+  // CERRAR VIAJE
+  // ====================================
+
+  travel.status = "finalizado";
+
+  // llegadaReal se puede mantener solo como referencia técnica
+  travel.llegadaReal = ahoraSistema();
+
+  // ====================================
+  // GUARDAR CAMBIOS
+  // ====================================
 
   saveOrders(
     getOrders().map(o =>
@@ -717,6 +826,14 @@ function cancelarViajeActual(){
   );
 
   setActiveOrder(order);
+
+  // ====================================
+  // REGISTRAR ESTADÍSTICA CONTABLE
+  // ====================================
+
+  if(typeof registrarEstadisticaViaje === "function"){
+    registrarEstadisticaViaje(travel);
+  }
 
   return travel;
 }
@@ -771,7 +888,7 @@ function cancelarViajePorId(travelId){
 
   travel.status = "cancelado";
 
-  travel.canceladoAt = Date.now();
+  travel.canceladoAt = ahoraSistema();
 
   // guardar cambios
   saveOrders(
