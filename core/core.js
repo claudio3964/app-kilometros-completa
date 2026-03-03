@@ -363,38 +363,38 @@ function addTravelProgramado(
 // MOTOR DE VIAJES PROGRAMADOS
 // =====================================================
 
-function verificarViajesProgramados() {
+function verificarViajesProgramados(){
   const order = getActiveOrder();
-  if (!order || !order.travels) return;
+  if(!order || !order.travels) return;
 
   const ahora = ahoraSistema();
 
-  const enCurso = order.travels.find(t => t.status === "en_curso");
-  if (enCurso) return;
+  // 1) Obtener programados ordenados por inicioProgramado asc
+  const programados = order.travels
+      .filter(t => t.status === "programado" && t.inicioProgramado)
+      .sort((a,b) => a.inicioProgramado - b.inicioProgramado);
 
-  const siguiente = order.travels
-    .filter(t => t.status === "programado")
-    .sort((a, b) => a.inicioProgramado - b.inicioProgramado)[0];
+  // 2) Si ya hay un viaje en curso, NO activar nada
+  if(existeViajeEnCurso()) return;
 
-  if (!siguiente) return;
+  // 3) Activar el primer programado cuya hora pasó
+  const proximo = programados.find(t => t.inicioProgramado <= ahora);
+  if(!proximo) return;
 
-  if (siguiente.inicioProgramado <= ahora) {
+  proximo.status = "en_curso";
+  proximo.inicioReal = ahora;
 
-    siguiente.status = "en_curso";
-    siguiente.inicioReal = ahora;
-    siguiente.timeStartRealTS = ahora;
-
-    // 🔥 ESTO ES LO QUE FALTA
-    saveOrders(
-      getOrders().map(o =>
-        o.orderNumber === order.orderNumber ? order : o
-      )
-    );
-
-    setActiveOrder(order);
-
-    console.log("Viaje iniciado automáticamente:", siguiente);
+  // 4) Tome y cese automático (si no se generó)
+  if(!order.tomeCeseGenerado){
+    proximo.tomeCese = true;
+    order.tomeCeseGenerado = true;
   }
+
+  // 5) Guardar cambios
+  saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
+  setActiveOrder(order);
+
+  console.log("Viaje programado iniciado:", proximo.id);
 }
 // ================================
 // MOTOR AUTOMÁTICO VIAJES PROGRAMADOS
