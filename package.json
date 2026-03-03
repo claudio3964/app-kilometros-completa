@@ -1,32 +1,19 @@
 {
-  "dependencies": {
-    "@capacitor/android": "^8.1.0",
-    "@capacitor/cli": "^8.1.0",
-    "@capacitor/core": "^8.1.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-scripts": "^5.0.1"
-  },
   "name": "app-kilometros-completa",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
+  "dependencies": {
+    "@capacitor/android": "^8.1.0",
+    "@capacitor/cli": "^8.1.0",
+    "@capacitor/core": "^8.1.0"
+  },
   "devDependencies": {
     "jest": "^27.5.1"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "xcopy /E /Y /I *.html www\\ & xcopy /E /Y /I *.js www\\ & xcopy /E /Y /I *.css www\\ & xcopy /E /Y /I *.json www\\ & xcopy /E /Y /I icons www\\icons\\ & xcopy /E /Y /I core www\\core\\",
+    "sync": "npm run build && npx cap sync android"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/claudio3964/app-kilometros-completa.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/claudio3964/app-kilometros-completa/issues"
-  },
-  "homepage": "https://github.com/claudio3964/app-kilometros-completa#readme"
+  "license": "ISC"
 }
