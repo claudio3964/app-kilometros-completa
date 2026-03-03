@@ -24,7 +24,10 @@ html, body {
 .screen.active {
   display: block;
 }
-
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
 /* ==============================
    CONTENEDOR CENTRADO RESPONSIVE
 ================================ */

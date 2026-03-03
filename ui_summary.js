@@ -194,6 +194,66 @@ function renderResumenDia(){
     Viáticos generados: <b>${t.viaticos}</b><br>
     Total $: <b>${Math.round(t.monto)}</b>
   `;
+}
+  //----Boton cerrar viaje---------
+function renderBotonCerrarJornada(){
 
-}// EXPORTAR
+  const cont = document.getElementById("bloqueCerrarJornada");
+  if(!cont) return;
+
+  const order = getActiveOrder();
+
+  // ❌ No hay jornada activa
+  if(!order){
+    cont.innerHTML = "";
+    return;
+  }
+
+  // 🔎 Validaciones operativas
+  const hayViajeEnCurso =
+    order.travels?.some(t => t.status === "en_curso");
+
+  const hayViajeProgramado =
+    order.travels?.some(t => t.status === "programado");
+
+  const hayGuardiaActiva =
+    order.guards?.some(g => g.status === "activa");
+
+  // ❌ Si hay actividad activa o pendiente, no permitir cerrar
+  if(hayViajeEnCurso || hayViajeProgramado || hayGuardiaActiva){
+    cont.innerHTML = "";
+    return;
+  }
+
+  // ✅ Jornada limpia → permitir cerrar
+  cont.innerHTML = `
+    <button id="btnCerrarJornadaManual"
+      class="card-btn"
+      style="background:#c62828;color:white;">
+      Finalizar Jornada
+    </button>
+  `;
+
+  document
+    .getElementById("btnCerrarJornadaManual")
+    .addEventListener("click", function(){
+
+      const confirmar = confirm(
+        "¿Seguro que desea finalizar la jornada?"
+      );
+
+      if(!confirmar) return;
+
+      const resultado = closeActiveOrder();
+
+      if(resultado){
+        alert("Jornada finalizada correctamente.");
+        showScreen("mainScreen"); // 🔥 sin reload
+      }
+
+    });
+
+}
+// EXPORTAR
 window.renderResumenDia = renderResumenDia;
+window.renderBotonCerrarJornada = renderBotonCerrarJornada;

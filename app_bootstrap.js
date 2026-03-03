@@ -170,6 +170,9 @@ document.addEventListener("DOMContentLoaded", () => {
   renderListaViajes();
   renderResumenDia();
 
+  if(typeof renderBotonCerrarJornada === "function")
+  renderBotonCerrarJornada();
+
   if(typeof renderOrdenActivaUI === "function")
     renderOrdenActivaUI();
 
