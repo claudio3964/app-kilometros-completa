@@ -2,6 +2,89 @@
 // 🚀 ARRANQUE GENERAL DE LA APP
 // =====================================================
 
+// =====================================================
+// 🔔 DETECCIÓN DE CAMBIO DE DÍA
+// =====================================================
+
+function verificarCambioDeDia(){
+
+  const order = getActiveOrder();
+  if(!order) return;
+
+  const hoy = new Date().toISOString().split("T")[0];
+
+  if(order.date !== hoy){
+    mostrarModalCierrePendiente(order);
+  }
+}
+
+function mostrarModalCierrePendiente(order){
+
+  const modal = document.createElement("div");
+
+  modal.id = "modalCambioDia";
+  modal.style.cssText = `
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(0,0,0,0.6);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:9999;
+  `;
+
+  modal.innerHTML = `
+    <div style="
+      background:white;
+      padding:20px;
+      border-radius:8px;
+      max-width:400px;
+      text-align:center;
+    ">
+      <h3>Jornada pendiente</h3>
+      <p>
+        Tiene una jornada pendiente del día ${order.date}.<br>
+        Debe finalizarla antes de continuar.
+      </p>
+      <button id="btnForzarCierre"
+        style="
+          background:#c62828;
+          color:white;
+          padding:10px 20px;
+          border:none;
+          border-radius:6px;
+          font-weight:bold;
+        ">
+        Finalizar Jornada
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  document.getElementById("btnForzarCierre")
+    .addEventListener("click", function(){
+
+      const resultado = closeActiveOrder();
+
+      if(resultado){
+
+        document.body.removeChild(modal);
+
+        if(typeof renderResumenFinal === "function"){
+          renderResumenFinal(resultado);
+        }
+
+      }
+
+    });
+}
+
+// =====================================================
+// 🚀 BOOTSTRAP PRINCIPAL
+// =====================================================
+
 document.addEventListener("DOMContentLoaded", () => {
 
   // =====================================================
@@ -11,7 +94,6 @@ document.addEventListener("DOMContentLoaded", () => {
   (function syncActiveOrderBootstrap(){
 
     const active = getActiveOrder();
-
     if(!active) return;
 
     const orders = getOrders();
@@ -23,13 +105,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if(!real){
 
       console.warn("activeOrder inválido eliminado (bootstrap)");
-
       clearActiveOrder();
-
       return;
     }
 
-    // limpiar viajes en_curso corruptos
     if(real.travels){
 
       let cambio = false;
@@ -39,9 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if(t.status === "en_curso"){
 
           t.status = "finalizado";
-
           t.llegadaReal = t.llegadaReal || Date.now();
-
           cambio = true;
 
         }
@@ -99,18 +176,17 @@ document.addEventListener("DOMContentLoaded", () => {
   if(typeof mostrarViajeEnCursoUI === "function")
     mostrarViajeEnCursoUI();
 
+  // 🔔 Detectar cambio de día (DESPUÉS de render básico)
+  verificarCambioDeDia();
+
   // =====================================================
   // MOTOR AUTOMÁTICO DE VIAJES PROGRAMADOS
   // =====================================================
-
-//  verificarViajesProgramados();
 
   if(!window.__motorViajesProgramados){
 
     window.__motorViajesProgramados =
       setInterval(() => {
-
-       // verificarViajesProgramados();
 
         renderListaViajes();
 

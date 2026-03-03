@@ -160,57 +160,67 @@ function createOrder(){
 function closeActiveOrder(){
 
   const order = getActiveOrder();
-
   if(!order) return null;
 
-  // evitar doble cierre
-  if(order.status === "finalizada"){
+  // ================================
+  // EVITAR DOBLE CIERRE
+  // ================================
+  if(order.closed === true){
     return order;
   }
 
-  // calcular totales finales desde CORE
+  // ================================
+  // 🔒 VALIDACIÓN CRÍTICA
+  // ================================
+
+  const viajeEnCurso = (order.travels || [])
+    .find(t => t.status === "en_curso");
+
+  if(viajeEnCurso){
+    alert("Debe finalizar el viaje en curso antes de cerrar la jornada.");
+    return null;
+  }
+
+  const guardiaActiva = (order.guards || [])
+    .find(g => g.status === "activa");
+
+  if(guardiaActiva){
+    alert("Debe finalizar la guardia activa antes de cerrar la jornada.");
+    return null;
+  }
+
+  // ================================
+  // CÁLCULO FINAL
+  // ================================
+
   const totals = calculateOrderTotals(order);
 
-  // congelar snapshot contable
   order.totalsSnapshot = {
-
     kmViajes: totals.kmViajes,
     kmGuardias: totals.kmGuardias,
     kmTomeCese: totals.kmTomeCese,
     kmAcoplados: totals.kmAcoplados,
     kmTotal: totals.kmTotal,
-
     viaticos: totals.viaticos,
-
     monto: totals.monto,
-
     cerradoAt: ahoraSistema()
-
   };
 
-  // marcar estado final
   order.status = "finalizada";
-
   order.closed = true;
-
   order.closedAt = ahoraSistema();
 
-  // guardar en storage
   saveOrders(
     getOrders().map(o =>
-      o.orderNumber === order.orderNumber
-        ? order
-        : o
+      o.orderNumber === order.orderNumber ? order : o
     )
   );
 
-  // limpiar activeOrder
   clearActiveOrder();
 
   console.log("Jornada finalizada:", order.orderNumber);
 
   return order;
-
 }
 // =====================================================
 // VIAJES (CORE OFICIAL CON KM AUTO + TIPO + ACOPLADO)

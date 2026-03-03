@@ -6,73 +6,89 @@ console.log("ui_summary cargado");
 
 function renderResumenGeneral(){
 
-  const lista=document.getElementById("summaryGeneralLista");
-  const totalesBox=document.getElementById("summaryGeneralTotales");
+  const lista = document.getElementById("summaryGeneralLista");
+  const totalesBox = document.getElementById("summaryGeneralTotales");
 
-  if(!lista||!totalesBox)return;
+  if(!lista || !totalesBox) return;
 
-  lista.innerHTML="";
+  lista.innerHTML = "";
 
+  // ================================
   // LEER FILTROS
-  const desde=document.getElementById("filtroDesde")?.value||"";
-  const hasta=document.getElementById("filtroHasta")?.value||"";
-  const ordenFiltro=document.getElementById("filtroOrden")?.value.trim().toLowerCase()||"";
-  const ordenarPor=document.getElementById("ordenarPor")?.value||"fecha_desc";
+  // ================================
+  const desde = document.getElementById("filtroDesde")?.value || "";
+  const hasta = document.getElementById("filtroHasta")?.value || "";
+  const ordenFiltro = document.getElementById("filtroOrden")?.value.trim().toLowerCase() || "";
+  const ordenarPor = document.getElementById("ordenarPor")?.value || "fecha_desc";
 
-  // OBTENER ÓRDENES
-  let orders=getOrders();
+  // ================================
+  // OBTENER ÓRDENES (SOLO CERRADAS)
+  // ================================
+  let orders = getOrders().filter(o => o.closed === true);
 
+  // ================================
   // FILTRO POR FECHA
+  // ================================
   if(desde){
-    orders=orders.filter(o=>o.date>=desde);
+    orders = orders.filter(o => o.date >= desde);
   }
 
   if(hasta){
-    orders=orders.filter(o=>o.date<=hasta);
+    orders = orders.filter(o => o.date <= hasta);
   }
 
+  // ================================
   // FILTRO POR ORDEN
+  // ================================
   if(ordenFiltro){
-    orders=orders.filter(o=>
-      o.orderNumber&&
+    orders = orders.filter(o =>
+      o.orderNumber &&
       o.orderNumber.toLowerCase().includes(ordenFiltro)
     );
   }
 
+  // ================================
   // ORDENAMIENTO
-  if(ordenarPor==="fecha_desc"){
+  // ================================
+  if(ordenarPor === "fecha_desc"){
     orders.sort((a,b)=>new Date(b.date)-new Date(a.date));
   }
-  else if(ordenarPor==="fecha_asc"){
+  else if(ordenarPor === "fecha_asc"){
     orders.sort((a,b)=>new Date(a.date)-new Date(b.date));
   }
-  else if(ordenarPor==="orden_desc"){
+  else if(ordenarPor === "orden_desc"){
     orders.sort((a,b)=>b.orderNumber.localeCompare(a.orderNumber));
   }
-  else if(ordenarPor==="orden_asc"){
+  else if(ordenarPor === "orden_asc"){
     orders.sort((a,b)=>a.orderNumber.localeCompare(b.orderNumber));
   }
 
-  // CALCULAR TOTALES
-  let kmTotal=0;
-  let montoTotal=0;
-  let viaticosTotal=0;
+  // ================================
+  // CALCULAR TOTALES ACUMULADOS
+  // ================================
+  let kmTotal = 0;
+  let montoTotal = 0;
+  let viaticosTotal = 0;
 
+  // ================================
   // RENDER TARJETAS
-  orders.forEach(o=>{
+  // ================================
+  orders.forEach(o => {
 
-    const t=calculateOrderTotals(o);
+    const t = o.totalsSnapshot;
 
-    kmTotal+=t.kmTotal;
-    montoTotal+=t.monto;
-    viaticosTotal+=t.viaticos;
+    // Seguridad adicional
+    if(!t) return;
 
-    const card=document.createElement("div");
+    kmTotal += Number(t.kmTotal || 0);
+    montoTotal += Number(t.monto || 0);
+    viaticosTotal += Number(t.viaticos || 0);
 
-    card.className="card";
-    card.style.cssText="margin:10px;";
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.cssText = "margin:10px;";
 
-    card.innerHTML=`
+    card.innerHTML = `
       <b>Orden:</b> ${o.orderNumber}<br>
       <b>Fecha:</b> ${o.date}<br>
       <b>Base:</b> ${o.baseInicio}<br>
@@ -82,11 +98,12 @@ function renderResumenGeneral(){
     `;
 
     lista.appendChild(card);
-
   });
 
-  // MOSTRAR TOTALES
-  totalesBox.innerHTML=`
+  // ================================
+  // MOSTRAR TOTALES GENERALES
+  // ================================
+  totalesBox.innerHTML = `
     <b>Total jornadas:</b> ${orders.length}<br>
     <b>Total km:</b> ${kmTotal}<br>
     <b>Total viáticos:</b> ${viaticosTotal}<br>
