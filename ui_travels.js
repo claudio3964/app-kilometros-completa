@@ -87,8 +87,10 @@ function renderListaViajes(){
 
     card.className = "order-card";
 
-    card.onclick = () =>
-      abrirDetalleOrden(order.orderNumber);
+    card.onclick = () => {
+  showScreen('detalleJornadaScreen');
+  renderDetalleJornadaPorNumero(order.orderNumber);
+};
 
     // =========================
     // TITULO
@@ -440,6 +442,81 @@ function renderResumenDia(){
   `;
 }
 // =====================================================
+// DETALLE DE JORNADA ACTIVA
+// Muestra resumen + viajes del dia activo
+// =====================================================
+function renderDetalleJornadaActiva(){
+
+  const container =
+    document.getElementById("cardsViajesContainer");
+  if(!container) return;
+
+  const order = getActiveOrder();
+  if(!order){
+    container.innerHTML = "<div>Sin jornada activa</div>";
+    return;
+  }
+
+  container.innerHTML = "";
+
+  // Resumen
+  renderResumenDia();
+
+  // Ordenar viajes por hora programada
+  const travels = (order.travels || []).sort((a,b)=>
+    (a.departureTime||"").localeCompare(b.departureTime||"")
+  );
+
+  // Render cada viaje
+  travels.forEach(v => {
+
+    const km =
+      v.kmAuto ?? v.kmEmpresa ?? 0;
+
+    const estado = v.status || "finalizado";
+    const item = document.createElement("div");
+    item.className = `travel-card ${estado}`;
+
+    // ESTADO
+    let estadoTexto =
+      "⚫ FINALIZADO";
+    if(estado==="programado")
+      estadoTexto="🟡 PROGRAMADO";
+    if(estado==="en_curso")
+      estadoTexto="🟢 EN CURSO";
+
+    // SERVICIO
+    const tipoServicio =
+      v.tipoServicio || v.turno || "—";
+    const acopladoTexto =
+      v.acoplado ? "SI" : "NO";
+
+    // HORARIOS
+    const horaSalida = v.departureTime || "--:--";
+    const horaLlegada= v.arrivalTime || "--:--";
+
+    // DURACION REAL
+    const duracionRealHTML = v.durationRealMin
+      ? `<div>⌛ Duración real: ${v.durationRealMin} min</div>`
+      : "";
+
+    item.innerHTML = `
+      <div class="travel-status ${estado}">
+        ${estadoTexto}
+      </div>
+
+      <div>🚍 ${v.origen} → ${v.destino}</div>
+      <div>🕒 ${horaSalida} — ${horaLlegada}</div>
+      <div>🚦 Servicio: <b>${tipoServicio}</b></div>
+      <div>🔗 Acoplado: <b>${acopladoTexto}</b></div>
+      ${duracionRealHTML}
+      <div>📏 ${km} km</div>
+    `;
+
+    container.appendChild(item);
+  });
+}
+// =====================================================
 // ABRIR PANTALLA NUEVO VIAJE
 // =====================================================
 function abrirViajeSimple(){
@@ -758,143 +835,6 @@ function finalizarViajeUI(){
   renderResumenDia?.();
 }
 
-// =====================================================
-// ABRIR DETALLE DE ORDEN
-// =====================================================
-function abrirDetalleOrden(orderNumber){
-
-  const orders = getOrders();
-
-  const order =
-    orders.find(o => o.orderNumber === orderNumber);
-
-  if(!order) return;
-
-  renderDetalleOrden(order);
-
-  showScreen("detalleOrdenScreen");
-}
-
-
-// =====================================================
-// RENDER DETALLE DE ORDEN
-// =====================================================
-function renderDetalleOrden(order){
-
-  const container =
-    document.getElementById("detalleOrdenContainer");
-
-  if(!container) return;
-
-  const totales =
-    calculateOrderTotals(order);
-
-  // =========================
-  // CABECERA Y RESUMEN
-  // =========================
-
-  container.innerHTML = `
-  
-    <div style="margin-bottom:15px">
-
-      <h3 style="margin-bottom:5px">
-        📅 Jornada ${order.date}
-      </h3>
-
-      <div style="font-size:14px;color:#555">
-        <b>Orden:</b> ${order.orderNumber}<br>
-        <b>Base:</b> ${order.baseInicio}
-      </div>
-
-    </div>
-
-    <div style="
-      background:#f1f3f5;
-      padding:12px;
-      border-radius:8px;
-      margin-bottom:15px;
-      border:1px solid #ddd;
-    ">
-
-      <b>Resumen de jornada</b><br><br>
-
-      KM viajes: ${totales.kmViajes.toFixed(1)} km<br>
-      KM guardias: ${totales.kmGuardias.toFixed(1)} km<br>
-      KM tome y cese: ${totales.kmTomeCese.toFixed(1)} km<br>
-      KM acoplados: ${totales.kmAcoplados.toFixed(1)} km<br>
-      Viáticos: ${totales.viaticos}<br>
-
-      <hr>
-
-      <b>Total KM:</b> ${totales.kmTotal.toFixed(1)} km<br>
-      <b>Total $:</b> ${totales.monto.toFixed(0)}
-
-    </div>
-
-    <h4 style="margin-bottom:10px">Viajes realizados</h4>
-
-  `;
-
-  // =========================
-  // LISTA DE VIAJES
-  // =========================
-
-  if(!order.travels || order.travels.length === 0){
-
-    const empty =
-      document.createElement("div");
-
-    empty.style.cssText = `
-      color:#666;
-      padding:10px;
-    `;
-
-    empty.innerText =
-      "No hay viajes en esta jornada";
-
-    container.appendChild(empty);
-
-    return;
-  }
-
-  order.travels.forEach(v => {
-
-    const km =
-      v.kmAuto ??
-      v.kmEmpresa ??
-      0;
-
-    const div =
-      document.createElement("div");
-
-    div.style.cssText = `
-      padding:10px;
-      margin-bottom:8px;
-      background:white;
-      border-radius:8px;
-      border:1px solid #ddd;
-      box-shadow:0 1px 3px rgba(0,0,0,.05);
-    `;
-
-    div.innerHTML = `
-      <div style="font-weight:500">
-        🚍 ${v.origen} → ${v.destino}
-      </div>
-
-      <div style="font-size:13px;color:#555">
-        🕒 ${v.departureTime} - ${v.arrivalTime}
-      </div>
-
-      <div style="font-size:13px;color:#555">
-        📏 ${km} km
-      </div>
-    `;
-
-    container.appendChild(div);
-
-  });
-
-}
 // =========================
 // AUTO REFRESH LISTA VIAJES
 // =========================
@@ -952,6 +892,82 @@ if(!window.__travelListTimer){
   renderResumenDia();
 
 }
+function renderDetalleJornadaPorNumero(orderNumber){
+console.log("Entrando a renderDetalleJornadaPorNumero:", orderNumber);
+  const order =
+    getOrders().find(o => o.orderNumber === orderNumber);
+
+  if(!order) return;
+
+  const container =
+    document.getElementById("cardsViajesContainer");
+
+  const resumenBox =
+    document.getElementById("resumenDia");
+
+  if(!container || !resumenBox) return;
+
+  container.innerHTML = "";
+
+  // 🔹 Resumen usando función actual
+  const totales =
+    calculateOrderTotals(order);
+
+  resumenBox.innerHTML = `
+    <div class="order-summary">
+      <b>Fecha:</b> ${order.date}<br>
+      <b>Base:</b> ${order.baseInicio}<br>
+      <b>KM:</b> ${totales.kmTotal.toFixed(1)} km<br>
+      <b>Viáticos:</b> ${totales.viaticos}<br>
+      <b>Total:</b> $ ${Math.round(totales.monto)}
+    </div>
+  `;
+
+  // 🔹 Viajes de esa orden
+  const travels = order.travels || [];
+
+  travels.sort((a,b)=>
+    (a.departureTime||"").localeCompare(b.departureTime||"")
+  );
+
+  travels.forEach(v => {
+
+    const km =
+      v.kmAuto ?? v.kmEmpresa ?? 0;
+
+    const estado = v.status || "finalizado";
+
+    const item =
+      document.createElement("div");
+
+    item.className =
+      `travel-card ${estado}`;
+
+    let estadoTexto = "⚫ FINALIZADO";
+    if(estado==="programado") estadoTexto="🟡 PROGRAMADO";
+    if(estado==="en_curso") estadoTexto="🟢 EN CURSO";
+
+    const tipoServicio =
+      v.tipoServicio || v.turno || "—";
+
+    const acopladoTexto =
+      v.acoplado ? "SI" : "NO";
+
+    item.innerHTML = `
+      <div class="travel-status ${estado}">
+        ${estadoTexto}
+      </div>
+
+      <div>🚍 ${v.origen} → ${v.destino}</div>
+      <div>🚦 Servicio: <b>${tipoServicio}</b></div>
+      <div>🔗 Acoplado: <b>${acopladoTexto}</b></div>
+      <div>🕒 ${v.departureTime} - ${v.arrivalTime || "--:--"}</div>
+      <div>📏 ${km} km</div>
+    `;
+
+    container.appendChild(item);
+  });
+}
 
 // export global
 window.abrirViajeSimple = abrirViajeSimple;
@@ -960,7 +976,7 @@ window.addTravelUI = addTravelUI;
 window.cargarViajeRetornoAutomatico = cargarViajeRetornoAutomatico;
 window.createOrderUI = createOrderUI;
 window.closeActiveOrderUI = closeActiveOrderUI;
-window.renderListaViajes = renderListaViajes;
+
 window.actualizarInfoServicio = actualizarInfoServicio;
 window.renderTarjetasPorDia = renderTarjetasPorDia;
 window.mostrarViajeEnCursoUI = mostrarViajeEnCursoUI;

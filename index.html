@@ -184,9 +184,9 @@ input, select{
         🚗 Nuevo Viaje
       </button>
 
-      <button class="card-btn" onclick="showScreen('listaViajesScreen')">
-        📄 Ver Viajes
-      </button>
+  <button class="card-btn" onclick="showScreen('detalleJornadaScreen')">
+  📄 Detalle de Jornada
+</button>
 
       <button class="card-btn" onclick="showScreen('nuevaGuardiaScreen')">
         ➕ Registrar Guardia
@@ -263,19 +263,27 @@ input, select{
   </div>
 </div>
 
-<!-- ================= LISTA VIAJES ================= -->
-<div id="listaViajesScreen" class="screen">
+<!-- ================= DETALLE DE JORNADA ================= -->
+<div id="detalleJornadaScreen" class="screen">
 
-  <!-- HEADER FIJO -->
   <div class="header-fijo">
-
     <button onclick="showScreen('mainScreen')">← Volver</button>
+    <h2>Detalle de Jornada</h2>
+  </div>
 
-    <h2>Lista de Viajes</h2>
+  <div class="contenido-scroll">
 
+    <!-- Resumen arriba -->
     <div id="resumenDia"></div>
 
+    <hr style="margin:12px 0;">
+
+    <!-- Viajes abajo -->
+    <div id="cardsViajesContainer"></div>
+
   </div>
+
+</div>
 
   <!-- CONTENIDO CON SCROLL -->
   <div class="contenido-scroll">
@@ -285,17 +293,6 @@ input, select{
   </div>
 
 </div>
-<!-- ================= DETALLE ORDEN ================= -->
-<div id="detalleOrdenScreen" class="screen">
-
-  <!-- HEADER FIJO -->
-  <div class="header-fijo">
-
-    <button onclick="showScreen('listaViajesScreen')">← Volver</button>
-
-    <h2>Detalle de Jornada</h2>
-
-  </div>
 
   <!-- CONTENIDO CON SCROLL -->
   <div class="contenido-scroll">

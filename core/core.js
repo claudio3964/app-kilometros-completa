@@ -421,47 +421,82 @@ function calcularHorasJornada(o){
 
   if(!o) return 0;
 
-  let totalMinutos = 0;
+  const fechaBase = new Date(o.date + "T00:00:00").getTime();
+
+  const eventosInicio = [];
+  const eventosFin = [];
 
   // ================================
   // VIAJES FINALIZADOS
   // ================================
-  if(o.travels){
-    o.travels.forEach(t => {
-      if(t.status === "finalizado" && t.duracionMinutos){
-        totalMinutos += t.duracionMinutos;
-      }
-    });
-  }
+  (o.travels || []).forEach(t => {
+
+    if(
+      t.status === "finalizado" &&
+      t.inicioReal &&
+      t.llegadaReal
+    ){
+      eventosInicio.push({
+        tipo: "viaje",
+        timestamp: t.inicioReal,
+        tomeCese: t.tomeCese === true
+      });
+
+      eventosFin.push(t.llegadaReal);
+    }
+
+  });
 
   // ================================
   // GUARDIAS
   // ================================
-  if(o.guards){
-    o.guards.forEach(g => {
+  (o.guards || []).forEach(g => {
 
-      if(g.inicio && g.fin){
+    if(g.inicio && g.fin){
 
-        const [h1,m1] = g.inicio.split(":").map(Number);
-        const [h2,m2] = g.fin.split(":").map(Number);
+      const [hI,mI] = g.inicio.split(":").map(Number);
+      const [hF,mF] = g.fin.split(":").map(Number);
 
-        let inicioMin = h1*60 + m1;
-        let finMin    = h2*60 + m2;
+      let inicioMs =
+        fechaBase + ((hI * 60 + mI) * 60 * 1000);
 
-        // soporte cruce medianoche
-        if(finMin < inicioMin){
-          finMin += 24*60;
-        }
+      let finMs =
+        fechaBase + ((hF * 60 + mF) * 60 * 1000);
 
-        totalMinutos += (finMin - inicioMin);
+      if(finMs < inicioMs){
+        finMs += 24 * 60 * 60 * 1000;
       }
 
-    });
+      eventosInicio.push({
+        tipo: "guardia",
+        timestamp: inicioMs,
+        tomeCese: false
+      });
+
+      eventosFin.push(finMs);
+    }
+
+  });
+
+  if(eventosInicio.length === 0) return 0;
+
+  eventosInicio.sort((a,b)=>a.timestamp-b.timestamp);
+
+  let inicioReal = eventosInicio[0].timestamp;
+  const finReal = Math.max(...eventosFin);
+
+  // aplicar tome y cese si corresponde
+  if(
+    eventosInicio[0].tipo === "viaje" &&
+    eventosInicio[0].tomeCese
+  ){
+    inicioReal -= (45 * 60 * 1000);
   }
 
-  return totalMinutos / 60;
-}
+  const totalMs = finReal - inicioReal;
 
+  return totalMs / (1000 * 60 * 60);
+}
 
 // =====================================================
 // 🆕 VIÁTICOS POR JORNADA (regla empresarial)
@@ -757,30 +792,47 @@ function finalizarViajeActual() {
 
   const ahora = ahoraSistema();
 
+  // =========================
+  // ASEGURAR TIMESTAMPS REALES
+  // =========================
+
+  // Si por alguna razón no tiene start real,
+  // usamos inicioReal como respaldo
+  if (!travel.timeStartRealTS && travel.inicioReal) {
+    travel.timeStartRealTS = travel.inicioReal;
+  }
+
   travel.timeEndRealTS = ahora;
+  travel.llegadaReal = ahora;
 
- // Duración real basada en timestamps
-if (travel.timeStartRealTS) {
+  // =========================
+  // DURACIÓN REAL (NUEVO SISTEMA)
+  // =========================
 
-    travel.timeEndRealTS = ahora;
-
+  if (travel.timeStartRealTS) {
     travel.durationRealMin = Math.floor(
-        (travel.timeEndRealTS - travel.timeStartRealTS) / 60000
+      (travel.timeEndRealTS - travel.timeStartRealTS) / 60000
     );
 
-    // mantener compatibilidad con UI actual
+    // Mantener compatibilidad con UI legacy
     travel.duracionMinutos = travel.durationRealMin;
-}
+  }
 
-  // Mantener compatibilidad UI actual
+  // =========================
+  // COMPATIBILIDAD UI (hora llegada visible)
+  // =========================
+
   if (!travel.arrivalTime) {
     const hh = String(new Date(ahora).getHours()).padStart(2, "0");
     const mm = String(new Date(ahora).getMinutes()).padStart(2, "0");
     travel.arrivalTime = `${hh}:${mm}`;
   }
 
-  // Duración legacy para stats actuales
-  if (travel.departureTime && travel.arrivalTime) {
+  // =========================
+  // FALLBACK LEGACY (solo si no existe durationRealMin)
+  // =========================
+
+  if (!travel.durationRealMin && travel.departureTime && travel.arrivalTime) {
     const convertir = hhmm => {
       const [h, m] = hhmm.split(":").map(Number);
       return h * 60 + m;
@@ -795,7 +847,6 @@ if (travel.timeStartRealTS) {
   }
 
   travel.status = "finalizado";
-  travel.llegadaReal = ahora;
 
   saveOrders(
     getOrders().map(o =>
