@@ -254,6 +254,82 @@ function renderBotonCerrarJornada(){
     });
 
 }
+
+function renderResumenGeneral(){
+
+  const container =
+    document.getElementById("resumenGeneralContainer");
+
+  if(!container) return;
+
+  const orders = getOrders();
+
+  if(!orders || orders.length === 0){
+
+    container.innerHTML = `
+      <div class="card">
+        No hay jornadas registradas
+      </div>
+    `;
+
+    return;
+  }
+
+  container.innerHTML = "";
+
+  const ordenadas =
+    orders.sort((a,b)=> new Date(b.date)-new Date(a.date));
+
+  ordenadas.forEach(order => {
+
+    const totals =
+      calculateOrderTotals(order);
+
+    const card =
+      document.createElement("div");
+
+    card.className = "card";
+
+    card.style.marginBottom = "10px";
+
+    card.innerHTML = `
+      <b>📅 ${order.date}</b><br>
+
+      KM totales: ${totals.kmTotal.toFixed(1)} km<br>
+      Viáticos: ${totals.viaticos}<br><br>
+
+      <button onclick="
+        showScreen('detalleJornadaScreen');
+        renderDetalleJornadaPorNumero('${order.orderNumber}');
+      ">
+        Ver detalle
+      </button>
+
+      <button onclick="exportarJornadaPorNumero('${order.orderNumber}')">
+        📤 Exportar
+      </button>
+    `;
+
+    container.appendChild(card);
+
+  });
+
+}
+
+function exportarJornadaPorNumero(orderNumber){
+
+  const order =
+    getOrders().find(o => o.orderNumber === orderNumber);
+
+  if(!order){
+    alert("Jornada no encontrada");
+    return;
+  }
+
+  exportarJornada(order);
+
+}
+
 // EXPORTAR
 window.renderResumenDia = renderResumenDia;
 window.renderBotonCerrarJornada = renderBotonCerrarJornada;

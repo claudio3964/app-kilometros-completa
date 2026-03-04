@@ -35,7 +35,7 @@ function closeActiveOrderUI(){
 
   document.getElementById("ordenActivaInfo").innerText =
     "🔴 Sin jornada activa";
-
+  exportarJornada(o);
   alert("Jornada cerrada");
 }
 // =====================================================
@@ -45,7 +45,7 @@ function closeActiveOrderUI(){
 // =====================================================
 
 function renderListaViajes(){
-
+activarViajesProgramados();
   const container =
     document.getElementById("cardsViajesContainer");
 
@@ -967,6 +967,98 @@ console.log("Entrando a renderDetalleJornadaPorNumero:", orderNumber);
 
     container.appendChild(item);
   });
+}
+
+function activarViajesProgramados(){
+
+  const order = getActiveOrder();
+  if(!order || !order.travels) return;
+
+  const ahora = ahoraSistema();
+
+  const viajeEnCurso =
+    order.travels.find(t => t.status === "en_curso");
+
+  if(viajeEnCurso) return;
+
+  const candidatos =
+    order.travels
+      .filter(t => t.status === "programado")
+      .sort((a,b)=> a.inicioProgramado - b.inicioProgramado);
+
+  for(const travel of candidatos){
+
+    if(ahora >= travel.inicioProgramado){
+
+      travel.status = "en_curso";
+      travel.inicioReal = ahora;
+
+      saveOrders();
+
+      console.log(
+        "🚦 Viaje iniciado automáticamente:",
+        travel.origen,
+        travel.destino
+      );
+
+      break;
+    }
+
+  }
+
+}
+
+// =====================================================
+// EXPORTAR JORNADA (JSON PARA PRUEBAS)
+// =====================================================
+
+async function exportarJornada(order){
+
+  const driver = getDriver?.();
+
+  const data = {
+    version_app: "0.9 piloto",
+    chofer: driver?.nombre || "Chofer",
+    base: driver?.base || "Montevideo",
+    fecha: order.date,
+    orderNumber: order.orderNumber,
+    viajes: order.travels || [],
+    guardias: order.guards || [],
+    resumen: calculateOrderTotals(order),
+    generado: new Date().toISOString()
+  };
+
+  const json = JSON.stringify(data, null, 2);
+
+  const blob = new Blob([json], {type:"application/json"});
+
+  const file = new File(
+    [blob],
+    `jornada_${order.date}.json`,
+    {type:"application/json"}
+  );
+
+  // 📤 compartir si el dispositivo lo permite
+  if(navigator.canShare && navigator.canShare({files:[file]})){
+
+    await navigator.share({
+      title: "Jornada COT Driver",
+      text: "Reporte de jornada",
+      files: [file]
+    });
+
+  }else{
+
+    // fallback descarga
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `jornada_${order.date}.json`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+  }
 }
 
 // export global

@@ -115,13 +115,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
       real.travels.forEach(t => {
 
-        if(t.status === "en_curso"){
+       if(t.status === "en_curso"){
 
-          t.status = "finalizado";
-          t.llegadaReal = t.llegadaReal || Date.now();
-          cambio = true;
+  console.warn(
+    "Viaje en curso recuperado al iniciar app:",
+    t.id
+  );
 
-        }
+}
 
       });
 
@@ -199,7 +200,24 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 15000);
 
   }
+// =====================================================
+// REACTIVACIÓN AL VOLVER A LA APP
+// =====================================================
 
+document.addEventListener("visibilitychange", () => {
+
+  if(!document.hidden){
+
+    console.log("🔄 App volvió a foreground");
+
+    renderListaViajes();
+
+    if(typeof mostrarViajeEnCursoUI === "function")
+      mostrarViajeEnCursoUI();
+
+  }
+
+});
   // =====================================================
   // SPLASH Y CARGA INICIAL
   // =====================================================

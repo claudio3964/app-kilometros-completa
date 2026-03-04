@@ -188,6 +188,10 @@ input, select{
   📄 Detalle de Jornada
 </button>
 
+<button class="card-btn" onclick="showScreen('resumenGeneralScreen'); renderResumenGeneral();">
+  📊 Resumen General
+</button>
+
       <button class="card-btn" onclick="showScreen('nuevaGuardiaScreen')">
         ➕ Registrar Guardia
       </button>
@@ -298,6 +302,24 @@ input, select{
   <div class="contenido-scroll">
 
     <div id="detalleOrdenContainer"></div>
+
+  </div>
+
+</div>
+
+<!-- ================= RESUMEN GENERAL ================= -->
+<div id="resumenGeneralScreen" class="screen">
+
+  <div class="screen-header">
+    <button class="btn-back" onclick="showScreen('mainScreen')">←</button>
+    <div>
+      <h3 style="margin:0;">Resumen General</h3>
+    </div>
+  </div>
+
+  <div class="screen-container">
+
+    <div id="resumenGeneralContainer"></div>
 
   </div>
 
