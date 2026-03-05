@@ -97,6 +97,7 @@ activarViajesProgramados();
     // =========================
 
     const titulo =
+  
       document.createElement("div");
 
     titulo.className = "order-title";
@@ -477,6 +478,9 @@ function renderDetalleJornadaActiva(){
     const item = document.createElement("div");
     item.className = `travel-card ${estado}`;
 
+    // 🔧 CAMBIO: abrir detalle del registro
+    item.onclick = () => renderDetalleRegistro(v);
+
     // ESTADO
     let estadoTexto =
       "⚫ FINALIZADO";
@@ -512,10 +516,14 @@ function renderDetalleJornadaActiva(){
       ${duracionRealHTML}
       <div>📏 ${km} km</div>
     `;
+    item.onclick = () => {
+  renderDetalleRegistro(v);
+};
 
     container.appendChild(item);
   });
 }
+
 // =====================================================
 // ABRIR PANTALLA NUEVO VIAJE
 // =====================================================
@@ -954,16 +962,23 @@ console.log("Entrando a renderDetalleJornadaPorNumero:", orderNumber);
       v.acoplado ? "SI" : "NO";
 
     item.innerHTML = `
-      <div class="travel-status ${estado}">
-        ${estadoTexto}
-      </div>
+  <div class="travel-status ${estado}">
+    ${estadoTexto}
+  </div>
 
-      <div>🚍 ${v.origen} → ${v.destino}</div>
-      <div>🚦 Servicio: <b>${tipoServicio}</b></div>
-      <div>🔗 Acoplado: <b>${acopladoTexto}</b></div>
-      <div>🕒 ${v.departureTime} - ${v.arrivalTime || "--:--"}</div>
-      <div>📏 ${km} km</div>
-    `;
+  <div><b>N° Orden:</b> ${order.orderNumber}</div>
+
+  <div>🚍 <b>${v.origen}</b> → <b>${v.destino}</b></div>
+
+  <div>🚦 Servicio: <b>${tipoServicio}</b></div>
+  <div>🔗 Acoplado: <b>${acopladoTexto}</b></div>
+
+  <div>🕒 Salida: <b>${v.departureTime}</b></div>
+  <div>🕒 Llegada: <b>${v.arrivalTime || "--:--"}</b></div>
+
+  <div>📏 KM generados: <b>${km}</b></div>
+`;
+
 
     container.appendChild(item);
   });
@@ -1015,30 +1030,44 @@ function activarViajesProgramados(){
 async function exportarJornada(order){
 
   const driver = getDriver?.();
+const totals = calculateOrderTotals(order);
+const tomeCeseAplicado = (totals.kmTomeCese || 0) > 0;
 
-  const data = {
-    version_app: "0.9 piloto",
-    chofer: driver?.nombre || "Chofer",
-    base: driver?.base || "Montevideo",
-    fecha: order.date,
-    orderNumber: order.orderNumber,
-    viajes: order.travels || [],
-    guardias: order.guards || [],
-    resumen: calculateOrderTotals(order),
-    generado: new Date().toISOString()
-  };
+ const data = {
+  version_app: "0.9 piloto",
+  chofer: driver?.nombre || "Chofer",
+  base: driver?.base || "Montevideo",
+  fecha: order.date,
+  orderNumber: order.orderNumber,
+  viajes: order.travels || [],
+  guardias: order.guards || [],
+  resumen: calculateOrderTotals(order),
+
+  export: {
+    generatedAt: new Date().toISOString(),
+    version_app: "0.9 piloto"
+  }
+};
 
   const json = JSON.stringify(data, null, 2);
 
   const blob = new Blob([json], {type:"application/json"});
 
-  const file = new File(
-    [blob],
-    `jornada_${order.date}.json`,
-    {type:"application/json"}
-  );
+  const now = new Date();
+const hh = String(now.getHours()).padStart(2,"0");
+const mm = String(now.getMinutes()).padStart(2,"0");
+
+const filename = `jornada_${order.date}_${hh}${mm}.json`;
+
+const file = new File(
+  [blob],
+  filename,
+  {type:"application/json"}
+);
 
   // 📤 compartir si el dispositivo lo permite
+try {
+
   if(navigator.canShare && navigator.canShare({files:[file]})){
 
     await navigator.share({
@@ -1047,19 +1076,24 @@ async function exportarJornada(order){
       files: [file]
     });
 
-  }else{
+    return;
+
+  }
+
+}catch(e){
+  console.log("Share no disponible, usando descarga");
+}
 
     // fallback descarga
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `jornada_${order.date}.json`;
+    a.download = filename;
     a.click();
 
     URL.revokeObjectURL(url);
   }
-}
 
 // export global
 window.abrirViajeSimple = abrirViajeSimple;

@@ -223,6 +223,43 @@ function closeActiveOrder(){
   return order;
 }
 // =====================================================
+// CORTE DE GUARDIA SI INTERVIENE VIAJE
+// =====================================================
+function cortarGuardiaPorViaje(order, departureTime){
+
+  if(!order.guards || order.guards.length === 0) return;
+
+  const [hV,mV] = departureTime.split(":").map(Number);
+  const viajeMin = hV*60 + mV;
+
+  order.guards.forEach(g => {
+
+    if(!g.inicio || !g.fin) return;
+
+    const [hI,mI] = g.inicio.split(":").map(Number);
+    const [hF,mF] = g.fin.split(":").map(Number);
+
+    const guardiaInicio = hI*60 + mI;
+    const guardiaFin = hF*60 + mF;
+
+    if(viajeMin > guardiaInicio && viajeMin < guardiaFin){
+
+      const nuevoFin = viajeMin - 15;
+
+      const h = Math.floor(nuevoFin/60).toString().padStart(2,"0");
+      const m = (nuevoFin%60).toString().padStart(2,"0");
+
+      g.fin = `${h}:${m}`;
+      g.hours = (nuevoFin - guardiaInicio) / 60;
+
+      console.log("✂ Guardia recortada automáticamente:", g);
+
+    }
+
+  });
+
+}
+// =====================================================
 // VIAJES (CORE OFICIAL CON KM AUTO + TIPO + ACOPLADO)
 // =====================================================
 function addTravel(
@@ -299,7 +336,11 @@ function addTravel(
   };
 
   if (!order.travels) order.travels = [];
-  order.travels.push(travel);
+
+// ✂ cortar guardia si el viaje cae dentro
+cortarGuardiaPorViaje(order, departureTime);
+
+order.travels.push(travel);
 
   saveOrders(
     getOrders().map(o =>

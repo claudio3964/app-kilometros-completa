@@ -161,6 +161,10 @@ window.limpiarFiltrosResumen=limpiarFiltrosResumen;
 // RESUMEN DE LA JORNADA ACTIVA (USA SOLO EL CORE)
 // =====================================================
 
+// =====================================================
+// RESUMEN DE LA JORNADA ACTIVA (USA SOLO EL CORE)
+// =====================================================
+
 function renderResumenDia(){
 
   const box = document.getElementById("summaryDiaBox");
@@ -187,12 +191,12 @@ function renderResumenDia(){
   const t = calculateOrderTotals(order);
 
   box.innerHTML = `
-    KM totales: <b>${t.kmViajes}</b><br>
-    KM tome y cese: <b>${t.kmTomeCese}</b><br>
-    KM guardias: <b>${t.kmGuardias}</b><br>
-    KM acoplados: <b>${t.kmAcoplados}</b><br>
-    Viáticos generados: <b>${t.viaticos}</b><br>
-    Total $: <b>${Math.round(t.monto)}</b>
+    KM totales: <b>${t.kmTotal || 0}</b><br> <!-- 🔧 CAMBIO -->
+    KM tome y cese: <b>${t.kmTomeCese || 0}</b><br>
+    KM guardias: <b>${t.kmGuardias || 0}</b><br>
+    KM acoplados: <b>${t.kmAcoplados || 0}</b><br>
+    Viáticos generados: <b>${t.viaticos || 0}</b><br>
+    Total $: <b>${Math.round(t.monto || 0)}</b>
   `;
 }
   //----Boton cerrar viaje---------
@@ -295,8 +299,9 @@ function renderResumenGeneral(){
     card.innerHTML = `
       <b>📅 ${order.date}</b><br>
 
-      KM totales: ${totals.kmTotal.toFixed(1)} km<br>
-      Viáticos: ${totals.viaticos}<br><br>
+      KM totales: ${(totals.kmTotal || 0).toFixed(1)} km<br>
+      KM tome y cese: ${(totals.kmTomeCese || 0).toFixed(1)} km<br>
+      Viáticos: ${totals.viaticos || 0}<br><br>
 
       <button onclick="
         showScreen('detalleJornadaScreen');
@@ -315,21 +320,6 @@ function renderResumenGeneral(){
   });
 
 }
-
-function exportarJornadaPorNumero(orderNumber){
-
-  const order =
-    getOrders().find(o => o.orderNumber === orderNumber);
-
-  if(!order){
-    alert("Jornada no encontrada");
-    return;
-  }
-
-  exportarJornada(order);
-
-}
-
 // EXPORTAR
 window.renderResumenDia = renderResumenDia;
 window.renderBotonCerrarJornada = renderBotonCerrarJornada;
