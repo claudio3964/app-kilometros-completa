@@ -240,7 +240,7 @@ function renderBotonCerrarJornada(){
 
   document
     .getElementById("btnCerrarJornadaManual")
-    .addEventListener("click", function(){
+    .addEventListener("click", async function(){
 
       const confirmar = confirm(
         "¿Seguro que desea finalizar la jornada?"
@@ -248,11 +248,18 @@ function renderBotonCerrarJornada(){
 
       if(!confirmar) return;
 
+      const order = getActiveOrder();
+
+      // 🔥 Generar PDF antes de cerrar
+      if(order){
+        await generarPDFJornada(order);
+      }
+
       const resultado = closeActiveOrder();
 
       if(resultado){
         alert("Jornada finalizada correctamente.");
-        showScreen("mainScreen"); // 🔥 sin reload
+        showScreen("mainScreen");
       }
 
     });
@@ -320,6 +327,61 @@ function renderResumenGeneral(){
   });
 
 }
+async function generarPDFJornada(order){
+  console.log("GENERANDO PDF DE JORNADA", order);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const totals = calculateOrderTotals(order);
+
+  let y = 20;
+
+  doc.setFontSize(16);
+  doc.text("COT Driver - Resumen de Jornada", 20, y);
+
+  y += 12;
+
+  doc.setFontSize(12);
+
+  doc.text(`Fecha: ${order.date}`, 20, y);
+  y += 8;
+
+  doc.text(`Orden: ${order.orderNumber}`, 20, y);
+  y += 8;
+
+  doc.text(`Base: ${order.baseInicio || "Montevideo"}`, 20, y);
+
+  y += 10;
+
+  doc.text(`KM totales: ${totals.kmTotal}`, 20, y);
+  y += 8;
+
+  doc.text(`KM guardias: ${totals.kmGuardias}`, 20, y);
+  y += 8;
+
+  doc.text(`KM acoplados: ${totals.kmAcoplados}`, 20, y);
+  y += 8;
+
+  doc.text(`KM tome y cese: ${totals.kmTomeCese}`, 20, y);
+  y += 8;
+
+  doc.text(`Viáticos: ${totals.viaticos}`, 20, y);
+
+  y += 12;
+
+  doc.text(`Total estimado: $${Math.round(totals.monto)}`, 20, y);
+
+  y += 20;
+
+  doc.text("Firma chofer: ____________________", 20, y);
+  y += 10;
+
+  doc.text("Firma tránsito: ____________________", 20, y);
+
+  doc.save(`jornada_${order.date}.pdf`);
+
+}
 // EXPORTAR
 window.renderResumenDia = renderResumenDia;
 window.renderBotonCerrarJornada = renderBotonCerrarJornada;
+window.generarPDFJornada = generarPDFJornada;
