@@ -260,15 +260,22 @@ document.addEventListener("visibilitychange", () => {
 
         if(sel){
 
-          const bases = [
-            "Montevideo",
-            "Colonia",
-            "Maldonado",
-            "Punta del Este",
-            "Rocha",
-            "Chuy",
-            "Otro"
-          ];
+         // Obtener ciudades desde rutas
+const ciudades = new Set();
+
+if(typeof routes !== "undefined"){
+  routes.forEach(r=>{
+    ciudades.add(r.origen);
+    ciudades.add(r.destino);
+  });
+}
+
+// agregar base por si no aparece
+ciudades.add(driver.base || "Montevideo");
+
+const bases = [...ciudades].sort();
+
+bases.push("Otro");
 
           sel.innerHTML =
             bases.map(b =>

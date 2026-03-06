@@ -534,19 +534,17 @@ function abrirViajeSimple(){
   if(travelEnCurso){
 
     alert(
-      "Ya hay un viaje en curso\n\n" +
+      "Hay un viaje en curso.\n\n" +
       travelEnCurso.origen + " → " +
       travelEnCurso.destino +
       "\nSalida: " +
       travelEnCurso.departureTime +
-      "\n\nFinalizalo antes de iniciar uno nuevo."
+      "\n\nEl nuevo viaje se cargará como PROGRAMADO."
     );
 
-    return;
   }
 
   showScreen("travelScreen");
-
 }
 // =====================================================
 // ACTUALIZAR INFO SERVICIO (UI)

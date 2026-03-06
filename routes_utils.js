@@ -129,7 +129,11 @@ function buscarMultiplesRutas(textoUsuario){
 
 function autoKmPorDestino(terminoDeEscribir = false){
 
-  const input = document.getElementById("destinationTravels");
+  const inputDestino = document.getElementById("destinationTravels");
+  const inputOrigen = document.getElementById("originTravels");
+
+  const input = inputDestino.value ? inputDestino : inputOrigen;
+
   const box = document.getElementById("sugerenciasRutas");
 
   const texto = input.value;
@@ -141,8 +145,8 @@ function autoKmPorDestino(terminoDeEscribir = false){
 
     box.style.display = "none";
     box.innerHTML = "";
-
     return;
+
   }
 
   const matches = buscarMultiplesRutas(texto);
@@ -151,8 +155,8 @@ function autoKmPorDestino(terminoDeEscribir = false){
 
     box.style.display = "none";
     box.innerHTML = "";
-
     return;
+
   }
 
   box.style.display = "block";
@@ -165,7 +169,12 @@ function autoKmPorDestino(terminoDeEscribir = false){
     div.style.padding = "8px";
     div.style.cursor = "pointer";
 
-    div.innerText = `${m.destinoFinal} (${m.km} km)`;
+    // 🔧 MOSTRAR KM SOLO SI ES DESTINO
+    if(input.id === "originTravels"){
+      div.innerText = m.destinoFinal;
+    }else{
+      div.innerText = `${m.destinoFinal} (${m.km} km)`;
+    }
 
     div.onclick = () => {
 
@@ -174,7 +183,10 @@ function autoKmPorDestino(terminoDeEscribir = false){
       let kmCalculado =
         buscarKmRuta(origenActual, m.destinoFinal) || m.km;
 
-      document.getElementById("kmTravels").value = kmCalculado;
+      // 🔧 solo calcular km si estamos en destino
+      if(input.id !== "originTravels"){
+        document.getElementById("kmTravels").value = kmCalculado;
+      }
 
       box.style.display = "none";
 
@@ -182,6 +194,7 @@ function autoKmPorDestino(terminoDeEscribir = false){
     };
 
     box.appendChild(div);
+
   });
 
   const matchUnico = buscarRutaCoincidente(texto);
@@ -194,7 +207,9 @@ function autoKmPorDestino(terminoDeEscribir = false){
     const kmCalculado =
       buscarKmRuta(origenActual, destinoFinal) || matchUnico.km;
 
-    document.getElementById("kmTravels").value = kmCalculado;
+    if(input.id !== "originTravels"){
+      document.getElementById("kmTravels").value = kmCalculado;
+    }
 
     if (terminoDeEscribir){
 
@@ -203,6 +218,7 @@ function autoKmPorDestino(terminoDeEscribir = false){
       box.style.display = "none";
 
       mostrarHorariosOficiales(origenActual, destinoFinal);
+
     }
   }
 }

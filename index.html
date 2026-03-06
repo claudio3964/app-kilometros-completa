@@ -220,7 +220,12 @@ input, select{
   <div class="screen-container">
     <div class="card">
       <label>Origen</label>
-      <select id="originTravels"></select>
+   <input
+  id="originTravels"
+  type="text"
+  placeholder="Origen"
+  oninput="autoKmPorDestino(false)"
+>
 
       <label>Destino</label>
       <input id="destinationTravels" oninput="autoKmPorDestino(false)">

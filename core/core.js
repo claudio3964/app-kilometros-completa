@@ -296,11 +296,18 @@ function addTravel(
 
   const esFuturo = inicioProgramado > ahora;
 
-  // 🔒 Si sería inmediato, no permitir otro en curso
-  if (!esFuturo) {
-    const enCurso = order.travels?.find(t => t.status === "en_curso");
-    if (enCurso) return false;
-  }
+  
+  // 🔎 Detectar si hay viaje en curso
+const enCurso = order.travels?.find(t => t.status === "en_curso");
+
+// Si hay uno en curso, el nuevo siempre será programado
+let statusInicial;
+
+if(enCurso){
+  statusInicial = "programado";
+}else{
+  statusInicial = esFuturo ? "programado" : "en_curso";
+}
 
   // 🧠 Regla empresarial: DIRECTO lleva acoplado
   const acoplado = turno === "DIRECTO";
@@ -321,8 +328,7 @@ function addTravel(
     createdAt: ahora,
 
     // 🔥 Decisión automática del core
-    status: esFuturo ? "programado" : "en_curso",
-
+status: statusInicial,
     inicioProgramado,
     inicioReal: esFuturo ? null : ahora,
     timeStartRealTS: esFuturo ? null : ahora,
