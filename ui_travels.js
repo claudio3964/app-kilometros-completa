@@ -648,6 +648,9 @@ function mostrarViajeEnCursoUI(){
   // SIEMPRE limpiar
   container.innerHTML = "";
 
+  // 🔧 FIX: activar viajes programados antes de renderizar
+  activarViajesProgramados();
+
   const order = getActiveOrder();
 
   if(!order || !order.travels || order.travels.length === 0){

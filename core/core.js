@@ -52,9 +52,30 @@ const ROUTES_CATALOG = {
 
 // ===== STORAGE =====
 const Storage = {
-  get(k, f=null){ return JSON.parse(localStorage.getItem(k)) ?? f; },
-  set(k,v){ localStorage.setItem(k, JSON.stringify(v)); },
-  remove(k){ localStorage.removeItem(k); }
+
+  get(k, fallback = null){
+
+    const raw = localStorage.getItem(k);
+
+    if(!raw) return fallback;
+
+    try{
+      return JSON.parse(raw);
+    }catch(e){
+      console.warn("Storage corrupto:", k);
+      return fallback;
+    }
+
+  },
+
+  set(k, v){
+    localStorage.setItem(k, JSON.stringify(v));
+  },
+
+  remove(k){
+    localStorage.removeItem(k);
+  }
+
 };
 
 // ===== DRIVER =====

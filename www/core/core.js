@@ -651,20 +651,22 @@ function calculateOrderTotals(o){
 
   if(o.travels){
 
-    o.travels.forEach(t => {
+   o.travels.forEach(t => {
 
-      if(!t) return;
+  if(!t) return;
 
-      // ignorar cancelados
-      if(t.status === "cancelado")
-        return;
+  // ignorar cancelados y programados
+  if(t.status === "cancelado" || t.status === "programado")
+    return;
 
-      kmViajes += Number(t.kmEmpresa || 0);
+  const km = t.kmEmpresa ?? t.kmAuto ?? 0;
 
-      if(t.acoplado)
-        kmAcoplados += ACOPLADO_EXTRA_KM;
+  kmViajes += Number(km);
 
-    });
+  if(t.acoplado)
+    kmAcoplados += ACOPLADO_EXTRA_KM;
+
+});
 
   }
 
@@ -685,11 +687,21 @@ function calculateOrderTotals(o){
 
   }
 
-  // Tome y Cese
-  const kmTomeCese =
-    o.travels && o.travels.some(t => t.tomeCese)
-      ? TOME_CESE_KM
-      : 0;
+  // Tome y Cese automático en el primer viaje válido
+
+let kmTomeCese = 0;
+
+if(o.travels){
+
+  const primerViaje = o.travels.find(
+    t => t && t.status !== "cancelado"
+  );
+
+  if(primerViaje){
+    kmTomeCese = TOME_CESE_KM;
+  }
+
+}
 
   // Total km
   const kmTotal =
