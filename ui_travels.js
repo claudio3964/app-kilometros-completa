@@ -858,7 +858,7 @@ if(!window.__travelListTimer){
 
       if(pantalla &&
          pantalla.classList.contains("active")){
-
+verificarViajesProgramados();
         renderListaViajes();
 
       }
@@ -1095,7 +1095,38 @@ try {
 
     URL.revokeObjectURL(url);
   }
+// ================================
+// VERIFICAR VIAJES PROGRAMADOS
+// (soluciona standby del celular)
+// ================================
 
+function verificarViajesProgramados(){
+
+  const order = getActiveOrder();
+
+  if(!order || !order.travels) return;
+
+  const ahora = ahoraSistema();
+
+  order.travels.forEach(travel => {
+
+    if(travel.status === "programado"){
+
+      const salida = new Date(travel.departureTime).getTime();
+
+      if(ahora >= salida){
+
+        console.log("Activando viaje programado atrasado");
+
+        iniciarViajeProgramado(travel.id);
+
+      }
+
+    }
+
+  });
+
+}
 // export global
 window.abrirViajeSimple = abrirViajeSimple;
 window.renderResumenDia = renderResumenDia;
