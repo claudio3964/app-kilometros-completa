@@ -1,3 +1,4 @@
+
 alert("UI_TRAVELS VERSION NUEVA");
 console.log("ui_travels cargado");
 // ===============================
@@ -214,7 +215,23 @@ function renderListaViajes(){
           </div>
         `;
       }
+// ============================
+// VIAJE FINALIZADO
+// ============================
 
+if(
+ estado === "finalizado"
+ &&
+ v.arrivalTime
+){
+
+ tiempoHTML = `
+ <div class="travel-time">
+ 🏁 Llegada: ${v.arrivalTime}
+ </div>
+ `;
+
+}
       // =========================
       // RENDER ITEM
       // =========================
