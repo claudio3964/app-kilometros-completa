@@ -106,7 +106,9 @@ function generateOrderNumber(){
 
 // ===== ACTIVE ORDER =====
 function getActiveOrder(){
-
+console.log("🔍 getActiveOrder llamado");
+console.log("activeOrder storage:", Storage.get("activeOrder"));
+console.log("orders storage:", getOrders());
   const active = Storage.get("activeOrder");
   if(!active) return null;
 
@@ -440,61 +442,91 @@ function addTravelProgramado(
 // =====================================================
 // MOTOR DE VIAJES PROGRAMADOS
 // =====================================================
-
 function verificarViajesProgramados(){
+
+  console.log("⏱ MOTOR VIAJES ejecutando verificación");
+
   const order = getActiveOrder();
+
+  console.log("📦 ORDEN ACTIVA:", order?.orderNumber);
+  console.log("🧭 VIAJES EN ORDEN:", order?.travels);
+
   if(!order || !order.travels) return;
 
   const ahora = ahoraSistema();
+  console.log("⏰ HORA SISTEMA:", ahora);
 
-  // 1) Obtener programados ordenados por inicioProgramado asc
+  // =================================
+  // 1) Obtener viajes programados ordenados
+  // =================================
+
   const programados = order.travels
-      .filter(t => t.status === "programado" && t.inicioProgramado)
-      .sort((a,b) => a.inicioProgramado - b.inicioProgramado);
+    .filter(t => t.status === "programado" && t.inicioProgramado)
+    .sort((a,b) => a.inicioProgramado - b.inicioProgramado);
 
-  // 2) Si ya hay un viaje en curso, NO activar nada
-  if(existeViajeEnCurso()) return;
+  console.log("🟡 VIAJES PROGRAMADOS ORDENADOS:", programados);
 
-  // 3) Activar el primer programado cuya hora pasó
+  // =================================
+  // 2) Si ya hay un viaje en curso NO hacer nada
+  // =================================
+
+  if(existeViajeEnCurso()){
+    console.log("🔴 YA EXISTE VIAJE EN CURSO - MOTOR NO ACTIVA NADA");
+    return;
+  }
+
+  // =================================
+  // 3) Buscar el próximo viaje a activar
+  // =================================
+
   const proximo = programados.find(t => t.inicioProgramado <= ahora);
-  if(!proximo) return;
+
+  console.log("🟢 VIAJE A ACTIVAR:", proximo);
+
+  if(!proximo){
+    console.log("⚪ NINGÚN VIAJE LISTO PARA ACTIVAR");
+    return;
+  }
+
+  // =================================
+  // 4) Activar viaje
+  // =================================
+
+  console.log("🟠 CAMBIANDO ESTADO A EN_CURSO");
 
   proximo.status = "en_curso";
   proximo.inicioReal = ahora;
 
-  // 4) Tome y cese automático (si no se generó)
+  // =================================
+  // 5) Generar Tome y Cese (solo primer viaje)
+  // =================================
+
   if(!order.tomeCeseGenerado){
+
+    console.log("🟣 GENERANDO TOME Y CESE");
+
     proximo.tomeCese = true;
     order.tomeCeseGenerado = true;
+
   }
 
-  // 5) Guardar cambios
-  saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
+  // =================================
+  // 6) Guardar cambios
+  // =================================
+
+  const nuevasOrders = getOrders().map(o =>
+    o.orderNumber === order.orderNumber ? order : o
+  );
+
+  saveOrders(nuevasOrders);
+
+  console.log("🔵 ORDERS DESPUÉS DE GUARDAR:", getOrders());
+
   setActiveOrder(order);
 
-  console.log("Viaje programado iniciado:", proximo.id);
+  console.log("✅ VIAJE PROGRAMADO INICIADO:", proximo.id);
+
 }
-// ================================
-// MOTOR AUTOMÁTICO VIAJES PROGRAMADOS
-// ================================
-
-let motorViajesInterval = null;
-
-function iniciarMotorViajes() {
-  if (motorViajesInterval) return;
-
-  motorViajesInterval = setInterval(() => {
-    verificarViajesProgramados();
-  }, 30000); // cada 30 segundos
-}
-
-function detenerMotorViajes() {
-  if (motorViajesInterval) {
-    clearInterval(motorViajesInterval);
-    motorViajesInterval = null;
-  }
-}
-
 function calcularHorasJornada(o){
 
   if(!o) return 0;

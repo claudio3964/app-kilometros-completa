@@ -210,8 +210,6 @@ document.addEventListener("visibilitychange", () => {
 
     console.log("🔄 App volvió a foreground");
 
-    renderListaViajes();
-
     if(typeof mostrarViajeEnCursoUI === "function")
       mostrarViajeEnCursoUI();
 
@@ -308,3 +306,12 @@ bases.push("Otro");
   });
 
 });
+// ========================================
+// MOTOR VIAJES PROGRAMADOS
+// ========================================
+
+setInterval(() => {
+
+  activarViajesProgramados();
+
+}, 10000);

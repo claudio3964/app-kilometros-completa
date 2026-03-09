@@ -52,17 +52,59 @@ const ROUTES_CATALOG = {
 
 // ===== STORAGE =====
 const Storage = {
-  get(k, f=null){ return JSON.parse(localStorage.getItem(k)) ?? f; },
-  set(k,v){ localStorage.setItem(k, JSON.stringify(v)); },
-  remove(k){ localStorage.removeItem(k); }
+
+  get(k, f = null) {
+
+    const raw = localStorage.getItem(k);
+
+    if (!raw) return f;
+
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      console.warn("Storage corrupto:", k);
+      localStorage.removeItem(k);
+      return f;
+    }
+
+  },
+
+  set(k, v) {
+    localStorage.setItem(k, JSON.stringify(v));
+  },
+
+  remove(k) {
+    localStorage.removeItem(k);
+  }
+
 };
 
 // ===== DRIVER =====
 function getDriver(){ return Storage.get("driverProfile"); }
 
 // ===== ORDERS =====
-function getOrders(){ return Storage.get("orders",[]); }
-function saveOrders(l){ Storage.set("orders",l); }
+function getOrders(){
+
+  const orders = Storage.get("orders", []);
+
+  if(!Array.isArray(orders)){
+    console.warn("Orders corrupto, reiniciando storage");
+    Storage.remove("orders");
+    return [];
+  }
+
+  return orders;
+
+}function saveOrders(l){
+
+  if(!Array.isArray(l)){
+    console.error("saveOrders recibió algo inválido:", l);
+    return;
+  }
+
+  Storage.set("orders", l);
+
+}
 
 // ===== ORDER NUMBER =====
 function generateOrderNumber(){
@@ -125,7 +167,8 @@ function createOrder(){
     travels: [],
     guards: [],
     closed: false,
-    createdAt: ahoraSistema()
+    createdAt: ahoraSistema(),
+    tomeCeseGenerado: false
   };
 
   const all = getOrders();

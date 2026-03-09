@@ -125,6 +125,7 @@ function createOrder(){
     travels: [],
     guards: [],
     closed: false,
+    tomeCeseGenerado: false,
     createdAt: ahoraSistema()
   };
 
@@ -376,8 +377,7 @@ function verificarViajesProgramados(){
 
   let cambio = false;
 
-  order.travels.forEach(travel => {
-
+order.travels.forEach((travel, index) => {
     if(
       travel.status === "programado"
       &&
@@ -393,8 +393,7 @@ function verificarViajesProgramados(){
       // RESTAURAR TOME Y CESE (PRIMER VIAJE DEL DÍA)
       // =====================================================
 
-      if(!order.tomeCeseGenerado){
-
+if(index === 0 && !order.tomeCeseGenerado){
         travel.tomeCese = true;
 
         order.tomeCeseGenerado = true;

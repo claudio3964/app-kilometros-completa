@@ -45,7 +45,7 @@ function closeActiveOrderUI(){
 // =====================================================
 
 function renderListaViajes(){
-activarViajesProgramados();
+
   const container =
     document.getElementById("cardsViajesContainer");
 
@@ -324,6 +324,9 @@ function cargarViajeRetornoAutomatico(data){
 // =====================================================
 // GUARDAR VIAJE → CORE (JORNADA AUTOMÁTICA)
 // =====================================================
+// =====================================================
+// GUARDAR VIAJE → CORE (JORNADA AUTOMÁTICA)
+// =====================================================
 function addTravelUI(event){
 
   event.preventDefault();
@@ -341,28 +344,21 @@ function addTravelUI(event){
     document.getElementById("destinationTravels").value.trim();
 
   if(!servicioSeleccionado){
-
     alert("Seleccioná un servicio válido");
     return;
-
   }
 
   if(!origen || !destino){
-
     alert("Completá origen y destino");
     return;
-
   }
 
-  // USAR HORA INGRESADA POR EL USUARIO
   const departureTime =
     document.getElementById("departureTimeTravels").value;
 
   if(!departureTime){
-
     alert("Ingresá hora de salida");
     return;
-
   }
 
   const duracionEstimadaHoras = 2;
@@ -371,7 +367,6 @@ function addTravelUI(event){
     departureTime.split(":").map(Number);
 
   const salidaDate = new Date();
-
   salidaDate.setHours(h,m,0,0);
 
   const llegadaDate =
@@ -383,64 +378,55 @@ function addTravelUI(event){
   const arrivalTime =
     llegadaDate.toTimeString().substring(0,5);
 
-  // ESTA ES LA CLAVE
-  const ok = addTravel(
+  // =====================================================
+  // DECIDIR SI ES VIAJE PROGRAMADO O INMEDIATO
+  // =====================================================
 
-    origen,
-    destino,
-    servicioSeleccionado.turno,
-    departureTime,
-    arrivalTime,
-    duracionEstimadaHoras
+  const ahora = new Date();
 
-  );
+  let ok;
+
+  if(salidaDate > ahora){
+
+    // VIAJE PROGRAMADO
+    ok = addTravelProgramado(
+      origen,
+      destino,
+      servicioSeleccionado.turno,
+      departureTime,
+      arrivalTime,
+      duracionEstimadaHoras
+    );
+
+  }else{
+
+    // VIAJE INMEDIATO
+    ok = addTravel(
+      origen,
+      destino,
+      servicioSeleccionado.turno,
+      departureTime,
+      arrivalTime,
+      duracionEstimadaHoras
+    );
+
+  }
 
   if(!ok){
-
     alert("No se pudo programar el viaje");
     return;
-
   }
 
   renderResumenDia();
   renderListaViajes();
 
   alert(
-    "Viaje programado correctamente\n" +
-    "Inicio automático a las " +
-    departureTime
+    "Viaje cargado correctamente\n" +
+    "Salida: " + departureTime
   );
 
   showScreen("mainScreen");
 
-}
-// =====================================================
-// RESUMEN DEL DIA (FUNCION FALTANTE)
-// =====================================================
-
-function renderResumenDia(){
-  const container=document.getElementById("resumenDia");
-  if(!container)return;
-
-  const order=getActiveOrder();
-  if(!order){
-    container.innerHTML="Sin jornada activa";
-    return;
-  }
-
-  const totals=calculateOrderTotals(order);
-
-  container.innerHTML=`
-    <div class="card">
-      <b>Resumen jornada activa</b><br>
-      KM totales: <b>${totals.kmTotal.toFixed(1)}</b><br>
-      KM tome y cese: <b>${totals.kmTomeCese.toFixed(1)}</b><br>
-      KM guardias: <b>${totals.kmGuardias.toFixed(1)}</b><br>
-      KM acoplados: <b>${totals.kmAcoplados.toFixed(1)}</b><br>
-      Viáticos generados: <b>${totals.viaticos}</b><br>
-      Total $: <b>${totals.monto.toFixed(0)}</b>
-    </div>
-  `;
 }
 // =====================================================
 // DETALLE DE JORNADA ACTIVA
@@ -649,7 +635,7 @@ function mostrarViajeEnCursoUI(){
   container.innerHTML = "";
 
   // 🔧 FIX: activar viajes programados antes de renderizar
-  activarViajesProgramados();
+  
 
   const order = getActiveOrder();
 
@@ -987,40 +973,9 @@ console.log("Entrando a renderDetalleJornadaPorNumero:", orderNumber);
 
 function activarViajesProgramados(){
 
-  const order = getActiveOrder();
-  if(!order || !order.travels) return;
+  console.log("🧭 UI solicita verificación de viajes programados");
 
-  const ahora = ahoraSistema();
-
-  const viajeEnCurso =
-    order.travels.find(t => t.status === "en_curso");
-
-  if(viajeEnCurso) return;
-
-  const candidatos =
-    order.travels
-      .filter(t => t.status === "programado")
-      .sort((a,b)=> a.inicioProgramado - b.inicioProgramado);
-
-  for(const travel of candidatos){
-
-    if(ahora >= travel.inicioProgramado){
-
-      travel.status = "en_curso";
-      travel.inicioReal = ahora;
-
-      saveOrders();
-
-      console.log(
-        "🚦 Viaje iniciado automáticamente:",
-        travel.origen,
-        travel.destino
-      );
-
-      break;
-    }
-
-  }
+  verificarViajesProgramados();
 
 }
 
@@ -1095,38 +1050,7 @@ try {
 
     URL.revokeObjectURL(url);
   }
-// ================================
-// VERIFICAR VIAJES PROGRAMADOS
-// (soluciona standby del celular)
-// ================================
 
-function verificarViajesProgramados(){
-
-  const order = getActiveOrder();
-
-  if(!order || !order.travels) return;
-
-  const ahora = ahoraSistema();
-
-  order.travels.forEach(travel => {
-
-    if(travel.status === "programado"){
-
-      const salida = new Date(travel.departureTime).getTime();
-
-      if(ahora >= salida){
-
-        console.log("Activando viaje programado atrasado");
-
-        iniciarViajeProgramado(travel.id);
-
-      }
-
-    }
-
-  });
-
-}
 // export global
 window.abrirViajeSimple = abrirViajeSimple;
 window.renderResumenDia = renderResumenDia;
