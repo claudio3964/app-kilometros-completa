@@ -1,3 +1,4 @@
+alert("UI_TRAVELS VERSION NUEVA");
 console.log("ui_travels cargado");
 // ===============================
 // JORNADA - UI
@@ -418,14 +419,14 @@ function addTravelUI(event){
   }
 
   renderResumenDia();
-  renderListaViajes();
+renderListaViajes();
 
-  alert(
-    "Viaje cargado correctamente\n" +
-    "Salida: " + departureTime
-  );
+showScreen("mainScreen");
 
-  showScreen("mainScreen");
+alert(
+"Viaje cargado correctamente\n" +
+"Salida: " + departureTime
+);
 
 }
 // =====================================================

@@ -209,7 +209,7 @@ document.addEventListener("visibilitychange", () => {
   if(!document.hidden){
 
     console.log("🔄 App volvió a foreground");
-
+activarViajesProgramados();
     if(typeof mostrarViajeEnCursoUI === "function")
       mostrarViajeEnCursoUI();
 
@@ -314,4 +314,4 @@ setInterval(() => {
 
   activarViajesProgramados();
 
-}, 10000);
+}, 60000);

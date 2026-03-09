@@ -134,7 +134,7 @@ function setActiveOrder(o){
     Storage.set("activeOrder", o);
 
     // 🔁 arrancar motor automático
-    iniciarMotorViajes();
+    
 
     // 🔄 rehidratar inmediatamente
     verificarViajesProgramados();
