@@ -221,6 +221,14 @@ input, select{
       <label>Destino</label>
       <input id="destinationTravels" oninput="autoKmPorDestino(false)">
 
+<label>Tipo de coche</label>
+<select id="tipoCoche" onchange="actualizarCodigoCartel()">
+  <option value="">Elegí coche...</option>
+  <option value="marcopolo">Marcopolo</option>
+  <option value="neobus">Neobus</option>
+</select>
+
+<div id="codigoCartel" style="margin-top:6px; font-weight:bold;"></div>
       <!-- SUGERENCIAS PRIMERO -->
       <div id="sugerenciasRutas"
            style="display:none; border:1px solid #ddd; border-radius:8px;
@@ -346,7 +354,8 @@ input, select{
 <script src="core/core.js"></script>
 
 <script src="../schedules_cot.js"></script>
-<script src="../routes_utils.js"></script>
+<script src="../routes_utils.js"></script
+<script src="../routes_catalog.js"></script>
 <script src="../ui_summary.js"></script>
 <script src="../ui_navigation.js"></script>
 <script src="../ui_travels.js"></script>
