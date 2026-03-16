@@ -197,6 +197,34 @@ function closeActiveOrder(){
 
 }
 // =====================================================
+// cortar guardias antes de viajes
+// =====================================================
+function cortarGuardiaAntesDeViaje(order, departureTime){
+
+  if(!order.guards || order.guards.length === 0)
+    return;
+
+  const ultima =
+    order.guards[order.guards.length - 1];
+
+  if(!ultima.inicio || ultima.fin)
+    return;
+
+  const [h,m] =
+    departureTime.split(":").map(Number);
+
+  const corte = new Date();
+  corte.setHours(h,m,0,0);
+
+  // restar 15 minutos
+  corte.setMinutes(corte.getMinutes() - 15);
+
+  ultima.fin =
+    corte.toTimeString().substring(0,5);
+
+  console.log("Guardia cortada automáticamente:", ultima.fin);
+}
+// =====================================================
 // VIAJES (CORE OFICIAL CON KM AUTO + TIPO + ACOPLADO)
 // =====================================================
 function addTravel(
@@ -219,7 +247,7 @@ function addTravel(
 
   const order = getActiveOrder();
   if(!order) return false;
-
+cortarGuardiaAntesDeViaje(order, departureTime);
   const ahora = ahoraSistema();
 
   const kmEmpresa =

@@ -90,52 +90,7 @@ function addGuardUI(event){
 
   showScreen("mainScreen");
 }
-// =====================================================
-// LISTA DE GUARDIAS
-// =====================================================
 
-function renderListaGuardias(){
-  const tbody =
-    document.getElementById("listaGuardiasContainer");
-
-  tbody.innerHTML = "";
-
-  const orders = getOrders(); // CORE
-  if(!orders || orders.length === 0) return;
-
-  const o = orders[orders.length - 1]; // última jornada
-  if(!o.guards || o.guards.length === 0) return;
-
-  o.guards.forEach((g,i) => {
-
-    const tipoTexto =
-      g.type === "especial" ? "Especial" : "Común";
-
-    // 👉 Cálculo de KM por guardia (sin tocar el core)
-    const kmGuardia =
-      g.hours * (g.type === "especial" ? 40 : 30);
-
-    // Formateo de horario (si existen inicio/fin)
-    const horario =
-      g.inicio && g.fin
-        ? `${g.inicio} – ${g.fin}`
-        : new Date(g.createdAt).toLocaleTimeString();
-
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${i+1}</td>
-      <td>${g.dia || new Date(g.createdAt).toLocaleDateString()}</td>
-      <td>${horario}</td>
-      <td>${g.hours.toFixed(2)}</td>
-      <td>${kmGuardia.toFixed(0)} km</td>
-      <td>${tipoTexto}</td>
-      <td>${g.descripcion || "—"}</td>
-    `;
-
-    tbody.appendChild(tr);
-  });
-}
 // =====================================================
 // CONTROL VISUAL DE DESCRIPCIÓN DE GUARDIA
 // =====================================================
@@ -165,18 +120,20 @@ function renderTarjetasGuardiasPorDia(){
   container.innerHTML = "";
 
   const orders = getOrders();
-
   if(!orders || orders.length === 0) return;
 
   const porDia = {};
 
   orders.forEach(o => {
 
+    if(!o.guards || o.guards.length === 0) return;
+
     const d = o.date;
 
     if(!porDia[d]) porDia[d] = [];
 
     porDia[d].push(o);
+
   });
 
   const fechas = Object.keys(porDia)
@@ -196,6 +153,7 @@ function renderTarjetasGuardiasPorDia(){
           `${g.hours.toFixed(2)} h | ${g.type}` +
           (g.descripcion ? ` (${g.descripcion})` : "")
         );
+
       });
 
     });
@@ -218,10 +176,10 @@ function renderTarjetasGuardiasPorDia(){
     `;
 
     container.appendChild(card);
+
   });
 
 }
-
 // =====================================================
 // FUNCIÓN PRINCIPAL LLAMADA POR LA APP
 // =====================================================

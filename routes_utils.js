@@ -298,11 +298,72 @@ function actualizarCodigoCartel(){
     "Código cartel: " + codigos[tipo];
 }
 
+function obtenerCodigosRuta(destino){
+
+    if(!destino) return null;
+
+    const key = destino.toLowerCase().trim();
+
+    return ROUTES_CATALOG[key] || null;
+}
+// ======================================
+// OBTENER CARTEL SEGUN DESTINO
+// ======================================
+
+window.obtenerCartelRuta = function(destino){
+
+  if(!destino) return null;
+
+  const destinoNorm = normalizarTexto(destino);
+
+  const catalogo = window.ROUTES_SIGNS || {};
+
+  for(const ruta in catalogo){
+
+    const rutaNorm = normalizarTexto(ruta);
+
+    if(destinoNorm.includes(rutaNorm)){
+      return catalogo[ruta];
+    }
+
+  }
+
+  return null;
+}
+// ======================================
+// MOSTRAR CARTEL SEGÚN DESTINO
+// ======================================
+
+function mostrarCodigoRuta(destino){
+
+  const box = document.getElementById("codigoRutaInfo");
+
+  if(!box) return;
+
+  if(!destino){
+    box.innerHTML = "";
+    return;
+  }
+
+  const cartel = obtenerCartelRuta(destino);
+
+  if(!cartel){
+    box.innerHTML = "";
+    return;
+  }
+
+  box.innerHTML = `
+    <b>Cartel sugerido:</b><br>
+    Marcopolo: ${cartel.marcopolo}<br>
+    Neobus: ${cartel.neobus}
+  `;
+}
 // =====================================================
 // EXPORTS
 // =====================================================
 
 window.autoKmPorDestino = autoKmPorDestino;
+window.obtenerCodigosRuta = obtenerCodigosRuta;
 window.buscarKmRuta = buscarKmRuta;
 window.buscarRutaCoincidente = buscarRutaCoincidente;
 window.buscarMultiplesRutas = buscarMultiplesRutas;
