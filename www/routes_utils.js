@@ -127,36 +127,55 @@ function buscarMultiplesRutas(textoUsuario){
 // AUTOCOMPLETADO KM
 // =====================================================
 
+function buscarSugerenciasCarteles(texto){
+  const buscado = normalizarTexto(texto);
+  const catalogo = window.ROUTES_SIGNS || {};
+  const resultados = [];
+
+  for(const destino in catalogo){
+    if(destino.startsWith("_")) continue;
+
+    const coches = catalogo[destino];
+    const servicios = new Set([
+      ...Object.keys(coches.marcopolo || {}),
+      ...Object.keys(coches.neobus   || {})
+    ]);
+
+    for(const servicio of servicios){
+      const label = destino + " - " + servicio;
+      if(normalizarTexto(label).includes(buscado)){
+        resultados.push({
+          label,
+          destino,
+          servicio,
+          km: buscarKmRuta("Montevideo", destino) || 0
+        });
+      }
+    }
+  }
+
+  return resultados;
+}
+
 function autoKmPorDestino(terminoDeEscribir = false){
 
   const inputDestino = document.getElementById("destinationTravels");
-  const inputOrigen = document.getElementById("originTravels");
+  const box          = document.getElementById("sugerenciasRutas");
+  const texto        = inputDestino.value;
+  const origenActual = document.getElementById("originTravels")?.value || "Montevideo";
 
-  const input = inputDestino.value ? inputDestino : inputOrigen;
-
-  const box = document.getElementById("sugerenciasRutas");
-
-  const texto = input.value;
-
-  const origenActual =
-    document.getElementById("originTravels")?.value || "Montevideo";
-
-  if (!texto){
-
+  if(!texto){
     box.style.display = "none";
     box.innerHTML = "";
     return;
-
   }
 
-  const matches = buscarMultiplesRutas(texto);
+  const matches = buscarSugerenciasCarteles(texto);
 
-  if (matches.length === 0){
-
+  if(matches.length === 0){
     box.style.display = "none";
     box.innerHTML = "";
     return;
-
   }
 
   box.style.display = "block";
@@ -165,62 +184,24 @@ function autoKmPorDestino(terminoDeEscribir = false){
   matches.forEach(m => {
 
     const div = document.createElement("div");
-
     div.style.padding = "8px";
-    div.style.cursor = "pointer";
-
-    // 🔧 MOSTRAR KM SOLO SI ES DESTINO
-    if(input.id === "originTravels"){
-      div.innerText = m.destinoFinal;
-    }else{
-      div.innerText = `${m.destinoFinal} (${m.km} km)`;
-    }
+    div.style.cursor  = "pointer";
+    div.innerText = m.label + (m.km ? ` (${m.km} km)` : "");
 
     div.onclick = () => {
+      inputDestino.value = m.label;
 
-      input.value = m.destinoFinal;
-
-      let kmCalculado =
-        buscarKmRuta(origenActual, m.destinoFinal) || m.km;
-
-      // 🔧 solo calcular km si estamos en destino
-      if(input.id !== "originTravels"){
-        document.getElementById("kmTravels").value = kmCalculado;
-      }
+      const kmCalculado = buscarKmRuta(origenActual, m.destino) || m.km;
+      document.getElementById("kmTravels").value = kmCalculado;
 
       box.style.display = "none";
 
-      mostrarHorariosOficiales(origenActual, m.destinoFinal);
+      mostrarHorariosOficiales(origenActual, m.destino);
+      actualizarCodigoCartel();
     };
 
     box.appendChild(div);
-
   });
-
-  const matchUnico = buscarRutaCoincidente(texto);
-
-  if (matchUnico){
-
-    const destinoFinal =
-      matchUnico.ruta.split("→")[1].trim();
-
-    const kmCalculado =
-      buscarKmRuta(origenActual, destinoFinal) || matchUnico.km;
-
-    if(input.id !== "originTravels"){
-      document.getElementById("kmTravels").value = kmCalculado;
-    }
-
-    if (terminoDeEscribir){
-
-      input.value = destinoFinal;
-
-      box.style.display = "none";
-
-      mostrarHorariosOficiales(origenActual, destinoFinal);
-
-    }
-  }
 }
 
 // =====================================================
@@ -287,46 +268,64 @@ function obtenerCodigosRuta(destino){
 
 function actualizarCodigoCartel(){
 
-  const destino =
-    document.getElementById("destinationTravels").value;
+  const valor = document.getElementById("destinationTravels").value.trim();
+  const tipo  = document.getElementById("tipoCoche").value;
+  const div   = document.getElementById("codigoCartel");
 
-  const tipo =
-    document.getElementById("tipoCoche").value;
-
-  const div =
-    document.getElementById("codigoCartel");
-
-  const codigos = obtenerCodigosRuta(destino);
-
-  if(!destino){
+  if(!valor){
     div.innerHTML = "";
     return;
   }
 
-  if(!codigos){
+  // Parsear "destino - servicio"
+  const sep      = valor.indexOf(" - ");
+  const destino  = sep !== -1 ? valor.substring(0, sep)  : valor;
+  const servicio = sep !== -1 ? valor.substring(sep + 3) : null;
+
+  const catalogo   = window.ROUTES_SIGNS || {};
+  const destinoKey = normalizarTexto(destino);
+  let entrada = null;
+  for(const ruta in catalogo){
+    if(normalizarTexto(ruta) === destinoKey){ entrada = catalogo[ruta]; break; }
+  }
+
+  if(!entrada){
     div.innerHTML = "Sin código disponible";
     return;
   }
 
-  const formatearServicios = (servicios) =>
-    Object.entries(servicios)
-      .map(([srv, cod]) => `<b>${cod}</b> <span style="color:#666">${srv}</span>`)
-      .join(" &nbsp;|&nbsp; ");
+  // Con servicio seleccionado: mostrar código directo
+  if(servicio){
+    if(tipo){
+      const codigo = (entrada[tipo] || {})[servicio];
+      div.innerHTML = codigo
+        ? "Código cartel: <b style='font-size:1.1em'>" + codigo + "</b>"
+        : "Sin código para " + tipo + " - " + servicio;
+    } else {
+      const mp = (entrada.marcopolo || {})[servicio];
+      const nb = (entrada.neobus   || {})[servicio];
+      const partes = [];
+      if(mp) partes.push("Marcopolo: <b>" + mp + "</b>");
+      if(nb) partes.push("Neobus: <b>" + nb + "</b>");
+      div.innerHTML = partes.length ? partes.join(" &nbsp;|&nbsp; ") : "Sin código disponible";
+    }
+    return;
+  }
 
-  if(!tipo){
+  // Sin servicio: mostrar todos los códigos del tipo seleccionado
+  const formatear = (obj) =>
+    Object.entries(obj).map(([srv, cod]) =>
+      `<b>${cod}</b> <span style="color:#666">${srv}</span>`
+    ).join(" &nbsp;|&nbsp; ");
+
+  if(tipo){
+    const servicios = entrada[tipo];
+    div.innerHTML = servicios ? formatear(servicios) : "Sin código disponible para " + tipo;
+  } else {
     div.innerHTML =
-      "<div>Marcopolo: " + formatearServicios(codigos.marcopolo || {}) + "</div>" +
-      "<div style='margin-top:4px'>Neobus: " + formatearServicios(codigos.neobus || {}) + "</div>";
-    return;
+      "<div>Marcopolo: " + formatear(entrada.marcopolo || {}) + "</div>" +
+      "<div style='margin-top:4px'>Neobus: " + formatear(entrada.neobus || {}) + "</div>";
   }
-
-  const servicios = codigos[tipo];
-  if(!servicios){
-    div.innerHTML = "Sin código disponible para " + tipo;
-    return;
-  }
-
-  div.innerHTML = formatearServicios(servicios);
 }
 
 // =====================================================
