@@ -219,9 +219,9 @@ input, select{
       <select id="originTravels"></select>
 
       <label>Destino</label>
-      <input id="destinationTravels" oninput="autoKmPorDestino(false)">
+      <input id="destinationTravels" oninput="autoKmPorDestino(false); actualizarCodigoCartel()">
 
-<label>Tipo de coche</label>
+<label>Código cartel</label>
 <select id="tipoCoche" onchange="actualizarCodigoCartel()">
   <option value="">Elegí coche...</option>
   <option value="marcopolo">Marcopolo</option>

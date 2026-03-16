@@ -289,8 +289,13 @@ function actualizarCodigoCartel(){
 
   const codigos = obtenerCodigosRuta(destino);
 
-  if(!codigos){
+  if(!destino){
     div.innerHTML = "";
+    return;
+  }
+
+  if(!codigos){
+    div.innerHTML = "Sin código disponible";
     return;
   }
 
@@ -301,8 +306,7 @@ function actualizarCodigoCartel(){
     return;
   }
 
-  div.innerHTML =
-    "Código cartel: " + codigos[tipo];
+  div.innerHTML = "Código cartel: " + codigos[tipo];
 }
 
 // =====================================================
