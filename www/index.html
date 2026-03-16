@@ -222,13 +222,14 @@ input, select{
       <input id="destinationTravels" oninput="autoKmPorDestino(false); actualizarCodigoCartel()">
 
 <label>Código cartel</label>
-<select id="tipoCoche" onchange="actualizarCodigoCartel()">
-  <option value="">Elegí coche...</option>
-  <option value="marcopolo">Marcopolo</option>
-  <option value="neobus">Neobus</option>
-</select>
-
-<div id="codigoCartel" style="margin-top:6px; font-weight:bold;"></div>
+<div style="display:flex; gap:8px; align-items:center;">
+  <select id="tipoCoche" onchange="actualizarCodigoCartel()" style="flex:2;">
+    <option value="">Elegí coche...</option>
+    <option value="marcopolo">Marcopolo</option>
+    <option value="neobus">Neobus</option>
+  </select>
+  <div id="codigoCartel" style="flex:1; text-align:center; font-weight:bold; font-size:1.1em; background:#f0f4ff; border-radius:6px; padding:6px 4px;"></div>
+</div>
       <!-- SUGERENCIAS PRIMERO -->
       <div id="sugerenciasRutas"
            style="display:none; border:1px solid #ddd; border-radius:8px;

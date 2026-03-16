@@ -294,20 +294,15 @@ function actualizarCodigoCartel(){
     return;
   }
 
-  // Con servicio seleccionado: mostrar código directo
+  // Con servicio seleccionado: mostrar código limpio
   if(servicio){
     if(tipo){
       const codigo = (entrada[tipo] || {})[servicio];
-      div.innerHTML = codigo
-        ? "Código cartel: <b style='font-size:1.1em'>" + codigo + "</b>"
-        : "Sin código para " + tipo + " - " + servicio;
+      div.innerHTML = codigo || "-";
     } else {
       const mp = (entrada.marcopolo || {})[servicio];
       const nb = (entrada.neobus   || {})[servicio];
-      const partes = [];
-      if(mp) partes.push("Marcopolo: <b>" + mp + "</b>");
-      if(nb) partes.push("Neobus: <b>" + nb + "</b>");
-      div.innerHTML = partes.length ? partes.join(" &nbsp;|&nbsp; ") : "Sin código disponible";
+      div.innerHTML = [mp, nb].filter(Boolean).join(" / ") || "-";
     }
     return;
   }
