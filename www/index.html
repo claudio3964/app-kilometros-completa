@@ -221,6 +221,12 @@ input, select{
       <label>Destino</label>
       <input id="destinationTravels" oninput="autoKmPorDestino(false)">
 
+      <!-- SUGERENCIAS AUTOCOMPLETE -->
+      <div id="sugerenciasRutas"
+           style="display:none; border:1px solid #ddd; border-radius:8px;
+                  max-height:160px; overflow:auto; margin-bottom:10px;">
+      </div>
+
 <label>Código cartel</label>
 <div style="display:flex; gap:8px; align-items:center;">
   <select id="tipoCoche" onchange="actualizarCodigoCartel()" style="flex:2;">
@@ -230,11 +236,6 @@ input, select{
   </select>
   <div id="codigoCartel" style="flex:1; text-align:center; font-weight:bold; font-size:1.1em; background:#f0f4ff; border-radius:6px; padding:6px 4px;"></div>
 </div>
-      <!-- SUGERENCIAS PRIMERO -->
-      <div id="sugerenciasRutas"
-           style="display:none; border:1px solid #ddd; border-radius:8px;
-                  max-height:160px; overflow:auto; margin-bottom:10px;">
-      </div>
 
       <!-- HORARIOS COT DESPUÉS -->
       <div id="horariosOficiales"
