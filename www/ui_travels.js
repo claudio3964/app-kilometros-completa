@@ -982,71 +982,101 @@ function activarViajesProgramados(){
 
 async function exportarJornada(order){
 
-  const driver = getDriver?.();
-const totals = calculateOrderTotals(order);
-const tomeCeseAplicado = (totals.kmTomeCese || 0) > 0;
+  const driver = getDriver?.() || {};
+  const totals = calculateOrderTotals(order);
 
- const data = {
-  version_app: "0.9 piloto",
-  chofer: driver?.nombre || "Chofer",
-  base: driver?.base || "Montevideo",
-  fecha: order.date,
-  orderNumber: order.orderNumber,
-  viajes: order.travels || [],
-  guardias: order.guards || [],
-  resumen: calculateOrderTotals(order),
+  // =====================================================
+  // ESTRUCTURA COMPLETA PARA CORROBORACIÓN
+  // =====================================================
+  const data = {
+    version_app: "0.9 piloto",
+    syncStatus: order.syncStatus || "local",
+    exportadoAt: new Date().toISOString(),
 
-  export: {
-    generatedAt: new Date().toISOString(),
-    version_app: "0.9 piloto"
-  }
-};
+    chofer: {
+      legajo: driver.legajo || "—",
+      nombre: driver.nombre || "—",
+      base: driver.base || "Montevideo"
+    },
+
+    jornada: {
+      orderNumber: order.orderNumber,
+      fecha: order.date,
+      estado: order.status || "activa",
+      creadaAt: order.createdAt
+        ? new Date(order.createdAt).toISOString()
+        : null,
+      cerradaAt: order.closedAt
+        ? new Date(order.closedAt).toISOString()
+        : null
+    },
+
+    viajes: (order.travels || []).map(v => ({
+      id: v.id,
+      estado: v.status,
+      origen: v.origen,
+      destino: v.destino,
+      tipoServicio: v.tipoServicio || v.turno,
+      salida: v.departureTime,
+      llegada: v.arrivalTime || "--:--",
+      kmEmpresa: v.kmEmpresa || 0,
+      acoplado: v.acopladoKm > 0 || v.acoplado,
+      acopladoKm: v.acopladoKm || 0,
+      tomeCese: v.tomeCese || false,
+      duracionMinutos: v.duracionMinutos || null,
+      syncStatus: v.syncStatus || "local"
+    })),
+
+    guardias: (order.guards || []).map(g => ({
+      tipo: g.type,
+      inicio: g.inicio,
+      fin: g.fin,
+      horas: g.hours || 0,
+      kmGenerados: (g.hours || 0) * (g.type === "especial" ? 40 : 30)
+    })),
+
+    resumen: {
+      kmViajes: totals.kmViajes,
+      kmAcoplados: totals.kmAcoplados,
+      kmGuardias: totals.kmGuardias,
+      kmTomeCese: totals.kmTomeCese,
+      kmTotal: totals.kmTotal,
+      viaticos: totals.viaticos,
+      montoKm: Math.round(totals.kmTotal * 7.637),
+      montoViaticos: totals.viaticos * 455,
+      montoTotal: Math.round(totals.monto)
+    }
+  };
 
   const json = JSON.stringify(data, null, 2);
-
   const blob = new Blob([json], {type:"application/json"});
 
   const now = new Date();
-const hh = String(now.getHours()).padStart(2,"0");
-const mm = String(now.getMinutes()).padStart(2,"0");
+  const hh = String(now.getHours()).padStart(2,"0");
+  const mm = String(now.getMinutes()).padStart(2,"0");
+  const filename = `jornada_${order.date}_${order.orderNumber}_${hh}${mm}.json`;
+  const file = new File([blob], filename, {type:"application/json"});
 
-const filename = `jornada_${order.date}_${hh}${mm}.json`;
-
-const file = new File(
-  [blob],
-  filename,
-  {type:"application/json"}
-);
-
-  // 📤 compartir si el dispositivo lo permite
-try {
-
-  if(navigator.canShare && navigator.canShare({files:[file]})){
-
-    await navigator.share({
-      title: "Jornada COT Driver",
-      text: "Reporte de jornada",
-      files: [file]
-    });
-
-    return;
-
+  try {
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({
+        title: `Jornada COT — ${order.date}`,
+        text: `Legajo ${driver.legajo || "—"} | ${totals.kmTotal.toFixed(1)} km | $${Math.round(totals.monto)}`,
+        files: [file]
+      });
+      return;
+    }
+  } catch(e){
+    console.log("Share no disponible, usando descarga");
   }
 
-}catch(e){
-  console.log("Share no disponible, usando descarga");
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
-
-    // fallback descarga
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-
-    URL.revokeObjectURL(url);
-  }
 
 // export global
 window.abrirViajeSimple = abrirViajeSimple;
@@ -1060,3 +1090,159 @@ window.actualizarInfoServicio = actualizarInfoServicio;
 window.renderTarjetasPorDia = renderTarjetasPorDia;
 window.mostrarViajeEnCursoUI = mostrarViajeEnCursoUI;
 window.cancelarViajeUI = cancelarViajeUI;
+
+// =====================================================
+// HISTORIAL
+// =====================================================
+
+function abrirHistorial(){
+
+  const orders = getOrders();
+
+  // Extraer meses únicos de las órdenes, ordenados descendente
+  const meses = [...new Set(
+    orders.map(o => (o.date || "").substring(0, 7))
+  )].filter(Boolean).sort((a, b) => b.localeCompare(a));
+
+  const selectMes = document.getElementById("filtroMes");
+  selectMes.innerHTML = "";
+
+  const mesActual = new Date().toISOString().substring(0, 7);
+
+  meses.forEach(m => {
+    const [yyyy, mm] = m.split("-");
+    const fecha = new Date(Number(yyyy), Number(mm) - 1, 1);
+    const label = fecha.toLocaleString("es-UY", { month: "long", year: "numeric" });
+    const opt = document.createElement("option");
+    opt.value = m;
+    opt.textContent = label;
+    if(m === mesActual) opt.selected = true;
+    selectMes.appendChild(opt);
+  });
+
+  actualizarFiltroDia();
+
+  showScreen("historialScreen");
+  renderHistorial();
+}
+
+function actualizarFiltroDia(){
+
+  const selectMes = document.getElementById("filtroMes");
+  const selectDia = document.getElementById("filtroDia");
+  const mes = selectMes.value;
+
+  const orders = getOrders();
+
+  const dias = [...new Set(
+    orders
+      .filter(o => (o.date || "").startsWith(mes))
+      .map(o => o.date)
+  )].filter(Boolean).sort((a, b) => b.localeCompare(a));
+
+  // mantener selección actual si sigue siendo válida
+  const diaActual = selectDia.value;
+
+  selectDia.innerHTML = `<option value="">Todos los días</option>`;
+
+  dias.forEach(d => {
+    const opt = document.createElement("option");
+    opt.value = d;
+    opt.textContent = d;
+    if(d === diaActual) opt.selected = true;
+    selectDia.appendChild(opt);
+  });
+}
+
+function renderHistorial(){
+
+  actualizarFiltroDia();
+
+  const mes = document.getElementById("filtroMes").value;
+  const dia = document.getElementById("filtroDia").value;
+  const container = document.getElementById("historialContainer");
+
+  if(!container) return;
+  container.innerHTML = "";
+
+  const orders = getOrders().filter(o => {
+    if(!o.date) return false;
+    if(dia) return o.date === dia;
+    return o.date.startsWith(mes);
+  });
+
+  if(orders.length === 0){
+    container.innerHTML = `<div style="text-align:center; color:#888; padding:24px;">Sin jornadas para este período</div>`;
+    return;
+  }
+
+  orders.sort((a, b) => b.date.localeCompare(a.date));
+
+  // ── Resumen del período ──
+  let kmTotal = 0, montoTotal = 0, viaticosTotal = 0;
+  orders.forEach(o => {
+    const t = calculateOrderTotals(o);
+    kmTotal    += t.kmTotal;
+    montoTotal += t.monto;
+    viaticosTotal += t.viaticos;
+  });
+
+  const resumen = document.createElement("div");
+  resumen.style.cssText = `
+    background:#1a1a2e; color:white; border-radius:12px;
+    padding:14px 16px; margin-bottom:16px; font-size:14px; line-height:1.8;
+  `;
+  resumen.innerHTML = `
+    <div style="font-weight:bold; font-size:15px; margin-bottom:6px;">
+      📊 ${dia ? "Resumen del día " + dia : "Resumen del período"}
+    </div>
+    🛣 KM: <b>${kmTotal.toFixed(1)} km</b><br>
+    💰 Monto: <b>$ ${Math.round(montoTotal)}</b><br>
+    🍽 Viáticos: <b>${viaticosTotal}</b><br>
+    📅 Jornadas: <b>${orders.length}</b>
+  `;
+  container.appendChild(resumen);
+
+  // ── Tarjetas por jornada ──
+  orders.forEach(order => {
+
+    const totales = calculateOrderTotals(order);
+    const card = document.createElement("div");
+    card.style.cssText = `
+      border:1px solid #ddd; border-radius:10px;
+      padding:12px; margin-bottom:10px; cursor:pointer;
+    `;
+
+    const travels = (order.travels || [])
+      .filter(t => t.status !== "cancelado")
+      .sort((a, b) => (a.departureTime || "").localeCompare(b.departureTime || ""));
+
+    let viajesHTML = travels.map(v =>
+      `<div style="font-size:13px; color:#444; margin-top:4px;">
+        🚍 ${v.origen} → ${v.destino}
+        &nbsp;·&nbsp; ${v.departureTime || "--"} - ${v.arrivalTime || "--"}
+        &nbsp;·&nbsp; ${v.kmAuto ?? v.kmEmpresa ?? 0} km
+      </div>`
+    ).join("");
+
+    card.innerHTML = `
+      <div style="font-weight:bold; margin-bottom:6px;">📅 ${order.date}</div>
+      <div style="font-size:13px; line-height:1.7;">
+        🛣 KM: <b>${totales.kmTotal.toFixed(1)}</b>
+        &nbsp;·&nbsp; 💰 <b>$ ${Math.round(totales.monto)}</b>
+        &nbsp;·&nbsp; 🍽 Viáticos: <b>${totales.viaticos}</b>
+      </div>
+      ${viajesHTML}
+    `;
+
+    card.onclick = () => {
+      showScreen("detalleOrdenScreen");
+      renderDetalleJornadaPorNumero(order.orderNumber);
+    };
+
+    container.appendChild(card);
+  });
+}
+
+window.abrirHistorial = abrirHistorial;
+window.renderHistorial = renderHistorial;

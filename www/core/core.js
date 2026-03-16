@@ -138,7 +138,8 @@ function createOrder(){
     guards: [],
     closed: false,
     tomeCeseGenerado: false,
-    createdAt: ahoraSistema()
+    createdAt: ahoraSistema(),
+    syncStatus: "local"
   };
 
   const all = getOrders();
@@ -185,6 +186,7 @@ function closeActiveOrder(){
   };
 
   // marcar estado final
+  order.syncStatus = "pending";
   order.status = "finalizada";
 
   order.closed = true;
@@ -294,7 +296,8 @@ cortarGuardiaAntesDeViaje(order, departureTime);
   acoplado: acoplado,   // ← FIX correcto
   acopladoKm: calcularAcopladoKm(tipo, destino),
 
-  tomeCese: false
+  tomeCese: false,
+  syncStatus: "local"
 };
 
   if(!order.travels)
@@ -386,7 +389,8 @@ function addTravelProgramado(
   acoplado: acoplado,
   acopladoKm: calcularAcopladoKm(tipo, destino),
 
-  tomeCese: false
+  tomeCese: false,
+  syncStatus: "local"
 };
 
   if(!order.travels)

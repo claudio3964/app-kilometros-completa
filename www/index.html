@@ -196,6 +196,10 @@ input, select{
         🕒 Ver Guardias
       </button>
 
+      <button class="card-btn" onclick="abrirHistorial()">
+        📊 Historial
+      </button>
+
     </div>
 
   </div>
@@ -315,6 +319,32 @@ input, select{
   </div>
 
 </div>
+<!-- ================= HISTORIAL ================= -->
+<div id="historialScreen" class="screen">
+  <div class="screen-header">
+    <button onclick="showScreen('mainScreen')">← Volver</button>
+    <h2>Historial</h2>
+  </div>
+
+  <div style="padding:12px">
+
+    <!-- FILTROS -->
+    <div style="display:flex; gap:8px; margin-bottom:12px;">
+      <select id="filtroMes" onchange="renderHistorial()"
+        style="flex:1; padding:8px; border-radius:8px; border:1px solid #ddd;">
+      </select>
+      <select id="filtroDia" onchange="renderHistorial()"
+        style="flex:1; padding:8px; border-radius:8px; border:1px solid #ddd;">
+        <option value="">Todos los días</option>
+      </select>
+    </div>
+
+    <!-- CONTENIDO -->
+    <div id="historialContainer"></div>
+
+  </div>
+</div>
+
 <!-- ================= GUARDIAS ================= -->
 <div id="nuevaGuardiaScreen" class="screen">
   <button onclick="showScreen('mainScreen')">← Volver</button>
