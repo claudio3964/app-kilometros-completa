@@ -20,6 +20,18 @@ const GUARDIA_COMUN_KM_HORA = 30;
 const GUARDIA_ESPECIAL_KM_HORA = 40;
 const TOME_CESE_KM = 42.5;
 const ACOPLADO_EXTRA_KM = 30;
+
+// ===== REGLA DE ACOPLADOS =====
+function calcularAcopladoKm(tipoServicio, destino){
+  const tipo = (tipoServicio || "").toUpperCase().trim();
+  if(tipo !== "DIRECTO") return 0;
+  const d = (destino || "").toLowerCase().trim();
+  if(d === "chuy") return 0;
+  if(d.includes("la pedrera")) return 37.5;
+  return ACOPLADO_EXTRA_KM;
+}
+window.calcularAcopladoKm = calcularAcopladoKm;
+
 const MONTO_VIATICO = 455;
 
 // ===== RUTAS EMPRESA =====
@@ -280,6 +292,7 @@ cortarGuardiaAntesDeViaje(order, departureTime);
     ahora + (hoursWorked * 60 * 60 * 1000),
 
   acoplado: acoplado,   // ← FIX correcto
+  acopladoKm: calcularAcopladoKm(tipo, destino),
 
   tomeCese: false
 };
@@ -371,6 +384,7 @@ function addTravelProgramado(
     (hoursWorked * 60 * 60 * 1000),
 
   acoplado: acoplado,
+  acopladoKm: calcularAcopladoKm(tipo, destino),
 
   tomeCese: false
 };
@@ -690,7 +704,9 @@ function calculateOrderTotals(o){
 
   kmViajes += Number(km);
 
-  if(t.acoplado)
+  if(t.acopladoKm)
+    kmAcoplados += Number(t.acopladoKm);
+  else if(t.acoplado)
     kmAcoplados += ACOPLADO_EXTRA_KM;
 
 });

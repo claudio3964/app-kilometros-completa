@@ -183,7 +183,7 @@ function renderListaViajes(){
         "—";
 
       const acopladoTexto =
-        v.acoplado ? "SI" : "NO";
+        (v.acopladoKm > 0 || v.acoplado) ? "SI" : "NO";
 
       // =========================
       // TIEMPO TRANSCURRIDO
@@ -501,7 +501,7 @@ function renderDetalleJornadaActiva(){
     const tipoServicio =
       v.tipoServicio || v.turno || "—";
     const acopladoTexto =
-      v.acoplado ? "SI" : "NO";
+      (v.acopladoKm > 0 || v.acoplado) ? "SI" : "NO";
 
     // HORARIOS
     const horaSalida = v.departureTime || "--:--";
@@ -950,7 +950,7 @@ console.log("Entrando a renderDetalleJornadaPorNumero:", orderNumber);
     if(estado === "en_curso")   estadoTexto = "🟢 EN CURSO";
 
     const tipoServicio  = v.tipoServicio || v.turno || "—";
-    const acopladoTexto = v.acoplado ? "SI" : "NO";
+    const acopladoTexto = (v.acopladoKm > 0 || v.acoplado) ? "SI" : "NO";
 
     const item = document.createElement("div");
     item.className = `travel-card ${estado}`;

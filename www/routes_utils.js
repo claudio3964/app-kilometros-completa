@@ -164,8 +164,9 @@ function autoKmPorDestino(terminoDeEscribir = false){
   const texto        = inputDestino.value;
   const origenActual = document.getElementById("originTravels")?.value || "Montevideo";
 
-  // limpiar código cartel mientras el usuario escribe
+  // limpiar código cartel y servicio guardado mientras el usuario escribe
   document.getElementById("codigoCartel").innerHTML = "";
+  window._servicioCartel = null;
 
   if(!texto){
     box.style.display = "none";
@@ -192,7 +193,26 @@ function autoKmPorDestino(terminoDeEscribir = false){
     div.innerText = m.label + (m.km ? ` (${m.km} km)` : "");
 
     div.onclick = () => {
-      inputDestino.value = m.label;
+      // destino LIMPIO — sin el " - servicio"
+      inputDestino.value = m.destino;
+
+      // guardar servicio para actualizarCodigoCartel
+      window._servicioCartel = m.servicio;
+
+      // intentar actualizar el select de servicio
+      const mapaServicio = {
+        "directo":     "DIRECTO",
+        "directisimo": "DIRECTO",
+        "turno":       "TURNO",
+        "expreso":     "EXPRESO"
+      };
+      const selectEl = document.getElementById("numeroServicio");
+      const valSelect = mapaServicio[m.servicio] || "";
+      if(selectEl && valSelect){
+        selectEl.value = valSelect;
+        if(typeof actualizarInfoServicio === "function")
+          actualizarInfoServicio();
+      }
 
       const kmCalculado = buscarKmRuta(origenActual, m.destino) || m.km;
       document.getElementById("kmTravels").value = kmCalculado;
@@ -280,10 +300,10 @@ function actualizarCodigoCartel(){
     return;
   }
 
-  // Parsear "destino - servicio"
+  // Parsear destino y servicio (input limpio usa window._servicioCartel como fallback)
   const sep      = valor.indexOf(" - ");
   const destino  = sep !== -1 ? valor.substring(0, sep)  : valor;
-  const servicio = sep !== -1 ? valor.substring(sep + 3) : null;
+  const servicio = sep !== -1 ? valor.substring(sep + 3) : (window._servicioCartel || null);
 
   const catalogo   = window.ROUTES_SIGNS || {};
   const destinoKey = normalizarTexto(destino);
