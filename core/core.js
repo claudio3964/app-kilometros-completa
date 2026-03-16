@@ -106,9 +106,6 @@ function generateOrderNumber(){
 
 // ===== ACTIVE ORDER =====
 function getActiveOrder(){
-console.log("🔍 getActiveOrder llamado");
-console.log("activeOrder storage:", Storage.get("activeOrder"));
-console.log("orders storage:", getOrders());
   const active = Storage.get("activeOrder");
   if(!active) return null;
 
@@ -141,9 +138,6 @@ function setActiveOrder(o){
 
   } else {
     Storage.remove("activeOrder");
-
-    // 🛑 detener motor
-    detenerMotorViajes();
   }
 }
 function clearActiveOrder(){ Storage.remove("activeOrder"); }
@@ -165,6 +159,7 @@ function createOrder(){
     travels: [],
     guards: [],
     closed: false,
+    tomeCeseGenerado: false,
     createdAt: ahoraSistema()
   };
 
@@ -967,22 +962,6 @@ function finalizarViajeActual() {
   setActiveOrder(order);
 
   return travel;
-}
-// =====================================================
-// COMPATIBILIDAD — mantener función vieja
-// =====================================================
-
-function getTravelEnCurso(){
-
-  const order = getActiveOrder();
-
-  if(!order || !order.travels)
-    return null;
-
-  return order.travels.find(
-    t => t.status === "en_curso"
-  ) || null;
-
 }
 function existeViajeEnCurso(){
 
