@@ -299,14 +299,25 @@ function actualizarCodigoCartel(){
     return;
   }
 
+  const formatearServicios = (servicios) =>
+    Object.entries(servicios)
+      .map(([srv, cod]) => `<b>${cod}</b> <span style="color:#666">${srv}</span>`)
+      .join(" &nbsp;|&nbsp; ");
+
   if(!tipo){
     div.innerHTML =
-      "Marcopolo: " + codigos.marcopolo +
-      " | Neobus: " + codigos.neobus;
+      "<div>Marcopolo: " + formatearServicios(codigos.marcopolo || {}) + "</div>" +
+      "<div style='margin-top:4px'>Neobus: " + formatearServicios(codigos.neobus || {}) + "</div>";
     return;
   }
 
-  div.innerHTML = "Código cartel: " + codigos[tipo];
+  const servicios = codigos[tipo];
+  if(!servicios){
+    div.innerHTML = "Sin código disponible para " + tipo;
+    return;
+  }
+
+  div.innerHTML = formatearServicios(servicios);
 }
 
 // =====================================================
