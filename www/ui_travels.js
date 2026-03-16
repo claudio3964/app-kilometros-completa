@@ -90,7 +90,7 @@ function renderListaViajes(){
     card.className = "order-card";
 
     card.onclick = () => {
-  showScreen('detalleJornadaScreen');
+  showScreen('detalleOrdenScreen');
   renderDetalleJornadaPorNumero(order.orderNumber);
 };
 
@@ -915,78 +915,54 @@ console.log("Entrando a renderDetalleJornadaPorNumero:", orderNumber);
 
   if(!order) return;
 
-  const container =
-    document.getElementById("cardsViajesContainer");
+  const container = document.getElementById("detalleOrdenContainer");
 
-  const resumenBox =
-    document.getElementById("resumenDia");
-
-  if(!container || !resumenBox) return;
+  if(!container) return;
 
   container.innerHTML = "";
 
-  // 🔹 Resumen usando función actual
-  const totales =
-    calculateOrderTotals(order);
+  // Resumen de la orden
+  const totales = calculateOrderTotals(order);
 
-  resumenBox.innerHTML = `
-    <div class="order-summary">
-      <b>Fecha:</b> ${order.date}<br>
-      <b>Base:</b> ${order.baseInicio}<br>
-      <b>KM:</b> ${totales.kmTotal.toFixed(1)} km<br>
-      <b>Viáticos:</b> ${totales.viaticos}<br>
-      <b>Total:</b> $ ${Math.round(totales.monto)}
-    </div>
+  const resumenEl = document.createElement("div");
+  resumenEl.className = "order-summary";
+  resumenEl.innerHTML = `
+    <b>Fecha:</b> ${order.date}<br>
+    <b>Base:</b> ${order.baseInicio}<br>
+    <b>KM:</b> ${totales.kmTotal.toFixed(1)} km<br>
+    <b>Viáticos:</b> ${totales.viaticos}<br>
+    <b>Total:</b> $ ${Math.round(totales.monto)}
   `;
+  container.appendChild(resumenEl);
 
-  // 🔹 Viajes de esa orden
-  const travels = order.travels || [];
-
-  travels.sort((a,b)=>
-    (a.departureTime||"").localeCompare(b.departureTime||"")
+  // Viajes de la orden
+  const travels = (order.travels || []).slice().sort(
+    (a,b) => (a.departureTime||"").localeCompare(b.departureTime||"")
   );
 
   travels.forEach(v => {
 
-    const km =
-      v.kmAuto ?? v.kmEmpresa ?? 0;
-
-    const estado = v.status || "finalizado";
-
-    const item =
-      document.createElement("div");
-
-    item.className =
-      `travel-card ${estado}`;
+    const km      = v.kmAuto ?? v.kmEmpresa ?? 0;
+    const estado  = v.status || "finalizado";
 
     let estadoTexto = "⚫ FINALIZADO";
-    if(estado==="programado") estadoTexto="🟡 PROGRAMADO";
-    if(estado==="en_curso") estadoTexto="🟢 EN CURSO";
+    if(estado === "programado") estadoTexto = "🟡 PROGRAMADO";
+    if(estado === "en_curso")   estadoTexto = "🟢 EN CURSO";
 
-    const tipoServicio =
-      v.tipoServicio || v.turno || "—";
+    const tipoServicio  = v.tipoServicio || v.turno || "—";
+    const acopladoTexto = v.acoplado ? "SI" : "NO";
 
-    const acopladoTexto =
-      v.acoplado ? "SI" : "NO";
-
+    const item = document.createElement("div");
+    item.className = `travel-card ${estado}`;
     item.innerHTML = `
-  <div class="travel-status ${estado}">
-    ${estadoTexto}
-  </div>
-
-  <div><b>N° Orden:</b> ${order.orderNumber}</div>
-
-  <div>🚍 <b>${v.origen}</b> → <b>${v.destino}</b></div>
-
-  <div>🚦 Servicio: <b>${tipoServicio}</b></div>
-  <div>🔗 Acoplado: <b>${acopladoTexto}</b></div>
-
-  <div>🕒 Salida: <b>${v.departureTime}</b></div>
-  <div>🕒 Llegada: <b>${v.arrivalTime || "--:--"}</b></div>
-
-  <div>📏 KM generados: <b>${km}</b></div>
-`;
-
+      <div class="travel-status ${estado}">${estadoTexto}</div>
+      <div>🚍 <b>${v.origen}</b> → <b>${v.destino}</b></div>
+      <div>🚦 Servicio: <b>${tipoServicio}</b></div>
+      <div>🔗 Acoplado: <b>${acopladoTexto}</b></div>
+      <div>🕒 Salida: <b>${v.departureTime}</b></div>
+      <div>🕒 Llegada: <b>${v.arrivalTime || "--:--"}</b></div>
+      <div>📏 KM generados: <b>${km}</b></div>
+    `;
 
     container.appendChild(item);
   });
