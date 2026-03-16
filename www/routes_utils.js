@@ -219,13 +219,8 @@ function autoKmPorDestino(terminoDeEscribir = false){
 
       mostrarHorariosOficiales(origenActual, destinoFinal);
 
-
-// ---- catálogo de carteles ----
-const destino = document.getElementById("destinationTravels").value;
-const codigos = obtenerCodigosRuta(destino);
-
-if(codigos){
-  console.log("Carteles disponibles:", codigos);
+    }
+  }
 }
 
 // =====================================================

@@ -727,7 +727,7 @@ tiempoHTML = `
       const velocidadFallback = 60;
 
       duracionEstimadaMin =
-`;  Math.floor(
+        Math.floor(
           (travel.kmEmpresa || 0)
           / velocidadFallback * 60
         );
