@@ -264,6 +264,18 @@ function mostrarHorariosOficiales(origen, destino){
     box.appendChild(btn);
   });
 }
+function obtenerCodigosRuta(destino){
+  if(!destino) return null;
+  const key = normalizarTexto(destino);
+  const catalogo = window.ROUTES_SIGNS || {};
+  for(const ruta in catalogo){
+    if(normalizarTexto(ruta) === key){
+      return catalogo[ruta];
+    }
+  }
+  return null;
+}
+
 function actualizarCodigoCartel(){
 
   const destino =
@@ -302,3 +314,4 @@ window.buscarKmRuta = buscarKmRuta;
 window.buscarRutaCoincidente = buscarRutaCoincidente;
 window.buscarMultiplesRutas = buscarMultiplesRutas;
 window.mostrarHorariosOficiales = mostrarHorariosOficiales;
+window.obtenerCodigosRuta = obtenerCodigosRuta;
