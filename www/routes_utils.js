@@ -164,6 +164,9 @@ function autoKmPorDestino(terminoDeEscribir = false){
   const texto        = inputDestino.value;
   const origenActual = document.getElementById("originTravels")?.value || "Montevideo";
 
+  // limpiar código cartel mientras el usuario escribe
+  document.getElementById("codigoCartel").innerHTML = "";
+
   if(!texto){
     box.style.display = "none";
     box.innerHTML = "";
