@@ -268,11 +268,20 @@ function obtenerCodigosRuta(destino){
   if(!destino) return null;
   const key = normalizarTexto(destino);
   const catalogo = window.ROUTES_SIGNS || {};
+
+  // 1) coincidencia exacta
   for(const ruta in catalogo){
-    if(normalizarTexto(ruta) === key){
-      return catalogo[ruta];
+    if(normalizarTexto(ruta) === key) return catalogo[ruta];
+  }
+
+  // 2) destino base antes del " x " (ej: "punta del este x piriapolis" → "punta del este")
+  const base = key.split(" x ")[0].trim();
+  if(base !== key){
+    for(const ruta in catalogo){
+      if(normalizarTexto(ruta) === base) return catalogo[ruta];
     }
   }
+
   return null;
 }
 
