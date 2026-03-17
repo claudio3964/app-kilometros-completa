@@ -223,7 +223,7 @@ input, select{
       <select id="originTravels"></select>
 
       <label>Destino</label>
-      <input id="destinationTravels" oninput="autoKmPorDestino(false)">
+      <input id="destinationTravels" oninput="autoKmPorDestino()">
 
       <!-- SUGERENCIAS AUTOCOMPLETE -->
       <div id="sugerenciasRutas"
@@ -248,7 +248,7 @@ input, select{
       </div>
 
       <label>Servicio</label>
-      <select id="numeroServicio" onchange="actualizarInfoServicio()">
+      <select id="numeroServicio" onchange="actualizarInfoServicio(); actualizarCodigoCartel()">
         <option value="">Elegí servicio...</option>
         <option value="TURNO">Turno</option>
         <option value="SEMI">Semi-directo</option>

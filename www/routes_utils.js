@@ -127,31 +127,35 @@ function buscarMultiplesRutas(textoUsuario){
 // AUTOCOMPLETADO KM
 // =====================================================
 
-function buscarSugerenciasCarteles(texto){
+function buscarSugerenciasCarteles(texto) {
   const buscado = normalizarTexto(texto);
-  const catalogo = window.ROUTES_SIGNS || {};
   const resultados = [];
 
-  for(const destino in catalogo){
-    if(destino.startsWith("_")) continue;
+  for (const ruta in ROUTES_CATALOG) {
+    const km = ROUTES_CATALOG[ruta];
+    const rutaNorm = normalizarTexto(ruta);
 
-    const coches = catalogo[destino];
-    const servicios = new Set([
-      ...Object.keys(coches.marcopolo || {}),
-      ...Object.keys(coches.neobus   || {})
-    ]);
+    // Extraer solo el destino (después del →)
+    const partes = rutaNorm.split("→");
+    if (partes.length < 2) continue;
 
-    for(const servicio of servicios){
-      const label = destino + " - " + servicio;
-      if(normalizarTexto(label).includes(buscado)){
-        resultados.push({
-          label,
-          destino,
-          servicio,
-          km: buscarKmRuta("Montevideo", destino) || 0
-        });
-      }
-    }
+    const destinoCompleto = partes[1].trim(); // ej: "punta del este x piriapolis"
+
+    if (!destinoCompleto.includes(buscado)) continue;
+
+    // Separar destino base y variante
+    const xIdx = destinoCompleto.indexOf(" x ");
+    const destinoBase = xIdx !== -1 ? destinoCompleto.substring(0, xIdx).trim() : destinoCompleto;
+    const variante    = xIdx !== -1 ? destinoCompleto.substring(xIdx + 3).trim() : null;
+
+    const label = variante ? destinoBase + " - x " + variante : destinoBase;
+
+    resultados.push({
+      label,
+      destino: destinoBase,
+      variante,
+      km
+    });
   }
 
   return resultados;
@@ -167,6 +171,7 @@ function autoKmPorDestino(terminoDeEscribir = false){
   // limpiar código cartel y servicio guardado mientras el usuario escribe
   document.getElementById("codigoCartel").innerHTML = "";
   window._servicioCartel = null;
+  window._destinoSeleccionado = false;
 
   if(!texto){
     box.style.display = "none";
@@ -194,7 +199,7 @@ function autoKmPorDestino(terminoDeEscribir = false){
 
     div.onclick = () => {
       // destino LIMPIO — sin el " - servicio"
-      inputDestino.value = m.destino;
+      inputDestino.value = m.variante ? m.destino + " x " + m.variante : m.destino;
 
       // guardar servicio para actualizarCodigoCartel
       window._servicioCartel = m.servicio;
@@ -214,8 +219,8 @@ function autoKmPorDestino(terminoDeEscribir = false){
           actualizarInfoServicio();
       }
 
-      const kmCalculado = buscarKmRuta(origenActual, m.destino) || m.km;
-      document.getElementById("kmTravels").value = kmCalculado;
+      document.getElementById("kmTravels").value = m.km;
+      window._destinoSeleccionado = true;
 
       box.style.display = "none";
 
@@ -291,58 +296,42 @@ function obtenerCodigosRuta(destino){
 
 function actualizarCodigoCartel(){
 
-  const valor = document.getElementById("destinationTravels").value.trim();
-  const tipo  = document.getElementById("tipoCoche").value;
-  const div   = document.getElementById("codigoCartel");
+  const valor   = document.getElementById("destinationTravels").value.trim();
+  const div     = document.getElementById("codigoCartel");
+  const servicio = document.getElementById("numeroServicio")?.value;
+
+  if (!window._destinoSeleccionado || !servicio) {
+    div.innerHTML = "";
+    return;
+  }
 
   if(!valor){
     div.innerHTML = "";
     return;
   }
 
-  // Parsear destino y servicio (input limpio usa window._servicioCartel como fallback)
-  const sep      = valor.indexOf(" - ");
-  const destino  = sep !== -1 ? valor.substring(0, sep)  : valor;
-  const servicio = sep !== -1 ? valor.substring(sep + 3) : (window._servicioCartel || null);
+  const destinoBase = valor.split(" x ")[0].trim();
 
-  const catalogo   = window.ROUTES_SIGNS || {};
-  const destinoKey = normalizarTexto(destino);
+  const catalogo = window.ROUTES_SIGNS || {};
+  const destinoKey = normalizarTexto(destinoBase);
   let entrada = null;
-  for(const ruta in catalogo){
-    if(normalizarTexto(ruta) === destinoKey){ entrada = catalogo[ruta]; break; }
+  for (const ruta in catalogo) {
+    if (normalizarTexto(ruta) === destinoKey) { entrada = catalogo[ruta]; break; }
   }
 
-  if(!entrada){
-    div.innerHTML = "Sin código disponible";
-    return;
-  }
+  if (!entrada) { div.innerHTML = "Sin código disponible"; return; }
 
-  // Con servicio seleccionado: mostrar código limpio
-  if(servicio){
-    if(tipo){
-      const codigo = (entrada[tipo] || {})[servicio];
-      div.innerHTML = codigo || "-";
-    } else {
-      const mp = (entrada.marcopolo || {})[servicio];
-      const nb = (entrada.neobus   || {})[servicio];
-      div.innerHTML = [mp, nb].filter(Boolean).join(" / ") || "-";
-    }
-    return;
-  }
+  const tipo = document.getElementById("tipoCoche")?.value;
+  const servicioNorm = normalizarTexto(servicio);
 
-  // Sin servicio: mostrar todos los códigos del tipo seleccionado
-  const formatear = (obj) =>
-    Object.entries(obj).map(([srv, cod]) =>
-      `<b>${cod}</b> <span style="color:#666">${srv}</span>`
-    ).join(" &nbsp;|&nbsp; ");
-
-  if(tipo){
-    const servicios = entrada[tipo];
-    div.innerHTML = servicios ? formatear(servicios) : "Sin código disponible para " + tipo;
+  if (tipo) {
+    const codigo = (entrada[tipo] || {})[servicioNorm];
+    div.innerHTML = codigo || "-";
   } else {
-    div.innerHTML =
-      "<div>Marcopolo: " + formatear(entrada.marcopolo || {}) + "</div>" +
-      "<div style='margin-top:4px'>Neobus: " + formatear(entrada.neobus || {}) + "</div>";
+    const mp = (entrada.marcopolo || {})[servicioNorm];
+    const nb = (entrada.neobus || {})[servicioNorm];
+    div.innerHTML = [mp && `<b>${mp}</b> Marcopolo`, nb && `<b>${nb}</b> Neobus`]
+      .filter(Boolean).join(" &nbsp;|&nbsp; ") || "-";
   }
 }
 

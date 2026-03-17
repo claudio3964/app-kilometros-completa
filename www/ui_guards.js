@@ -60,6 +60,19 @@ function addGuardUI(event){
 
   if (!ultima.guards) ultima.guards = [];
 
+  // 1. VALIDAR SOLAPAMIENTO
+  const solapada = ultima.guards.find(
+    g => g.dia === dia && g.inicio === inicio && g.fin === fin
+  );
+  if(solapada){
+    alert("Ya existe una guardia en ese horario");
+    return;
+  }
+
+  // 2. CALCULAR km y viatico
+  const kmGuardia = horas * (tipo === "especial" ? 40 : 30);
+  const viatico   = horas >= 9;
+
   ultima.guards.push({
     type: tipo,
     hours: horas,
@@ -67,6 +80,8 @@ function addGuardUI(event){
     dia: dia,
     inicio: inicio,
     fin: fin,
+    kmGuardia,
+    viatico,
     createdAt: Date.now()
   });
 
@@ -95,46 +110,43 @@ function addGuardUI(event){
 // =====================================================
 
 function renderListaGuardias(){
-  const tbody =
-    document.getElementById("listaGuardiasContainer");
+  const container = document.getElementById("cardsGuardiasContainer");
+  container.innerHTML = "";
 
-  tbody.innerHTML = "";
-
-  const orders = getOrders(); // CORE
+  const orders = getOrders();
   if(!orders || orders.length === 0) return;
 
-  const o = orders[orders.length - 1]; // última jornada
-  if(!o.guards || o.guards.length === 0) return;
-
-  o.guards.forEach((g,i) => {
-
-    const tipoTexto =
-      g.type === "especial" ? "Especial" : "Común";
-
-    // 👉 Cálculo de KM por guardia (sin tocar el core)
-    const kmGuardia =
-      g.hours * (g.type === "especial" ? 40 : 30);
-
-    // Formateo de horario (si existen inicio/fin)
-    const horario =
-      g.inicio && g.fin
-        ? `${g.inicio} – ${g.fin}`
-        : new Date(g.createdAt).toLocaleTimeString();
-
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${i+1}</td>
-      <td>${g.dia || new Date(g.createdAt).toLocaleDateString()}</td>
-      <td>${horario}</td>
-      <td>${g.hours.toFixed(2)}</td>
-      <td>${kmGuardia.toFixed(0)} km</td>
-      <td>${tipoTexto}</td>
-      <td>${g.descripcion || "—"}</td>
-    `;
-
-    tbody.appendChild(tr);
+  // Agrupar guardias por día
+  const porDia = {};
+  orders.forEach(o => {
+    if(!o.guards) return;
+    o.guards.forEach(g => {
+      const dia = g.dia || new Date(g.createdAt).toLocaleDateString();
+      if(!porDia[dia]) porDia[dia] = [];
+      porDia[dia].push(g);
+    });
   });
+
+  for(const dia in porDia){
+    const card = document.createElement("div");
+    card.style.cssText = "border:1px solid #ddd; border-radius:8px; padding:16px; margin:12px 0;";
+
+    let html = `<p><strong>📅 ${dia}</strong></p><p><strong>Guardias:</strong></p>`;
+
+    porDia[dia].forEach(g => {
+      const kmGuardia = g.hours * (g.type === "especial" ? 40 : 30);
+      const viatico = g.viatico ? "✅ Viático" : "";
+      const horario = g.inicio && g.fin ? `${g.inicio} – ${g.fin}` : "—";
+      const tipo = g.type === "especial" ? "especial" : "comun";
+
+      html += `${horario} | ${g.hours.toFixed(1)} h | ${g.kmGuardia} km | ${tipo}`;
+      if(g.viatico) html += ` | ✅ Viático`;
+      html += `<br>`;
+    });
+
+    card.innerHTML = html;
+    container.appendChild(card);
+  }
 }
 // =====================================================
 // CONTROL VISUAL DE DESCRIPCIÓN DE GUARDIA

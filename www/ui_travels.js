@@ -225,9 +225,12 @@ if(
  v.arrivalTime
 ){
 
+ const horaReal = v.llegadaReal
+   ? new Date(v.llegadaReal).toLocaleTimeString("es-UY", {hour:"2-digit", minute:"2-digit"})
+   : v.arrivalTime;
  tiempoHTML = `
  <div class="travel-time">
- 🏁 Llegada: ${v.arrivalTime}
+ 🏁 Llegada: ${horaReal}
  </div>
  `;
 
@@ -960,7 +963,7 @@ console.log("Entrando a renderDetalleJornadaPorNumero:", orderNumber);
       <div>🚦 Servicio: <b>${tipoServicio}</b></div>
       <div>🔗 Acoplado: <b>${acopladoTexto}</b></div>
       <div>🕒 Salida: <b>${v.departureTime}</b></div>
-      <div>🕒 Llegada: <b>${v.arrivalTime || "--:--"}</b></div>
+      <div>🕒 Llegada: <b>${v.llegadaReal ? new Date(v.llegadaReal).toLocaleTimeString("es-UY", {hour:"2-digit", minute:"2-digit"}) : (v.arrivalTime || "--:--")}</b></div>
       <div>📏 KM generados: <b>${km}</b></div>
     `;
 

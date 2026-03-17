@@ -816,15 +816,14 @@ function finalizarViajeActual(){
   // FIJAR HORA DE LLEGADA DECLARADA
   // ====================================
 
-  if(!travel.arrivalTime){
+  const ahora = new Date();
+  const hh = String(ahora.getHours()).padStart(2,"0");
+  const mm = String(ahora.getMinutes()).padStart(2,"0");
+  const horaReal = `${hh}:${mm}`;
 
-    const ahora = new Date();
+  travel.arrivalTimeReal = horaReal;
 
-    const hh = String(ahora.getHours()).padStart(2,"0");
-    const mm = String(ahora.getMinutes()).padStart(2,"0");
-
-    travel.arrivalTime = `${hh}:${mm}`;
-  }
+  if(!travel.arrivalTime) travel.arrivalTime = horaReal;
 
   // ====================================
   // CALCULAR DURACIÓN DESDE HORAS DECLARADAS
@@ -846,6 +845,12 @@ function finalizarViajeActual(){
   }
 
   travel.duracionMinutos = duracion;
+
+  if(travel.llegadaReal && travel.inicioReal){
+    travel.duracionMinutos = Math.round(
+      (travel.llegadaReal - travel.inicioReal) / 60000
+    );
+  }
 
   // ====================================
   // CERRAR VIAJE
