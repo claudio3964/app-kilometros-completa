@@ -271,6 +271,12 @@ if(typeof routes !== "undefined"){
 // agregar base por si no aparece
 ciudades.add(driver.base || "Montevideo");
 
+// Agregar todas las puntas disponibles desde ROUTES_CATALOG
+const puntas = Object.keys(window.ROUTES_CATALOG || {});
+puntas.forEach(p => {
+  ciudades.add(p.charAt(0).toUpperCase() + p.slice(1));
+});
+
 const bases = [...ciudades].sort();
 
 bases.push("Otro");

@@ -268,6 +268,14 @@ if(typeof routes !== "undefined"){
   });
 }
 
+// Puntas fijas — fuente de verdad
+  const puntasFijas = [
+    'Montevideo','Punta del Este','Piriápolis',
+    'Punta Colorada','Punta Negra','Rocha',
+    'Chuy','La Pedrera','La Paloma','Aguas Dulces'
+  ];
+  puntasFijas.forEach(p => ciudades.add(p));
+
 // agregar base por si no aparece
 ciudades.add(driver.base || "Montevideo");
 

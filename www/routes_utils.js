@@ -131,31 +131,35 @@ function buscarSugerenciasCarteles(texto) {
   const buscado = normalizarTexto(texto);
   const resultados = [];
 
+  const origenActual = normalizarTexto(
+    document.getElementById("originTravels")?.value || "montevideo"
+  );
+
   for (const ruta in ROUTES_CATALOG) {
     const km = ROUTES_CATALOG[ruta];
     const rutaNorm = normalizarTexto(ruta);
-
-    // Extraer solo el destino (después del →)
     const partes = rutaNorm.split("→");
     if (partes.length < 2) continue;
 
-    const destinoCompleto = partes[1].trim(); // ej: "punta del este x piriapolis"
-
-    if (!destinoCompleto.includes(buscado)) continue;
+    const origenRuta  = partes[0].trim();
+    const destinoCompleto = partes[1].trim();
 
     // Separar destino base y variante
     const xIdx = destinoCompleto.indexOf(" x ");
     const destinoBase = xIdx !== -1 ? destinoCompleto.substring(0, xIdx).trim() : destinoCompleto;
     const variante    = xIdx !== -1 ? destinoCompleto.substring(xIdx + 3).trim() : null;
 
-    const label = variante ? destinoBase + " - x " + variante : destinoBase;
+    // RUTA DIRECTA: origen coincide con origen seleccionado
+    if (origenRuta === origenActual && destinoCompleto.includes(buscado)) {
+      const label = variante ? destinoBase + " - x " + variante : destinoBase;
+      resultados.push({ label, destino: destinoBase, variante, km });
+    }
 
-    resultados.push({
-      label,
-      destino: destinoBase,
-      variante,
-      km
-    });
+    // RUTA INVERSA: destino base coincide con origen seleccionado
+    // → ofrecer el origen de esa ruta como destino disponible
+    if (destinoBase === origenActual && origenRuta.includes(buscado)) {
+      resultados.push({ label: origenRuta, destino: origenRuta, variante: null, km });
+    }
   }
 
   return resultados;
