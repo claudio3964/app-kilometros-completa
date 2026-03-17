@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.driverlog.app',
-  appName: 'DriverLog',
+  appName: 'Gestión de Viajes',
   webDir: 'www'
 };
 
