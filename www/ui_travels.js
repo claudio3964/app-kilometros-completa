@@ -411,6 +411,9 @@ function addTravelUI(event){
 
   let ok;
 
+  // Cortar guardia en curso 15 min antes del viaje
+  cortarGuardiaAntesDeViaje(order, departureTime);
+
   if(salidaDate > ahora){
 
     // VIAJE PROGRAMADO

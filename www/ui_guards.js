@@ -22,8 +22,8 @@ function addGuardUI(event){
     return;
   }
 
-  if(!inicio || !fin){
-    alert("Ingresá hora inicio y fin");
+  if(!inicio){
+    alert("Ingresá hora de inicio");
     return;
   }
 
@@ -32,14 +32,18 @@ function addGuardUI(event){
     return;
   }
 
-  const [hI, mI] = inicio.split(":").map(Number);
-  const [hF, mF] = fin.split(":").map(Number);
+  let horas = 0;
+  let status = "en_curso";
 
-  let horas = (hF + mF/60) - (hI + mI/60);
-
-  if(horas <= 0){
-    alert("La hora fin debe ser mayor que la de inicio");
-    return;
+  if(fin){
+    const [hI, mI] = inicio.split(":").map(Number);
+    const [hF, mF] = fin.split(":").map(Number);
+    horas = (hF + mF/60) - (hI + mI/60);
+    if(horas <= 0){
+      alert("La hora fin debe ser mayor que la de inicio");
+      return;
+    }
+    status = "finalizada";
   }
 
   let descripcion = "";
@@ -72,19 +76,16 @@ function addGuardUI(event){
     return;
   }
 
-  // 2. CALCULAR km y viatico
-  const kmGuardia = horas * (tipo === "especial" ? 40 : 30);
-  const viatico   = horas >= 9;
-
   order.guards.push({
     type: tipo,
     hours: horas,
+    status: status,
     descripcion: descripcion,
     dia: dia,
     inicio: inicio,
-    fin: fin,
-    kmGuardia,
-    viatico,
+    fin: fin || null,
+    kmGuardia: status === "finalizada" ? horas * (tipo === "especial" ? 40 : 30) : 0,
+    viatico: status === "finalizada" ? horas >= 9 : false,
     createdAt: Date.now()
   });
 
@@ -145,9 +146,32 @@ function renderListaGuardias(){
       const horario = g.inicio && g.fin ? `${g.inicio} – ${g.fin}` : "—";
       const tipo = g.type === "especial" ? "especial" : "comun";
 
-      html += `${horario} | ${g.hours.toFixed(1)} h | ${g.kmGuardia} km | ${tipo}`;
-      if(g.viatico) html += ` | ✅ Viático`;
-      html += `<br>`;
+      if(g.status === "en_curso"){
+        const ahora = new Date();
+        const [hI, mI] = g.inicio.split(":").map(Number);
+        const inicio = new Date();
+        inicio.setHours(hI, mI, 0, 0);
+        const transcurrido = Math.floor((ahora - inicio) / 60000);
+        const hTrans = Math.floor(transcurrido / 60);
+        const mTrans = transcurrido % 60;
+
+        html += `
+          <div style="background:#fff3e0; border:1px solid #ffb300; border-radius:8px; padding:10px; margin:6px 0;">
+            🟡 EN CURSO desde ${g.inicio}<br>
+            ⏱ ${hTrans}h ${mTrans}m transcurridos<br>
+            Tipo: ${tipo}
+            <br><br>
+            <button onclick="finalizarGuardiaUI('${g.createdAt}')"
+              style="background:#c62828; color:white; border:none; border-radius:6px; padding:8px 16px; font-size:14px; cursor:pointer;">
+              Finalizar Guardia
+            </button>
+          </div>
+        `;
+      } else {
+        html += `${horario} | ${g.hours.toFixed(1)} h | ${g.kmGuardia} km | ${tipo}`;
+        if(g.viatico) html += ` | ✅ Viático`;
+        html += `<br>`;
+      }
     });
 
     card.innerHTML = html;
@@ -249,6 +273,43 @@ function renderListaGuardias(){
   renderTarjetasGuardiasPorDia();
 
 }
+
+function finalizarGuardiaUI(createdAt){
+  const order = getActiveOrder();
+  if(!order) return;
+
+  const g = order.guards.find(g => String(g.createdAt) === String(createdAt));
+  if(!g){ alert("Guardia no encontrada"); return; }
+
+  const ahora = new Date();
+  const fin = ahora.toTimeString().substring(0,5);
+
+  const [hI, mI] = g.inicio.split(":").map(Number);
+  const [hF, mF] = fin.split(":").map(Number);
+  const horas = (hF + mF/60) - (hI + mI/60);
+
+  if(horas <= 0){ alert("Error en horario"); return; }
+
+  g.fin = fin;
+  g.hours = horas;
+  g.status = "finalizada";
+  g.kmGuardia = horas * (g.type === "especial" ? 40 : 30);
+  g.viatico = horas >= 9;
+
+  const orders = getOrders();
+  saveOrders(orders.map(o =>
+    o.orderNumber === order.orderNumber ? order : o
+  ));
+  setActiveOrder(order);
+
+  renderResumenDia();
+  renderListaGuardias();
+  renderBotonCerrarJornada?.();
+
+  alert(`Guardia finalizada: ${g.inicio} – ${fin} | ${horas.toFixed(2)}h`);
+}
+
+window.finalizarGuardiaUI = finalizarGuardiaUI;
 
 // =====================================================
 // EXPORTS
