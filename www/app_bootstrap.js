@@ -168,8 +168,11 @@ document.addEventListener("DOMContentLoaded", () => {
       new Date().toISOString().split("T")[0];
   }
 
-  renderListaViajes();
-  renderResumenDia();
+  if(typeof renderListaViajes === "function")
+    renderListaViajes();
+
+  if(typeof renderResumenDia === "function")
+    renderResumenDia();
 
   if(typeof renderBotonCerrarJornada === "function")
   renderBotonCerrarJornada();
@@ -196,6 +199,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if(typeof mostrarViajeEnCursoUI === "function")
           mostrarViajeEnCursoUI();
+
+        if(typeof renderBotonCerrarJornada === "function")
+          renderBotonCerrarJornada();
 
       }, 15000);
 

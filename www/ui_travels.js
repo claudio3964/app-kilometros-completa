@@ -852,6 +852,7 @@ function finalizarViajeUI(){
 
   mostrarViajeEnCursoUI();
   renderResumenDia?.();
+  renderBotonCerrarJornada?.();
 }
 
 // =========================

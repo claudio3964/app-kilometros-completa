@@ -199,7 +199,6 @@ function renderResumenDia(){
     Total $: <b>${Math.round(t.monto || 0)}</b>
   `;
 }
-  //----Boton cerrar viaje---------
 function renderBotonCerrarJornada(){
 
   const cont = document.getElementById("bloqueCerrarJornada");
@@ -207,13 +206,11 @@ function renderBotonCerrarJornada(){
 
   const order = getActiveOrder();
 
-  // ❌ No hay jornada activa
   if(!order){
     cont.innerHTML = "";
     return;
   }
 
-  // 🔎 Validaciones operativas
   const hayViajeEnCurso =
     order.travels?.some(t => t.status === "en_curso");
 
@@ -223,17 +220,40 @@ function renderBotonCerrarJornada(){
   const hayGuardiaActiva =
     order.guards?.some(g => g.status === "activa");
 
-  // ❌ Si hay actividad activa o pendiente, no permitir cerrar
   if(hayViajeEnCurso || hayViajeProgramado || hayGuardiaActiva){
     cont.innerHTML = "";
     return;
   }
 
-  // ✅ Jornada limpia → permitir cerrar
+  const tieneActividad =
+    (order.travels?.length > 0) ||
+    (order.guards?.length > 0);
+
+  if(!tieneActividad){
+    cont.innerHTML = "";
+    return;
+  }
+
+  const NUEVE_HORAS = 9 * 60 * 60 * 1000;
+  const tiempoTranscurrido = Date.now() - new Date(order.createdAt).getTime();
+
+  if(tiempoTranscurrido < NUEVE_HORAS){
+    cont.innerHTML = "";
+    return;
+  }
+
   cont.innerHTML = `
     <button id="btnCerrarJornadaManual"
-      class="card-btn"
-      style="background:#c62828;color:white;">
+      style="
+        background:#c62828;
+        color:white;
+        border:none;
+        border-radius:8px;
+        padding:6px 12px;
+        font-size:13px;
+        font-weight:bold;
+        cursor:pointer;
+      ">
       Finalizar Jornada
     </button>
   `;
@@ -243,27 +263,22 @@ function renderBotonCerrarJornada(){
     .addEventListener("click", async function(){
 
       const confirmar = confirm(
-        "¿Seguro que desea finalizar la jornada?"
+        "¿Confirma que desea finalizar la jornada?"
       );
 
       if(!confirmar) return;
 
       const order = getActiveOrder();
-
-      // 🔥 Generar PDF antes de cerrar
-      if(order){
-        await generarPDFJornada(order);
-      }
-
       const resultado = closeActiveOrder();
 
       if(resultado){
-        alert("Jornada finalizada correctamente.");
+        await exportarJornada(resultado);
+        renderBotonCerrarJornada();
+        renderOrdenActivaUI?.();
         showScreen("mainScreen");
       }
 
     });
-
 }
 
 function renderResumenGeneral(){
