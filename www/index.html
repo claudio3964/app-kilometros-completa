@@ -152,6 +152,13 @@ input, select{
       <option value="Otro">Otro</option>
     </select>
 
+    <label>Tipo de chofer</label>
+    <select id="regTipo">
+      <option value="">Elegí tipo...</option>
+      <option value="efectivo">Efectivo</option>
+      <option value="contratado">Contratado</option>
+    </select>
+
     <button onclick="registrarChofer()">Guardar y continuar</button>
   </div>
 </div>
@@ -451,7 +458,9 @@ function registrarChofer(){
     return;
   }
 
-  initDriverProfile({legajo, nombre, base});
+  const tipo = document.getElementById('regTipo').value;
+  if(!tipo){ alert("Elegí tipo de chofer"); return; }
+  initDriverProfile({legajo, nombre, base, tipo});
   document.getElementById('baseChoferBadge').innerText = "Base: " + base;
 
   const sel = document.getElementById('originTravels');
