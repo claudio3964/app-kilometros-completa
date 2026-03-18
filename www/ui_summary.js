@@ -341,6 +341,34 @@ function renderResumenGeneral(){
 
   });
 
+  // Boton limpiar storage (solo desarrollo)
+  const btnLimpiar = document.createElement("div");
+  btnLimpiar.style.cssText = "margin-top:30px; text-align:center;";
+  btnLimpiar.innerHTML = `
+    <button id="btnLimpiarStorage" style="
+      background:none;
+      border:1px solid #ccc;
+      border-radius:8px;
+      padding:8px 16px;
+      font-size:12px;
+      color:#999;
+      cursor:pointer;
+    ">
+      🗑 Limpiar datos de prueba
+    </button>
+  `;
+  container.appendChild(btnLimpiar);
+
+  document.getElementById("btnLimpiarStorage")
+    .addEventListener("click", function(){
+      const c1 = confirm("¿Borrar todos los datos?");
+      if(!c1) return;
+      const c2 = confirm("Esta acción no se puede deshacer. ¿Confirmar?");
+      if(!c2) return;
+      localStorage.clear();
+      location.reload();
+    });
+
 }
 async function generarPDFJornada(order){
   console.log("GENERANDO PDF DE JORNADA", order);
