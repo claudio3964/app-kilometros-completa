@@ -80,6 +80,10 @@
   border-bottom:1px solid #eee;
 }
 
+.header-fijo{
+  padding-top: calc(12px + env(safe-area-inset-top));
+}
+
 .btn-back{
   width:38px;
   height:38px;
@@ -354,8 +358,10 @@ input, select{
 
 <!-- ================= GUARDIAS ================= -->
 <div id="nuevaGuardiaScreen" class="screen">
-  <button onclick="showScreen('mainScreen')">← Volver</button>
-  <h2>Registrar Guardia</h2>
+  <div class="screen-header">
+    <button class="btn-back" onclick="showScreen('mainScreen')">←</button>
+    <h3 style="margin:0;">Registrar Guardia</h3>
+  </div>
 
   <form onsubmit="addGuardUI(event); return false;">
     <label>Día</label>
@@ -384,8 +390,10 @@ input, select{
 </div>
 
 <div id="listaGuardiasScreen" class="screen">
-  <button onclick="showScreen('mainScreen')">← Volver</button>
-  <h2>Guardias por día</h2>
+  <div class="screen-header">
+    <button class="btn-back" onclick="showScreen('mainScreen')">←</button>
+    <h3 style="margin:0;">Guardias por día</h3>
+  </div>
   <div id="cardsGuardiasContainer"></div>
 </div>
 
