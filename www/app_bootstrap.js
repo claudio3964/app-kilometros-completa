@@ -319,6 +319,19 @@ bases.push("Otro");
 
   });
 
+  // Boton limpiar storage
+  const btnLimpiar = document.getElementById("btnLimpiarStorage");
+  if(btnLimpiar){
+    btnLimpiar.addEventListener("click", function(){
+      const c1 = confirm("¿Borrar todos los datos?");
+      if(!c1) return;
+      const c2 = confirm("Esta acción no se puede deshacer. ¿Confirmar?");
+      if(!c2) return;
+      localStorage.clear();
+      location.reload();
+    });
+  }
+
 });
 // ========================================
 // MOTOR VIAJES PROGRAMADOS
