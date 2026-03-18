@@ -389,8 +389,10 @@ input, select{
     <label>Hora inicio</label>
     <input id="horaInicioGuardia" type="time">
 
-    <label>Hora fin <span style="color:#999;font-size:12px;">(opcional — se completa al finalizar)</span></label>
-    <input id="horaFinGuardia" type="time" style="display:none;">
+    <div style="display:none;">
+      <label>Hora fin</label>
+      <input id="horaFinGuardia" type="time">
+    </div>
 
     <label>Tipo</label>
     <select id="tipoGuardia" onchange="manejarDescripcionGuardia()">
