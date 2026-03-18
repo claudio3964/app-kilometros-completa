@@ -55,13 +55,16 @@ function addGuardUI(event){
   }
 
   // 🔥 GUARDADO COMPATIBLE CON CORE
-  const orders = getOrders();
-  const ultima = orders[orders.length - 1];
+  const order = getActiveOrder();
+  if(!order){
+    alert("No hay jornada activa");
+    return;
+  }
 
-  if (!ultima.guards) ultima.guards = [];
+  if(!order.guards) order.guards = [];
 
   // 1. VALIDAR SOLAPAMIENTO
-  const solapada = ultima.guards.find(
+  const solapada = order.guards.find(
     g => g.dia === dia && g.inicio === inicio && g.fin === fin
   );
   if(solapada){
@@ -73,7 +76,7 @@ function addGuardUI(event){
   const kmGuardia = horas * (tipo === "especial" ? 40 : 30);
   const viatico   = horas >= 9;
 
-  ultima.guards.push({
+  order.guards.push({
     type: tipo,
     hours: horas,
     descripcion: descripcion,
@@ -85,13 +88,16 @@ function addGuardUI(event){
     createdAt: Date.now()
   });
 
-  saveOrders(orders);
-  setActiveOrder(ultima);
+  const orders = getOrders();
+  saveOrders(orders.map(o =>
+    o.orderNumber === order.orderNumber ? order : o
+  ));
+  setActiveOrder(order);
 
   renderResumenDia();
   renderListaGuardias();
 
-  const totals = calculateOrderTotals(ultima);
+  const totals = calculateOrderTotals(order);
 
   const mensajeViatico =
     totals.viaticos > 0
