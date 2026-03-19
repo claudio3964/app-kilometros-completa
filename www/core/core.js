@@ -972,3 +972,4 @@ function cancelarViajePorId(travelId){
 // export global
 window.cancelarViajePorId = cancelarViajePorId;
 window.getTravelEnCurso = getTravelEnCurso;
+window.cortarGuardiaAntesDeViaje = cortarGuardiaAntesDeViaje;
