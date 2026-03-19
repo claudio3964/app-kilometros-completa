@@ -218,25 +218,37 @@ function cortarGuardiaAntesDeViaje(order, departureTime){
   if(!order.guards || order.guards.length === 0)
     return;
 
-  const ultima =
-    order.guards[order.guards.length - 1];
+  const ultima = order.guards[order.guards.length - 1];
 
   if(!ultima.inicio || ultima.fin)
     return;
 
-  const [h,m] =
-    departureTime.split(":").map(Number);
+  const [h,m] = departureTime.split(":").map(Number);
 
   const corte = new Date();
   corte.setHours(h,m,0,0);
-
-  // restar 15 minutos
   corte.setMinutes(corte.getMinutes() - 15);
 
-  ultima.fin =
-    corte.toTimeString().substring(0,5);
+  ultima.fin = corte.toTimeString().substring(0,5);
 
-  console.log("Guardia cortada automáticamente:", ultima.fin);
+  // Recalcular horas y km
+  const [hI, mI] = ultima.inicio.split(":").map(Number);
+  const [hF, mF] = ultima.fin.split(":").map(Number);
+  const horas = (hF + mF/60) - (hI + mI/60);
+
+  ultima.hours = horas > 0 ? horas : 0;
+  ultima.kmGuardia = ultima.hours * (ultima.type === "especial" ? 40 : 30);
+  ultima.viatico = ultima.hours >= 9;
+  ultima.status = "finalizada";
+
+  // Guardar en storage
+  const orders = getOrders();
+  saveOrders(orders.map(o =>
+    o.orderNumber === order.orderNumber ? order : o
+  ));
+  setActiveOrder(order);
+
+  console.log("Guardia cortada:", ultima.inicio, "→", ultima.fin, "|", ultima.hours.toFixed(2), "h");
 }
 // =====================================================
 // VIAJES (CORE OFICIAL CON KM AUTO + TIPO + ACOPLADO)
