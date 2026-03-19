@@ -746,31 +746,11 @@ tiempoHTML = `
 
       if(excedidoMin > 0){
 
-        estadoDuracionHTML = `
-          <div style="
-            margin-top:8px;
-            padding:6px;
-            background:#fff3cd;
-            border-radius:6px;
-            font-size:13px;
-          ">
-            🟡 Excedido: ${excedidoMin} min
-          </div>
-        `;
+        estadoDuracionHTML = `<div style="margin-top:8px;padding:6px;background:#fff3cd;border-radius:6px;font-size:13px;">🟡 Excedido: ${excedidoMin} min</div>`;
 
       }else{
 
-        estadoDuracionHTML = `
-          <div style="
-            margin-top:8px;
-            padding:6px;
-            background:#e8f5e9;
-            border-radius:6px;
-            font-size:13px;
-          ">
-            🟢 Dentro del tiempo estimado
-          </div>
-        `;
+        estadoDuracionHTML = `<div style="margin-top:8px;padding:6px;background:#e8f5e9;border-radius:6px;font-size:13px;">🟢 Dentro del tiempo estimado</div>`;
       }
     }
 
