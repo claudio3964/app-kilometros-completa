@@ -13,8 +13,8 @@ function addGuardUI(event){
   }
 
   const dia = document.getElementById("diaGuardia").value;
-  const inicio = document.getElementById("horaInicioGuardia").value;
-  const fin = document.getElementById("horaFinGuardia").value;
+  const inicio = normalizarHora(document.getElementById("horaInicioGuardia").value);
+  const fin = normalizarHora(document.getElementById("horaFinGuardia").value);
   const tipo = document.getElementById("tipoGuardia").value;
 
   if(!dia){

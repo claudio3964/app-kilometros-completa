@@ -8,6 +8,29 @@ function ahoraSistema(){
 }
 console.log("CORE OK");
 
+function normalizarHora(hora){
+  if(!hora) return "";
+  const str = hora.trim().toLowerCase()
+    .replace(/\u00a0/g, " ")  // non-breaking space
+    .replace(/\./g, "");       // "a. m." → "a m"
+
+  const matchAmPm = str.match(/^(\d{1,2}):(\d{2})\s*(am|a m|pm|p m)$/);
+  if(matchAmPm){
+    let h = parseInt(matchAmPm[1]);
+    const m = parseInt(matchAmPm[2]);
+    const period = matchAmPm[3].replace(" ","");
+    if(period === "am" && h === 12) h = 0;
+    if(period === "pm" && h !== 12) h += 12;
+    return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
+  }
+  const match24 = str.match(/^(\d{1,2}):(\d{2})$/);
+  if(match24){
+    return `${match24[1].padStart(2,"0")}:${match24[2].padStart(2,"0")}`;
+  }
+  return hora; // fallback
+}
+window.normalizarHora = normalizarHora;
+
 /* ================================
    COT DRIVER CORE ENGINE v1.2
    (viáticos por jornada real,
@@ -232,7 +255,8 @@ function cortarGuardiaAntesDeViaje(order, departureTime){
   ultima.fin = corte.toTimeString().substring(0,5);
 
   // Recalcular horas y km
-  const [hI, mI] = ultima.inicio.split(":").map(Number);
+  const inicioNorm = normalizarHora(ultima.inicio);
+  const [hI, mI] = inicioNorm.split(":").map(Number);
   const [hF, mF] = ultima.fin.split(":").map(Number);
   const horas = (hF + mF/60) - (hI + mI/60);
 
@@ -512,8 +536,8 @@ function calcularHorasJornada(o){
 
       if(g.inicio && g.fin){
 
-        const [h1,m1] = g.inicio.split(":").map(Number);
-        const [h2,m2] = g.fin.split(":").map(Number);
+        const [h1,m1] = normalizarHora(g.inicio).split(":").map(Number);
+        const [h2,m2] = normalizarHora(g.fin).split(":").map(Number);
 
         let inicioMin = h1*60 + m1;
         let finMin    = h2*60 + m2;
@@ -572,8 +596,8 @@ function determinarViatico(o){
 
     if(g.inicio && g.fin){
 
-      const [hI,mI] = g.inicio.split(":").map(Number);
-      const [hF,mF] = g.fin.split(":").map(Number);
+      const [hI,mI] = normalizarHora(g.inicio).split(":").map(Number);
+      const [hF,mF] = normalizarHora(g.fin).split(":").map(Number);
 
       let inicioMs =
         fechaBase + ((hI * 60 + mI) * 60 * 1000);
