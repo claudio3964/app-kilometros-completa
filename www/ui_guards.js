@@ -112,89 +112,10 @@ function addGuardUI(event){
 
   showScreen("mainScreen");
 }
+
 // =====================================================
-// LISTA DE GUARDIAS
-// =====================================================
-
-function renderListaGuardias(){
-  const container = document.getElementById("cardsGuardiasContainer");
-  container.innerHTML = "";
-
-  const orders = getOrders();
-  if(!orders || orders.length === 0) return;
-
-  // Agrupar guardias por día
-  const porDia = {};
-  orders.forEach(o => {
-    if(!o.guards) return;
-    o.guards.forEach(g => {
-      const dia = g.dia || new Date(g.createdAt).toLocaleDateString();
-      if(!porDia[dia]) porDia[dia] = [];
-      porDia[dia].push(g);
-    });
-  });
-
-  for(const dia in porDia){
-    const card = document.createElement("div");
-    card.style.cssText = "border:1px solid #ddd; border-radius:8px; padding:16px; margin:12px 0;";
-
-    let html = `<p><strong>📅 ${dia}</strong></p><p><strong>Guardias:</strong></p>`;
-
-    porDia[dia].forEach(g => {
-      const kmGuardia = g.hours * (g.type === "especial" ? 40 : 30);
-      const viatico = g.viatico ? "✅ Viático" : "";
-      const horario = g.inicio && g.fin ? `${g.inicio} – ${g.fin}` : "—";
-      const tipo = g.type === "especial" ? "especial" : "comun";
-
-      if(g.status === "en_curso"){
-        const ahora = new Date();
-        const [hI, mI] = g.inicio.split(":").map(Number);
-        const inicio = new Date();
-        inicio.setHours(hI, mI, 0, 0);
-        const transcurrido = Math.floor((ahora - inicio) / 60000);
-        const hTrans = Math.floor(transcurrido / 60);
-        const mTrans = transcurrido % 60;
-
-        html += `
-          <div style="background:#fff3e0; border:1px solid #ffb300; border-radius:8px; padding:10px; margin:6px 0;">
-            🟡 EN CURSO desde ${g.inicio}<br>
-            ⏱ ${hTrans}h ${mTrans}m transcurridos<br>
-            Tipo: ${tipo}
-            <br><br>
-            <button onclick="finalizarGuardiaUI('${g.createdAt}')"
-              style="background:#c62828; color:white; border:none; border-radius:6px; padding:8px 16px; font-size:14px; cursor:pointer;">
-              Finalizar Guardia
-            </button>
-          </div>
-        `;
-      } else {
-        html += `${horario} | ${g.hours.toFixed(1)} h | ${g.kmGuardia} km | ${tipo}`;
-        if(g.viatico) html += ` | ✅ Viático`;
-        html += `<br>`;
-      }
-    });
-
-    card.innerHTML = html;
-    container.appendChild(card);
-  }
-}
-// =====================================================
-// CONTROL VISUAL DE DESCRIPCIÓN DE GUARDIA
-// =====================================================
-
-function manejarDescripcionGuardia(){
-  const tipo = document.getElementById("tipoGuardia").value;
-  const box = document.getElementById("boxDescripcionGuardia");
-
-  if(tipo === "especial"){
-    box.style.display = "block";
-  } else {
-    box.style.display = "none";
-    document.getElementById("descripcionGuardia").value = "";
-  }
-}
-// =====================================================
-// TARJETAS DE GUARDIAS POR DÍA (ESTILO MOBILE)
+// TARJETAS DE GUARDIAS POR DÍA — VERSIÓN CORREGIDA
+// Muestra: inicio, fin (o EN CURSO), horas, km, tipo
 // =====================================================
 
 function renderTarjetasGuardiasPorDia(){
@@ -210,40 +131,24 @@ function renderTarjetasGuardiasPorDia(){
 
   if(!orders || orders.length === 0) return;
 
+  // Agrupar guardias por fecha de jornada (order.date)
   const porDia = {};
 
   orders.forEach(o => {
-
-    const d = o.date;
-
-    if(!porDia[d]) porDia[d] = [];
-
-    porDia[d].push(o);
+    const fecha = o.date;
+    if(!porDia[fecha]) porDia[fecha] = [];
+    (o.guards || []).forEach(g => {
+      porDia[fecha].push(g);
+    });
   });
 
   const fechas = Object.keys(porDia)
     .sort((a,b) => new Date(b) - new Date(a))
-    .slice(0,5);
+    .slice(0, 5);
 
   fechas.forEach(fecha => {
 
-    const listaGuardias = [];
-
-    porDia[fecha].forEach(o => {
-
-      o.guards.forEach(g => {
-
-        listaGuardias.push(
-          `${g.inicio || "--:--"} – ${g.fin || "--:--"} | ` +
-          `${g.hours.toFixed(2)} h | ${g.type}` +
-          (g.descripcion ? ` (${g.descripcion})` : "")
-        );
-      });
-
-    });
-
     const card = document.createElement("div");
-
     card.style.cssText = `
       border:1px solid #ddd;
       border-radius:12px;
@@ -253,15 +158,120 @@ function renderTarjetasGuardiasPorDia(){
       margin-bottom:10px;
     `;
 
+    let guardiasHTML = "";
+
+    porDia[fecha].forEach(g => {
+
+      const kmHora = g.type === "especial" ? 40 : 30;
+
+      // ── GUARDIA EN CURSO ──
+      if(g.status === "en_curso"){
+
+        const ahora = new Date();
+        const [hI, mI] = g.inicio.split(":").map(Number);
+        const inicio = new Date();
+        inicio.setHours(hI, mI, 0, 0);
+        const transcurridoMin = Math.max(0, Math.floor((ahora - inicio) / 60000));
+        const hTrans = Math.floor(transcurridoMin / 60);
+        const mTrans = transcurridoMin % 60;
+        const kmAcum = (transcurridoMin / 60 * kmHora).toFixed(1);
+
+        guardiasHTML += `
+          <div style="
+            background:#fff3e0;
+            border:1px solid #ffb300;
+            border-radius:8px;
+            padding:10px;
+            margin:6px 0;
+            font-size:14px;
+            line-height:1.8;
+          ">
+            🟡 <b>EN CURSO</b><br>
+            🕐 Inicio: <b>${g.inicio}</b><br>
+            ⏱ Transcurrido: <b>${hTrans}h ${mTrans}m</b><br>
+            📏 KM acumulados: <b>${kmAcum} km</b><br>
+            🔖 Tipo: <b>${g.type}</b>
+            <br><br>
+            <button onclick="finalizarGuardiaUI('${g.createdAt}')"
+              style="
+                background:#c62828;
+                color:white;
+                border:none;
+                border-radius:6px;
+                padding:8px 16px;
+                font-size:14px;
+                cursor:pointer;
+              ">
+              Finalizar Guardia
+            </button>
+          </div>
+        `;
+
+      // ── GUARDIA FINALIZADA ──
+      } else {
+
+        // Recalcular horas y km desde inicio/fin para garantizar consistencia
+        let horas = g.hours || 0;
+        let km = g.kmGuardia;
+
+        if(g.inicio && g.fin){
+          const [hI, mI] = g.inicio.split(":").map(Number);
+          const [hF, mF] = g.fin.split(":").map(Number);
+          let calculado = (hF + mF/60) - (hI + mI/60);
+          if(calculado < 0) calculado += 24; // cruce medianoche
+          if(calculado > 0){
+            horas = calculado;
+            km = horas * kmHora;
+          }
+        }
+
+        // Indicar si fue cortada automáticamente por viaje
+        const cortadaAuto = g.cortadaAuto
+          ? `<span style="font-size:12px; color:#888;"> ✂️ cortada por viaje</span>`
+          : "";
+
+        const viatico = g.viatico
+          ? `<span style="color:green;"> ✅ Viático</span>`
+          : "";
+
+        const horasStr = Number.isFinite(horas)
+          ? horas.toFixed(2)
+          : "0.00";
+
+        const kmStr = Number.isFinite(km)
+          ? km.toFixed(1)
+          : "0.0";
+
+        guardiasHTML += `
+          <div style="
+            background:#f9f9f9;
+            border:1px solid #ddd;
+            border-radius:8px;
+            padding:10px;
+            margin:6px 0;
+            font-size:14px;
+            line-height:1.8;
+          ">
+            ✅ <b>FINALIZADA</b>${cortadaAuto}<br>
+            🕐 Inicio: <b>${g.inicio || "--:--"}</b><br>
+            🕑 Fin: <b>${g.fin || "--:--"}</b><br>
+            ⏱ Duración: <b>${horasStr} h</b><br>
+            📏 KM generados: <b>${kmStr} km</b><br>
+            🔖 Tipo: <b>${g.type}</b>${viatico}
+            ${g.descripcion ? `<br>📝 ${g.descripcion}` : ""}
+          </div>
+        `;
+      }
+    });
+
     card.innerHTML = `
-      <b>📅 ${fecha}</b><br><br>
-      <b>Guardias:</b><br>
-      ${listaGuardias.join("<br>") || "—"}
+      <p style="font-weight:bold; margin:0 0 8px 0;">📅 ${fecha}</p>
+      <p style="font-weight:bold; margin:0 0 4px 0;">Guardias:</p>
+      ${guardiasHTML || "<p style='color:#888;'>Sin guardias registradas</p>"}
     `;
 
     container.appendChild(card);
   });
-
 }
 
 // =====================================================
@@ -269,10 +279,28 @@ function renderTarjetasGuardiasPorDia(){
 // =====================================================
 
 function renderListaGuardias(){
-
   renderTarjetasGuardiasPorDia();
-
 }
+
+// =====================================================
+// CONTROL VISUAL DE DESCRIPCIÓN DE GUARDIA
+// =====================================================
+
+function manejarDescripcionGuardia(){
+  const tipo = document.getElementById("tipoGuardia").value;
+  const box = document.getElementById("boxDescripcionGuardia");
+
+  if(tipo === "especial"){
+    box.style.display = "block";
+  } else {
+    box.style.display = "none";
+    document.getElementById("descripcionGuardia").value = "";
+  }
+}
+
+// =====================================================
+// FINALIZAR GUARDIA MANUAL (botón en card)
+// =====================================================
 
 function finalizarGuardiaUI(createdAt){
   const order = getActiveOrder();
@@ -286,7 +314,8 @@ function finalizarGuardiaUI(createdAt){
 
   const [hI, mI] = g.inicio.split(":").map(Number);
   const [hF, mF] = fin.split(":").map(Number);
-  const horas = (hF + mF/60) - (hI + mI/60);
+  let horas = (hF + mF/60) - (hI + mI/60);
+  if(horas < 0) horas += 24; // cruce medianoche
 
   if(horas <= 0){ alert("Error en horario"); return; }
 
@@ -306,7 +335,7 @@ function finalizarGuardiaUI(createdAt){
   renderListaGuardias();
   renderBotonCerrarJornada?.();
 
-  alert(`Guardia finalizada: ${g.inicio} – ${fin} | ${horas.toFixed(2)}h`);
+  alert(`Guardia finalizada: ${g.inicio} – ${fin} | ${horas.toFixed(2)}h | ${g.kmGuardia.toFixed(1)} km`);
 }
 
 window.finalizarGuardiaUI = finalizarGuardiaUI;

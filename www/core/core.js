@@ -240,6 +240,7 @@ function cortarGuardiaAntesDeViaje(order, departureTime){
   ultima.kmGuardia = ultima.hours * (ultima.type === "especial" ? 40 : 30);
   ultima.viatico = ultima.hours >= 9;
   ultima.status = "finalizada";
+  ultima.cortadaAuto = true;
 
   // Guardar en storage
   const orders = getOrders();
