@@ -209,11 +209,7 @@ function renderListaViajes(){
         const m =
           diffMin % 60;
 
-        tiempoHTML = `
-          <div class="travel-time">
-            ⏱ ${h}h ${m}m transcurridos
-          </div>
-        `;
+        tiempoHTML = `<div class="travel-time">⏱ ${h}h ${m}m transcurridos</div>`;
       }
 // ============================
 // VIAJE FINALIZADO
@@ -225,14 +221,15 @@ if(
  v.arrivalTime
 ){
 
- const horaReal = v.llegadaReal
-   ? new Date(v.llegadaReal).toLocaleTimeString("es-UY", {hour:"2-digit", minute:"2-digit"})
-   : v.arrivalTime;
- tiempoHTML = `
- <div class="travel-time">
- 🏁 Llegada: ${horaReal}
- </div>
- `;
+let horaReal = v.arrivalTime;
+
+if(v.llegadaReal){
+  const d = new Date(v.llegadaReal);
+  horaReal =
+    String(d.getHours()).padStart(2,"0") + ":" +
+    String(d.getMinutes()).padStart(2,"0");
+}
+ tiempoHTML = `<div class="travel-time">🏁 Llegada: ${horaReal}</div>`;
 
 }
       // =========================
@@ -265,13 +262,13 @@ console.log(v);
 
         ${tiempoHTML}
 
-        <div>
+         <div>
           📏 ${km} km
-        </div
+        </div>
 
-<div>
-🚍 Coche: ${v.coche || "-"}
-</div>
+        <div>
+          🚍 Coche: ${v.coche || "-"}
+        </div>
       `;
 
       card.appendChild(item);
@@ -283,6 +280,7 @@ console.log(v);
   });
 
 }
+window.renderListaViajes = renderListaViajes;
 // =====================================================
 // CARGAR VIAJE DE RETORNO AUTOMÁTICO (CORREGIDO)
 // =====================================================
@@ -354,7 +352,7 @@ function cargarViajeRetornoAutomatico(data){
 // =====================================================
 function addTravelUI(event){
 
-  event.preventDefault();
+  if(event) event.preventDefault();
 
   let order = getActiveOrder();
 
@@ -411,9 +409,6 @@ function addTravelUI(event){
 
   let ok;
 
-  // Cortar guardia en curso 15 min antes del viaje
-  cortarGuardiaAntesDeViaje(order, departureTime);
-
   if(salidaDate > ahora){
 
     // VIAJE PROGRAMADO
@@ -444,16 +439,23 @@ function addTravelUI(event){
     alert("No se pudo programar el viaje");
     return;
   }
+  // 🔍 VALIDACIÓN DE CONSISTENCIA
+if (!validarConsistenciaOrder(order, { strict: true })) {
+  alert("⚠️ Inconsistencia detectada. Revisar datos.");
+  return;
+}
+
 
   renderResumenDia();
-renderListaViajes();
+  renderListaViajes();
+  renderListaGuardias?.();
 
-showScreen("mainScreen");
+  showScreen("mainScreen");
 
-alert(
-"Viaje cargado correctamente\n" +
-"Salida: " + departureTime
-);
+  alert(
+    "Viaje cargado correctamente\n" +
+    "Salida: " + departureTime
+  );
 
 }
 // =====================================================
@@ -719,8 +721,7 @@ function mostrarViajeEnCursoUI(){
 tiempoHTML = `
 🕒 Salida: ${travel.departureTime}<br>
 ⏱ Transcurrido: ${horas}h ${mins}m
-
-    `;
+`;
 
     let duracionEstimadaMin =
       obtenerDuracionPromedio(
@@ -790,21 +791,13 @@ tiempoHTML = `
   // RENDER
   // ============================
 
-  card.innerHTML = `
+  card.innerHTML = "";
 
-    <b>${esProgramado ? "🟡 Viaje programado" : "🟢 Viaje en curso"}</b><br><br>
-
-    🚍 ${travel.origen} → ${travel.destino}<br>
-
-    ${tiempoHTML}
-
-    ${estadoDuracionHTML}
-
-    <div style="margin-top:10px">
-      ${botonesHTML}
-    </div>
-
-  `;
+card.innerHTML += "<b>" + (esProgramado ? "Viaje programado" : "Viaje en curso") + "</b><br><br>";
+card.innerHTML += "Origen: " + travel.origen + " → " + travel.destino + "<br>";
+card.innerHTML += tiempoHTML;
+card.innerHTML += estadoDuracionHTML;
+card.innerHTML += '<div style="margin-top:10px">' + botonesHTML + '</div>';
 
   container.appendChild(card);
 }
@@ -1077,6 +1070,9 @@ window.actualizarInfoServicio = actualizarInfoServicio;
 window.renderTarjetasPorDia = renderTarjetasPorDia;
 window.mostrarViajeEnCursoUI = mostrarViajeEnCursoUI;
 window.cancelarViajeUI = cancelarViajeUI;
+window.activarViajesProgramados = activarViajesProgramados;
+window.finalizarViajeUI = finalizarViajeUI;
+window.renderDetalleJornadaPorNumero = renderDetalleJornadaPorNumero;
 
 // =====================================================
 // HISTORIAL

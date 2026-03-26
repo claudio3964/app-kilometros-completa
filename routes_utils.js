@@ -127,36 +127,68 @@ function buscarMultiplesRutas(textoUsuario){
 // AUTOCOMPLETADO KM
 // =====================================================
 
+function buscarSugerenciasCarteles(texto) {
+  const buscado = normalizarTexto(texto);
+  const resultados = [];
+
+  const origenActual = normalizarTexto(
+    document.getElementById("originTravels")?.value || "montevideo"
+  );
+
+  for (const ruta in ROUTES_CATALOG) {
+    const km = ROUTES_CATALOG[ruta];
+    const rutaNorm = normalizarTexto(ruta);
+    const partes = rutaNorm.split("→");
+    if (partes.length < 2) continue;
+
+    const origenRuta  = partes[0].trim();
+    const destinoCompleto = partes[1].trim();
+
+    // Separar destino base y variante
+    const xIdx = destinoCompleto.indexOf(" x ");
+    const destinoBase = xIdx !== -1 ? destinoCompleto.substring(0, xIdx).trim() : destinoCompleto;
+    const variante    = xIdx !== -1 ? destinoCompleto.substring(xIdx + 3).trim() : null;
+
+    // RUTA DIRECTA: origen coincide con origen seleccionado
+    if (origenRuta === origenActual && destinoCompleto.includes(buscado)) {
+      const label = variante ? destinoBase + " - x " + variante : destinoBase;
+      resultados.push({ label, destino: destinoBase, variante, km });
+    }
+
+    // RUTA INVERSA: destino base coincide con origen seleccionado
+    // → ofrecer el origen de esa ruta como destino disponible
+    if (destinoBase === origenActual && origenRuta.includes(buscado)) {
+      resultados.push({ label: origenRuta, destino: origenRuta, variante: null, km });
+    }
+  }
+
+  return resultados;
+}
+
 function autoKmPorDestino(terminoDeEscribir = false){
 
   const inputDestino = document.getElementById("destinationTravels");
-  const inputOrigen = document.getElementById("originTravels");
+  const box          = document.getElementById("sugerenciasRutas");
+  const texto        = inputDestino.value;
+  const origenActual = document.getElementById("originTravels")?.value || "Montevideo";
 
-  const input = inputDestino.value ? inputDestino : inputOrigen;
+  // limpiar código cartel y servicio guardado mientras el usuario escribe
+  document.getElementById("codigoCartel").innerHTML = "";
+  window._servicioCartel = null;
+  window._destinoSeleccionado = false;
 
-  const box = document.getElementById("sugerenciasRutas");
-
-  const texto = input.value;
-
-  const origenActual =
-    document.getElementById("originTravels")?.value || "Montevideo";
-
-  if (!texto){
-
+  if(!texto){
     box.style.display = "none";
     box.innerHTML = "";
     return;
-
   }
 
-  const matches = buscarMultiplesRutas(texto);
+  const matches = buscarSugerenciasCarteles(texto);
 
-  if (matches.length === 0){
-
+  if(matches.length === 0){
     box.style.display = "none";
     box.innerHTML = "";
     return;
-
   }
 
   box.style.display = "block";
@@ -165,67 +197,43 @@ function autoKmPorDestino(terminoDeEscribir = false){
   matches.forEach(m => {
 
     const div = document.createElement("div");
-
     div.style.padding = "8px";
-    div.style.cursor = "pointer";
-
-    // 🔧 MOSTRAR KM SOLO SI ES DESTINO
-    if(input.id === "originTravels"){
-      div.innerText = m.destinoFinal;
-    }else{
-      div.innerText = `${m.destinoFinal} (${m.km} km)`;
-    }
+    div.style.cursor  = "pointer";
+    div.innerText = m.label + (m.km ? ` (${m.km} km)` : "");
 
     div.onclick = () => {
+      // destino LIMPIO — sin el " - servicio"
+      inputDestino.value = m.variante ? m.destino + " x " + m.variante : m.destino;
 
-      input.value = m.destinoFinal;
+      // guardar servicio para actualizarCodigoCartel
+      window._servicioCartel = m.servicio;
 
-      let kmCalculado =
-        buscarKmRuta(origenActual, m.destinoFinal) || m.km;
-
-      // 🔧 solo calcular km si estamos en destino
-      if(input.id !== "originTravels"){
-        document.getElementById("kmTravels").value = kmCalculado;
+      // intentar actualizar el select de servicio
+      const mapaServicio = {
+        "directo":     "DIRECTO",
+        "directisimo": "DIRECTO",
+        "turno":       "TURNO",
+        "expreso":     "EXPRESO"
+      };
+      const selectEl = document.getElementById("numeroServicio");
+      const valSelect = mapaServicio[m.servicio] || "";
+      if(selectEl && valSelect){
+        selectEl.value = valSelect;
+        if(typeof actualizarInfoServicio === "function")
+          actualizarInfoServicio();
       }
+
+      document.getElementById("kmTravels").value = m.km;
+      window._destinoSeleccionado = true;
 
       box.style.display = "none";
 
-      mostrarHorariosOficiales(origenActual, m.destinoFinal);
+      mostrarHorariosOficiales(origenActual, m.destino);
+      actualizarCodigoCartel();
     };
 
     box.appendChild(div);
-
   });
-
-  const matchUnico = buscarRutaCoincidente(texto);
-
-  if (matchUnico){
-
-    const destinoFinal =
-      matchUnico.ruta.split("→")[1].trim();
-
-    const kmCalculado =
-      buscarKmRuta(origenActual, destinoFinal) || matchUnico.km;
-
-    if(input.id !== "originTravels"){
-      document.getElementById("kmTravels").value = kmCalculado;
-    }
-
-    if (terminoDeEscribir){
-
-      input.value = destinoFinal;
-
-      box.style.display = "none";
-
-      mostrarHorariosOficiales(origenActual, destinoFinal);
-
-
-// ---- catálogo de carteles ----
-const destino = document.getElementById("destinationTravels").value;
-const codigos = obtenerCodigosRuta(destino);
-
-if(codigos){
-  console.log("Carteles disponibles:", codigos);
 }
 
 // =====================================================
@@ -269,102 +277,76 @@ function mostrarHorariosOficiales(origen, destino){
     box.appendChild(btn);
   });
 }
-function actualizarCodigoCartel(){
-
-  const destino =
-    document.getElementById("destinationTravels").value;
-
-  const tipo =
-    document.getElementById("tipoCoche").value;
-
-  const div =
-    document.getElementById("codigoCartel");
-
-  const codigos = obtenerCodigosRuta(destino);
-
-  if(!codigos){
-    div.innerHTML = "";
-    return;
-  }
-
-  if(!tipo){
-    div.innerHTML =
-      "Marcopolo: " + codigos.marcopolo +
-      " | Neobus: " + codigos.neobus;
-    return;
-  }
-
-  div.innerHTML =
-    "Código cartel: " + codigos[tipo];
-}
-
 function obtenerCodigosRuta(destino){
-
-    if(!destino) return null;
-
-    const key = destino.toLowerCase().trim();
-
-    return ROUTES_CATALOG[key] || null;
-}
-// ======================================
-// OBTENER CARTEL SEGUN DESTINO
-// ======================================
-
-window.obtenerCartelRuta = function(destino){
-
   if(!destino) return null;
-
-  const destinoNorm = normalizarTexto(destino);
-
+  const key = normalizarTexto(destino);
   const catalogo = window.ROUTES_SIGNS || {};
 
+  // 1) coincidencia exacta
   for(const ruta in catalogo){
+    if(normalizarTexto(ruta) === key) return catalogo[ruta];
+  }
 
-    const rutaNorm = normalizarTexto(ruta);
-
-    if(destinoNorm.includes(rutaNorm)){
-      return catalogo[ruta];
+  // 2) destino base antes del " x " (ej: "punta del este x piriapolis" → "punta del este")
+  const base = key.split(" x ")[0].trim();
+  if(base !== key){
+    for(const ruta in catalogo){
+      if(normalizarTexto(ruta) === base) return catalogo[ruta];
     }
-
   }
 
   return null;
 }
-// ======================================
-// MOSTRAR CARTEL SEGÚN DESTINO
-// ======================================
 
-function mostrarCodigoRuta(destino){
+function actualizarCodigoCartel(){
 
-  const box = document.getElementById("codigoRutaInfo");
+  const valor   = document.getElementById("destinationTravels").value.trim();
+  const div     = document.getElementById("codigoCartel");
+  const servicio = document.getElementById("numeroServicio")?.value;
 
-  if(!box) return;
-
-  if(!destino){
-    box.innerHTML = "";
+  if (!window._destinoSeleccionado || !servicio) {
+    div.innerHTML = "";
     return;
   }
 
-  const cartel = obtenerCartelRuta(destino);
-
-  if(!cartel){
-    box.innerHTML = "";
+  if(!valor){
+    div.innerHTML = "";
     return;
   }
 
-  box.innerHTML = `
-    <b>Cartel sugerido:</b><br>
-    Marcopolo: ${cartel.marcopolo}<br>
-    Neobus: ${cartel.neobus}
-  `;
+  const destinoBase = valor.split(" x ")[0].trim();
+
+  const catalogo = window.ROUTES_SIGNS || {};
+  const destinoKey = normalizarTexto(destinoBase);
+  let entrada = null;
+  for (const ruta in catalogo) {
+    if (normalizarTexto(ruta) === destinoKey) { entrada = catalogo[ruta]; break; }
+  }
+
+  if (!entrada) { div.innerHTML = "Sin código disponible"; return; }
+
+  const tipo = document.getElementById("tipoCoche")?.value;
+  const servicioNorm = normalizarTexto(servicio);
+
+  if (tipo) {
+    const codigo = (entrada[tipo] || {})[servicioNorm];
+    div.innerHTML = codigo || "-";
+  } else {
+    const mp = (entrada.marcopolo || {})[servicioNorm];
+    const nb = (entrada.neobus || {})[servicioNorm];
+    div.innerHTML = [mp && `<b>${mp}</b> Marcopolo`, nb && `<b>${nb}</b> Neobus`]
+      .filter(Boolean).join(" &nbsp;|&nbsp; ") || "-";
+  }
 }
+
 // =====================================================
 // EXPORTS
 // =====================================================
 
 window.autoKmPorDestino = autoKmPorDestino;
-window.obtenerCodigosRuta = obtenerCodigosRuta;
 window.buscarKmRuta = buscarKmRuta;
 window.buscarRutaCoincidente = buscarRutaCoincidente;
 window.buscarMultiplesRutas = buscarMultiplesRutas;
 window.mostrarHorariosOficiales = mostrarHorariosOficiales;
+window.obtenerCodigosRuta = obtenerCodigosRuta;
+window.actualizarCodigoCartel = actualizarCodigoCartel;

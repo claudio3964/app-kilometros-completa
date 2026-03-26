@@ -428,3 +428,8 @@ async function generarPDFJornada(order){
 window.renderResumenDia = renderResumenDia;
 window.renderBotonCerrarJornada = renderBotonCerrarJornada;
 window.generarPDFJornada = generarPDFJornada;
+
+function exportarJornadaPorNumero(){
+  alert("Exportación no implementada aún");
+}
+window.exportarJornadaPorNumero = exportarJornadaPorNumero;

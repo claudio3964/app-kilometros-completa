@@ -1,36 +1,82 @@
+
+console.log("CORE v2 - CONSISTENCIA + VALIDACIONES");
 "use strict";
 // =====================================================
-// RELOJ CENTRAL (modo simulación)
+// 🔍 VALIDACIÓN DE CONSISTENCIA (NO BLOQUEANTE)
 // =====================================================
+function validarConsistenciaOrder(order, opciones = {}) {
 
+  const { strict = false } = opciones;
+
+  const errores = [];
+
+  if (!order) {
+    errores.push('Order inexistente');
+    return manejarResultado();
+  }
+
+  const viajes = order.travels || [];
+  const guardias = order.guards || [];
+
+  const viajesEnCurso = viajes.filter(v => v.status === 'en_curso');
+  const guardiasEnCurso = guardias.filter(g => g.status === 'en_curso');
+
+  // 🚫 múltiples viajes
+  if (viajesEnCurso.length > 1) {
+    errores.push(`Hay ${viajesEnCurso.length} viajes en curso`);
+  }
+
+  // 🚫 múltiples guardias
+  if (guardiasEnCurso.length > 1) {
+    errores.push(`Hay ${guardiasEnCurso.length} guardias en curso`);
+  }
+
+  // 🚫 viaje + guardia
+  if (viajesEnCurso.length && guardiasEnCurso.length) {
+    errores.push("Viaje y guardia simultáneos");
+  }
+
+  // 🚫 guardias incompletas
+  guardias.forEach(g => {
+    if (g.status === "finalizada") {
+      if (!g.fin || g.hours == null || g.kmGuardia == null) {
+        errores.push(`Guardia incompleta: ${g.id || "sin id"}`);
+      }
+    }
+  });
+
+  // 🚫 viajes incompletos
+  viajes.forEach(v => {
+    if (v.status === "finalizado") {
+      if (!v.arrivalTime || v.kmEmpresa == null) {
+        errores.push(`Viaje inválido: ${v.id}`);
+      }
+    }
+  });
+
+  return manejarResultado();
+
+  function manejarResultado() {
+    if (errores.length === 0) return true;
+
+    console.warn("⚠️ Validación:", errores);
+
+    if (strict) {
+      console.error("⛔ ERROR CRÍTICO");
+      return false;
+    }
+
+    return false;
+  }
+}
+
+window.validarConsistenciaOrder = validarConsistenciaOrder;
+// =====================================================
+// RELOJ CENTRAL
+// =====================================================
 function ahoraSistema(){
   return Date.now() + (window.TIME_OFFSET || 0);
 }
-console.log("CORE OK");
-
-function normalizarHora(hora){
-  if(!hora) return "";
-  const str = hora.trim().toLowerCase()
-    .replace(/\u00a0/g, " ")  // non-breaking space
-    .replace(/\./g, "");       // "a. m." → "a m"
-
-  const matchAmPm = str.match(/^(\d{1,2}):(\d{2})\s*(am|a m|pm|p m)$/);
-  if(matchAmPm){
-    let h = parseInt(matchAmPm[1]);
-    const m = parseInt(matchAmPm[2]);
-    const period = matchAmPm[3].replace(" ","");
-    if(period === "am" && h === 12) h = 0;
-    if(period === "pm" && h !== 12) h += 12;
-    return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
-  }
-  const match24 = str.match(/^(\d{1,2}):(\d{2})$/);
-  if(match24){
-    return `${match24[1].padStart(2,"0")}:${match24[2].padStart(2,"0")}`;
-  }
-  return hora; // fallback
-}
-window.normalizarHora = normalizarHora;
-
 /* ================================
    COT DRIVER CORE ENGINE v1.2
    (viáticos por jornada real,
@@ -470,7 +516,56 @@ order.travels.forEach((travel, index) => {
     ){
 
       travel.status = "en_curso";
-      travel.inicioReal = ahora;
+travel.inicioReal = ahora;
+
+// ✂️ CORTE AUTOMÁTICO DE GUARDIA
+if(order.guards){
+
+  const guardiaActiva = order.guards.find(
+    g => g.status === "en_curso"
+  );
+
+  if(guardiaActiva){
+
+    console.log("✂️ Guardia activa detectada:", guardiaActiva);
+
+    const fechaViaje = new Date(travel.inicioReal);
+
+    fechaViaje.setMinutes(fechaViaje.getMinutes() - 15);
+
+    const hh = String(fechaViaje.getHours()).padStart(2, "0");
+    const mm = String(fechaViaje.getMinutes()).padStart(2, "0");
+
+    const horaCorte = `${hh}:${mm}`;
+
+    const toMin = (hhmm) => {
+  const [h,m] = hhmm.split(":").map(Number);
+  return h*60 + m;
+};
+
+if(toMin(horaCorte) > toMin(guardiaActiva.inicio)){
+
+      const [hI, mI] = guardiaActiva.inicio.split(":").map(Number);
+      const [hF, mF] = horaCorte.split(":").map(Number);
+
+      let horas = (hF + mF/60) - (hI + mI/60);
+      if(horas < 0) horas += 24;
+
+      guardiaActiva.fin = horaCorte;
+      guardiaActiva.hours = horas;
+      guardiaActiva.status = "finalizada";
+      guardiaActiva.cortadaAuto = true;
+
+      guardiaActiva.kmGuardia =
+        horas * (guardiaActiva.type === "especial" ? 40 : 30);
+
+      guardiaActiva.viatico = horas >= 9;
+
+      console.log("✅ Guardia cortada automáticamente:", guardiaActiva);
+
+    }
+  }
+}
 
       // =====================================================
       // RESTAURAR TOME Y CESE (PRIMER VIAJE DEL DÍA)
@@ -1010,3 +1105,5 @@ function cancelarViajePorId(travelId){
 window.cancelarViajePorId = cancelarViajePorId;
 window.getTravelEnCurso = getTravelEnCurso;
 window.cortarGuardiaAntesDeViaje = cortarGuardiaAntesDeViaje;
+
+

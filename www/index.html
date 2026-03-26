@@ -419,7 +419,8 @@ input, select{
 </div>
 
  
-<script src="../core/core.js"></script>
+<script src="core_apk.js"></script>
+<script src="core_bridge.js"></script>
 
 <script src="../schedules_cot.js"></script>
 
@@ -463,28 +464,33 @@ document.addEventListener('DOMContentLoaded', ()=>{
 });
 
 function registrarChofer(){
-  const legajo = regLegajo.value.trim();
-  const nombre = regNombre.value.trim();
-  const base = regBase.value;
+  try {
+    const legajo = document.getElementById('regLegajo').value.trim();
+    const nombre = document.getElementById('regNombre').value.trim();
+    const base   = document.getElementById('regBase').value;
 
-  if(!legajo || !nombre){
-    alert("Completá legajo y nombre");
-    return;
+    if(!legajo || !nombre){
+      alert("Completá legajo y nombre");
+      return;
+    }
+
+    const tipo = document.getElementById('regTipo').value;
+    if(!tipo){ alert("Elegí tipo de chofer"); return; }
+    initDriverProfile({legajo, nombre, base, tipo});
+    document.getElementById('baseChoferBadge').innerText = "Base: " + base;
+
+    const sel = document.getElementById('originTravels');
+    const bases = ['Montevideo','Punta del Este','Piriápolis','Punta Colorada','Punta Negra','Rocha','Chuy','La Pedrera','La Paloma','Aguas Dulces','Otro'];
+    sel.innerHTML = bases.map(b =>
+      `<option value="${b}" ${b===base?'selected':''}>${b}</option>`
+    ).join('');
+
+    showScreen('mainScreen');
+  } catch(e) {
+    alert("ERROR registrarChofer: " + e.message);
   }
-
-  const tipo = document.getElementById('regTipo').value;
-  if(!tipo){ alert("Elegí tipo de chofer"); return; }
-  initDriverProfile({legajo, nombre, base, tipo});
-  document.getElementById('baseChoferBadge').innerText = "Base: " + base;
-
-  const sel = document.getElementById('originTravels');
-  const bases = ['Montevideo','Punta del Este','Piriápolis','Punta Colorada','Punta Negra','Rocha','Chuy','La Pedrera','La Paloma','Aguas Dulces','Otro'];
-  sel.innerHTML = bases.map(b =>
-    `<option value="${b}" ${b===base?'selected':''}>${b}</option>`
-  ).join('');
-
-  showScreen('mainScreen');
 }
+window.registrarChofer = registrarChofer;
 </script>
 
 </body>

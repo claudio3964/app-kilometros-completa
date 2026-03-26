@@ -1,4 +1,42 @@
+console.log("🔥 CORE ROOT");
 "use strict";
+function validarConsistenciaOrder(order, opciones = {}) {
+
+  const { strict = false } = opciones;
+  const errores = [];
+
+  if (!order) {
+    errores.push('Order inexistente');
+    return manejarResultado();
+  }
+
+  const viajes = order.travels || [];
+  const guardias = order.guards || [];
+
+  const viajesEnCurso = viajes.filter(v => v.status === 'en_curso');
+  const guardiasEnCurso = guardias.filter(g => g.status === 'en_curso');
+
+  if (viajesEnCurso.length > 1) {
+    errores.push(`Hay ${viajesEnCurso.length} viajes en curso`);
+  }
+
+  if (guardiasEnCurso.length > 1) {
+    errores.push(`Hay ${guardiasEnCurso.length} guardias en curso`);
+  }
+
+  if (viajesEnCurso.length && guardiasEnCurso.length) {
+    errores.push("Viaje y guardia simultáneos");
+  }
+
+  if (errores.length > 0) {
+    console.warn("⚠️ Validación CORE:", errores);
+    return false;
+  }
+
+  return true;
+}
+
+window.validarConsistenciaOrder = validarConsistenciaOrder;
 // =====================================================
 // RELOJ CENTRAL (modo simulación)
 // =====================================================
@@ -21,7 +59,23 @@ const GUARDIA_ESPECIAL_KM_HORA = 40;
 const TOME_CESE_KM = 42.5;
 const ACOPLADO_EXTRA_KM = 30;
 const MONTO_VIATICO = 455;
+function calcularAcopladoKm(tipoServicio, destino){
 
+  const tipo = (tipoServicio || "").toUpperCase().trim();
+  if(tipo !== "DIRECTO") return 0;
+
+  const d = (destino || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // quitar tildes
+    .trim();
+
+  if(d.includes("chuy")) return 0;
+
+  if(d.includes("pedrera")) return 37.5;
+
+  return ACOPLADO_EXTRA_KM;
+}
 // ===== RUTAS EMPRESA =====
 const ROUTES_CATALOG = {
 
@@ -147,7 +201,14 @@ function getActiveOrder(){
 
   return real;
 }
-function setActiveOrder(o){ Storage.set("activeOrder",o); }
+function setActiveOrder(o){
+  Storage.set("activeOrder", o);
+
+  // 🔍 validar solo si existe
+  if(o){
+    validarConsistenciaOrder(o);
+  }
+}
 function clearActiveOrder(){ Storage.remove("activeOrder"); }
 
 // ===== CREATE ORDER =====
@@ -193,7 +254,19 @@ function closeActiveOrder(){
   if(order.status === "finalizada"){
     return order;
   }
+  //calculo de acoplados
+function calcularAcopladoKm(tipoServicio, destino){
 
+  const tipo = (tipoServicio || "").toUpperCase().trim();
+  if(tipo !== "DIRECTO") return 0;
+
+  const d = (destino || "").toLowerCase().trim();
+
+  if(d === "chuy") return 0;
+  if(d.includes("la pedrera")) return 37.5;
+
+  return 30;
+}
   // calcular totales finales desde CORE
   const totals = calculateOrderTotals(order);
 
@@ -293,7 +366,10 @@ function addTravel(
   llegadaEstimada:
     ahora + (hoursWorked * 60 * 60 * 1000),
 
-  acoplado: acoplado,   // ← FIX correcto
+ acoplado: acoplado,
+acopladoKm: acoplado
+  ? calcularAcopladoKm(tipo, destino)
+  : 0,   // ← FIX correcto
 
   tomeCese: false
 };
@@ -384,7 +460,8 @@ function addTravelProgramado(
     inicioProgramado +
     (hoursWorked * 60 * 60 * 1000),
 
-  acoplado: acoplado,
+ acoplado: acoplado,
+acopladoKm: calcularAcopladoKm(tipo, destino),
 
   tomeCese: false
 };
@@ -704,8 +781,11 @@ function calculateOrderTotals(o){
 
       kmViajes += Number(t.kmEmpresa || 0);
 
-      if(t.acoplado)
-        kmAcoplados += ACOPLADO_EXTRA_KM;
+     const extra = t.acopladoKm != null
+  ? Number(t.acopladoKm)
+  : calcularAcopladoKm(t.tipoServicio, t.destino);
+
+kmAcoplados += extra;
 
     });
 

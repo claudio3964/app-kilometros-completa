@@ -1,0 +1,8 @@
+# APKs
+*.apk
+
+# Backups / legacy
+www/legacy/
+
+# Logs / temporales
+*.log

@@ -41,6 +41,10 @@ function showScreen(id){
 
   }
 
+  if(id === "listaGuardiasScreen"){
+    renderListaGuardias?.();
+  }
+
 }
 
 window.showScreen = showScreen;

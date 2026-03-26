@@ -349,3 +349,4 @@ window.buscarRutaCoincidente = buscarRutaCoincidente;
 window.buscarMultiplesRutas = buscarMultiplesRutas;
 window.mostrarHorariosOficiales = mostrarHorariosOficiales;
 window.obtenerCodigosRuta = obtenerCodigosRuta;
+window.actualizarCodigoCartel = actualizarCodigoCartel;
