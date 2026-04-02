@@ -346,7 +346,12 @@ function addTravel(
   if(!order) return false;
 cortarGuardiaAntesDeViaje(order, departureTime);
   const ahora = ahoraSistema();
+const [h, m] = departureTime.split(":").map(Number);
 
+const inicioDesdeHorario = new Date();
+inicioDesdeHorario.setHours(h, m, 0, 0);
+
+const inicioTimestamp = inicioDesdeHorario.getTime();
   const kmEmpresa =
     buscarKmRuta(origen, destino) || 0;
 
@@ -371,7 +376,8 @@ cortarGuardiaAntesDeViaje(order, departureTime);
   createdAt: ahora,
 
   status: "en_curso",
-  inicioReal: ahora,
+  inicioReal: inicioTimestamp,
+departureTimestamp: inicioTimestamp,
 
   llegadaEstimada:
     ahora + (hoursWorked * 60 * 60 * 1000),

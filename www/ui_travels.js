@@ -1,6 +1,6 @@
 
-alert("UI_TRAVELS VERSION NUEVA");
-console.log("ui_travels cargado");
+
+console.log("ui_travels cargado version dentro www");
 // ===============================
 // JORNADA - UI
 // ===============================
