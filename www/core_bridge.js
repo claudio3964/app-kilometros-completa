@@ -47,3 +47,12 @@ window.abrirHistorial = function () {
 
   alert("Pantalla de historial en construcción");
 };
+// -------- FINALIZAR JORNADA --------
+window.finalizarJornada = function () {
+  if (typeof finalizarJornada === "function") {
+    return finalizarJornada();
+  }
+
+  console.warn("finalizarJornada no existe en core");
+  return null;
+};

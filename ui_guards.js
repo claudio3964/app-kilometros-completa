@@ -1,4 +1,4 @@
-console.log("ui_guards cargado");
+console.log("ui_guards cargado vesion vieja");
 // =====================================================
 // GUARDIAS (UI → CORE) JORNADA AUTOMÁTICA
 // =====================================================

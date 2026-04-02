@@ -93,57 +93,86 @@ document.addEventListener("DOMContentLoaded", () => {
 
   (function syncActiveOrderBootstrap(){
 
-    const active = getActiveOrder();
-    if(!active) return;
+  let active = getActiveOrder();
+  const orders = getOrders();
 
-    const orders = getOrders();
+  // 🧠 RECUPERAR ORDEN SI NO HAY ACTIVA
+  if(!active && orders.length){
 
-    const real = orders.find(
-      o => o.orderNumber === active.orderNumber && !o.closed
-    );
+    const last = orders[orders.length - 1];
 
-    if(!real){
-
-      console.warn("activeOrder inválido eliminado (bootstrap)");
-      clearActiveOrder();
-      return;
+    if(!last.closed){
+      console.warn("🔄 Recuperando activeOrder desde storage");
+      setActiveOrder(last);
+      active = last;
     }
+  }
 
-    if(real.travels){
+  // 🔒 SI TODAVÍA NO HAY → salir
+  if(!active) return;
 
-      let cambio = false;
-
-      real.travels.forEach(t => {
-
-       if(t.status === "en_curso"){
-
-  console.warn(
-    "Viaje en curso recuperado al iniciar app:",
-    t.id
+  // 🔍 VALIDAR QUE LA ORDEN EXISTA REALMENTE
+  const real = orders.find(
+    o => o.orderNumber === active.orderNumber && !o.closed
   );
 
-}
+  if(!real){
+    console.warn("activeOrder inválido eliminado (bootstrap)");
+    clearActiveOrder();
+    return;
+  }
 
-      });
+  // 🔎 VALIDAR VIAJES EN CURSO
+  if(real.travels){
 
-      if(cambio){
+    let cambio = false;
 
-        saveOrders(
-          orders.map(o =>
-            o.orderNumber === real.orderNumber ? real : o
-          )
+    real.travels.forEach(t => {
+
+      if(t.status === "en_curso"){
+
+        console.warn(
+          "Viaje en curso recuperado al iniciar app:",
+          t.id
         );
 
-        setActiveOrder(real);
-
-        console.warn("Viajes en_curso corruptos corregidos");
-
+        // (acá podrías marcar cambio = true si quisieras corregir algo)
       }
+
+    });
+
+    if(cambio){
+
+      saveOrders(
+        orders.map(o =>
+          o.orderNumber === real.orderNumber ? real : o
+        )
+      );
+
+      setActiveOrder(real);
+
+      console.warn("Viajes en_curso corruptos corregidos");
 
     }
 
-  })();
+  }
 
+ // 🔥 FORZAR RENDER DESPUÉS DEL BOOTSTRAP (SIN setTimeout)
+
+console.log("🔄 Render post-bootstrap");
+
+if(typeof refreshMainUI === "function"){
+  refreshMainUI();
+}
+
+// 👇 SOLO si estás en pantalla de guardias
+  if(typeof renderListaGuardias === "function"){
+      renderListaGuardias();
+    }
+
+  })(); 
+
+}); 
   // =====================================================
   // RESTO DE INICIALIZACIÓN
   // =====================================================
@@ -332,7 +361,6 @@ bases.push("Otro");
     });
   }
 
-});
 // ========================================
 // MOTOR VIAJES PROGRAMADOS
 // ========================================

@@ -272,11 +272,17 @@ function renderBotonCerrarJornada(){
       const resultado = closeActiveOrder();
 
       if(resultado){
-        await exportarJornada(resultado);
-        renderBotonCerrarJornada();
-        renderOrdenActivaUI?.();
-        showScreen("mainScreen");
-      }
+
+  try {
+    await exportarJornada(resultado);
+  } catch (e) {
+    console.warn("Error exportando jornada", e);
+  }
+
+  renderBotonCerrarJornada();
+  renderOrdenActivaUI?.();
+  showScreen("mainScreen");
+}
 
     });
 }
@@ -371,7 +377,16 @@ function renderResumenGeneral(){
 
 }
 async function generarPDFJornada(order){
+
+  // 🔴 BLOQUE NUEVO (va arriba de todo)
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    console.warn("jsPDF no cargado, se omite PDF");
+    return;
+  }
+
   console.log("GENERANDO PDF DE JORNADA", order);
+
+  // 👇 esto queda igual
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
 

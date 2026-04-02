@@ -1,4 +1,4 @@
-console.log("ui_guards cargado");
+console.log("ui_guards cargado vscode www");
 // =====================================================
 // FUNCION NORMALIZAR HORAS
 // =====================================================
@@ -45,7 +45,7 @@ function addGuardUI(event){
 
     const dia = document.getElementById("diaGuardia").value;
     const inicio = normalizarHora(document.getElementById("horaInicioGuardia").value);
-    const fin = normalizarHora(document.getElementById("horaFinGuardia").value);
+   const fin = null;
     const tipo = document.getElementById("tipoGuardia").value;
 
     if(!dia){
@@ -181,21 +181,26 @@ function renderTarjetasGuardiasPorDia(){
 
   container.innerHTML = "";
 
-  const orders = getOrders();
+ const order = getActiveOrder();
 
-  if(!orders || orders.length === 0) return;
+if(!order) return;
 
   // Agrupar guardias por fecha de jornada (order.date)
-  const porDia = {};
+ const porDia = {};
 
-  orders.forEach(o => {
-    const fecha = o.date;
-    if(!fecha || fecha === "undefined") return;
-    if(!porDia[fecha]) porDia[fecha] = [];
-    (o.guards || []).forEach(g => {
-      porDia[fecha].push(g);
-    });
-  });
+(order.guards || []).forEach(g => {
+
+  const fecha = g.dia || order.date;
+
+  if(!fecha) return;
+
+  if(!porDia[fecha]){
+    porDia[fecha] = [];
+  }
+
+  porDia[fecha].push(g);
+
+});
 
   const fechas = Object.keys(porDia)
     .filter(f => f && f !== "undefined")

@@ -1,5 +1,5 @@
 
-console.log("CORE v2 - CONSISTENCIA + VALIDACIONES");
+console.log("CORE v2 - CONSISTENCIA + VALIDACIONES( ESTE ES EL CORE COMPLETO )");
 "use strict";
 // =====================================================
 // 🔍 VALIDACIÓN DE CONSISTENCIA (NO BLOQUEANTE)

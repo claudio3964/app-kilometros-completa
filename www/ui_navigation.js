@@ -41,9 +41,10 @@ function showScreen(id){
 
   }
 
-  if(id === "listaGuardiasScreen"){
-    renderListaGuardias?.();
-  }
+ if(id === "listaGuardiasScreen"){
+  console.log("Render guardias...");
+  renderListaGuardias?.();
+}
 
 }
 

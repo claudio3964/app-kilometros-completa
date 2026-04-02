@@ -1,4 +1,4 @@
-console.log("🔥 CORE ROOT");
+console.log("🔥 CORE ROOT (core.js)");
 "use strict";
 function validarConsistenciaOrder(order, opciones = {}) {
 
