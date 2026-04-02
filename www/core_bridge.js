@@ -3,30 +3,14 @@
 // ===============================
 
 // -------- DRIVER --------
-window.getDriver = function () {
-  try {
-    const d = localStorage.getItem("driver");
-    return d ? JSON.parse(d) : null;
-  } catch (e) {
-    console.error("Error getDriver:", e);
-    return null;
-  }
-};
+window.getDriver = getDriver;
+
 
 // -------- ACTIVE ORDER --------
-window.getActiveOrder = function () {
-  try {
-    const o = localStorage.getItem("activeOrder");
-    return o ? JSON.parse(o) : null;
-  } catch (e) {
-    console.error("Error getActiveOrder:", e);
-    return null;
-  }
-};
+window.getActiveOrder = getActiveOrder;
 
-window.setActiveOrder = function (order) {
-  localStorage.setItem("activeOrder", JSON.stringify(order));
-};
+
+window.setActiveOrder = setActiveOrder;
 
 // -------- GUARDIAS --------
 window.addGuardia = function (inicio) {

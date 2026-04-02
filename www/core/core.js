@@ -935,8 +935,19 @@ function getTodaySummary(){
 
 // ===== DRIVER REG =====
 function initDriverProfile(d){
-  if(Storage.get("driverProfile")) return false;
-  Storage.set("driverProfile",{...d,createdAt:ahoraSistema()});
+  const existing = Storage.get("driverProfile");
+
+  if(existing){
+    console.warn("Driver ya registrado:", existing);
+    alert("Este dispositivo ya tiene un chofer registrado");
+    return false;
+  }
+
+  Storage.set("driverProfile", {
+    ...d,
+    createdAt: ahoraSistema()
+  });
+
   return true;
 }
 // ------función para obtener viaje en curso------
