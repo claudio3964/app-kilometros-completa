@@ -664,9 +664,6 @@ function mostrarViajeEnCursoUI(){
   // SIEMPRE limpiar
   container.innerHTML = "";
 
-  // 🔧 FIX: activar viajes programados antes de renderizar
-  
-
   const order = getActiveOrder();
 
   if(!order || !order.travels || order.travels.length === 0){
@@ -681,7 +678,7 @@ function mostrarViajeEnCursoUI(){
     order.travels.find(t => t.status === "programado");
 
   if(!travelEnCurso && !travelProgramado){
-    return; // nada para mostrar
+    return;
   }
 
   const travel = travelEnCurso || travelProgramado;
@@ -718,11 +715,8 @@ function mostrarViajeEnCursoUI(){
       Math.floor(diffMin / 60);
     const mins =
       diffMin % 60;
-tiempoHTML = `
-🕒 Salida: ${travel.departureTime}<br>
-⏱ Transcurrido: ${horas}h ${mins}m
-`;
 
+    // 🔹 duración estimada
     let duracionEstimadaMin =
       obtenerDuracionPromedio(
         travel.origen,
@@ -731,29 +725,77 @@ tiempoHTML = `
 
     if(!duracionEstimadaMin){
 
-      const velocidadFallback = 60;
+      let velocidad = 60;
 
-      duracionEstimadaMin =
-        Math.floor(
-          (travel.kmEmpresa || 0)
-          / velocidadFallback * 60
-        );
+// 🔥 usar velocidad real si existe
+const stats = getTravelStats();
+const key = travel.origen + "→" + travel.destino;
+
+if(stats[key] && stats[key].velocidadPromedio > 0){
+  velocidad = stats[key].velocidadPromedio;
+}
+
+duracionEstimadaMin =
+  Math.floor(
+    (travel.kmEmpresa || 0)
+    / velocidad * 60
+  );
     }
 
+    // 🔹 calcular llegada estimada
+    let horaLlegada = "";
+
     if(duracionEstimadaMin > 0){
+
+      const llegadaEstimadaMs =
+        travel.inicioReal + (duracionEstimadaMin * 60000);
+
+      const fechaLlegada =
+        new Date(llegadaEstimadaMs);
+
+      horaLlegada =
+        fechaLlegada.getHours().toString().padStart(2,'0') + ":" +
+        fechaLlegada.getMinutes().toString().padStart(2,'0');
 
       const excedidoMin =
         diffMin - duracionEstimadaMin;
 
       if(excedidoMin > 0){
 
-        estadoDuracionHTML = `<div style="margin-top:8px;padding:6px;background:#fff3cd;border-radius:6px;font-size:13px;">🟡 Excedido: ${excedidoMin} min</div>`;
+        estadoDuracionHTML = `
+          <div style="
+            margin-top:8px;
+            padding:6px;
+            background:#fff3cd;
+            border-radius:6px;
+            font-size:13px;
+          ">
+            🟡 Excedido: ${excedidoMin} min
+          </div>
+        `;
 
       }else{
 
-        estadoDuracionHTML = `<div style="margin-top:8px;padding:6px;background:#e8f5e9;border-radius:6px;font-size:13px;">🟢 Dentro del tiempo estimado</div>`;
+        estadoDuracionHTML = `
+          <div style="
+            margin-top:8px;
+            padding:6px;
+            background:#e8f5e9;
+            border-radius:6px;
+            font-size:13px;
+          ">
+            🟢 Dentro del tiempo estimado
+          </div>
+        `;
       }
     }
+
+    // 🔹 UI tiempo
+    tiempoHTML = `
+      🕒 Salida: ${travel.departureTime}<br>
+      ⏱ Transcurrido: ${horas}h ${mins}m<br>
+      🕒 Llegada estimada: ${horaLlegada}
+    `;
 
   }else{
 
@@ -783,8 +825,7 @@ tiempoHTML = `
         onclick="finalizarViajeUI()">
         Finalizar viaje
       </button>
-      `
-      + botonesHTML;
+      ` + botonesHTML;
   }
 
   // ============================

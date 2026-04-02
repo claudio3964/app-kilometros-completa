@@ -172,7 +172,7 @@ function autoKmPorDestino(terminoDeEscribir = false){
   const texto        = inputDestino.value;
   const origenActual = document.getElementById("originTravels")?.value || "Montevideo";
 
-  // limpiar código cartel y servicio guardado mientras el usuario escribe
+  // limpiar código cartel y servicio mientras escribe
   document.getElementById("codigoCartel").innerHTML = "";
   window._servicioCartel = null;
   window._destinoSeleccionado = false;
@@ -202,33 +202,61 @@ function autoKmPorDestino(terminoDeEscribir = false){
     div.innerText = m.label + (m.km ? ` (${m.km} km)` : "");
 
     div.onclick = () => {
-      // destino LIMPIO — sin el " - servicio"
-      inputDestino.value = m.variante ? m.destino + " x " + m.variante : m.destino;
 
-      // guardar servicio para actualizarCodigoCartel
+      const destinoFinal = m.destino;
+
+      // setear destino visible
+      const destinoLimpio = m.destino.trim();
+inputDestino.value = destinoLimpio.charAt(0).toUpperCase() + destinoLimpio.slice(1);
+
+      // guardar servicio
       window._servicioCartel = m.servicio;
 
-      // intentar actualizar el select de servicio
+      // actualizar select servicio
       const mapaServicio = {
         "directo":     "DIRECTO",
         "directisimo": "DIRECTO",
         "turno":       "TURNO",
         "expreso":     "EXPRESO"
       };
+
       const selectEl = document.getElementById("numeroServicio");
       const valSelect = mapaServicio[m.servicio] || "";
+
       if(selectEl && valSelect){
         selectEl.value = valSelect;
-        if(typeof actualizarInfoServicio === "function")
+        if(typeof actualizarInfoServicio === "function"){
           actualizarInfoServicio();
+        }
       }
 
-      document.getElementById("kmTravels").value = m.km;
+      // 🔥 NUEVO: buscar ruta REAL (no confiar en m.km)
+      const rutas = window.routes || [];
+
+      const ruta = rutas.find(r =>
+        (
+          r.origen.toLowerCase() === origenActual.toLowerCase() &&
+          r.destino.toLowerCase() === destinoFinal.toLowerCase()
+        ) ||
+        (
+          r.origen.toLowerCase() === destinoFinal.toLowerCase() &&
+          r.destino.toLowerCase() === origenActual.toLowerCase()
+        )
+      );
+
+      if(ruta){
+        document.getElementById("kmTravels").value = ruta.km;
+      }else{
+        console.warn("❌ ruta no encontrada", origenActual, destinoFinal);
+        document.getElementById("kmTravels").value = "";
+      }
+
       window._destinoSeleccionado = true;
 
       box.style.display = "none";
+      box.innerHTML = "";
 
-      mostrarHorariosOficiales(origenActual, m.destino);
+      mostrarHorariosOficiales(origenActual, destinoFinal);
       actualizarCodigoCartel();
     };
 

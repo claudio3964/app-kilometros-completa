@@ -101,11 +101,15 @@ function obtenerDuracionPromedio(origen, destino){
 
   const key = origen + "→" + destino;
 
-  if(!stats[key]) return null;
+  const stat = stats[key];
 
-  return Math.floor(
-    stats[key].totalMinutos / stats[key].totalViajes
-  );
+if(!stat || stat.totalViajes < 3){
+  return null;
+}
+
+return Math.floor(
+  stat.totalMinutos / stat.totalViajes
+);
 
 }
 
@@ -118,18 +122,7 @@ function convertirHoraAMin(hhmm){
   return parseInt(h)*60 + parseInt(m);
 
 }
-function obtenerDuracionPromedio(origen, destino){
 
-  const stats = getTravelStats();
-
-  const key = origen + "→" + destino;
-
-  if(!stats[key]) return null;
-
-  return Math.round(
-    stats[key].totalMinutos / stats[key].totalViajes
-  );
-}
 
 // debug
 window.getTravelStats = getTravelStats;
