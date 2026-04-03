@@ -663,9 +663,11 @@ function determinarViatico(o){
 
   if(!o) return 0;
 
-  const horasJornada = calcularHorasJornada(o);
+const horasJornada = calcularHorasJornada(o);  
   if(horasJornada <= 0) return 0;
-
+if(horasJornada < 9){
+  return 0;
+}
   const fechaBase = new Date(o.date + "T00:00:00").getTime();
 
   const eventosInicio = [];
