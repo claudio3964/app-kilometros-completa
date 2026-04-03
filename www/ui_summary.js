@@ -1,115 +1,5 @@
 console.log("ui_summary cargado");
 
-// =====================================================
-// RESUMEN GENERAL
-// =====================================================
-
-function renderResumenGeneral(){
-
-  const lista = document.getElementById("summaryGeneralLista");
-  const totalesBox = document.getElementById("summaryGeneralTotales");
-
-  if(!lista || !totalesBox) return;
-
-  lista.innerHTML = "";
-
-  // ================================
-  // LEER FILTROS
-  // ================================
-  const desde = document.getElementById("filtroDesde")?.value || "";
-  const hasta = document.getElementById("filtroHasta")?.value || "";
-  const ordenFiltro = document.getElementById("filtroOrden")?.value.trim().toLowerCase() || "";
-  const ordenarPor = document.getElementById("ordenarPor")?.value || "fecha_desc";
-
-  // ================================
-  // OBTENER ÓRDENES (SOLO CERRADAS)
-  // ================================
-  let orders = getOrders().filter(o => o.closed === true);
-
-  // ================================
-  // FILTRO POR FECHA
-  // ================================
-  if(desde){
-    orders = orders.filter(o => o.date >= desde);
-  }
-
-  if(hasta){
-    orders = orders.filter(o => o.date <= hasta);
-  }
-
-  // ================================
-  // FILTRO POR ORDEN
-  // ================================
-  if(ordenFiltro){
-    orders = orders.filter(o =>
-      o.orderNumber &&
-      o.orderNumber.toLowerCase().includes(ordenFiltro)
-    );
-  }
-
-  // ================================
-  // ORDENAMIENTO
-  // ================================
-  if(ordenarPor === "fecha_desc"){
-    orders.sort((a,b)=>new Date(b.date)-new Date(a.date));
-  }
-  else if(ordenarPor === "fecha_asc"){
-    orders.sort((a,b)=>new Date(a.date)-new Date(b.date));
-  }
-  else if(ordenarPor === "orden_desc"){
-    orders.sort((a,b)=>b.orderNumber.localeCompare(a.orderNumber));
-  }
-  else if(ordenarPor === "orden_asc"){
-    orders.sort((a,b)=>a.orderNumber.localeCompare(b.orderNumber));
-  }
-
-  // ================================
-  // CALCULAR TOTALES ACUMULADOS
-  // ================================
-  let kmTotal = 0;
-  let montoTotal = 0;
-  let viaticosTotal = 0;
-
-  // ================================
-  // RENDER TARJETAS
-  // ================================
-  orders.forEach(o => {
-
-    const t = o.totalsSnapshot;
-
-    // Seguridad adicional
-    if(!t) return;
-
-    kmTotal += Number(t.kmTotal || 0);
-    montoTotal += Number(t.monto || 0);
-    viaticosTotal += Number(t.viaticos || 0);
-
-    const card = document.createElement("div");
-    card.className = "card";
-    card.style.cssText = "margin:10px;";
-
-    card.innerHTML = `
-      <b>Orden:</b> ${o.orderNumber}<br>
-      <b>Fecha:</b> ${o.date}<br>
-      <b>Base:</b> ${o.baseInicio}<br>
-      <b>KM:</b> ${t.kmTotal}<br>
-      <b>Viáticos:</b> ${t.viaticos}<br>
-      <b>Total:</b> $ ${Math.round(t.monto)}
-    `;
-
-    lista.appendChild(card);
-  });
-
-  // ================================
-  // MOSTRAR TOTALES GENERALES
-  // ================================
-  totalesBox.innerHTML = `
-    <b>Total jornadas:</b> ${orders.length}<br>
-    <b>Total km:</b> ${kmTotal}<br>
-    <b>Total viáticos:</b> ${viaticosTotal}<br>
-    <b>Total dinero:</b> $ ${Math.round(montoTotal)}
-  `;
-}
 
 // =====================================================
 // LIMPIAR FILTROS
@@ -269,12 +159,19 @@ function renderBotonCerrarJornada(){
       if(!confirmar) return;
 
       const order = getActiveOrder();
-      const resultado = closeActiveOrder();
+const resultado = closeActiveOrder();
 
-      if(resultado){
+if(resultado){
 
   try {
-    await exportarJornada(resultado);
+
+    // 🔥 RELEER DESDE STORAGE (FIX CLAVE)
+    const ordenFinal = getOrders().find(
+      o => o.orderNumber === resultado.orderNumber
+    );
+
+    await exportarJornada(ordenFinal);
+
   } catch (e) {
     console.warn("Error exportando jornada", e);
   }
@@ -309,10 +206,30 @@ function renderResumenGeneral(){
 
   container.innerHTML = "";
 
-  const ordenadas =
-    orders.sort((a,b)=> new Date(b.date)-new Date(a.date));
+  // ================================
+// ORDENAR + LIMPIAR DUPLICADOS POR DÍA
+// ================================
 
-  ordenadas.forEach(order => {
+// ordenar primero
+const ordenadas = [...orders].sort(
+  (a,b)=> new Date(b.date)-new Date(a.date)
+);
+
+// eliminar duplicados por fecha
+const unicosPorDia = [];
+const fechasVistas = new Set();
+
+ordenadas.forEach(o => {
+  if(!fechasVistas.has(o.date)){
+    unicosPorDia.push(o);
+    fechasVistas.add(o.date);
+  }
+});
+
+// tomar solo últimos 5 días
+const ultimos5 = unicosPorDia.slice(0,5);
+
+  ultimos5.forEach(order => {
 
     const totals =
       calculateOrderTotals(order);

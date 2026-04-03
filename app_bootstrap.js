@@ -214,7 +214,7 @@ activarViajesProgramados();
       mostrarViajeEnCursoUI();
 
   }
-
+    verificarJornadaPendiente();
 });
   // =====================================================
   // SPLASH Y CARGA INICIAL
@@ -312,6 +312,57 @@ bases.push("Otro");
   });
 
 });
+function renderResumenGeneral(){
+  const container =
+    document.getElementById("resumenGeneralContainer");
+
+  if(!container) return;
+
+  const orders = getOrders();
+
+  if(!orders || orders.length === 0){
+    container.innerHTML = `
+      <div class="card">
+        No hay jornadas registradas
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = "";
+
+  const ordenadas = [...orders].sort(
+    (a,b)=> new Date(b.date)-new Date(a.date)
+  );
+
+  const unicosPorDia = [];
+  const fechasVistas = new Set();
+
+  ordenadas.forEach(o => {
+    if(!fechasVistas.has(o.date)){
+      unicosPorDia.push(o);
+      fechasVistas.add(o.date);
+    }
+  });
+
+  const ultimos5 = unicosPorDia.slice(0,5);
+
+  ultimos5.forEach(order => {
+    const totals = calculateOrderTotals(order);
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <b>📅 ${order.date}</b><br>
+      KM: ${(totals.kmTotal || 0).toFixed(1)} km<br>
+      💰 $${Math.round(totals.monto || 0)}<br>
+      🍽 ${totals.viaticos || 0} viáticos
+    `;
+
+    container.appendChild(card);
+  });
+}
 // ========================================
 // MOTOR VIAJES PROGRAMADOS
 // ========================================

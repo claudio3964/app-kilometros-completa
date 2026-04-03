@@ -37,7 +37,11 @@ function closeActiveOrderUI(){
 
   document.getElementById("ordenActivaInfo").innerText =
     "🔴 Sin jornada activa";
-  exportarJornada(o);
+  const ordenFinal = getOrders().find(
+  ord => ord.orderNumber === o.orderNumber
+);
+
+exportarJornada(ordenFinal);
   alert("Jornada cerrada");
 }
 // =====================================================
@@ -1000,15 +1004,237 @@ function activarViajesProgramados(){
 // =====================================================
 // EXPORTAR JORNADA (JSON PARA PRUEBAS)
 // =====================================================
+// ===============================
+// HELPERS
+// ===============================
+
+function redondear(n){
+  return Math.round((n || 0) * 10) / 10;
+}
+
+function calcularKmPorTipo(viajes){
+
+  const resultado = {
+    directo: 0,
+    semi_directo: 0,
+    expreso: 0,
+    turno: 0,
+    vacio: 0
+  };
+
+  viajes.forEach(v => {
+
+    if(v.status === "cancelado") return;
+
+    const km = v.kmEmpresa ?? v.kmAuto ?? 0;
+    const tipo = (v.tipoServicio || "").toLowerCase();
+
+    if(tipo.includes("directo") && !tipo.includes("semi")){
+      resultado.directo += km;
+    }
+    else if(tipo.includes("semi")){
+      resultado.semi_directo += km;
+    }
+    else if(tipo.includes("expreso")){
+      resultado.expreso += km;
+    }
+    else if(tipo.includes("turno")){
+      resultado.turno += km;
+    }
+    else if(tipo.includes("vacio")){
+      resultado.vacio += km;
+    }
+
+  });
+
+  return resultado;
+}
+
+function calcularKmPorCategoria(viajes){
+
+  let kmPasajero = 0;
+  let kmVacio = 0;
+
+  viajes.forEach(v => {
+
+    if(v.status === "cancelado") return;
+
+    const km = v.kmEmpresa ?? v.kmAuto ?? 0;
+
+    if((v.tipoServicio || "").toLowerCase().includes("vacio")){
+      kmVacio += km;
+    } else {
+      kmPasajero += km;
+    }
+
+  });
+
+  return {
+    pasajero: kmPasajero,
+    vacio: kmVacio
+  };
+}
+
+function calcularGuardiasDetalle(guardias){
+
+  let comun = 0;
+  let especial = 0;
+
+  let horasComun = 0;
+  let horasEspecial = 0;
+
+  guardias.forEach(g => {
+
+    const horas = g.hours || 0;
+
+    if(g.type === "especial"){
+      especial += horas * 40;
+      horasEspecial += horas;
+    } else {
+      comun += horas * 30;
+      horasComun += horas;
+    }
+
+  });
+
+  return {
+    km: {
+      comun,
+      especial
+    },
+    horas: {
+      comun: horasComun,
+      especial: horasEspecial
+    }
+  };
+}
+
+function calcularAcoplados(viajes){
+
+  let km = 0;
+  let cantidad = 0;
+
+  viajes.forEach(v => {
+
+    if(v.acopladoKm){
+      km += v.acopladoKm;
+      cantidad++;
+    }
+
+  });
+
+  return { km, cantidad };
+}
+async function generarPDFJornada(order){
+
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    console.warn("jsPDF no cargado");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const totals = calculateOrderTotals(order);
+
+  // helpers reutilizados
+  const kmPorTipo = calcularKmPorTipo(order.travels || []);
+  const kmPorCategoria = calcularKmPorCategoria(order.travels || []);
+  const guardiasDetalle = calcularGuardiasDetalle(order.guards || []);
+  const acopladosDetalle = calcularAcoplados(order.travels || []);
+
+  let y = 15;
+
+  const add = (txt, salto = 7) => {
+    doc.text(txt, 15, y);
+    y += salto;
+  };
+
+  doc.setFontSize(14);
+  add("COT Driver - Resumen de Jornada", 10);
+
+  doc.setFontSize(11);
+
+  add(`Fecha: ${order.date}`);
+  add(`Orden: ${order.orderNumber}`);
+  add(`Base: ${order.baseInicio || "Montevideo"}`);
+
+  y += 5;
+
+  // =========================
+  // TOTALES
+  // =========================
+  add("=== TOTALES ===");
+  add(`KM Totales: ${redondear(totals.kmTotal)}`);
+  add(`KM Viajes: ${redondear(totals.kmViajes)}`);
+  add(`KM Guardias: ${redondear(totals.kmGuardias)}`);
+  add(`KM Acoplados: ${redondear(totals.kmAcoplados)}`);
+  add(`Viáticos: ${totals.viaticos}`);
+  add(`Total $: ${Math.round(totals.monto)}`);
+
+  y += 5;
+
+  // =========================
+  // KM POR TIPO
+  // =========================
+  add("=== KM POR TIPO ===");
+  add(`Directo: ${redondear(kmPorTipo.directo)}`);
+  add(`Semi Directo: ${redondear(kmPorTipo.semi_directo)}`);
+  add(`Expreso: ${redondear(kmPorTipo.expreso)}`);
+  add(`Turno: ${redondear(kmPorTipo.turno)}`);
+  add(`Vacío: ${redondear(kmPorTipo.vacio)}`);
+
+  y += 5;
+
+  // =========================
+  // CATEGORÍA
+  // =========================
+  add("=== KM POR CATEGORÍA ===");
+  add(`Pasajero: ${redondear(kmPorCategoria.pasajero)}`);
+  add(`Vacío: ${redondear(kmPorCategoria.vacio)}`);
+
+  y += 5;
+
+  // =========================
+  // GUARDIAS
+  // =========================
+  add("=== GUARDIAS ===");
+  add(`Común: ${redondear(guardiasDetalle.km.comun)} km (${redondear(guardiasDetalle.horas.comun)} h)`);
+  add(`Especial: ${redondear(guardiasDetalle.km.especial)} km (${redondear(guardiasDetalle.horas.especial)} h)`);
+
+  y += 5;
+
+  // =========================
+  // ACOPLADOS
+  // =========================
+  add("=== ACOPLADOS ===");
+  add(`Cantidad: ${acopladosDetalle.cantidad}`);
+  add(`KM: ${redondear(acopladosDetalle.km)}`);
+
+  y += 10;
+
+  // =========================
+  // FIRMAS
+  // =========================
+  add("Firma chofer: ____________________", 10);
+  add("Firma tránsito: ____________________", 10);
+
+  doc.save(`jornada_${order.date}.pdf`);
+}
+// ===============================
+// EXPORTAR JORNADA
+// ===============================
 
 async function exportarJornada(order){
 
   const driver = getDriver?.() || {};
   const totals = calculateOrderTotals(order);
 
-  // =====================================================
-  // ESTRUCTURA COMPLETA PARA CORROBORACIÓN
-  // =====================================================
+  const kmPorTipo = calcularKmPorTipo(order.travels || []);
+  const kmPorCategoria = calcularKmPorCategoria(order.travels || []);
+  const guardiasDetalle = calcularGuardiasDetalle(order.guards || []);
+  const acopladosDetalle = calcularAcoplados(order.travels || []);
+
   const data = {
     version_app: "0.9 piloto",
     syncStatus: order.syncStatus || "local",
@@ -1057,15 +1283,26 @@ async function exportarJornada(order){
     })),
 
     resumen: {
-      kmViajes: totals.kmViajes,
-      kmAcoplados: totals.kmAcoplados,
-      kmGuardias: totals.kmGuardias,
-      kmTomeCese: totals.kmTomeCese,
-      kmTotal: totals.kmTotal,
+
+      kmTotal: redondear(totals.kmTotal),
+
+      kmViajes: redondear(totals.kmViajes),
+      kmGuardias: redondear(totals.kmGuardias),
+      kmAcoplados: redondear(totals.kmAcoplados),
+      kmTomeCese: redondear(totals.kmTomeCese),
+
+      kmPorTipo: kmPorTipo,
+      kmPorCategoria: kmPorCategoria,
+
+      guardias: guardiasDetalle,
+      acoplados: acopladosDetalle,
+
       viaticos: totals.viaticos,
+
       montoKm: Math.round(totals.kmTotal * 7.637),
       montoViaticos: totals.viaticos * 455,
       montoTotal: Math.round(totals.monto)
+
     }
   };
 
@@ -1076,20 +1313,6 @@ async function exportarJornada(order){
   const hh = String(now.getHours()).padStart(2,"0");
   const mm = String(now.getMinutes()).padStart(2,"0");
   const filename = `jornada_${order.date}_${order.orderNumber}_${hh}${mm}.json`;
-  const file = new File([blob], filename, {type:"application/json"});
-
-  try {
-    if(navigator.canShare && navigator.canShare({files:[file]})){
-      await navigator.share({
-        title: `Jornada COT — ${order.date}`,
-        text: `Legajo ${driver.legajo || "—"} | ${totals.kmTotal.toFixed(1)} km | $${Math.round(totals.monto)}`,
-        files: [file]
-      });
-      return;
-    }
-  } catch(e){
-    console.log("Share no disponible, usando descarga");
-  }
 
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -1097,8 +1320,16 @@ async function exportarJornada(order){
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
-}
 
+  // 🔥 PDF
+  try {
+    if (typeof generarPDFJornada === "function") {
+      generarPDFJornada(order);
+    }
+  } catch (e) {
+    console.warn("Error generando PDF", e);
+  }
+}
 // export global
 window.abrirViajeSimple = abrirViajeSimple;
 window.renderResumenDia = renderResumenDia;
