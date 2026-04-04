@@ -1119,6 +1119,84 @@ function cancelarViajePorId(travelId){
   return travel;
 
 }
+function generateMonthlySummary(month, year){
+
+  const orders = getOrders();
+
+  const result = {
+    month,
+    year,
+    totalKm: 0,
+    totalViaticos: 0,
+    totalImporte: 0,
+    totalJornadas: 0,
+    days: []
+  };
+
+  if(!orders || orders.length === 0) return result;
+
+  const daysMap = {};
+
+  orders.forEach(order => {
+
+    if(!order.closed) return;
+
+    const d = new Date(order.date);
+    const m = d.getMonth() + 1;
+    const y = d.getFullYear();
+
+    if(m !== month || y !== year) return;
+
+    const t = calculateOrderTotals(order);
+
+    result.totalKm += t.kmTotal || 0;
+    result.totalViaticos += t.viaticos || 0;
+    result.totalImporte += t.monto || 0;
+    result.totalJornadas += 1;
+
+    const dateKey = order.date;
+
+    // 🔹 INIT
+    if(!daysMap[dateKey]){
+      daysMap[dateKey] = {
+        date: dateKey,
+        km: 0,
+        viaticos: 0,
+        importe: 0,
+        jornadas: 0,
+
+        // 🆕 operativos
+        viajes: 0,
+        guardias: 0,
+        tomeCese: false
+      };
+    }
+
+    // 🔹 ACUMULAR CORE
+    daysMap[dateKey].km += t.kmTotal || 0;
+    daysMap[dateKey].viaticos += t.viaticos || 0;
+    daysMap[dateKey].importe += t.monto || 0;
+    daysMap[dateKey].jornadas += 1;
+
+    // 🔹 ACUMULAR OPERATIVO
+    daysMap[dateKey].viajes += (order.travels?.length || 0);
+    daysMap[dateKey].guardias += (order.guards?.length || 0);
+
+    // 🔹 TOME Y CESE
+    const tieneTomeCese =
+      order.travels?.some(t => t.tomeCese);
+
+    if(tieneTomeCese){
+      daysMap[dateKey].tomeCese = true;
+    }
+
+  });
+
+  result.days = Object.values(daysMap)
+    .sort((a,b)=> new Date(b.date) - new Date(a.date));
+
+  return result;
+}
 
 // export global
 window.cancelarViajePorId = cancelarViajePorId;

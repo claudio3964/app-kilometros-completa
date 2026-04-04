@@ -1435,6 +1435,7 @@ function renderHistorial(){
 
   // ── Resumen del período ──
   let kmTotal = 0, montoTotal = 0, viaticosTotal = 0;
+
   orders.forEach(o => {
     const t = calculateOrderTotals(o);
     kmTotal    += t.kmTotal;
@@ -1447,6 +1448,7 @@ function renderHistorial(){
     background:#1a1a2e; color:white; border-radius:12px;
     padding:14px 16px; margin-bottom:16px; font-size:14px; line-height:1.8;
   `;
+
   resumen.innerHTML = `
     <div style="font-weight:bold; font-size:15px; margin-bottom:6px;">
       📊 ${dia ? "Resumen del día " + dia : "Resumen del período"}
@@ -1456,12 +1458,56 @@ function renderHistorial(){
     🍽 Viáticos: <b>${viaticosTotal}</b><br>
     📅 Jornadas: <b>${orders.length}</b>
   `;
+
   container.appendChild(resumen);
 
   // ── Tarjetas por jornada ──
   orders.forEach(order => {
+const resumenDestinos = {};
+
+(order.travels || [])
+  .filter(t => t.status !== "cancelado")
+  .forEach(t => {
+
+    const destino = (t.destino || "Sin destino");
+
+    if(!resumenDestinos[destino]){
+      resumenDestinos[destino] = 0;
+    }
+
+    resumenDestinos[destino]++;
+  });
+
+const textoDestinos = Object.entries(resumenDestinos)
+  .map(([dest, cant]) => `${cant} ${dest}`)
+  .join(" · ");
 
     const totales = calculateOrderTotals(order);
+
+    // ✅ CORRECTO: dentro del scope de order
+    const tieneTomeCese = (order.travels || []).some(t => t.tomeCese);
+    const cantidadViajes = (order.travels || [])
+      .filter(t => t.status !== "cancelado").length;
+
+    const cantidadGuardias = (order.guards || []).length;
+
+    // ✅ resumen tipos
+    const resumenTipos = {};
+    (order.travels || [])
+      .filter(t => t.status !== "cancelado")
+      .forEach(t => {
+        const tipo = (t.tipoServicio || "comun").toLowerCase();
+        if(!resumenTipos[tipo]) resumenTipos[tipo] = 0;
+        resumenTipos[tipo]++;
+      });
+
+    const textoTipos = Object.entries(resumenTipos)
+      .map(([tipo, cant]) => {
+        const nombre = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+        return `${cant} ${nombre}`;
+      })
+      .join(" · ");
+
     const card = document.createElement("div");
     card.style.cssText = `
       border:1px solid #ddd; border-radius:10px;
@@ -1482,11 +1528,19 @@ function renderHistorial(){
 
     card.innerHTML = `
       <div style="font-weight:bold; margin-bottom:6px;">📅 ${order.date}</div>
+
       <div style="font-size:13px; line-height:1.7;">
         🛣 KM: <b>${totales.kmTotal.toFixed(1)}</b>
-        &nbsp;·&nbsp; 💰 <b>$ ${Math.round(totales.monto)}</b>
         &nbsp;·&nbsp; 🍽 Viáticos: <b>${totales.viaticos}</b>
+        &nbsp;·&nbsp; 🟢 Tome y Cese: <b>${tieneTomeCese ? "Sí" : "No"}</b><br>
+
+        📦 Viajes: <b>${cantidadViajes}</b>
+        &nbsp;·&nbsp; ⏱ Guardias: <b>${cantidadGuardias}</b><br>
+
+        🧭 Servicios: <b>${textoTipos || "—"}</b>
+        📍 Destinos: <b>${textoDestinos || "—"}</b><br>
       </div>
+
       ${viajesHTML}
     `;
 
