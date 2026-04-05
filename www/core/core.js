@@ -710,34 +710,38 @@ function determinarViatico(o){
   });
 
   // ================================
-  // GUARDIAS
+  // GUARDIAS (finalizadas y en_curso)
   // ================================
   (o.guards || []).forEach(g => {
 
-    if(g.inicio && g.fin){
+    if(!g.inicio) return;
 
-      const [hI,mI] = normalizarHora(g.inicio).split(":").map(Number);
+    const [hI,mI] = normalizarHora(g.inicio).split(":").map(Number);
+
+    let inicioMs = fechaBase + ((hI * 60 + mI) * 60 * 1000);
+
+    let finMs;
+
+    if(g.fin){
       const [hF,mF] = normalizarHora(g.fin).split(":").map(Number);
-
-      let inicioMs =
-        fechaBase + ((hI * 60 + mI) * 60 * 1000);
-
-      let finMs =
-        fechaBase + ((hF * 60 + mF) * 60 * 1000);
-
-      // soporte cruce medianoche
-      if(finMs < inicioMs){
-        finMs += 24 * 60 * 60 * 1000;
-      }
-
-      eventosInicio.push({
-        tipo: "guardia",
-        timestamp: inicioMs,
-        tomeCese: false
-      });
-
-      eventosFin.push(finMs);
+      finMs = fechaBase + ((hF * 60 + mF) * 60 * 1000);
+    } else {
+      // guardia en_curso: usar hora actual como fin provisional
+      finMs = ahoraSistema();
     }
+
+    // soporte cruce medianoche
+    if(finMs < inicioMs){
+      finMs += 24 * 60 * 60 * 1000;
+    }
+
+    eventosInicio.push({
+      tipo: "guardia",
+      timestamp: inicioMs,
+      tomeCese: false
+    });
+
+    eventosFin.push(finMs);
 
   });
 
