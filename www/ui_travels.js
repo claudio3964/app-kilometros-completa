@@ -1537,6 +1537,7 @@ const textoDestinos = Object.entries(resumenDestinos)
         🚍 ${v.origen} → ${v.destino}
         &nbsp;·&nbsp; ${v.departureTime || "--"} - ${v.arrivalTime || "--"}
         &nbsp;·&nbsp; ${v.kmAuto ?? v.kmEmpresa ?? 0} km
+        ${v.coche ? `&nbsp;·&nbsp; 🚌 Coche: ${v.coche}` : ""}
       </div>`
     ).join("");
 
