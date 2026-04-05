@@ -1139,11 +1139,11 @@ function calcularAcoplados(viajes){
 
   return { km, cantidad };
 }
-async function generarPDFJornada(order){
+async function generarPDFJornada(order, { returnBase64 = false } = {}){
 
   if (!window.jspdf || !window.jspdf.jsPDF) {
     console.warn("jsPDF no cargado");
-    return;
+    return null;
   }
 
   const { jsPDF } = window.jspdf;
@@ -1233,6 +1233,7 @@ async function generarPDFJornada(order){
   add("Firma chofer: ____________________", 10);
   add("Firma tránsito: ____________________", 10);
 
+  if (returnBase64) return doc.output('base64');
   doc.save(`jornada_${order.date}.pdf`);
 }
 // ===============================
@@ -1257,7 +1258,8 @@ async function exportarJornada(order){
     chofer: {
       legajo: driver.legajo || "—",
       nombre: driver.nombre || "—",
-      base: driver.base || "Montevideo"
+      base: driver.base || "Montevideo",
+      tipo: driver.tipo || "—"
     },
 
     jornada: {
@@ -1284,6 +1286,7 @@ async function exportarJornada(order){
       acoplado: v.acopladoKm > 0 || v.acoplado,
       acopladoKm: v.acopladoKm || 0,
       tomeCese: v.tomeCese || false,
+      coche: v.coche || null,
       duracionMinutos: v.duracionMinutos || null,
       syncStatus: v.syncStatus || "local"
     })),
@@ -1293,7 +1296,7 @@ async function exportarJornada(order){
       inicio: g.inicio,
       fin: g.fin,
       horas: g.hours || 0,
-      kmGenerados: (g.hours || 0) * (g.type === "especial" ? 40 : 30)
+      kmGenerados: (g.hours || 0) * (g.type === "especial" ? GUARDIA_ESPECIAL_KM_HORA : GUARDIA_COMUN_KM_HORA)
     })),
 
     resumen: {
@@ -1313,35 +1316,76 @@ async function exportarJornada(order){
 
       viaticos: totals.viaticos,
 
-      montoKm: Math.round(totals.kmTotal * 7.637),
-      montoViaticos: totals.viaticos * 455,
+      montoKm: Math.round(totals.kmTotal * LAUDO_KM),
+      montoViaticos: totals.viaticos * MONTO_VIATICO,
       montoTotal: Math.round(totals.monto)
 
     }
   };
 
   const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], {type:"application/json"});
 
   const now = new Date();
   const hh = String(now.getHours()).padStart(2,"0");
   const mm = String(now.getMinutes()).padStart(2,"0");
-  const filename = `jornada_${order.date}_${order.orderNumber}_${hh}${mm}.json`;
+  const basename = `jornada_${order.date}_${order.orderNumber}_${hh}${mm}`;
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+  const isNative = window.Capacitor?.isNativePlatform?.();
 
-  // 🔥 PDF
-  try {
-    if (typeof generarPDFJornada === "function") {
-      generarPDFJornada(order);
+  if (isNative) {
+    try {
+      const Filesystem = window.Capacitor.Plugins.Filesystem;
+      const Share = window.Capacitor.Plugins.Share;
+
+      // PDF → base64
+      const pdfBase64 = await generarPDFJornada(order, { returnBase64: true });
+
+      if (pdfBase64) {
+        const pdfResult = await Filesystem.writeFile({
+          path: basename + ".pdf",
+          data: pdfBase64,
+          directory: "CACHE"
+        });
+
+        await Share.share({
+          title: `Jornada ${order.date}`,
+          text: `Resumen jornada ${order.orderNumber}`,
+          files: [pdfResult.uri],
+          dialogTitle: "Compartir jornada"
+        });
+      }
+
+      // JSON → también guardar en cache por si se necesita
+      const jsonB64 = btoa(unescape(encodeURIComponent(json)));
+      await Filesystem.writeFile({
+        path: basename + ".json",
+        data: jsonB64,
+        directory: "CACHE"
+      });
+
+    } catch (e) {
+      console.error("Error exportando en Android:", e);
+      alert("Error al exportar: " + e.message);
     }
-  } catch (e) {
-    console.warn("Error generando PDF", e);
+
+  } else {
+    // Fallback navegador: descarga JSON
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = basename + ".json";
+    a.click();
+    URL.revokeObjectURL(url);
+
+    // PDF via doc.save
+    try {
+      if (typeof generarPDFJornada === "function") {
+        generarPDFJornada(order);
+      }
+    } catch (e) {
+      console.warn("Error generando PDF", e);
+    }
   }
 }
 // export global
