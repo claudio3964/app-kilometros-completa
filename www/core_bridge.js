@@ -5,54 +5,45 @@
 // -------- DRIVER --------
 window.getDriver = getDriver;
 
-
 // -------- ACTIVE ORDER --------
 window.getActiveOrder = getActiveOrder;
-
-
 window.setActiveOrder = setActiveOrder;
 
 // -------- GUARDIAS --------
-window.addGuardia = function (inicio) {
-  // adaptá si el core usa otro nombre
-  if (typeof crearGuardia === "function") {
-    return crearGuardia(inicio);
-  }
-
-  console.warn("crearGuardia no existe en core");
-  return null;
+window.addGuardia = function(tipo, inicio, dia, descripcion){
+  return addGuard(tipo, inicio, dia, descripcion);
 };
 
 // -------- VIAJES --------
-window.addViaje = function (data) {
-  if (typeof crearViaje === "function") {
-    const viaje = crearViaje(data);
+window.addViaje = function(data){
+  const ok = addTravel(
+    data.origen,
+    data.destino,
+    data.turno,
+    data.departureTime,
+    data.arrivalTime,
+    data.hoursWorked,
+    data.tipo,
+    data.acoplado
+  );
 
-    // MUY IMPORTANTE
-    if (window.verificarViajesProgramados) {
-      window.verificarViajesProgramados();
-    }
-
-    return viaje;
+  if(ok && window.verificarViajesProgramados){
+    window.verificarViajesProgramados();
   }
 
-  console.warn("crearViaje no existe en core");
-  return null;
+  return ok;
 };
-// ===============================
-// HISTORIAL (UI stub temporal)
-// ===============================
-window.abrirHistorial = function () {
-  console.log("Historial no implementado aún");
 
-  alert("Pantalla de historial en construcción");
+// -------- HISTORIAL --------
+window.abrirHistorial = function(){
+  if(typeof abrirHistorial === "function"){
+    abrirHistorial();
+  } else {
+    console.warn("abrirHistorial no disponible");
+  }
 };
+
 // -------- FINALIZAR JORNADA --------
-window.finalizarJornada = function () {
-  if (typeof finalizarJornada === "function") {
-    return finalizarJornada();
-  }
-
-  console.warn("finalizarJornada no existe en core");
-  return null;
+window.finalizarJornada = function(){
+  return closeActiveOrder();
 };
