@@ -356,7 +356,8 @@ function addTravel(
   arrivalTime,
   hoursWorked,
   tipo = turno,        // ← FIX
-  acoplado = false     // ← FIX
+  acoplado = false,    // ← FIX
+  coche = null
 ){
 
   if(existeViajeEnCurso()){
@@ -409,6 +410,8 @@ departureTimestamp: inicioTimestamp,
   acoplado: acoplado,   // ← FIX correcto
   acopladoKm: calcularAcopladoKm(tipo, destino),
 
+  coche: coche ?? null,
+
   tomeCese: false,
   syncStatus: "local"
 };
@@ -446,7 +449,8 @@ function addTravelProgramado(
   arrivalTime,
   hoursWorked,
   tipo = turno,
-  acoplado = false
+  acoplado = false,
+  coche = null
 ){
 
   const order = getActiveOrder();
@@ -503,6 +507,8 @@ function addTravelProgramado(
 
   acoplado: acoplado,
   acopladoKm: calcularAcopladoKm(tipo, destino),
+
+  coche: coche ?? null,
 
   tomeCese: false,
   syncStatus: "local"

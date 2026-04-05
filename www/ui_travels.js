@@ -416,6 +416,11 @@ function addTravelUI(event){
 
   let ok;
 
+  const cocheInput = document.getElementById("numeroCoche");
+  const coche = cocheInput && cocheInput.value.trim()
+    ? Number(cocheInput.value.trim())
+    : null;
+
   if(salidaDate > ahora){
 
     // VIAJE PROGRAMADO
@@ -425,7 +430,10 @@ function addTravelUI(event){
       servicioSeleccionado.turno,
       departureTime,
       arrivalTime,
-      duracionEstimadaHoras
+      duracionEstimadaHoras,
+      servicioSeleccionado.turno,
+      false,
+      coche
     );
 
   }else{
@@ -437,7 +445,10 @@ function addTravelUI(event){
       servicioSeleccionado.turno,
       departureTime,
       arrivalTime,
-      duracionEstimadaHoras
+      duracionEstimadaHoras,
+      servicioSeleccionado.turno,
+      false,
+      coche
     );
 
   }
