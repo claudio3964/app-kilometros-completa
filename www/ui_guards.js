@@ -31,137 +31,58 @@ window.normalizarHora = normalizarHora;
 // =====================================================
 function addGuardUI(event){
 
-  // 🔥 PROTECCIÓN WEBVIEW
   if(event) event.preventDefault();
 
+  const dia = document.getElementById("diaGuardia").value;
+  const inicio = normalizarHora(document.getElementById("horaInicioGuardia").value);
+  const tipo = document.getElementById("tipoGuardia").value;
+  const descripcion = tipo === "especial"
+    ? document.getElementById("descripcionGuardia").value.trim()
+    : "";
+
+  if(!dia){
+    alert("Seleccioná el día");
+    return;
+  }
+
+  let guardia;
+
   try {
-
-    // 🔥 CREACIÓN AUTOMÁTICA DE JORNADA
-    let o = getActiveOrder();
-    if(!o){
-      o = createOrder();
-      console.log("Jornada creada automáticamente:", o.orderNumber);
+    guardia = addGuard(tipo, inicio, dia, descripcion);
+  } catch(e){
+    if(e.message.startsWith("GUARDIA_TIPO_INVALIDO")){
+      alert("Elegí tipo de guardia válido (común o especial)");
+    } else if(e.message.startsWith("GUARDIA_INICIO_INVALIDO")){
+      alert("Ingresá hora de inicio en formato HH:mm");
+    } else if(e.message.startsWith("GUARDIA_DESCRIPCION_REQUERIDA")){
+      alert("Si es guardia especial, debés completar la descripción");
+    } else if(e.message.startsWith("YA_EXISTE_JORNADA_ACTIVA")){
+      alert("No se pudo crear la jornada automática");
+    } else {
+      alert("Error al registrar guardia: " + e.message);
+      console.error(e);
     }
+    return;
+  }
 
-    const dia = document.getElementById("diaGuardia").value;
-    const inicio = normalizarHora(document.getElementById("horaInicioGuardia").value);
-   const fin = null;
-    const tipo = document.getElementById("tipoGuardia").value;
+  const order = getActiveOrder();
 
-    if(!dia){
-      alert("Seleccioná el día");
-      return;
-    }
-
-    if(!inicio){
-      alert("Ingresá hora de inicio");
-      return;
-    }
-
-    if(!tipo){
-      alert("Elegí tipo de guardia");
-      return;
-    }
-
-    let horas = 0;
-    let status = "en_curso";
-
-    if(fin){
-      const [hI, mI] = inicio.split(":").map(Number);
-      const [hF, mF] = fin.split(":").map(Number);
-      horas = (hF + mF/60) - (hI + mI/60);
-
-      if(horas <= 0){
-        alert("La hora fin debe ser mayor que la de inicio");
-        return;
-      }
-
-      status = "finalizada";
-    }
-
-    let descripcion = "";
-
-    if(tipo === "especial"){
-      descripcion =
-        document.getElementById("descripcionGuardia").value.trim();
-
-      if(!descripcion){
-        alert("Si es guardia especial, debés completar la descripción");
-        return;
-      }
-    }
-
-    // 🔥 GUARDADO COMPATIBLE CON CORE
-    const order = getActiveOrder();
-    if(!order){
-      alert("No hay jornada activa");
-      return;
-    }
-
-    if(!order.guards) order.guards = [];
-
-    // 🔴 VALIDAR SOLAPAMIENTO
-    const solapada = order.guards.find(
-      g => g.dia === dia && g.inicio === inicio && g.fin === fin
-    );
-
-    if(solapada){
-      alert("Ya existe una guardia en ese horario");
-      return;
-    }
-
-    order.guards.push({
-      type: tipo,
-      hours: horas,
-      status: status,
-      descripcion: descripcion,
-      dia: dia,
-      inicio: inicio,
-      fin: fin || null,
-      kmGuardia: status === "finalizada"
-        ? horas * (tipo === "especial" ? 40 : 30)
-        : 0,
-      viatico: status === "finalizada"
-        ? horas >= 9
-        : false,
-      createdAt: Date.now()
-    });
-    // 🔥 VALIDACIÓN
-if (!validarConsistenciaOrder(order, { strict: true })) {
-  order.guards.pop(); // rollback
-  alert("⚠️ Inconsistencia detectada en la jornada");
-  return;
-}
-
-    const orders = getOrders();
-
-    saveOrders(orders.map(o =>
+  if(!validarConsistenciaOrder(order, { strict: true })){
+    order.guards.pop();
+    saveOrders(getOrders().map(o =>
       o.orderNumber === order.orderNumber ? order : o
     ));
-
     setActiveOrder(order);
-
-    renderResumenDia();
-    renderListaGuardias();
-
-    const totals = calculateOrderTotals(order);
-
-    const mensajeViatico =
-      totals.viaticos > 0
-        ? "\n✅ Viático generado en esta jornada"
-        : "\nℹ️ Aún sin viático";
-
-    alert(
-      `Guardia ${tipo} de ${horas.toFixed(2)} hs registrada` +
-      mensajeViatico
-    );
-
-    showScreen("mainScreen");
-
-  } catch(e){
-    alert("ERROR addGuardUI: " + e.message);
-    console.error(e);
+    alert("⚠️ Inconsistencia detectada en la jornada");
+    return;
   }
+
+  renderResumenDia();
+  renderListaGuardias();
+
+  alert(`Guardia ${guardia.type} registrada. Inicio: ${guardia.inicio}`);
+
+  showScreen("mainScreen");
 }
 
 // 🔥 EXPORT GLOBAL (IMPORTANTE PARA WEBVIEW)
@@ -367,39 +288,26 @@ function manejarDescripcionGuardia(){
 // =====================================================
 
 function finalizarGuardiaUI(createdAt){
-  const order = getActiveOrder();
-  if(!order) return;
 
-  const g = order.guards.find(g => String(g.createdAt) === String(createdAt));
-  if(!g){ alert("Guardia no encontrada"); return; }
+  let g;
 
-  const ahora = new Date();
-  const fin = ahora.toTimeString().substring(0,5);
-
-  const [hI, mI] = g.inicio.split(":").map(Number);
-  const [hF, mF] = fin.split(":").map(Number);
-  let horas = (hF + mF/60) - (hI + mI/60);
-  if(horas < 0) horas += 24; // cruce medianoche
-
-  if(horas <= 0){ alert("Error en horario"); return; }
-
-  g.fin = fin;
-  g.hours = horas;
-  g.status = "finalizada";
-  g.kmGuardia = horas * (g.type === "especial" ? 40 : 30);
-  g.viatico = horas >= 9;
-
-  const orders = getOrders();
-  saveOrders(orders.map(o =>
-    o.orderNumber === order.orderNumber ? order : o
-  ));
-  setActiveOrder(order);
+  try {
+    g = finalizarGuardia(createdAt);
+  } catch(e){
+    if(e.message === "GUARDIA_NO_ENCONTRADA"){
+      alert("Guardia no encontrada");
+    } else {
+      alert("Error al finalizar guardia: " + e.message);
+      console.error(e);
+    }
+    return;
+  }
 
   renderResumenDia();
   renderListaGuardias();
   renderBotonCerrarJornada?.();
 
-  alert(`Guardia finalizada: ${g.inicio} – ${fin} | ${horas.toFixed(2)}h | ${g.kmGuardia.toFixed(1)} km`);
+  alert(`Guardia finalizada: ${g.inicio} – ${g.fin} | ${g.hours.toFixed(2)}h | ${g.kmGuardia.toFixed(1)} km`);
 }
 
 window.finalizarGuardiaUI = finalizarGuardiaUI;

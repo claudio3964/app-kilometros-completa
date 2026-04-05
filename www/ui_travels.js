@@ -177,6 +177,9 @@ function renderListaViajes(){
       if(estado === "en_curso")
         estadoTexto = "🟢 EN CURSO";
 
+      if(estado === "cancelado")
+        estadoTexto = "⛔ CANCELADO";
+
       // =========================
       // SERVICIO Y ACOPLADO
       // =========================
@@ -1485,7 +1488,7 @@ const textoDestinos = Object.entries(resumenDestinos)
     const totales = calculateOrderTotals(order);
 
     // ✅ CORRECTO: dentro del scope de order
-    const tieneTomeCese = (order.travels || []).some(t => t.tomeCese);
+    const tieneTomeCese = (order.travels || []).some(t => t.status !== "cancelado" && t.tomeCese);
     const cantidadViajes = (order.travels || [])
       .filter(t => t.status !== "cancelado").length;
 

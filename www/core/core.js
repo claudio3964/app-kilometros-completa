@@ -90,10 +90,22 @@ const GUARDIA_ESPECIAL_KM_HORA = 40;
 const TOME_CESE_KM = 42.5;
 const ACOPLADO_EXTRA_KM = 30;
 
+const TIPOS_SERVICIO = {
+  TURNO:       { tomeCese: true,  acoplado: false, km: true },
+  SEMIDIRECTO: { tomeCese: true,  acoplado: false, km: true },
+  DIRECTO:     { tomeCese: true,  acoplado: true,  km: true },
+  DIRECTISIMO: { tomeCese: true,  acoplado: true,  km: true },
+  EXPRESO:     { tomeCese: true,  acoplado: false, km: true },
+  CONTRATADO:  { tomeCese: true,  acoplado: false, km: true },
+  PASAJERO:    { tomeCese: false, acoplado: false, km: true }
+};
+window.TIPOS_SERVICIO = TIPOS_SERVICIO;
+
 // ===== REGLA DE ACOPLADOS =====
 function calcularAcopladoKm(tipoServicio, destino){
   const tipo = (tipoServicio || "").toUpperCase().trim();
-  if(tipo !== "DIRECTO") return 0;
+  const config = TIPOS_SERVICIO[tipo];
+  if(!config || !config.acoplado) return 0;
   const d = (destino || "").toLowerCase().trim();
   if(d === "chuy") return 0;
   if(d.includes("la pedrera")) return 37.5;
@@ -322,6 +334,18 @@ function cortarGuardiaAntesDeViaje(order, departureTime){
   console.log("Guardia cortada:", ultima.inicio, "→", ultima.fin, "|", ultima.hours.toFixed(2), "h");
 }
 // =====================================================
+// HELPER: TOME Y CESE — asigna una sola vez por jornada
+// =====================================================
+function _asignarTomeCeseSiCorresponde(order, travel){
+  if(order.tomeCeseGenerado) return;
+  const config = TIPOS_SERVICIO[(travel.tipoServicio || "").toUpperCase().trim()];
+  if(!config || !config.tomeCese) return;
+  travel.tomeCese = true;
+  order.tomeCeseGenerado = true;
+  console.log("Tome y Cese asignado:", travel.id, travel.tipoServicio);
+}
+
+// =====================================================
 // VIAJES (CORE OFICIAL CON KM AUTO + TIPO + ACOPLADO)
 // =====================================================
 function addTravel(
@@ -391,6 +415,8 @@ departureTimestamp: inicioTimestamp,
 
   if(!order.travels)
     order.travels = [];
+
+  _asignarTomeCeseSiCorresponde(order, travel);
 
   order.travels.push(travel);
 
@@ -485,6 +511,8 @@ function addTravelProgramado(
   if(!order.travels)
     order.travels = [];
 
+  _asignarTomeCeseSiCorresponde(order, travel);
+
   order.travels.push(travel);
 
   saveOrders(
@@ -574,17 +602,9 @@ if(toMin(horaCorte) > toMin(guardiaActiva.inicio)){
 }
 
       // =====================================================
-      // RESTAURAR TOME Y CESE (PRIMER VIAJE DEL DÍA)
+      // TOME Y CESE — primer viaje elegible de la jornada
       // =====================================================
-
-if(index === 0 && !order.tomeCeseGenerado){
-        travel.tomeCese = true;
-
-        order.tomeCeseGenerado = true;
-
-        console.log("Tome y Cese generado automáticamente");
-
-      }
+      _asignarTomeCeseSiCorresponde(order, travel);
 
       cambio = true;
 
@@ -663,11 +683,8 @@ function determinarViatico(o){
 
   if(!o) return 0;
 
-const horasJornada = calcularHorasJornada(o);  
+  const horasJornada = calcularHorasJornada(o);
   if(horasJornada <= 0) return 0;
-if(horasJornada < 9){
-  return 0;
-}
   const fechaBase = new Date(o.date + "T00:00:00").getTime();
 
   const eventosInicio = [];
@@ -1097,8 +1114,17 @@ function cancelarViajePorId(travelId){
     return travel;
 
   travel.status = "cancelado";
-
   travel.canceladoAt = ahoraSistema();
+  travel.acoplado = false;
+  travel.acopladoKm = 0;
+
+  // Si ya no queda ningún viaje activo con tomeCese, liberar el flag
+  const quedaTomeCese = order.travels.some(
+    t => t.status !== "cancelado" && t.tomeCese === true
+  );
+  if(!quedaTomeCese){
+    order.tomeCeseGenerado = false;
+  }
 
   // guardar cambios
   saveOrders(
@@ -1197,6 +1223,111 @@ function generateMonthlySummary(month, year){
 
   return result;
 }
+
+// =====================================================
+// AGREGAR GUARDIA A LA JORNADA ACTIVA
+// =====================================================
+function addGuard(tipo, inicio, dia, descripcion){
+
+  const TIPOS_VALIDOS = ["comun", "especial"];
+
+  if(!TIPOS_VALIDOS.includes(tipo)){
+    throw new Error(`GUARDIA_TIPO_INVALIDO: "${tipo}". Valores válidos: comun, especial`);
+  }
+
+  if(!/^\d{2}:\d{2}$/.test(inicio)){
+    throw new Error(`GUARDIA_INICIO_INVALIDO: "${inicio}". Formato esperado: HH:mm`);
+  }
+
+  if(tipo === "especial" && !(descripcion || "").trim()){
+    throw new Error("GUARDIA_DESCRIPCION_REQUERIDA: la guardia especial requiere descripción");
+  }
+
+  let order = getActiveOrder();
+  if(!order){
+    order = createOrder();
+  }
+
+  if(!order.guards){
+    order.guards = [];
+  }
+
+  const guardia = {
+    id: "GRD-" + ahoraSistema(),
+    type: tipo,
+    inicio,
+    dia: dia || order.date,
+    descripcion: descripcion || null,
+    fin: null,
+    hours: 0,
+    kmGuardia: 0,
+    viatico: false,
+    status: "en_curso",
+    createdAt: ahoraSistema(),
+    syncStatus: "local"
+  };
+
+  order.guards.push(guardia);
+
+  saveOrders(
+    getOrders().map(o =>
+      o.orderNumber === order.orderNumber ? order : o
+    )
+  );
+
+  setActiveOrder(order);
+
+  console.log("Guardia iniciada:", guardia);
+
+  return guardia;
+}
+window.addGuard = addGuard;
+
+// =====================================================
+// FINALIZAR GUARDIA POR createdAt
+// =====================================================
+function finalizarGuardia(createdAt){
+
+  const order = getActiveOrder();
+  if(!order || !order.guards)
+    throw new Error("GUARDIA_NO_ENCONTRADA");
+
+  const g = order.guards.find(
+    g => String(g.createdAt) === String(createdAt)
+  );
+
+  if(!g)
+    throw new Error("GUARDIA_NO_ENCONTRADA");
+
+  const ahora = new Date();
+  const fin = String(ahora.getHours()).padStart(2,"0") + ":" +
+              String(ahora.getMinutes()).padStart(2,"0");
+
+  const [hI, mI] = g.inicio.split(":").map(Number);
+  const [hF, mF] = fin.split(":").map(Number);
+
+  let horas = (hF + mF / 60) - (hI + mI / 60);
+  if(horas < 0) horas += 24; // cruce medianoche
+
+  g.fin      = fin;
+  g.hours    = horas;
+  g.status   = "finalizada";
+  g.kmGuardia = horas * (g.type === "especial" ? GUARDIA_ESPECIAL_KM_HORA : GUARDIA_COMUN_KM_HORA);
+  g.viatico  = horas >= 9;
+
+  saveOrders(
+    getOrders().map(o =>
+      o.orderNumber === order.orderNumber ? order : o
+    )
+  );
+
+  setActiveOrder(order);
+
+  console.log("Guardia finalizada:", g);
+
+  return g;
+}
+window.finalizarGuardia = finalizarGuardia;
 
 // export global
 window.cancelarViajePorId = cancelarViajePorId;
