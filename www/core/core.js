@@ -908,8 +908,9 @@ let kmTomeCese = 0;
 if(o.travels){
 
   const primerViaje = o.travels.find(
-    t => t && t.status !== "cancelado"
-  );
+  t => t && t.status !== "cancelado" && t.status !== "programado"
+);
+  
 
   if(primerViaje){
     kmTomeCese = TOME_CESE_KM;

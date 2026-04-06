@@ -6,10 +6,13 @@
   "dependencies": {
     "@capacitor/android": "^8.1.0",
     "@capacitor/cli": "^8.1.0",
-    "@capacitor/core": "^8.1.0"
+    "@capacitor/core": "^8.1.0",
+    "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/share": "^8.0.1"
   },
   "devDependencies": {
-    "jest": "^27.5.1"
+    "jest": "^27.5.1",
+    "typescript": "^6.0.2"
   },
   "scripts": {
     "build": "xcopy /E /Y /I *.html www\\ & xcopy /E /Y /I *.js www\\ & xcopy /E /Y /I *.css www\\ & xcopy /E /Y /I *.json www\\ & xcopy /E /Y /I icons www\\icons\\ & xcopy /E /Y /I core www\\core\\",

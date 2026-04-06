@@ -64,21 +64,22 @@ function mostrarModalCierrePendiente(order){
   document.body.appendChild(modal);
 
   document.getElementById("btnForzarCierre")
-    .addEventListener("click", function(){
+  .addEventListener("click", async function(){
 
-      const resultado = closeActiveOrder();
+    const resultado = closeActiveOrder();
 
-      if(resultado){
+    if(resultado){
 
-        document.body.removeChild(modal);
+      document.body.removeChild(modal);
 
-        if(typeof renderResumenFinal === "function"){
-          renderResumenFinal(resultado);
-        }
+      await exportarJornada(resultado);
 
-      }
+      renderBotonCerrarJornada?.();
+      renderOrdenActivaUI?.();
 
-    });
+    }
+
+  });
 }
 
 // =====================================================

@@ -124,13 +124,19 @@ function renderBotonCerrarJornada(){
     return;
   }
 
-  const NUEVE_HORAS = 9 * 60 * 60 * 1000;
-  const tiempoTranscurrido = Date.now() - new Date(order.createdAt).getTime();
+  const soloGuardias =
+  (order.travels?.filter(t => t.status !== "cancelado").length === 0) &&
+  (order.guards?.length > 0);
 
-  if(tiempoTranscurrido < NUEVE_HORAS){
-    cont.innerHTML = "";
-    return;
-  }
+const OCHO_HORAS = 8 * 60 * 60 * 1000;
+const NUEVE_HORAS = 9 * 60 * 60 * 1000;
+const umbral = soloGuardias ? OCHO_HORAS : NUEVE_HORAS;
+const tiempoTranscurrido = ahoraSistema() - order.createdAt;
+
+if(tiempoTranscurrido < umbral){
+  cont.innerHTML = "";
+  return;
+}
 
   cont.innerHTML = `
     <button id="btnCerrarJornadaManual"
