@@ -291,7 +291,26 @@ function closeActiveOrder(){
   if(order.status === "finalizada"){
     return order;
   }
-
+// Cerrar guardias en curso al finalizar jornada
+if(order.guards){
+  order.guards.forEach(g => {
+    if(g.status === "en_curso"){
+      const ahora = new Date(ahoraSistema());
+      const fin = String(ahora.getHours()).padStart(2,"0") + ":" +
+                  String(ahora.getMinutes()).padStart(2,"0");
+      const [hI, mI] = g.inicio.split(":").map(Number);
+      const [hF, mF] = fin.split(":").map(Number);
+      let horas = (hF + mF/60) - (hI + mI/60);
+      if(horas < 0) horas += 24;
+      g.fin = fin;
+      g.hours = horas;
+      g.status = "finalizada";
+      g.kmGuardia = horas * (g.type === "especial" ? GUARDIA_ESPECIAL_KM_HORA : GUARDIA_COMUN_KM_HORA);
+      g.viatico = horas >= 9;
+      console.log("Guardia cerrada automáticamente al finalizar jornada:", g);
+    }
+  });
+}
   // calcular totales finales desde CORE
   const totals = calculateOrderTotals(order);
 
