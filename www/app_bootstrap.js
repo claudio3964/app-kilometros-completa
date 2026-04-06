@@ -299,9 +299,11 @@ const ciudades = new Set();
 
 if(typeof routes !== "undefined"){
   routes.forEach(r=>{
+  if(!r.origen.includes(" x "))
     ciudades.add(r.origen);
+  if(!r.destino.includes(" x "))
     ciudades.add(r.destino);
-  });
+});
 }
 
 // Puntas fijas — fuente de verdad
