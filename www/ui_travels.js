@@ -577,8 +577,7 @@ function abrirViajeSimple(){
     );
 
   }
-
-   const driver = getDriver();
+const driver = getDriver();
   if(driver){
     const sel = document.getElementById("originTravels");
     if(sel) sel.value = driver.base || "Montevideo";
