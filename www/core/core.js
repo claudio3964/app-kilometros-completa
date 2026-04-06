@@ -115,33 +115,79 @@ window.calcularAcopladoKm = calcularAcopladoKm;
 
 const MONTO_VIATICO = 455;
 
-// ===== RUTAS EMPRESA =====
-const ROUTES_CATALOG = {
+  // -------- VARIANTES PUNTA DEL ESTE REGRESO --------
+  const ROUTES_CATALOG = {
 
   // -------- PUNTA DEL ESTE --------
   "Montevideo → Punta del Este": 140,
   "Montevideo → Punta del Este x Piriápolis": 145,
   "Montevideo → Punta del Este x Pan de Azúcar y San Carlos": 155,
   "Montevideo → Punta del Este x Ruta 8 y 9": 165,
+  "Punta del Este x Piriápolis → Montevideo": 145,
+  "Punta del Este x Pan de Azúcar y San Carlos → Montevideo": 155,
+  "Punta del Este x Ruta 8 y 9 → Montevideo": 165,
 
   // -------- COSTA ESTE --------
   "Montevideo → Laguna Garzón": 183,
   "Montevideo → Punta Negra": 112,
   "Montevideo → Piriápolis": 97,
   "Montevideo → La Pedrera": 250,
-  "Montevideo → La Paloma": 280,
+  "Montevideo → La Paloma": 220,
+  "Montevideo → Rocha": 220,
+  "Montevideo → Aguas Dulces": 290,
 
   // -------- LARGA DISTANCIA --------
   "Montevideo → Chuy": 345,
   "Montevideo → Colonia": 178,
 
-  // -------- TRAMOS CORTOS --------
+  // -------- REGRESOS A MONTEVIDEO --------
+  "Punta del Este → Montevideo": 140,
+  "Piriápolis → Montevideo": 97,
+  "Punta Negra → Montevideo": 112,
+  "Laguna Garzón → Montevideo": 183,
+  "La Pedrera → Montevideo": 250,
+  "La Paloma → Montevideo": 220,
+  "Rocha → Montevideo": 220,
+  "Aguas Dulces → Montevideo": 290,
+  "Chuy → Montevideo": 345,
+  "Colonia → Montevideo": 178,
+
+  // -------- TRAMOS PUNTA DEL ESTE --------
   "Punta del Este → Piriápolis": 48,
+  "Piriápolis → Punta del Este": 48,
+  "Punta del Este → Punta Negra": 28,
+  "Punta Negra → Punta del Este": 28,
+  "Punta del Este → Laguna Garzón": 50,
+  "Laguna Garzón → Punta del Este": 50,
   "Punta del Este → La Pedrera": 150,
+  "La Pedrera → Punta del Este": 150,
   "Punta del Este → Chuy": 235,
+  "Chuy → Punta del Este": 235,
+  "Punta del Este → San Carlos (alcance)": 30,
+  "San Carlos → Punta del Este": 30,
+
+  // -------- PIRIÁPOLIS ZONA --------
+  "Piriápolis → Punta Colorada": 15,
+  "Punta Colorada → Piriápolis": 15,
+  "Piriápolis → Punta Negra": 12,
+  "Punta Negra → Piriápolis": 12,
   "Piriápolis → Cuchilla Alta": 30,
-  "Punta del Este → San Carlos (alcance)": 30
+  "Cuchilla Alta → Piriápolis": 30,
+
+  // -------- ROCHA ZONA --------
+  "Rocha → Chuy": 120,
+  "Chuy → Rocha": 120,
+  "Rocha → La Paloma": 35,
+  "La Paloma → Rocha": 35,
+  "Rocha → La Pedrera": 40,
+  "La Pedrera → Rocha": 40,
+  "Rocha → Aguas Dulces": 70,
+  "Aguas Dulces → Rocha": 70,
+  "La Paloma → Chuy": 120,
+  "Chuy → La Paloma": 120
+
 };
+
 
 // ===== STORAGE =====
 const Storage = {

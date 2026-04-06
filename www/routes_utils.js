@@ -63,23 +63,34 @@ function buscarKmRuta(origen, destino){
   const origenNorm = normalizarTexto(origen);
   const destinoNorm = normalizarTexto(destino);
 
+  // Buscar en window.routes primero (fuente principal)
+  if(window.routes){
+    for(const ruta of window.routes){
+      const oNorm = normalizarTexto(ruta.origen);
+      const dNorm = normalizarTexto(ruta.destino);
+
+      if(oNorm === origenNorm && dNorm === destinoNorm){
+        return ruta.km;
+      }
+      // inverso
+      if(oNorm === destinoNorm && dNorm === origenNorm){
+        return ruta.km;
+      }
+    }
+  }
+
+  // Fallback a ROUTES_CATALOG
   for(const ruta in ROUTES_CATALOG){
-
     const partes = ruta.split("→");
-
     const origenCatalogo = normalizarTexto(partes[0]);
     const destinoCatalogo = normalizarTexto(partes[1]);
 
-    // Coincidencia directa
     if(origenNorm === origenCatalogo && destinoNorm === destinoCatalogo){
       return ROUTES_CATALOG[ruta];
     }
-
-    // Coincidencia inversa (retorno)
     if(origenNorm === destinoCatalogo && destinoNorm === origenCatalogo){
       return ROUTES_CATALOG[ruta];
     }
-
   }
 
   return 0;
@@ -135,32 +146,24 @@ function buscarSugerenciasCarteles(texto) {
     document.getElementById("originTravels")?.value || "montevideo"
   );
 
-  for (const ruta in ROUTES_CATALOG) {
-    const km = ROUTES_CATALOG[ruta];
-    const rutaNorm = normalizarTexto(ruta);
-    const partes = rutaNorm.split("→");
-    if (partes.length < 2) continue;
+ for (const ruta of (window.routes || [])) {
 
-    const origenRuta  = partes[0].trim();
-    const destinoCompleto = partes[1].trim();
+  const origenRuta = normalizarTexto(ruta.origen);
+  const destinoCompleto = normalizarTexto(ruta.destino);
 
-    // Separar destino base y variante
-    const xIdx = destinoCompleto.indexOf(" x ");
-    const destinoBase = xIdx !== -1 ? destinoCompleto.substring(0, xIdx).trim() : destinoCompleto;
-    const variante    = xIdx !== -1 ? destinoCompleto.substring(xIdx + 3).trim() : null;
+  const xIdx = destinoCompleto.indexOf(" x ");
+  const destinoBase = xIdx !== -1 ? destinoCompleto.substring(0, xIdx).trim() : destinoCompleto;
+  const variante    = xIdx !== -1 ? destinoCompleto.substring(xIdx + 3).trim() : null;
 
-    // RUTA DIRECTA: origen coincide con origen seleccionado
-    if (origenRuta === origenActual && destinoCompleto.includes(buscado)) {
-      const label = variante ? destinoBase + " - x " + variante : destinoBase;
-      resultados.push({ label, destino: destinoBase, variante, km });
-    }
-
-    // RUTA INVERSA: destino base coincide con origen seleccionado
-    // → ofrecer el origen de esa ruta como destino disponible
-    if (destinoBase === origenActual && origenRuta.includes(buscado)) {
-      resultados.push({ label: origenRuta, destino: origenRuta, variante: null, km });
-    }
+  if (origenRuta === origenActual && destinoCompleto.includes(buscado)) {
+    const label = variante ? destinoBase + " x " + variante : destinoBase;
+    resultados.push({ label, destino: ruta.destino, variante, km: ruta.km });
   }
+
+  if (destinoBase === origenActual && origenRuta.includes(buscado)) {
+    resultados.push({ label: ruta.origen, destino: ruta.origen, variante: null, km: ruta.km });
+  }
+}
 
   return resultados;
 }
@@ -201,13 +204,14 @@ function autoKmPorDestino(terminoDeEscribir = false){
     div.style.cursor  = "pointer";
     div.innerText = m.label + (m.km ? ` (${m.km} km)` : "");
 
-    div.onclick = () => {
+   div.onclick = () => {
 
-      const destinoFinal = m.destino;
+  const destinoFinal = m.destino;
 
-      // setear destino visible
-      const destinoLimpio = m.destino.trim();
-inputDestino.value = destinoLimpio.charAt(0).toUpperCase() + destinoLimpio.slice(1);
+  // setear destino visible
+  const destinoCompleto = m.destino.trim();
+  inputDestino.value = destinoCompleto.charAt(0).toUpperCase() + destinoCompleto.slice(1);
+
 
       // guardar servicio
       window._servicioCartel = m.servicio;
