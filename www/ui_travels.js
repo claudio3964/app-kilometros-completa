@@ -578,6 +578,12 @@ function abrirViajeSimple(){
 
   }
 
+   const driver = getDriver();
+  if(driver){
+    const sel = document.getElementById("originTravels");
+    if(sel) sel.value = driver.base || "Montevideo";
+  }
+
   showScreen("travelScreen");
 }
 // =====================================================
@@ -999,7 +1005,7 @@ console.log("Entrando a renderDetalleJornadaPorNumero:", orderNumber);
       <div>🚦 Servicio: <b>${tipoServicio}</b></div>
       <div>🔗 Acoplado: <b>${acopladoTexto}</b></div>
       <div>🕒 Salida: <b>${v.departureTime}</b></div>
-      <div>🕒 Llegada: <b>${v.llegadaReal ? new Date(v.llegadaReal).toLocaleTimeString("es-UY", {hour:"2-digit", minute:"2-digit"}) : (v.arrivalTime || "--:--")}</b></div>
+      <div>🕒 Llegada: <b>${v.llegadaReal ? new Date(v.llegadaReal).toLocaleTimeString("es-UY", {hour:"2-digit", minute:"2-digit", hour12: false}) : (v.arrivalTime || "--:--")}</b></div>
       <div>📏 KM generados: <b>${km}</b></div>
     `;
 

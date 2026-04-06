@@ -85,6 +85,7 @@ function ahoraSistema(){
 
 // ===== CONFIG =====
 const LAUDO_KM = 7.6370;
+window.LAUDO_KM = LAUDO_KM;
 const GUARDIA_COMUN_KM_HORA = 30;
 const GUARDIA_ESPECIAL_KM_HORA = 40;
 const TOME_CESE_KM = 42.5;
