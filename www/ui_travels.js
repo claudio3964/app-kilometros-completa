@@ -27,7 +27,7 @@ function createOrderUI(){
 }
 
 function closeActiveOrderUI(){
-
+console.log("🔥 ENTRE A closeActiveOrderUI");
   const o = closeActiveOrder(); // CORE
 
   if(!o){
@@ -40,6 +40,12 @@ function closeActiveOrderUI(){
   const ordenFinal = getOrders().find(
   ord => ord.orderNumber === o.orderNumber
 );
+
+console.log("ANTES DE SYNC");
+
+syncPendientes();
+
+console.log("DESPUES DE SYNC");
 
 exportarJornada(ordenFinal);
   alert("Jornada cerrada");

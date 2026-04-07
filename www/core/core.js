@@ -353,7 +353,9 @@ if(order.guards){
   clearActiveOrder();
 
   console.log("Jornada finalizada:", order.orderNumber);
+console.log("🔥 DISPARO SYNC DESDE CORE");
 
+syncPendientes();
   return order;
 
 }
