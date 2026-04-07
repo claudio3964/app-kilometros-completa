@@ -282,8 +282,8 @@ function createOrder(){
 // CERRAR JORNADA (VERSIÓN PROFESIONAL CON SNAPSHOT)
 // =====================================================
 
-function closeActiveOrder(){
-
+async function closeActiveOrder(){
+alert("CLOSE ORDER EJECUTADO");
   const order = getActiveOrder();
 
   if(!order) return null;
@@ -355,7 +355,7 @@ if(order.guards){
   console.log("Jornada finalizada:", order.orderNumber);
 console.log("🔥 DISPARO SYNC DESDE CORE");
 
-syncPendientes();
+await syncPendientes();
   return order;
 
 }

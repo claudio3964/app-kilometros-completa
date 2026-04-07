@@ -1381,13 +1381,13 @@ async function exportarJornada(order){
 
   } else {
     // Fallback navegador: descarga JSON
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = basename + ".json";
-    a.click();
-    URL.revokeObjectURL(url);
+   // const blob = new Blob([json], { type: "application/json" });
+   // const url = URL.createObjectURL(blob);
+   // const a = document.createElement("a");
+   // a.href = url;
+   // a.download = basename + ".json";
+   // a.click();
+   // URL.revokeObjectURL(url);
 
     // PDF via doc.save
     try {
