@@ -143,37 +143,28 @@ function renderBotonCerrarJornada(){
   `;
 
   document
-    .getElementById("btnCerrarJornadaManual")
-    .addEventListener("click", async function(){
+  .getElementById("btnCerrarJornadaManual")
+  .addEventListener("click", async function(){
 
-      const confirmar = confirm(
-        "¿Confirma que desea finalizar la jornada?"
-      );
-
-      if(!confirmar) return;
-
-      const order = getActiveOrder();
-const resultado = closeActiveOrder();
-
-if(resultado){
-
-  try {
-
-    // 🔥 RELEER DESDE STORAGE (FIX CLAVE)
-    const ordenFinal = getOrders().find(
-      o => o.orderNumber === resultado.orderNumber
+    const confirmar = confirm(
+      "¿Confirma que desea finalizar la jornada?"
     );
 
-    await exportarJornada(ordenFinal);
+    if(!confirmar) return;
 
-  } catch (e) {
-    console.warn("Error exportando jornada", e);
-  }
+    const resultado = closeActiveOrder();
 
-  renderBotonCerrarJornada();
-  renderOrdenActivaUI?.();
-  showScreen("mainScreen");
-}
+    if(resultado){
+      try {
+        await exportarJornada(resultado);
+      } catch(e) {
+        console.warn("Error exportando jornada", e);
+      }
+
+      renderBotonCerrarJornada();
+      renderOrdenActivaUI?.();
+      showScreen("mainScreen");
+    }
 
     });
 }

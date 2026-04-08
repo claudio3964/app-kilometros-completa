@@ -248,7 +248,7 @@ if(v.llegadaReal){
       // =========================
       // RENDER ITEM
       // =========================
-console.log(v);
+
 
       item.innerHTML = `
 
@@ -1226,7 +1226,8 @@ async function generarPDFJornada(order, { returnBase64 = false } = {}){
   add("Firma tránsito: ____________________", 10);
 
   if (returnBase64) return doc.output('base64');
-  doc.save(`jornada_${order.date}.pdf`);
+  const fechaPdf = order.date || new Date().toISOString().split("T")[0];
+doc.save(`jornada_${fechaPdf}_${order.orderNumber}.pdf`);
 }
 // ===============================
 // EXPORTAR JORNADA
@@ -1320,7 +1321,8 @@ async function exportarJornada(order){
   const now = new Date();
   const hh = String(now.getHours()).padStart(2,"0");
   const mm = String(now.getMinutes()).padStart(2,"0");
-  const basename = `jornada_${order.date}_${order.orderNumber}_${hh}${mm}`;
+  const fecha = order.date || new Date().toISOString().split("T")[0];
+const basename = `jornada_${fecha}_${order.orderNumber}_${hh}${mm}`;
 
   const isNative = window.Capacitor?.isNativePlatform?.();
 

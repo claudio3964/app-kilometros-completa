@@ -283,7 +283,7 @@ function createOrder(){
 // =====================================================
 
 async function closeActiveOrder(){
-alert("CLOSE ORDER EJECUTADO");
+
   const order = getActiveOrder();
 
   if(!order) return null;
