@@ -1,18 +1,17 @@
 // =====================================================
-// 🚀 ARRANQUE GENERAL DE LA APP
+// 🚀 APP BOOTSTRAP — COT Driver
 // =====================================================
 
+console.log("app_bootstrap cargado");
+
 // =====================================================
-// 🔔 DETECCIÓN DE CAMBIO DE DÍA
+// DETECCIÓN DE CAMBIO DE DÍA
 // =====================================================
 
 function verificarCambioDeDia(){
-
   const order = getActiveOrder();
   if(!order) return;
-
   const hoy = new Date().toISOString().split("T")[0];
-
   if(order.date !== hoy){
     mostrarModalCierrePendiente(order);
   }
@@ -20,42 +19,28 @@ function verificarCambioDeDia(){
 
 function mostrarModalCierrePendiente(order){
 
-  const modal = document.createElement("div");
+  if(document.getElementById("modalCambioDia")) return;
 
+  const modal = document.createElement("div");
   modal.id = "modalCambioDia";
   modal.style.cssText = `
-    position: fixed;
-    top:0; left:0;
+    position:fixed; top:0; left:0;
     width:100%; height:100%;
-    background: rgba(0,0,0,0.6);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    z-index:9999;
+    background:rgba(0,0,0,0.6);
+    display:flex; align-items:center;
+    justify-content:center; z-index:9999;
   `;
 
   modal.innerHTML = `
-    <div style="
-      background:white;
-      padding:20px;
-      border-radius:8px;
-      max-width:400px;
-      text-align:center;
-    ">
+    <div style="background:white; padding:20px; border-radius:8px;
+                max-width:340px; text-align:center;">
       <h3>Jornada pendiente</h3>
-      <p>
-        Tiene una jornada pendiente del día ${order.date}.<br>
-        Debe finalizarla antes de continuar.
-      </p>
-      <button id="btnForzarCierre"
-        style="
-          background:#c62828;
-          color:white;
-          padding:10px 20px;
-          border:none;
-          border-radius:6px;
-          font-weight:bold;
-        ">
+      <p>Tenés una jornada pendiente del día <b>${order.date}</b>.<br>
+         Debés finalizarla antes de continuar.</p>
+      <button id="btnForzarCierre" style="
+        background:#c62828; color:white;
+        padding:10px 20px; border:none;
+        border-radius:6px; font-weight:bold; cursor:pointer;">
         Finalizar Jornada
       </button>
     </div>
@@ -64,44 +49,29 @@ function mostrarModalCierrePendiente(order){
   document.body.appendChild(modal);
 
   document.getElementById("btnForzarCierre")
-  .addEventListener("click", async function(){
-
-    const resultado = closeActiveOrder();
-
-    if(resultado){
-
-      document.body.removeChild(modal);
-
-      await exportarJornada(resultado);
-
-      renderBotonCerrarJornada?.();
-      renderOrdenActivaUI?.();
-
-    }
-
-  });
+    .addEventListener("click", async function(){
+      const resultado = closeActiveOrder();
+      if(resultado){
+        document.body.removeChild(modal);
+        await exportarJornada(resultado);
+        renderBotonCerrarJornada?.();
+        renderOrdenActivaUI?.();
+      }
+    });
 }
 
 // =====================================================
-// 🚀 BOOTSTRAP PRINCIPAL
+// SINCRONIZACIÓN SEGURA DE ACTIVE ORDER
 // =====================================================
 
-document.addEventListener("DOMContentLoaded", () => {
-
-  // =====================================================
-  // 🔒 SINCRONIZACIÓN SEGURA DE ACTIVE ORDER
-  // =====================================================
-
-  (function syncActiveOrderBootstrap(){
+function syncActiveOrderBootstrap(){
 
   let active = getActiveOrder();
   const orders = getOrders();
 
-  // 🧠 RECUPERAR ORDEN SI NO HAY ACTIVA
+  // Recuperar orden abierta si no hay activa
   if(!active && orders.length){
-
     const last = orders[orders.length - 1];
-
     if(!last.closed){
       console.warn("🔄 Recuperando activeOrder desde storage");
       setActiveOrder(last);
@@ -109,10 +79,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // 🔒 SI TODAVÍA NO HAY → salir
   if(!active) return;
 
-  // 🔍 VALIDAR QUE LA ORDEN EXISTA REALMENTE
   const real = orders.find(
     o => o.orderNumber === active.orderNumber && !o.closed
   );
@@ -123,237 +91,98 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // 🔎 VALIDAR VIAJES EN CURSO
   if(real.travels){
-
-    let cambio = false;
-
     real.travels.forEach(t => {
-
       if(t.status === "en_curso"){
-
-        console.warn(
-          "Viaje en curso recuperado al iniciar app:",
-          t.id
-        );
-
-        // (acá podrías marcar cambio = true si quisieras corregir algo)
+        console.warn("Viaje en curso recuperado al iniciar app:", t.id);
       }
-
     });
-
-    if(cambio){
-
-      saveOrders(
-        orders.map(o =>
-          o.orderNumber === real.orderNumber ? real : o
-        )
-      );
-
-      setActiveOrder(real);
-
-      console.warn("Viajes en_curso corruptos corregidos");
-
-    }
-
   }
-
- // 🔥 FORZAR RENDER DESPUÉS DEL BOOTSTRAP (SIN setTimeout)
-
-console.log("🔄 Render post-bootstrap");
-
-if(typeof refreshMainUI === "function"){
-  refreshMainUI();
 }
 
-// 👇 SOLO si estás en pantalla de guardias
-  if(typeof renderListaGuardias === "function"){
-      renderListaGuardias();
-    }
+// =====================================================
+// RENDER PRINCIPAL
+// =====================================================
 
-  })(); 
-
-}); 
-  // =====================================================
-  // RESTO DE INICIALIZACIÓN
-  // =====================================================
-
+function refreshMainUI(){
   const o = getActiveOrder();
 
-  if(o){
-
-    const info = document.getElementById("ordenActivaInfo");
-
-    if(info){
-      info.innerText =
-        "🟢 Jornada activa: " + o.orderNumber;
-    }
-
+  const info = document.getElementById("ordenActivaInfo");
+  if(info){
+    info.innerText = o
+      ? "🟢 Jornada activa: " + o.orderNumber
+      : "🔴 Sin jornada activa";
   }
 
   const diaInput = document.getElementById("diaGuardia");
-
   if(diaInput){
-    diaInput.value =
-      new Date().toISOString().split("T")[0];
+    diaInput.value = new Date().toISOString().split("T")[0];
   }
 
-  if(typeof renderListaViajes === "function")
-    renderListaViajes();
-
-  if(typeof renderResumenDia === "function")
-    renderResumenDia();
-
-  if(typeof renderBotonCerrarJornada === "function")
-  renderBotonCerrarJornada();
-
-  if(typeof renderOrdenActivaUI === "function")
-    renderOrdenActivaUI();
-
-  if(typeof mostrarViajeEnCursoUI === "function")
-    mostrarViajeEnCursoUI();
-
-  // 🔔 Detectar cambio de día (DESPUÉS de render básico)
-  verificarCambioDeDia();
-
-  // =====================================================
-  // MOTOR AUTOMÁTICO DE VIAJES PROGRAMADOS
-  // =====================================================
-
-  if(!window.__motorViajesProgramados){
-
-    window.__motorViajesProgramados =
-      setInterval(() => {
-
-        renderListaViajes();
-
-        if(typeof mostrarViajeEnCursoUI === "function")
-          mostrarViajeEnCursoUI();
-
-        if(typeof renderBotonCerrarJornada === "function")
-          renderBotonCerrarJornada();
-
-      }, 15000);
-
-  }
-// =====================================================
-// REACTIVACIÓN AL VOLVER A LA APP
-// =====================================================
-
-document.addEventListener("visibilitychange", () => {
-
-  if(!document.hidden){
-
-    console.log("🔄 App volvió a foreground");
-activarViajesProgramados();
-    if(typeof mostrarViajeEnCursoUI === "function")
-      mostrarViajeEnCursoUI();
-
-  }
-
-});
-  // =====================================================
-  // SPLASH Y CARGA INICIAL
-  // =====================================================
-
-  window.addEventListener("load", () => {
-
-    const splash =
-      document.getElementById("splashScreen");
-
-    if(splash) splash.classList.add("active");
-
-    setTimeout(() => {
-
-      const driver = getDriver();
-
-      document
-        .querySelectorAll(".screen")
-        .forEach(s =>
-          s.classList.remove("active")
-        );
-
-      if(!driver){
-
-        document
-          .getElementById("registroScreen")
-          ?.classList.add("active");
-
-      }else{
-
-        const badge =
-          document.getElementById("baseChoferBadge");
-
-        if(badge){
-          badge.innerText =
-            "Base: " + (driver.base || "Montevideo");
-        }
-
-        const sel =
-          document.getElementById("originTravels");
-
-        if(sel){
-
-         // Obtener ciudades desde rutas
-const ciudades = new Set();
-
-if(typeof routes !== "undefined"){
-  routes.forEach(r=>{
-  if(!r.origen.includes(" x "))
-    ciudades.add(r.origen);
-  if(!r.destino.includes(" x "))
-    ciudades.add(r.destino);
-});
+  if(typeof renderListaViajes === "function")       renderListaViajes();
+  if(typeof renderResumenDia === "function")        renderResumenDia();
+  if(typeof renderBotonCerrarJornada === "function") renderBotonCerrarJornada();
+  if(typeof renderOrdenActivaUI === "function")     renderOrdenActivaUI();
+  if(typeof mostrarViajeEnCursoUI === "function")   mostrarViajeEnCursoUI();
+  if(typeof renderListaGuardias === "function")     renderListaGuardias();
 }
 
-// Puntas fijas — fuente de verdad
- // const puntasFijas = [
-   //  'Montevideo','Punta del Este','Piriápolis',
-   // 'Punta Colorada','Punta Negra','Rocha',
-   //  'Chuy','La Pedrera','La Paloma','Aguas Dulces'
- // ];
- // puntasFijas.forEach(p => ciudades.add(p));
+// =====================================================
+// BOOTSTRAP PRINCIPAL — se ejecuta después del registro
+// (llamado desde ui_registro.js al mostrar mainScreen)
+// =====================================================
 
-// agregar base por si no aparece
-ciudades.add(driver.base || "Montevideo");
+function iniciarBootstrap(){
 
-const bases = [...ciudades].sort();
+  syncActiveOrderBootstrap();
+  refreshMainUI();
+  verificarCambioDeDia();
 
-// bases.push("Otro");
+  // Sincronizar pendientes con Supabase
+  if(typeof syncPendientes === "function"){
+    setTimeout(() => syncPendientes(), 1000);
+  }
 
-          sel.innerHTML =
-            bases.map(b =>
-              `<option value="${b}" ${
-                b===driver.base?'selected':''
-              }>${b}</option>`
-            ).join("");
+  // Motor automático de viajes programados (cada 15s)
+  if(!window.__motorViajesProgramados){
+    window.__motorViajesProgramados = setInterval(() => {
+      if(typeof verificarViajesProgramados === "function")
+        verificarViajesProgramados();
+      if(typeof renderListaViajes === "function")
+        renderListaViajes();
+      if(typeof mostrarViajeEnCursoUI === "function")
+        mostrarViajeEnCursoUI();
+      if(typeof renderBotonCerrarJornada === "function")
+        renderBotonCerrarJornada();
+    }, 15000);
+  }
 
-        }
+  // Motor de viajes programados (cada 60s)
+  if(!window.__motorSync){
+    window.__motorSync = setInterval(() => {
+      if(typeof activarViajesProgramados === "function")
+        activarViajesProgramados();
+    }, 60000);
+  }
 
-        document
-          .getElementById("mainScreen")
-          ?.classList.add("active");
-
+  // Reactivación al volver a la app
+  if(!window.__visibilityHandler){
+    window.__visibilityHandler = true;
+    document.addEventListener("visibilitychange", () => {
+      if(!document.hidden){
+        console.log("🔄 App volvió a foreground");
+        if(typeof activarViajesProgramados === "function")
+          activarViajesProgramados();
+        if(typeof mostrarViajeEnCursoUI === "function")
+          mostrarViajeEnCursoUI();
       }
+    });
+  }
 
-      if(splash){
-
-        splash.classList.add("fade-out");
-
-        setTimeout(() =>
-          splash.style.display = "none",
-          400
-        );
-
-      }
-
-    }, 900);
-
-  });
-
-  // Boton limpiar storage
+  // Botón limpiar storage
   const btnLimpiar = document.getElementById("btnLimpiarStorage");
-  if(btnLimpiar){
+  if(btnLimpiar && !btnLimpiar._bound){
+    btnLimpiar._bound = true;
     btnLimpiar.addEventListener("click", function(){
       const c1 = confirm("¿Borrar todos los datos?");
       if(!c1) return;
@@ -363,13 +192,9 @@ const bases = [...ciudades].sort();
       location.reload();
     });
   }
+}
 
-// ========================================
-// MOTOR VIAJES PROGRAMADOS
-// ========================================
-
-setInterval(() => {
-
-  activarViajesProgramados();
-
-}, 60000);
+window.iniciarBootstrap         = iniciarBootstrap;
+window.refreshMainUI            = refreshMainUI;
+window.verificarCambioDeDia     = verificarCambioDeDia;
+window.mostrarModalCierrePendiente = mostrarModalCierrePendiente;

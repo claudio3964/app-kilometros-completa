@@ -73,9 +73,24 @@ function buscarKmRuta(origen, destino){
         return ruta.km;
       }
       // inverso
-      if(oNorm === destinoNorm && dNorm === origenNorm){
-        return ruta.km;
-      }
+      let kmDirecto = null;
+let kmInverso = null;
+
+for(const ruta of window.routes){
+  const oNorm = normalizarTexto(ruta.origen);
+  const dNorm = normalizarTexto(ruta.destino);
+
+  if(oNorm === origenNorm && dNorm === destinoNorm){
+    kmDirecto = ruta.km;
+  }
+
+  if(oNorm === destinoNorm && dNorm === origenNorm){
+    kmInverso = ruta.km;
+  }
+}
+
+if(kmDirecto !== null) return kmDirecto;
+if(kmInverso !== null) return kmInverso;
     }
   }
 
@@ -146,26 +161,58 @@ function buscarSugerenciasCarteles(texto) {
     document.getElementById("originTravels")?.value || "montevideo"
   );
 
- for (const ruta of (window.routes || [])) {
+  for (const ruta of (window.routes || [])) {
 
-  const origenRuta = normalizarTexto(ruta.origen);
-  const destinoCompleto = normalizarTexto(ruta.destino);
+    const origenRuta   = normalizarTexto(ruta.origen);
+    const destinoRuta  = normalizarTexto(ruta.destino);
 
-  const xIdx = destinoCompleto.indexOf(" x ");
-  const destinoBase = xIdx !== -1 ? destinoCompleto.substring(0, xIdx).trim() : destinoCompleto;
-  const variante    = xIdx !== -1 ? destinoCompleto.substring(xIdx + 3).trim() : null;
+    // Extraer destino base y variante (ej: "punta del este x piriapolis")
+    const xIdx        = destinoRuta.indexOf(" x ");
+    const destinoBase = xIdx !== -1 ? destinoRuta.substring(0, xIdx).trim() : destinoRuta;
+    const variante    = xIdx !== -1 ? destinoRuta.substring(xIdx + 3).trim() : null;
 
-  if (origenRuta === origenActual && destinoCompleto.includes(buscado)) {
-    const label = variante ? destinoBase + " x " + variante : destinoBase;
-    resultados.push({ label, destino: ruta.destino, variante, km: ruta.km });
+    // ── CASO 1: ruta directa (origen coincide) ──
+    if (origenRuta === origenActual && destinoRuta.includes(buscado)) {
+      const label = variante
+        ? destinoBase + " x " + variante
+        : destinoBase;
+      resultados.push({
+        label,
+        destino: ruta.destino,
+        variante,
+        km: ruta.km
+      });
+    }
+
+    // ── CASO 2: ruta de retorno (destino base coincide con origen actual) ──
+    // Ej: estás en "Punta del Este", la ruta es "Montevideo → Punta del Este x Piriápolis"
+    // → sugerir "Punta del Este x Piriápolis → Montevideo" con los mismos km
+    if (destinoBase === origenActual && origenRuta.includes(buscado)) {
+      // El label del retorno incluye la variante si la tiene
+      const labelRetorno = variante
+        ? origenActual.replace(/\b\w/g, l => l.toUpperCase()) + " x " + variante
+        : ruta.origen;
+
+      resultados.push({
+  label:            ruta.origen + (variante ? " x " + variante : ""),  // "Montevideo x Piriápolis"
+  destino:          ruta.destino,         // "Punta del Este x Piriápolis" (para buscar km)
+  _retorno:         true,
+  _origenRetorno:   ruta.destino,         // origen real del retorno
+  _destinoRetorno:  ruta.origen,          // destino real del retorno = "Montevideo"
+  variante,
+  km:               ruta.km
+});
+    }
   }
 
-  if (destinoBase === origenActual && origenRuta.includes(buscado)) {
-    resultados.push({ label: ruta.origen, destino: ruta.origen, variante: null, km: ruta.km });
-  }
-}
-
-  return resultados;
+  // Eliminar duplicados por label+km
+  const vistos = new Set();
+  return resultados.filter(r => {
+    const key = r.label + "|" + r.km;
+    if (vistos.has(key)) return false;
+    vistos.add(key);
+    return true;
+  });
 }
 
 function autoKmPorDestino(terminoDeEscribir = false){
@@ -175,10 +222,12 @@ function autoKmPorDestino(terminoDeEscribir = false){
   const texto        = inputDestino.value;
   const origenActual = document.getElementById("originTravels")?.value || "Montevideo";
 
-  // limpiar código cartel y servicio mientras escribe
+  // limpiar estado previo
   document.getElementById("codigoCartel").innerHTML = "";
-  window._servicioCartel = null;
+  window._servicioCartel     = null;
   window._destinoSeleccionado = false;
+  window._kmSeleccionado      = null;   // ← NUEVO: limpiar km previo
+  window._destinoReal         = null;   // ← NUEVO: limpiar destino real previo
 
   if(!texto){
     box.style.display = "none";
@@ -202,21 +251,39 @@ function autoKmPorDestino(terminoDeEscribir = false){
     const div = document.createElement("div");
     div.style.padding = "8px";
     div.style.cursor  = "pointer";
-    div.innerText = m.label + (m.km ? ` (${m.km} km)` : "");
 
-   div.onclick = () => {
+    // ── LABEL VISIBLE: mostrar variante si existe ──
+    const labelVisible = m.variante
+      ? `${m.label} (${m.km} km)`
+      : `${m.label} (${m.km} km)`;
 
-  const destinoFinal = m.destino;
+    div.innerText = labelVisible;
 
-  // setear destino visible
-  const destinoCompleto = m.destino.trim();
-  inputDestino.value = destinoCompleto.charAt(0).toUpperCase() + destinoCompleto.slice(1);
+    div.onclick = () => {
 
+      // ── SETEAR TEXTO VISIBLE EN EL INPUT ──
+      inputDestino.value = m.label;
 
-      // guardar servicio
+      // ── GUARDAR KM CORRECTO ──
+      document.getElementById("kmTravels").value = m.km;
+      window._kmSeleccionado = m.km;
+
+      // ── GUARDAR DESTINO REAL PARA EL CORE ──
+      // En retorno: el destino real para buscarKmRuta es el origen original
+      // En directo: es el destino de la ruta
+      if(m._retorno){
+  // label ya tiene la variante: "Montevideo x Piriápolis"
+  inputDestino.value   = m.label;           // visible con variante
+  window._destinoReal  = m.label;           // ← guardar label completo, no _destinoRetorno
+  window._origenReal   = m._origenRetorno;
+} else {
+  window._destinoReal  = m.destino;
+  window._origenReal   = null;
+}
+
+      // ── SERVICIO ──
       window._servicioCartel = m.servicio;
 
-      // actualizar select servicio
       const mapaServicio = {
         "directo":     "DIRECTO",
         "directisimo": "DIRECTO",
@@ -224,7 +291,7 @@ function autoKmPorDestino(terminoDeEscribir = false){
         "expreso":     "EXPRESO"
       };
 
-      const selectEl = document.getElementById("numeroServicio");
+      const selectEl  = document.getElementById("numeroServicio");
       const valSelect = mapaServicio[m.servicio] || "";
 
       if(selectEl && valSelect){
@@ -234,40 +301,23 @@ function autoKmPorDestino(terminoDeEscribir = false){
         }
       }
 
-      // 🔥 NUEVO: buscar ruta REAL (no confiar en m.km)
-      const rutas = window.routes || [];
-
-      const ruta = rutas.find(r =>
-        (
-          r.origen.toLowerCase() === origenActual.toLowerCase() &&
-          r.destino.toLowerCase() === destinoFinal.toLowerCase()
-        ) ||
-        (
-          r.origen.toLowerCase() === destinoFinal.toLowerCase() &&
-          r.destino.toLowerCase() === origenActual.toLowerCase()
-        )
-      );
-
-      if(ruta){
-        document.getElementById("kmTravels").value = ruta.km;
-      }else{
-        console.warn("❌ ruta no encontrada", origenActual, destinoFinal);
-        document.getElementById("kmTravels").value = "";
-      }
-
       window._destinoSeleccionado = true;
 
       box.style.display = "none";
-      box.innerHTML = "";
+      box.innerHTML     = "";
 
-      mostrarHorariosOficiales(origenActual, destinoFinal);
+      // ── HORARIOS: usar destino real ──
+      const destinoParaHorarios = m._retorno
+        ? m._destinoRetorno
+        : m.destino;
+
+      mostrarHorariosOficiales(origenActual, destinoParaHorarios);
       actualizarCodigoCartel();
     };
 
     box.appendChild(div);
   });
 }
-
 // =====================================================
 // HORARIOS OFICIALES
 // =====================================================

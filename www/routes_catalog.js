@@ -26,6 +26,9 @@ window.routes = [
   { origen: "Rocha", destino: "Montevideo", km: 220, carteles: { marcopolo: "", neobus: "" } },
   { origen: "Aguas Dulces", destino: "Montevideo", km: 290, carteles: { marcopolo: "", neobus: "" } },
   { origen: "Chuy", destino: "Montevideo", km: 345, carteles: { marcopolo: "L183", neobus: "L240" } },
+{ origen: "Punta del Este", destino: "Montevideo x Piriápolis", km: 145 },
+{ origen: "Punta del Este", destino: "Montevideo x Pan de Azúcar y San Carlos", km: 155 },
+{ origen: "Punta del Este", destino: "Montevideo x Ruta 8 y 9", km: 165 },
 
   // ===== INTERMEDIOS PUNTA DEL ESTE =====
   { origen: "Punta del Este", destino: "Piriápolis", km: 40, carteles: { marcopolo: "", neobus: "" } },

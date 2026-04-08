@@ -355,7 +355,11 @@ if(order.guards){
   console.log("Jornada finalizada:", order.orderNumber);
 console.log("🔥 DISPARO SYNC DESDE CORE");
 
-await syncPendientes();
+
+console.log("DISPARO SYNC DESDE CORE");
+  if(typeof syncPendientes === "function"){
+    setTimeout(() => syncPendientes(), 300);
+  }
   return order;
 
 }

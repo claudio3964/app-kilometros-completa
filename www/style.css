@@ -293,3 +293,113 @@ button[onclick^="showScreen('mainScreen')"] {
 .travel-status.finalizado {
   color: #555;
 }
+/* =====================================================
+   AGREGAR ESTO AL FINAL DE style.css
+   (extraído del <style> interno del index.html)
+===================================================== */
+
+/* ========== PANTALLAS GENERALES ========== */
+.screen {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  background: white;
+}
+
+.screen.active { display: block; }
+
+/* ========== SPLASH ========== */
+#splashScreen {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 30px;
+  background: white;
+}
+
+.splash-text {
+  font-size: 14px;
+  color: #777;
+}
+
+/* ========== HEADER AZUL ========== */
+.header-bar {
+  background: #6b5cff;
+  color: white;
+  padding: 18px 16px;
+  padding-top: calc(18px + env(safe-area-inset-top));
+}
+
+.header-bar h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.header-bar p {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+}
+
+/* ========== TARJETAS DEL MENÚ ========== */
+.menu-tarjetas {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 16px;
+}
+
+.card-btn {
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 16px;
+  text-align: left;
+  font-size: 16px;
+}
+
+/* ========== HEADER CON BOTÓN REDONDO ========== */
+.screen-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  padding-top: calc(12px + env(safe-area-inset-top));
+  border-bottom: 1px solid #eee;
+}
+
+.header-fijo {
+  padding-top: calc(12px + env(safe-area-inset-top));
+}
+
+.btn-back {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: #6b5cff;
+  color: white;
+  font-size: 18px;
+}
+
+/* ========== FORMULARIO ========== */
+.screen-container {
+  padding: 16px;
+}
+
+.card {
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin: 6px 0 12px 0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}

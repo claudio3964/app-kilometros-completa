@@ -1,119 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Gestión de Viajes</title>
-<link rel="stylesheet" href="style.css">
-
-<style>
-/* ========== PANTALLAS GENERALES ========== */
-.screen{
-  display:none;
-  position:fixed;
-  top:0; left:0;
-  width:100%;
-  height:100%;
-  overflow-y:auto;
-  background:white;
-}
-
-.screen.active{ display:block; }
-
-/* ========== SPLASH DISCRETO ========== */
-#splashScreen{
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-end;
-  align-items:center;
-  padding-bottom:30px;
-  background:white;
-}
-
-.splash-text{
-  font-size:14px;
-  color:#777;
-}
-
-/* ========== HEADER AZUL (nuestro “splash visual”) ========== */
-.header-bar{
-  background:#6b5cff;
-  color:white;
-  padding:18px 16px;
-  padding-top: calc(18px + env(safe-area-inset-top));
-}
-
-.header-bar h1{
-  margin:0;
-  font-size:20px;
-}
-
-.header-bar p{
-  margin:4px 0 0 0;
-  font-size:14px;
-}
-
-/* ========== TARJETAS DEL MENÚ ========== */
-.menu-tarjetas{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  padding:0 16px;
-}
-
-.card-btn{
-  background:#f5f5f5;
-  border:1px solid #e0e0e0;
-  border-radius:10px;
-  padding:16px;
-  text-align:left;
-  font-size:16px;
-}
-
-/* ========== HEADER CON BOTÓN REDONDO ========== */
-.screen-header{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:12px 16px;
-  padding-top: calc(12px + env(safe-area-inset-top));
-  border-bottom:1px solid #eee;
-}
-
-.header-fijo{
-  padding-top: calc(12px + env(safe-area-inset-top));
-}
-
-.btn-back{
-  width:38px;
-  height:38px;
-  border-radius:50%;
-  border:none;
-  background:#6b5cff;
-  color:white;
-  font-size:18px;
-}
-
-/* ========== FORMULARIO NUEVO VIAJE ========== */
-.screen-container{
-  padding:16px;
-}
-
-.card{
-  border:1px solid #eee;
-  border-radius:12px;
-  padding:16px;
-}
-
-input, select{
-  width:100%;
-  padding:10px;
-  margin:6px 0 12px 0;
-  border:1px solid #ccc;
-  border-radius:8px;
-}
-
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Gestión de Viajes</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -123,12 +14,9 @@ input, select{
      style="display:flex; flex-direction:column;
             align-items:center; justify-content:center;
             gap:16px;">
-
   <img src="logo.png" width="120" alt="COT Logo">
-
   <div class="splash-text">Cargando aplicación…</div>
 </div>
-
 
 <!-- ================= REGISTRO ================= -->
 <div id="registroScreen" class="screen">
@@ -176,7 +64,6 @@ input, select{
 
     <h3>Estado de la jornada</h3>
 
-    <!-- Este div será controlado automáticamente por el CORE -->
     <div style="
       display:flex;
       align-items:center;
@@ -191,37 +78,19 @@ input, select{
       <div id="bloqueCerrarJornada"></div>
     </div>
 
-    <!-- Viaje en curso -->
     <div id="viajeEnCursoContainer"></div>
 
     <h3>Operaciones del día</h3>
 
     <div class="menu-tarjetas">
-
-      <button class="card-btn" onclick="abrirViajeSimple()">
-        🚗 Nuevo Viaje
-      </button>
-
-      <button class="card-btn" onclick="showScreen('listaViajesScreen')">
-        📄 Ver Viajes
-      </button>
-
-      <button class="card-btn" onclick="showScreen('nuevaGuardiaScreen')">
-        ➕ Registrar Guardia
-      </button>
-
-      <button class="card-btn" onclick="showScreen('listaGuardiasScreen')">
-        🕒 Ver Guardias
-      </button>
-
-      <button class="card-btn" onclick="abrirHistorial()">
-        📊 Historial
-      </button>
-
+      <button class="card-btn" onclick="abrirViajeSimple()">🚗 Nuevo Viaje</button>
+      <button class="card-btn" onclick="showScreen('listaViajesScreen')">📄 Ver Viajes</button>
+      <button class="card-btn" onclick="showScreen('nuevaGuardiaScreen')">➕ Registrar Guardia</button>
+      <button class="card-btn" onclick="showScreen('listaGuardiasScreen')">🕒 Ver Guardias</button>
+      <button class="card-btn" onclick="abrirHistorial()">📊 Historial</button>
     </div>
 
   </div>
-
 </div>
 
 <!-- ================= NUEVO VIAJE ================= -->
@@ -237,32 +106,33 @@ input, select{
 
   <div class="screen-container">
     <div class="card">
+
       <label>Origen</label>
       <select id="originTravels"></select>
 
       <label>Destino</label>
       <input id="destinationTravels" oninput="autoKmPorDestino()">
 
-      <!-- SUGERENCIAS AUTOCOMPLETE -->
       <div id="sugerenciasRutas"
            style="display:none; border:1px solid #ddd; border-radius:8px;
                   max-height:160px; overflow:auto; margin-bottom:10px;">
       </div>
 
-<label>Código cartel</label>
-<div style="display:flex; gap:8px; align-items:center;">
-  <select id="tipoCoche" onchange="actualizarCodigoCartel()" style="flex:2;">
-    <option value="">Elegí coche...</option>
-    <option value="marcopolo">Marcopolo</option>
-    <option value="neobus">Neobus</option>
-  </select>
-  <div id="codigoCartel" style="flex:1; text-align:center; font-weight:bold; font-size:1.1em; background:#f0f4ff; border-radius:6px; padding:6px 4px;"></div>
-</div>
+      <label>Código cartel</label>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <select id="tipoCoche" onchange="actualizarCodigoCartel()" style="flex:2;">
+          <option value="">Elegí coche...</option>
+          <option value="marcopolo">Marcopolo</option>
+          <option value="neobus">Neobus</option>
+        </select>
+        <div id="codigoCartel" style="flex:1; text-align:center; font-weight:bold;
+             font-size:1.1em; background:#f0f4ff; border-radius:6px; padding:6px 4px;">
+        </div>
+      </div>
 
-<label>Número de coche</label>
-<input type="number" id="numeroCoche" placeholder="Ej: 1234" min="1" style="width:100%;">
+      <label>Número de coche</label>
+      <input type="number" id="numeroCoche" placeholder="Ej: 1234" min="1">
 
-      <!-- HORARIOS COT DESPUÉS -->
       <div id="horariosOficiales"
            style="display:none; border:1px solid #ddd; border-radius:8px;
                   padding:8px; margin-bottom:10px;">
@@ -280,7 +150,7 @@ input, select{
       </select>
 
       <label>Kilómetros (auto)</label>
-<input id="kmTravels" type="number">
+      <input id="kmTravels" type="number">
 
       <label>Hora salida</label>
       <input id="departureTimeTravels" type="time">
@@ -300,46 +170,27 @@ input, select{
 
 <!-- ================= LISTA VIAJES ================= -->
 <div id="listaViajesScreen" class="screen">
-
-  <!-- HEADER FIJO -->
   <div class="header-fijo">
-
     <button onclick="showScreen('mainScreen')">← Volver</button>
-
     <h2>Lista de Viajes</h2>
-
     <div id="resumenDia"></div>
-
   </div>
-
-  <!-- CONTENIDO CON SCROLL -->
   <div class="contenido-scroll">
-
     <div id="cardsViajesContainer"></div>
-
   </div>
-
 </div>
+
 <!-- ================= DETALLE ORDEN ================= -->
 <div id="detalleOrdenScreen" class="screen">
-
-  <!-- HEADER FIJO -->
   <div class="header-fijo">
-
     <button onclick="showScreen('listaViajesScreen')">← Volver</button>
-
     <h2>Detalle de Jornada</h2>
-
   </div>
-
-  <!-- CONTENIDO CON SCROLL -->
   <div class="contenido-scroll">
-
     <div id="detalleOrdenContainer"></div>
-
   </div>
-
 </div>
+
 <!-- ================= HISTORIAL ================= -->
 <div id="historialScreen" class="screen">
   <div class="screen-header">
@@ -348,8 +199,6 @@ input, select{
   </div>
 
   <div style="padding:12px">
-
-    <!-- FILTROS -->
     <div style="display:flex; gap:8px; margin-bottom:12px;">
       <select id="filtroMes" onchange="renderHistorial()"
         style="flex:1; padding:8px; border-radius:8px; border:1px solid #ddd;">
@@ -359,22 +208,16 @@ input, select{
         <option value="">Todos los días</option>
       </select>
     </div>
-
-    <!-- CONTENIDO -->
     <div id="historialContainer"></div>
-
   </div>
 
   <div style="text-align:center; padding:20px 0 40px 0;">
     <button id="btnLimpiarStorage" style="
-      background:none;
-      border:1px solid #ccc;
-      border-radius:8px;
-      padding:8px 16px;
-      font-size:12px;
-      color:#999;
-      cursor:pointer;
-    ">🗑 Limpiar datos de prueba</button>
+      background:none; border:1px solid #ccc;
+      border-radius:8px; padding:8px 16px;
+      font-size:12px; color:#999; cursor:pointer;">
+      🗑 Limpiar datos de prueba
+    </button>
   </div>
 </div>
 
@@ -420,81 +263,23 @@ input, select{
   </div>
   <div id="cardsGuardiasContainer"></div>
 </div>
+
+<!-- ================= SCRIPTS ================= -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
- <script src="./core/core.js"></script>
- <script src="sync.js"></script>
+<script src="./core/core.js"></script>
+<script src="sync.js"></script>
 <script src="./core_bridge.js"></script>
-
 <script src="./schedules_cot.js"></script>
-
 <script src="./routes_catalog.js"></script>
 <script src="./routes_signs.js"></script>
 <script src="./routes_utils.js"></script>
-
-<script src="./ui_summary.js"></script>
 <script src="./ui_navigation.js"></script>
+<script src="./ui_registro.js"></script>
+<script src="./ui_summary.js"></script>
 <script src="./ui_travels.js"></script>
 <script src="./travel_stats.js"></script>
 <script src="./ui_guards.js"></script>
 <script src="./app_bootstrap.js"></script>
-
-
-
-
-<script>
-// ===== FLUJO DE ARRANQUE CORRECTO =====
-document.addEventListener('DOMContentLoaded', ()=>{
-  showScreen('splashScreen');
-
-  setTimeout(()=>{
-    const driver = getDriver();
-
-    if(!driver){
-      showScreen('registroScreen');
-    } else {
-      document.getElementById('baseChoferBadge').innerText =
-        "Base: " + (driver.base || "Montevideo");
-
-      const sel = document.getElementById('originTravels');
-      const bases = ['Montevideo','Punta del Este','Piriápolis','Punta Colorada','Punta Negra','Rocha','Colonia','Chuy','La Pedrera','La Paloma','Aguas Dulces','Otro'];
-      sel.innerHTML = bases.map(b =>
-        `<option value="${b}" ${b===driver.base?'selected':''}>${b}</option>`
-      ).join('');
-
-      showScreen('mainScreen');
-    }
-  }, 900);
-});
-
-function registrarChofer(){
-  try {
-    const legajo = document.getElementById('regLegajo').value.trim();
-    const nombre = document.getElementById('regNombre').value.trim();
-    const base   = document.getElementById('regBase').value;
-
-    if(!legajo || !nombre){
-      alert("Completá legajo y nombre");
-      return;
-    }
-
-    const tipo = document.getElementById('regTipo').value;
-    if(!tipo){ alert("Elegí tipo de chofer"); return; }
-    initDriverProfile({legajo, nombre, base, tipo});
-    document.getElementById('baseChoferBadge').innerText = "Base: " + base;
-
-    const sel = document.getElementById('originTravels');
-    const bases = ['Montevideo','Punta del Este','Piriápolis','Punta Colorada','Punta Negra','Rocha','Chuy','Colonia','La Pedrera','La Paloma','Aguas Dulces','Otro'];
-    sel.innerHTML = bases.map(b =>
-      `<option value="${b}" ${b===base?'selected':''}>${b}</option>`
-    ).join('');
-
-    showScreen('mainScreen');
-  } catch(e) {
-    alert("ERROR registrarChofer: " + e.message);
-  }
-}
-window.registrarChofer = registrarChofer;
-</script>
 
 </body>
 </html>

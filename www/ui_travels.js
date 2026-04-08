@@ -365,19 +365,21 @@ function cargarViajeRetornoAutomatico(data){
 // =====================================================
 function addTravelUI(event){
 
-  if(event) event.preventDefault();
+  event.preventDefault();
 
   let order = getActiveOrder();
-
   if(!order){
     order = createOrder();
   }
 
-  const origen =
-    document.getElementById("originTravels").value.trim();
+  const origen = document.getElementById("originTravels").value.trim();
 
-  const destino =
-    document.getElementById("destinationTravels").value.trim();
+  // ── FIX: usar destino real guardado al seleccionar sugerencia ──
+  const destinoInput = document.getElementById("destinationTravels").value.trim();
+  const destino = window._destinoReal || destinoInput;
+
+  // ── FIX: usar km guardado al seleccionar sugerencia ──
+  const kmSeleccionado = window._kmSeleccionado || null;
 
   if(!servicioSeleccionado){
     alert("Seleccioná un servicio válido");
@@ -389,8 +391,7 @@ function addTravelUI(event){
     return;
   }
 
-  const departureTime =
-    document.getElementById("departureTimeTravels").value;
+  const departureTime = document.getElementById("departureTimeTravels").value;
 
   if(!departureTime){
     alert("Ingresá hora de salida");
@@ -398,89 +399,69 @@ function addTravelUI(event){
   }
 
   const duracionEstimadaHoras = 2;
-
-  const [h,m] =
-    departureTime.split(":").map(Number);
-
+  const [h, m] = departureTime.split(":").map(Number);
   const salidaDate = new Date();
-  salidaDate.setHours(h,m,0,0);
+  salidaDate.setHours(h, m, 0, 0);
 
-  const llegadaDate =
-    new Date(
-      salidaDate.getTime() +
-      duracionEstimadaHoras * 60 * 60 * 1000
-    );
-
-  const arrivalTime =
-    llegadaDate.toTimeString().substring(0,5);
-
-  // =====================================================
-  // DECIDIR SI ES VIAJE PROGRAMADO O INMEDIATO
-  // =====================================================
+  const llegadaDate = new Date(
+    salidaDate.getTime() + duracionEstimadaHoras * 60 * 60 * 1000
+  );
+  const arrivalTime = llegadaDate.toTimeString().substring(0, 5);
 
   const ahora = new Date();
-
   let ok;
 
-  const cocheInput = document.getElementById("numeroCoche");
-  const coche = cocheInput && cocheInput.value.trim()
-    ? Number(cocheInput.value.trim())
-    : null;
+  cortarGuardiaAntesDeViaje(order, departureTime);
 
   if(salidaDate > ahora){
-
-    // VIAJE PROGRAMADO
     ok = addTravelProgramado(
-      origen,
-      destino,
+      origen, destino,
       servicioSeleccionado.turno,
-      departureTime,
-      arrivalTime,
-      duracionEstimadaHoras,
-      servicioSeleccionado.turno,
-      false,
-      coche
+      departureTime, arrivalTime,
+      duracionEstimadaHoras
     );
-
-  }else{
-
-    // VIAJE INMEDIATO
+  } else {
     ok = addTravel(
-      origen,
-      destino,
+      origen, destino,
       servicioSeleccionado.turno,
-      departureTime,
-      arrivalTime,
-      duracionEstimadaHoras,
-      servicioSeleccionado.turno,
-      false,
-      coche
+      departureTime, arrivalTime,
+      duracionEstimadaHoras
     );
-
   }
 
   if(!ok){
     alert("No se pudo programar el viaje");
     return;
   }
-  // 🔍 VALIDACIÓN DE CONSISTENCIA
-if (!validarConsistenciaOrder(order, { strict: true })) {
-  alert("⚠️ Inconsistencia detectada. Revisar datos.");
-  return;
-}
 
+  // ── FIX: si había km seleccionado, corregirlo en el viaje recién guardado ──
+  if(kmSeleccionado){
+    const activeOrder = getActiveOrder();
+    if(activeOrder && activeOrder.travels){
+      const ultimoViaje = activeOrder.travels[activeOrder.travels.length - 1];
+      if(ultimoViaje){
+        ultimoViaje.kmEmpresa = kmSeleccionado;
+        ultimoViaje.kmAuto    = kmSeleccionado;
+        saveOrders(
+          getOrders().map(o =>
+            o.orderNumber === activeOrder.orderNumber ? activeOrder : o
+          )
+        );
+        setActiveOrder(activeOrder);
+      }
+    }
+  }
+
+  // limpiar estado de selección
+  window._destinoReal      = null;
+  window._kmSeleccionado   = null;
+  window._destinoSeleccionado = false;
 
   renderResumenDia();
   renderListaViajes();
-  renderListaGuardias?.();
-
   showScreen("mainScreen");
 
-  alert(
-    "Viaje cargado correctamente\n" +
-    "Salida: " + departureTime
-  );
-
+  alert("Viaje cargado correctamente\nSalida: " + departureTime);
 }
 // =====================================================
 // DETALLE DE JORNADA ACTIVA
