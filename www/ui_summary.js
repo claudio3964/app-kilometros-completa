@@ -160,7 +160,7 @@ function renderBotonCerrarJornada(){
       } catch(e) {
         console.warn("Error exportando jornada", e);
       }
-
+ alert("✅ Jornada finalizada y enviada correctamente");
       renderBotonCerrarJornada();
       renderOrdenActivaUI?.();
       showScreen("mainScreen");
