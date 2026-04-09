@@ -759,7 +759,9 @@ async function doLogin() {
 
     currentUser = data;
     localStorage.setItem('admin_token', data.access_token);
+    localStorage.setItem('admin_refresh_token', data.refresh_token || '');
     localStorage.setItem('admin_email', email);
+    localStorage.setItem('admin_password', password);
 
     document.getElementById('userEmail').textContent = email;
     document.getElementById('loginScreen').style.display = 'none';
@@ -780,7 +782,9 @@ async function doLogin() {
 
 function doLogout() {
   localStorage.removeItem('admin_token');
+  localStorage.removeItem('admin_refresh_token');
   localStorage.removeItem('admin_email');
+  localStorage.removeItem('admin_password');
   currentUser = null;
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('adminScreen').style.display = 'none';
@@ -799,6 +803,7 @@ window.addEventListener('DOMContentLoaded', () => {
     cargarChoferes();
     cargarJornadas();
     cargarAlertas();
+    cargarRotacion();
   }
 
   // Enter en login
@@ -808,8 +813,30 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ══════════════════════════════════════════
-// API HELPER
+// API HELPER — con auto-renovación de token
 // ══════════════════════════════════════════
+async function renovarToken() {
+  try {
+    const email    = localStorage.getItem('admin_email');
+    const password = localStorage.getItem('admin_password');
+    if (!email || !password) return false;
+
+    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (data.access_token) {
+      currentUser = data;
+      localStorage.setItem('admin_token', data.access_token);
+      localStorage.setItem('admin_refresh_token', data.refresh_token || '');
+      return true;
+    }
+  } catch(e) {}
+  return false;
+}
+
 async function sbFetch(path, options = {}) {
   const token = currentUser ? currentUser.access_token : localStorage.getItem('admin_token');
   const res = await fetch(`${SB_URL}/rest/v1/${path}`, {
@@ -821,6 +848,24 @@ async function sbFetch(path, options = {}) {
       ...(options.headers || {})
     }
   });
+
+  // Si el token venció, renovar y reintentar automáticamente
+  if (res.status === 401) {
+    const renovado = await renovarToken();
+    if (renovado) {
+      const newToken = currentUser.access_token;
+      const res2 = await fetch(`${SB_URL}/rest/v1/${path}`, {
+        ...options,
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${newToken}`,
+          'Content-Type': 'application/json',
+          ...(options.headers || {})
+        }
+      });
+      return res2.json();
+    }
+  }
   return res.json();
 }
 
@@ -845,16 +890,20 @@ async function cargarDashboard() {
       sbFetch('registro_alertas?select=id,resuelto')
     ]);
 
-    document.getElementById('statChoferes').textContent = choferes.length || 0;
-    document.getElementById('statTotal').textContent = jornadas.length || 0;
+    const choferesArr = Array.isArray(choferes) ? choferes : [];
+    const jornadasArr = Array.isArray(jornadas) ? jornadas : [];
+    const alertasArr  = Array.isArray(alertas) ? alertas : [];
+
+    document.getElementById('statChoferes').textContent = choferesArr.length || 0;
+    document.getElementById('statTotal').textContent = jornadasArr.length || 0;
 
     const hoy = new Date().toISOString().split('T')[0];
-    const jornadasHoy = jornadas.filter(j => {
+    const jornadasHoy = jornadasArr.filter(j => {
       try { return JSON.parse(j.data || '{}').date === hoy; } catch { return false; }
     });
     document.getElementById('statJornadas').textContent = jornadasHoy.length;
 
-    const pendientes = alertas.filter(a => !a.resuelto);
+    const pendientes = alertasArr.filter(a => !a.resuelto);
     document.getElementById('statAlertas').textContent = pendientes.length;
 
     // Badge en tab
@@ -867,7 +916,7 @@ async function cargarDashboard() {
     }
 
     // Últimas alertas en dashboard
-    renderDashAlertas(alertas.slice(0, 5));
+    renderDashAlertas(alertasArr.slice(0, 5));
 
   } catch (e) {
     console.error('Error dashboard:', e);
@@ -930,7 +979,7 @@ function filtrarChoferes() {
 // ══════════════════════════════════════════
 async function cargarJornadas() {
   try {
-    const data = await sbFetch('jornadas?empresa_id=eq.cot&select=*&order=created_at.desc&limit=100');
+    const data = await sbFetch('jornadas?empresa_id=eq.cot&select=*&order=id.desc&limit=100');
     allJornadas = data;
     renderJornadas(data);
   } catch(e) {
@@ -985,7 +1034,7 @@ function filtrarJornadas() {
 // ══════════════════════════════════════════
 async function cargarAlertas() {
   try {
-    const data = await sbFetch('registro_alertas?select=*&order=created_at.desc');
+    const data = await sbFetch('registro_alertas?select=*&order=intentado_at.desc');
     renderAlertas(data);
 
     const pendientes = data.filter(a => !a.resuelto).length;
@@ -1004,7 +1053,7 @@ async function cargarAlertas() {
 }
 
 function alertaCard(a, mini = false) {
-  const fecha = a.created_at ? new Date(a.created_at).toLocaleString('es-UY') : '—';
+  const fecha = a.intentado_at ? new Date(a.intentado_at).toLocaleString('es-UY') : '—';
   const resuelto = a.resuelto;
   return `
     <div class="alert-card ${resuelto ? 'resolved' : ''}">
