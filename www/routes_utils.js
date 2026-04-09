@@ -1,19 +1,13 @@
+"use strict";
+
 // =====================================================
 // NORMALIZADOR DE TEXTO (GLOBAL)
 // =====================================================
-function normalizarTexto(txt){
-
-  if(!txt) return "";
-
-  return txt
-    .toString()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // quita acentos
-    .replace(/\s+/g, " ")
-    .trim();
+function normalizarTexto(txt) {
+  if (!txt) return "";
+  return txt.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") // quita acentos
+  .replace(/\s+/g, " ").trim();
 }
-
 window.normalizarTexto = normalizarTexto;
 
 // =====================================================
@@ -22,130 +16,111 @@ window.normalizarTexto = normalizarTexto;
 
 function buscarRutaCoincidente(textoUsuario) {
   const buscado = normalizarTexto(textoUsuario);
-
   let candidataExacta = null;
   let candidataConX = null;
   let candidataParcial = null;
-
   for (const ruta in ROUTES_CATALOG) {
-
     const rutaNorm = normalizarTexto(ruta);
     const partes = rutaNorm.split("→");
     const destinoFinal = partes[1] ? partes[1].trim() : rutaNorm;
-
     if (destinoFinal.includes(buscado) && !destinoFinal.includes(" x ")) {
-      candidataExacta = { ruta, km: ROUTES_CATALOG[ruta] };
+      candidataExacta = {
+        ruta,
+        km: ROUTES_CATALOG[ruta]
+      };
       break;
     }
-
     if (destinoFinal.includes(buscado) && destinoFinal.includes(" x ")) {
-      candidataConX = { ruta, km: ROUTES_CATALOG[ruta] };
+      candidataConX = {
+        ruta,
+        km: ROUTES_CATALOG[ruta]
+      };
     }
-
     if (rutaNorm.includes(buscado)) {
-      candidataParcial = { ruta, km: ROUTES_CATALOG[ruta] };
+      candidataParcial = {
+        ruta,
+        km: ROUTES_CATALOG[ruta]
+      };
     }
   }
-
   return candidataExacta || candidataConX || candidataParcial;
 }
-
-
 
 // =====================================================
 // BUSCAR KM RUTA (VERSIÓN DEFINITIVA NORMALIZADA)
 // =====================================================
 
-function buscarKmRuta(origen, destino){
-
-  if(!origen || !destino) return 0;
-
+function buscarKmRuta(origen, destino) {
+  if (!origen || !destino) return 0;
   const origenNorm = normalizarTexto(origen);
   const destinoNorm = normalizarTexto(destino);
 
   // Buscar en window.routes primero (fuente principal)
-  if(window.routes){
-    for(const ruta of window.routes){
+  if (window.routes) {
+    for (const ruta of window.routes) {
       const oNorm = normalizarTexto(ruta.origen);
       const dNorm = normalizarTexto(ruta.destino);
-
-      if(oNorm === origenNorm && dNorm === destinoNorm){
+      if (oNorm === origenNorm && dNorm === destinoNorm) {
         return ruta.km;
       }
       // inverso
       let kmDirecto = null;
-let kmInverso = null;
-
-for(const ruta of window.routes){
-  const oNorm = normalizarTexto(ruta.origen);
-  const dNorm = normalizarTexto(ruta.destino);
-
-  if(oNorm === origenNorm && dNorm === destinoNorm){
-    kmDirecto = ruta.km;
-  }
-
-  if(oNorm === destinoNorm && dNorm === origenNorm){
-    kmInverso = ruta.km;
-  }
-}
-
-if(kmDirecto !== null) return kmDirecto;
-if(kmInverso !== null) return kmInverso;
+      let kmInverso = null;
+      for (const ruta of window.routes) {
+        const oNorm = normalizarTexto(ruta.origen);
+        const dNorm = normalizarTexto(ruta.destino);
+        if (oNorm === origenNorm && dNorm === destinoNorm) {
+          kmDirecto = ruta.km;
+        }
+        if (oNorm === destinoNorm && dNorm === origenNorm) {
+          kmInverso = ruta.km;
+        }
+      }
+      if (kmDirecto !== null) return kmDirecto;
+      if (kmInverso !== null) return kmInverso;
     }
   }
 
   // Fallback a ROUTES_CATALOG
-  for(const ruta in ROUTES_CATALOG){
+  for (const ruta in ROUTES_CATALOG) {
     const partes = ruta.split("→");
     const origenCatalogo = normalizarTexto(partes[0]);
     const destinoCatalogo = normalizarTexto(partes[1]);
-
-    if(origenNorm === origenCatalogo && destinoNorm === destinoCatalogo){
+    if (origenNorm === origenCatalogo && destinoNorm === destinoCatalogo) {
       return ROUTES_CATALOG[ruta];
     }
-    if(origenNorm === destinoCatalogo && destinoNorm === origenCatalogo){
+    if (origenNorm === destinoCatalogo && destinoNorm === origenCatalogo) {
       return ROUTES_CATALOG[ruta];
     }
   }
-
   return 0;
 }
-
 window.buscarKmRuta = buscarKmRuta;
-
 
 // =====================================================
 // BUSCAR MÚLTIPLES RUTAS
 // =====================================================
 
-function buscarMultiplesRutas(textoUsuario){
-
+function buscarMultiplesRutas(textoUsuario) {
   const buscado = normalizarTexto(textoUsuario);
   let resultados = [];
-
-  for (const ruta in ROUTES_CATALOG){
-
+  for (const ruta in ROUTES_CATALOG) {
+    var _partes$, _partes$2;
     const rutaNorm = normalizarTexto(ruta);
     const partes = rutaNorm.split("→");
-
-    const origen = partes[0]?.trim();
-    const destinoFinal = partes[1]?.trim();
-
-    if (destinoFinal && destinoFinal.includes(buscado))
-      resultados.push({
-        rutaOriginal: ruta,
-        destinoFinal,
-        km: ROUTES_CATALOG[ruta]
-      });
-
-    if (origen && origen.includes(buscado))
-      resultados.push({
-        rutaOriginal: ruta,
-        destinoFinal: origen,
-        km: ROUTES_CATALOG[ruta]
-      });
+    const origen = (_partes$ = partes[0]) === null || _partes$ === void 0 ? void 0 : _partes$.trim();
+    const destinoFinal = (_partes$2 = partes[1]) === null || _partes$2 === void 0 ? void 0 : _partes$2.trim();
+    if (destinoFinal && destinoFinal.includes(buscado)) resultados.push({
+      rutaOriginal: ruta,
+      destinoFinal,
+      km: ROUTES_CATALOG[ruta]
+    });
+    if (origen && origen.includes(buscado)) resultados.push({
+      rutaOriginal: ruta,
+      destinoFinal: origen,
+      km: ROUTES_CATALOG[ruta]
+    });
   }
-
   return resultados;
 }
 
@@ -154,28 +129,22 @@ function buscarMultiplesRutas(textoUsuario){
 // =====================================================
 
 function buscarSugerenciasCarteles(texto) {
+  var _document$getElementB;
   const buscado = normalizarTexto(texto);
   const resultados = [];
-
-  const origenActual = normalizarTexto(
-    document.getElementById("originTravels")?.value || "montevideo"
-  );
-
-  for (const ruta of (window.routes || [])) {
-
-    const origenRuta   = normalizarTexto(ruta.origen);
-    const destinoRuta  = normalizarTexto(ruta.destino);
+  const origenActual = normalizarTexto(((_document$getElementB = document.getElementById("originTravels")) === null || _document$getElementB === void 0 ? void 0 : _document$getElementB.value) || "montevideo");
+  for (const ruta of window.routes || []) {
+    const origenRuta = normalizarTexto(ruta.origen);
+    const destinoRuta = normalizarTexto(ruta.destino);
 
     // Extraer destino base y variante (ej: "punta del este x piriapolis")
-    const xIdx        = destinoRuta.indexOf(" x ");
+    const xIdx = destinoRuta.indexOf(" x ");
     const destinoBase = xIdx !== -1 ? destinoRuta.substring(0, xIdx).trim() : destinoRuta;
-    const variante    = xIdx !== -1 ? destinoRuta.substring(xIdx + 3).trim() : null;
+    const variante = xIdx !== -1 ? destinoRuta.substring(xIdx + 3).trim() : null;
 
     // ── CASO 1: ruta directa (origen coincide) ──
     if (origenRuta === origenActual && destinoRuta.includes(buscado)) {
-      const label = variante
-        ? destinoBase + " x " + variante
-        : destinoBase;
+      const label = variante ? destinoBase + " x " + variante : destinoBase;
       resultados.push({
         label,
         destino: ruta.destino,
@@ -189,19 +158,20 @@ function buscarSugerenciasCarteles(texto) {
     // → sugerir "Punta del Este x Piriápolis → Montevideo" con los mismos km
     if (destinoBase === origenActual && origenRuta.includes(buscado)) {
       // El label del retorno incluye la variante si la tiene
-      const labelRetorno = variante
-        ? origenActual.replace(/\b\w/g, l => l.toUpperCase()) + " x " + variante
-        : ruta.origen;
-
+      const labelRetorno = variante ? origenActual.replace(/\b\w/g, l => l.toUpperCase()) + " x " + variante : ruta.origen;
       resultados.push({
-  label:            ruta.origen + (variante ? " x " + variante : ""),  // "Montevideo x Piriápolis"
-  destino:          ruta.destino,         // "Punta del Este x Piriápolis" (para buscar km)
-  _retorno:         true,
-  _origenRetorno:   ruta.destino,         // origen real del retorno
-  _destinoRetorno:  ruta.origen,          // destino real del retorno = "Montevideo"
-  variante,
-  km:               ruta.km
-});
+        label: ruta.origen + (variante ? " x " + variante : ""),
+        // "Montevideo x Piriápolis"
+        destino: ruta.destino,
+        // "Punta del Este x Piriápolis" (para buscar km)
+        _retorno: true,
+        _origenRetorno: ruta.destino,
+        // origen real del retorno
+        _destinoRetorno: ruta.origen,
+        // destino real del retorno = "Montevideo"
+        variante,
+        km: ruta.km
+      });
     }
   }
 
@@ -214,53 +184,43 @@ function buscarSugerenciasCarteles(texto) {
     return true;
   });
 }
-
-function autoKmPorDestino(terminoDeEscribir = false){
-
+function autoKmPorDestino() {
+  var _document$getElementB2;
+  let terminoDeEscribir = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
   const inputDestino = document.getElementById("destinationTravels");
-  const box          = document.getElementById("sugerenciasRutas");
-  const texto        = inputDestino.value;
-  const origenActual = document.getElementById("originTravels")?.value || "Montevideo";
+  const box = document.getElementById("sugerenciasRutas");
+  const texto = inputDestino.value;
+  const origenActual = ((_document$getElementB2 = document.getElementById("originTravels")) === null || _document$getElementB2 === void 0 ? void 0 : _document$getElementB2.value) || "Montevideo";
 
   // limpiar estado previo
   document.getElementById("codigoCartel").innerHTML = "";
-  window._servicioCartel     = null;
+  window._servicioCartel = null;
   window._destinoSeleccionado = false;
-  window._kmSeleccionado      = null;   // ← NUEVO: limpiar km previo
-  window._destinoReal         = null;   // ← NUEVO: limpiar destino real previo
+  window._kmSeleccionado = null; // ← NUEVO: limpiar km previo
+  window._destinoReal = null; // ← NUEVO: limpiar destino real previo
 
-  if(!texto){
+  if (!texto) {
     box.style.display = "none";
     box.innerHTML = "";
     return;
   }
-
   const matches = buscarSugerenciasCarteles(texto);
-
-  if(matches.length === 0){
+  if (matches.length === 0) {
     box.style.display = "none";
     box.innerHTML = "";
     return;
   }
-
   box.style.display = "block";
   box.innerHTML = "";
-
   matches.forEach(m => {
-
     const div = document.createElement("div");
     div.style.padding = "8px";
-    div.style.cursor  = "pointer";
+    div.style.cursor = "pointer";
 
     // ── LABEL VISIBLE: mostrar variante si existe ──
-    const labelVisible = m.variante
-      ? `${m.label} (${m.km} km)`
-      : `${m.label} (${m.km} km)`;
-
+    const labelVisible = m.variante ? "".concat(m.label, " (").concat(m.km, " km)") : "".concat(m.label, " (").concat(m.km, " km)");
     div.innerText = labelVisible;
-
     div.onclick = () => {
-
       // ── SETEAR TEXTO VISIBLE EN EL INPUT ──
       inputDestino.value = m.label;
 
@@ -271,50 +231,41 @@ function autoKmPorDestino(terminoDeEscribir = false){
       // ── GUARDAR DESTINO REAL PARA EL CORE ──
       // En retorno: el destino real para buscarKmRuta es el origen original
       // En directo: es el destino de la ruta
-      if(m._retorno){
-  // label ya tiene la variante: "Montevideo x Piriápolis"
-  inputDestino.value   = m.label;           // visible con variante
-  window._destinoReal  = m.label;           // ← guardar label completo, no _destinoRetorno
-  window._origenReal   = m._origenRetorno;
-} else {
-  window._destinoReal  = m.destino;
-  window._origenReal   = null;
-}
+      if (m._retorno) {
+        // label ya tiene la variante: "Montevideo x Piriápolis"
+        inputDestino.value = m.label; // visible con variante
+        window._destinoReal = m.label; // ← guardar label completo, no _destinoRetorno
+        window._origenReal = m._origenRetorno;
+      } else {
+        window._destinoReal = m.destino;
+        window._origenReal = null;
+      }
 
       // ── SERVICIO ──
       window._servicioCartel = m.servicio;
-
       const mapaServicio = {
-        "directo":     "DIRECTO",
+        "directo": "DIRECTO",
         "directisimo": "DIRECTO",
-        "turno":       "TURNO",
-        "expreso":     "EXPRESO"
+        "turno": "TURNO",
+        "expreso": "EXPRESO"
       };
-
-      const selectEl  = document.getElementById("numeroServicio");
+      const selectEl = document.getElementById("numeroServicio");
       const valSelect = mapaServicio[m.servicio] || "";
-
-      if(selectEl && valSelect){
+      if (selectEl && valSelect) {
         selectEl.value = valSelect;
-        if(typeof actualizarInfoServicio === "function"){
+        if (typeof actualizarInfoServicio === "function") {
           actualizarInfoServicio();
         }
       }
-
       window._destinoSeleccionado = true;
-
       box.style.display = "none";
-      box.innerHTML     = "";
+      box.innerHTML = "";
 
       // ── HORARIOS: usar destino real ──
-      const destinoParaHorarios = m._retorno
-        ? m._destinoRetorno
-        : m.destino;
-
+      const destinoParaHorarios = m._retorno ? m._destinoRetorno : m.destino;
       mostrarHorariosOficiales(origenActual, destinoParaHorarios);
       actualizarCodigoCartel();
     };
-
     box.appendChild(div);
   });
 }
@@ -322,102 +273,82 @@ function autoKmPorDestino(terminoDeEscribir = false){
 // HORARIOS OFICIALES
 // =====================================================
 
-function mostrarHorariosOficiales(origen, destino){
-
-  const ruta = `${origen} → ${destino}`;
-
+function mostrarHorariosOficiales(origen, destino) {
+  const ruta = "".concat(origen, " \u2192 ").concat(destino);
   const horarios = SCHEDULE_COT[ruta];
-
   const box = document.getElementById("horariosOficiales");
-
-  if(!horarios){
-
+  if (!horarios) {
     box.style.display = "none";
     box.innerHTML = "";
-
     return;
   }
-
   box.innerHTML = "<b>Horarios sugeridos:</b>";
-
   box.style.display = "flex";
-
   horarios.forEach(h => {
-
     const btn = document.createElement("button");
-
-    btn.textContent =
-      `${h.salida} → ${h.llegada}`;
-
+    btn.textContent = "".concat(h.salida, " \u2192 ").concat(h.llegada);
     btn.onclick = () => {
-
       document.getElementById("departureTimeTravels").value = h.salida;
-
       document.getElementById("arrivalTimeTravels").value = h.llegada;
     };
-
     box.appendChild(btn);
   });
 }
-function obtenerCodigosRuta(destino){
-  if(!destino) return null;
+function obtenerCodigosRuta(destino) {
+  if (!destino) return null;
   const key = normalizarTexto(destino);
   const catalogo = window.ROUTES_SIGNS || {};
 
   // 1) coincidencia exacta
-  for(const ruta in catalogo){
-    if(normalizarTexto(ruta) === key) return catalogo[ruta];
+  for (const ruta in catalogo) {
+    if (normalizarTexto(ruta) === key) return catalogo[ruta];
   }
 
   // 2) destino base antes del " x " (ej: "punta del este x piriapolis" → "punta del este")
   const base = key.split(" x ")[0].trim();
-  if(base !== key){
-    for(const ruta in catalogo){
-      if(normalizarTexto(ruta) === base) return catalogo[ruta];
+  if (base !== key) {
+    for (const ruta in catalogo) {
+      if (normalizarTexto(ruta) === base) return catalogo[ruta];
     }
   }
-
   return null;
 }
-
-function actualizarCodigoCartel(){
-
-  const valor   = document.getElementById("destinationTravels").value.trim();
-  const div     = document.getElementById("codigoCartel");
-  const servicio = document.getElementById("numeroServicio")?.value;
-
+function actualizarCodigoCartel() {
+  var _document$getElementB3, _document$getElementB4;
+  const valor = document.getElementById("destinationTravels").value.trim();
+  const div = document.getElementById("codigoCartel");
+  const servicio = (_document$getElementB3 = document.getElementById("numeroServicio")) === null || _document$getElementB3 === void 0 ? void 0 : _document$getElementB3.value;
   if (!window._destinoSeleccionado || !servicio) {
     div.innerHTML = "";
     return;
   }
-
-  if(!valor){
+  if (!valor) {
     div.innerHTML = "";
     return;
   }
-
   const destinoBase = valor.split(" x ")[0].trim();
-
   const catalogo = window.ROUTES_SIGNS || {};
   const destinoKey = normalizarTexto(destinoBase);
   let entrada = null;
   for (const ruta in catalogo) {
-    if (normalizarTexto(ruta) === destinoKey) { entrada = catalogo[ruta]; break; }
+    if (normalizarTexto(ruta) === destinoKey) {
+      entrada = catalogo[ruta];
+      break;
+    }
   }
-
-  if (!entrada) { div.innerHTML = "Sin código disponible"; return; }
-
-  const tipo = document.getElementById("tipoCoche")?.value;
+  if (!entrada) {
+    div.innerHTML = "Sin código disponible";
+    return;
+  }
+  const tipo = (_document$getElementB4 = document.getElementById("tipoCoche")) === null || _document$getElementB4 === void 0 ? void 0 : _document$getElementB4.value;
   const servicioNorm = normalizarTexto(servicio);
-
   if (tipo) {
     const codigo = (entrada[tipo] || {})[servicioNorm];
     div.innerHTML = codigo || "-";
   } else {
     const mp = (entrada.marcopolo || {})[servicioNorm];
     const nb = (entrada.neobus || {})[servicioNorm];
-    div.innerHTML = [mp && `<b>${mp}</b> Marcopolo`, nb && `<b>${nb}</b> Neobus`]
-      .filter(Boolean).join(" &nbsp;|&nbsp; ") || "-";
+    div.innerHTML = [mp && "<b>".concat(mp, "</b> Marcopolo"), nb && "<b>".concat(nb, "</b> Neobus")].filter(Boolean).join(" &nbsp;|&nbsp; ") || "-";
   }
 }
 
