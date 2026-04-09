@@ -1143,12 +1143,7 @@ let allRotacion = [];
 
 async function cargarRotacion() {
   try {
-    const data = await sbFetch(
-      'rotacion?empresa_id=eq.cot&select=*,servicios_rotacion!inner(*)&servicios_rotacion.temporada=eq.invierno&order=posicion_actual.asc'
-    );
-
-    // Si falla el join, hacemos dos consultas separadas
-    const funcionarios = await sbFetch('rotacion?empresa_id=eq.cot&select=*&order=posicion_actual.asc');
+    const funcionarios = await sbFetch('rotacion?select=*&order=posicion_actual.asc');
     const servicios    = await sbFetch('servicios_rotacion?temporada=eq.invierno&select=*&order=posicion.asc');
 
     // Cruzar datos
