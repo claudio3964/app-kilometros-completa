@@ -1,52 +1,32 @@
+"use strict";
+
 // =====================================================
 // NAVEGACIÓN
 // =====================================================
-function refreshMainUI(){
-
-  if(typeof renderOrdenActivaUI === "function")
-    renderOrdenActivaUI();
-
-  if(typeof mostrarViajeEnCursoUI === "function")
-    mostrarViajeEnCursoUI();
-
-  if(typeof renderListaViajes === "function")
-    renderListaViajes();
-
-  if(typeof renderResumenDia === "function")
-    renderResumenDia();
-
-  if(typeof renderBotonCerrarJornada === "function")
-    renderBotonCerrarJornada();
-
+function refreshMainUI() {
+  if (typeof renderOrdenActivaUI === "function") renderOrdenActivaUI();
+  if (typeof mostrarViajeEnCursoUI === "function") mostrarViajeEnCursoUI();
+  if (typeof renderListaViajes === "function") renderListaViajes();
+  if (typeof renderResumenDia === "function") renderResumenDia();
+  if (typeof renderBotonCerrarJornada === "function") renderBotonCerrarJornada();
 }
-
 window.refreshMainUI = refreshMainUI;
-function showScreen(id){
-
+function showScreen(id) {
   console.log("[NAV] Mostrar pantalla:", id);
-
-  document.querySelectorAll(".screen")
-    .forEach(s => s.classList.remove("active"));
-
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   const target = document.getElementById(id);
-  if(!target) return;
-
+  if (!target) return;
   target.classList.add("active");
 
   // 🔥 ACTUALIZAR MAIN SCREEN
-  if(id === "mainScreen"){
-
+  if (id === "mainScreen") {
     console.log("Actualizando mainScreen...");
     refreshMainUI();
-
   }
-
- if(id === "listaGuardiasScreen"){
-  console.log("Render guardias...");
-  renderListaGuardias?.();
+  if (id === "listaGuardiasScreen") {
+    var _renderListaGuardias;
+    console.log("Render guardias...");
+    (_renderListaGuardias = renderListaGuardias) === null || _renderListaGuardias === void 0 || _renderListaGuardias();
+  }
 }
-
-}
-
 window.showScreen = showScreen;
-
