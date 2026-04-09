@@ -887,7 +887,7 @@ async function cargarDashboard() {
     const [choferes, jornadas, alertas] = await Promise.all([
       sbFetch('choferes?empresa_id=eq.cot&select=id'),
       sbFetch('jornadas?empresa_id=eq.cot&select=id,data'),
-      sbFetch('registro_alertas?select=id,resuelto')
+      sbFetch('registro_alertas?select=id,resuelto,intentado_at&order=intentado_at.desc')
     ]);
 
     const choferesArr = Array.isArray(choferes) ? choferes : [];
