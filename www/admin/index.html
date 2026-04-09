@@ -536,6 +536,7 @@
       🔔 Alertas
       <span class="tab-badge" id="alertBadge" style="display:none">0</span>
     </div>
+    <div class="nav-tab" onclick="switchTab('rotacion')">🔄 Rotación</div>
   </div>
 
   <!-- CONTENIDO -->
@@ -637,6 +638,74 @@
       <div id="alertasContainer"><div class="loading">Cargando...</div></div>
     </div>
 
+    <!-- ── ROTACIÓN ── -->
+    <div class="tab-panel" id="tab-rotacion">
+      <div class="section-header">
+        <div class="section-title">Rotación del día — Efectivos Montevideo</div>
+        <div style="display:flex;gap:10px">
+          <button class="btn-refresh" onclick="cargarRotacion()">↺ Actualizar</button>
+          <button class="btn-refresh" onclick="generarViajesSiguiente()" style="background:rgba(59,130,246,0.15);border-color:var(--accent);color:var(--accent)">
+            ▶ Generar viajes día siguiente
+          </button>
+        </div>
+      </div>
+
+      <!-- Info fecha -->
+      <div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap">
+        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px">
+          <div class="stat-label">Vigencia actual</div>
+          <div style="font-family:var(--mono);font-size:16px;color:var(--accent2)" id="rotVigencia">—</div>
+        </div>
+        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px">
+          <div class="stat-label">Temporada</div>
+          <div style="font-family:var(--mono);font-size:16px;color:var(--text)" id="rotTemporada">invierno</div>
+        </div>
+        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px">
+          <div class="stat-label">En servicio hoy</div>
+          <div style="font-family:var(--mono);font-size:22px;color:var(--ok)" id="rotEnServicio">—</div>
+        </div>
+        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px">
+          <div class="stat-label">De descanso hoy</div>
+          <div style="font-family:var(--mono);font-size:22px;color:var(--text3)" id="rotDescanso">—</div>
+        </div>
+        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px">
+          <div class="stat-label">Pueden agregar</div>
+          <div style="font-family:var(--mono);font-size:22px;color:var(--warn)" id="rotAgregar">—</div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filters">
+        <input class="filter-input" id="filterRotacion" placeholder="🔍 Buscar funcionario..." oninput="filtrarRotacion()" style="width:260px">
+        <select class="filter-input" id="filterRotDescanso" onchange="filtrarRotacion()">
+          <option value="">Todos</option>
+          <option value="servicio">En servicio</option>
+          <option value="descanso">Descanso</option>
+          <option value="agregar">Puede agregar</option>
+        </select>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Pos.</th>
+              <th>N° Fun</th>
+              <th>Nombre</th>
+              <th>Servicio 1</th>
+              <th>Servicio 2</th>
+              <th>Servicio 3</th>
+              <th>Servicio 4</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="rotacionBody">
+            <tr><td colspan="8" class="loading">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -700,6 +769,7 @@ async function doLogin() {
     cargarChoferes();
     cargarJornadas();
     cargarAlertas();
+    cargarRotacion();
 
   } catch (e) {
     errEl.style.display = 'block';
@@ -1015,6 +1085,191 @@ function showToast(msg) {
   t.textContent = msg;
   t.style.display = 'block';
   setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+// ══════════════════════════════════════════
+// ROTACIÓN
+// ══════════════════════════════════════════
+let allRotacion = [];
+
+async function cargarRotacion() {
+  try {
+    const data = await sbFetch(
+      'rotacion?empresa_id=eq.cot&select=*,servicios_rotacion!inner(*)&servicios_rotacion.temporada=eq.invierno&order=posicion_actual.asc'
+    );
+
+    // Si falla el join, hacemos dos consultas separadas
+    const funcionarios = await sbFetch('rotacion?empresa_id=eq.cot&select=*&order=posicion_actual.asc');
+    const servicios    = await sbFetch('servicios_rotacion?temporada=eq.invierno&select=*&order=posicion.asc');
+
+    // Cruzar datos
+    const rotacion = funcionarios.map(f => {
+      const srv = servicios.find(s => s.posicion === f.posicion_actual);
+      return { ...f, servicio: srv || null };
+    });
+
+    allRotacion = rotacion;
+
+    // Stats
+    const enServicio = rotacion.filter(r => r.servicio && !r.servicio.es_descanso).length;
+    const descanso   = rotacion.filter(r => r.servicio && r.servicio.es_descanso).length;
+    const agregar    = rotacion.filter(r => r.servicio && r.servicio.puede_agregar).length;
+    const vigencia   = servicios[0] ? servicios[0].vigencia_desde : '—';
+
+    document.getElementById('rotEnServicio').textContent = enServicio;
+    document.getElementById('rotDescanso').textContent   = descanso;
+    document.getElementById('rotAgregar').textContent    = agregar;
+    document.getElementById('rotVigencia').textContent   = vigencia ? new Date(vigencia).toLocaleDateString('es-UY') : '—';
+
+    renderRotacion(rotacion);
+
+  } catch(e) {
+    console.error('Error rotacion:', e);
+    document.getElementById('rotacionBody').innerHTML =
+      '<tr><td colspan="8" class="loading">Error al cargar rotación</td></tr>';
+  }
+}
+
+function formatServicio(hora, destino, tipo) {
+  if (!hora && !destino) return null;
+  if (!hora && destino) return `<span style="color:var(--text3);font-size:11px">${destino}</span>`;
+  const color = tipo === 'DIRECTO' ? 'var(--accent2)' : tipo === 'TURNO' ? 'var(--text)' : 'var(--text2)';
+  return `
+    <div style="line-height:1.6">
+      <span style="font-family:var(--mono);font-size:12px;color:var(--ok)">${hora}</span>
+      <span style="font-size:12px;color:${color};margin-left:4px">${destino || ''}</span>
+      ${tipo ? `<span style="font-size:10px;color:var(--text3);margin-left:4px">${tipo}</span>` : ''}
+    </div>
+  `;
+}
+
+function renderRotacion(rotacion) {
+  const tbody = document.getElementById('rotacionBody');
+  if (!rotacion.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="icon">🔄</div><p>No hay datos de rotación</p></div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rotacion.map(r => {
+    const s = r.servicio;
+    const esDescanso  = s && s.es_descanso;
+    const puedeAgregar = s && s.puede_agregar;
+    const esSuplente  = r.es_suplente;
+
+    const srv1 = s ? formatServicio(s.servicio_1_hora, s.servicio_1_destino, s.servicio_1_tipo) : null;
+    const srv2 = s ? formatServicio(s.servicio_2_hora, s.servicio_2_destino, s.servicio_2_tipo) : null;
+    const srv3 = s ? formatServicio(s.servicio_3_hora, s.servicio_3_destino, s.servicio_3_tipo) : null;
+    const srv4 = s ? formatServicio(s.servicio_4_hora, s.servicio_4_destino, s.servicio_4_tipo) : null;
+
+    let estadoBadge = '';
+    if (esDescanso) {
+      estadoBadge = '<span class="badge" style="background:rgba(71,85,105,0.3);color:var(--text3)">🟢 Descanso</span>';
+    } else if (puedeAgregar) {
+      estadoBadge = '<span class="badge badge-warn">+ Puede agregar</span>';
+    } else {
+      estadoBadge = '<span class="badge badge-ok">● En servicio</span>';
+    }
+
+    if (esSuplente) {
+      estadoBadge += `<br><span style="font-size:10px;color:var(--warn);font-family:var(--mono)">suplente de ${r.funcionario_titular}</span>`;
+    }
+
+    return `
+      <tr style="${esDescanso ? 'opacity:0.5' : ''}">
+        <td><span class="mono" style="color:var(--accent)">${r.posicion_actual}</span></td>
+        <td><span class="mono">${r.nro_fun}</span></td>
+        <td style="color:var(--text);font-size:13px">${r.apellidos_nombres}</td>
+        <td>${esDescanso ? '<span style="color:var(--text3);font-size:12px">— DESCANSO —</span>' : (srv1 || '—')}</td>
+        <td>${srv2 || '—'}</td>
+        <td>${srv3 || '—'}</td>
+        <td>${srv4 || '—'}</td>
+        <td>${estadoBadge}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filtrarRotacion() {
+  const q      = document.getElementById('filterRotacion').value.toLowerCase();
+  const filtro = document.getElementById('filterRotDescanso').value;
+
+  const filtrados = allRotacion.filter(r => {
+    const matchQ = !q ||
+      (r.apellidos_nombres || '').toLowerCase().includes(q) ||
+      (r.nro_fun || '').toLowerCase().includes(q);
+
+    const s = r.servicio;
+    let matchF = true;
+    if (filtro === 'servicio')  matchF = s && !s.es_descanso;
+    if (filtro === 'descanso')  matchF = s && s.es_descanso;
+    if (filtro === 'agregar')   matchF = s && s.puede_agregar;
+
+    return matchQ && matchF;
+  });
+
+  renderRotacion(filtrados);
+}
+
+async function generarViajesSiguiente() {
+  const confirmar = confirm('¿Generar viajes programados para mañana basados en la rotación actual?');
+  if (!confirmar) return;
+
+  const manana = new Date();
+  manana.setDate(manana.getDate() + 1);
+  const fechaManana = manana.toISOString().split('T')[0];
+
+  let generados = 0;
+  let errores   = 0;
+
+  for (const r of allRotacion) {
+    const s = r.servicio;
+    if (!s || s.es_descanso) continue;
+
+    // Construir viajes del día siguiente
+    const viajes = [];
+    [[s.servicio_1_hora, s.servicio_1_destino, s.servicio_1_tipo],
+     [s.servicio_2_hora, s.servicio_2_destino, s.servicio_2_tipo],
+     [s.servicio_3_hora, s.servicio_3_destino, s.servicio_3_tipo],
+     [s.servicio_4_hora, s.servicio_4_destino, s.servicio_4_tipo]
+    ].forEach(([hora, destino, tipo]) => {
+      if (hora && destino) {
+        viajes.push({ hora, destino, tipo, status: 'programado' });
+      }
+    });
+
+    if (!viajes.length) continue;
+
+    try {
+      await fetch(`${SB_URL}/rest/v1/jornadas`, {
+        method: 'POST',
+        headers: {
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=ignore-duplicates'
+        },
+        body: JSON.stringify({
+          empresa_id:   'cot',
+          chofer_id:    r.nro_fun,
+          order_number: `${fechaManana}-${r.nro_fun}`,
+          data: JSON.stringify({
+            date:          fechaManana,
+            driverLegajo:  r.nro_fun,
+            driverName:    r.apellidos_nombres,
+            posicion:      r.posicion_actual,
+            travels:       viajes,
+            tipo:          'efectivo',
+            generado_auto: true
+          })
+        })
+      });
+      generados++;
+    } catch(e) {
+      errores++;
+    }
+  }
+
+  showToast(`✅ ${generados} jornadas generadas para ${fechaManana}${errores ? ` (${errores} errores)` : ''}`);
 }
 
 function showError(msg) {
