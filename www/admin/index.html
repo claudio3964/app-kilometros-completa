@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DriverLog — Panel Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #0a0e1a;
+      --bg2:       #111827;
+      --bg3:       #1c2537;
+      --border:    #1e2d45;
+      --accent:    #3b82f6;
+      --accent2:   #06b6d4;
+      --danger:    #ef4444;
+      --warn:      #f59e0b;
+      --ok:        #10b981;
+      --text:      #e2e8f0;
+      --text2:     #94a3b8;
+      --text3:     #475569;
+      --mono:      'Space Mono', monospace;
+      --sans:      'DM Sans', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── LOGIN ── */
+    #loginScreen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at 30% 50%, #0f2040 0%, #0a0e1a 70%);
+    }
+
+    .login-box {
+      width: 380px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px;
+    }
+
+    .login-logo {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--accent2);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .login-title {
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 32px;
+      line-height: 1.2;
+    }
+
+    .login-title span { color: var(--accent); }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text2);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .field input {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .field input:focus { border-color: var(--accent); }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 13px;
+      font-family: var(--sans);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity 0.2s;
+    }
+
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    #loginError {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 12px;
+      text-align: center;
+      display: none;
+    }
+
+    /* ── LAYOUT PRINCIPAL ── */
+    #adminScreen { display: none; }
+
+    .topbar {
+      height: 56px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .topbar-brand {
+      font-family: var(--mono);
+      font-size: 13px;
+      letter-spacing: 2px;
+      color: var(--accent2);
+      text-transform: uppercase;
+    }
+
+    .topbar-sep {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+    }
+
+    .topbar-page {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text2);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-badge {
+      font-size: 12px;
+      color: var(--text3);
+      font-family: var(--mono);
+    }
+
+    .btn-logout {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 14px;
+      color: var(--text2);
+      font-family: var(--sans);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-logout:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    /* ── NAV TABS ── */
+    .nav-tabs {
+      display: flex;
+      gap: 2px;
+      padding: 16px 24px 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+    }
+
+    .nav-tab {
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text3);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      border-radius: 6px 6px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .nav-tab:hover { color: var(--text2); background: var(--bg3); }
+
+    .nav-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-badge {
+      background: var(--danger);
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-family: var(--mono);
+    }
+
+    /* ── CONTENIDO ── */
+    .main-content {
+      padding: 24px;
+      max-width: 1200px;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── STATS CARDS ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-family: var(--mono);
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .stat-value.accent { color: var(--accent); }
+    .stat-value.warn { color: var(--warn); }
+    .stat-value.ok { color: var(--ok); }
+
+    /* ── SECCIÓN ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .btn-refresh {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 14px;
+      color: var(--text2);
+      font-size: 12px;
+      cursor: pointer;
+      font-family: var(--sans);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── TABLA ── */
+    .table-wrap {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead tr {
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text3);
+    }
+
+    td {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text2);
+      vertical-align: middle;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tr:hover td { background: rgba(59,130,246,0.04); }
+
+    .mono { font-family: var(--mono); font-size: 12px; }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-ok { background: rgba(16,185,129,0.15); color: var(--ok); }
+    .badge-warn { background: rgba(245,158,11,0.15); color: var(--warn); }
+    .badge-danger { background: rgba(239,68,68,0.15); color: var(--danger); }
+    .badge-blue { background: rgba(59,130,246,0.15); color: var(--accent); }
+
+    /* ── BOTONES ACCIÓN ── */
+    .btn-action {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      font-family: var(--sans);
+      transition: opacity 0.2s;
+    }
+
+    .btn-action:hover { opacity: 0.8; }
+    .btn-approve { background: var(--ok); color: white; }
+    .btn-reject { background: var(--danger); color: white; }
+
+    /* ── ALERTAS ── */
+    .alert-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--warn);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .alert-card.resolved {
+      border-left-color: var(--ok);
+      opacity: 0.6;
+    }
+
+    .alert-info { flex: 1; }
+
+    .alert-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .alert-detail {
+      font-size: 12px;
+      color: var(--text3);
+      font-family: var(--mono);
+      line-height: 1.8;
+    }
+
+    .alert-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text3);
+    }
+
+    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; }
+
+    /* ── LOADING ── */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text3);
+      font-size: 13px;
+      font-family: var(--mono);
+    }
+
+    /* ── FILTROS ── */
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .filter-input {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .filter-input:focus { border-color: var(--accent); }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 20px;
+      font-size: 13px;
+      color: var(--text);
+      z-index: 9999;
+      display: none;
+      animation: slideUp 0.3s ease;
+      max-width: 320px;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">DriverLog</div>
+    <h1 class="login-title">Panel de <span>Administración</span></h1>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="admin@cot.com.uy">
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="loginPassword" placeholder="••••••••">
+    </div>
+
+    <button class="btn-primary" id="btnLogin" onclick="doLogin()">Ingresar</button>
+    <div id="loginError">Email o contraseña incorrectos</div>
+  </div>
+</div>
+
+<!-- ══════════════ ADMIN ══════════════ -->
+<div id="adminScreen">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-brand">DriverLog</div>
+      <div class="topbar-sep"></div>
+      <div class="topbar-page">Panel Admin — COT</div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-badge" id="userEmail"></div>
+      <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+    <div class="nav-tab" onclick="switchTab('choferes')">🚗 Choferes</div>
+    <div class="nav-tab" onclick="switchTab('jornadas')">📋 Jornadas</div>
+    <div class="nav-tab" onclick="switchTab('alertas')">
+      🔔 Alertas
+      <span class="tab-badge" id="alertBadge" style="display:none">0</span>
+    </div>
+  </div>
+
+  <!-- CONTENIDO -->
+  <div class="main-content">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="tab-panel active" id="tab-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Choferes registrados</div>
+          <div class="stat-value accent" id="statChoferes">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Jornadas hoy</div>
+          <div class="stat-value ok" id="statJornadas">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Alertas pendientes</div>
+          <div class="stat-value warn" id="statAlertas">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Jornadas totales</div>
+          <div class="stat-value" id="statTotal">—</div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <div class="section-title">Últimas alertas</div>
+        <button class="btn-refresh" onclick="cargarDashboard()">↺ Actualizar</button>
+      </div>
+      <div id="dashAlertasContainer"><div class="loading">Cargando...</div></div>
+    </div>
+
+    <!-- ── CHOFERES ── -->
+    <div class="tab-panel" id="tab-choferes">
+      <div class="section-header">
+        <div class="section-title">Choferes registrados</div>
+        <button class="btn-refresh" onclick="cargarChoferes()">↺ Actualizar</button>
+      </div>
+      <div class="filters">
+        <input class="filter-input" id="filterChofer" placeholder="🔍 Buscar por nombre o legajo..." oninput="filtrarChoferes()" style="width:280px">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Legajo</th>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Base</th>
+              <th>Device ID</th>
+              <th>Registrado</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="choferesBody">
+            <tr><td colspan="7" class="loading">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── JORNADAS ── -->
+    <div class="tab-panel" id="tab-jornadas">
+      <div class="section-header">
+        <div class="section-title">Jornadas</div>
+        <button class="btn-refresh" onclick="cargarJornadas()">↺ Actualizar</button>
+      </div>
+      <div class="filters">
+        <input class="filter-input" id="filterJornadaChofer" placeholder="🔍 Chofer o legajo..." oninput="filtrarJornadas()" style="width:240px">
+        <input class="filter-input" type="date" id="filterJornadaFecha" onchange="filtrarJornadas()">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Chofer</th>
+              <th>Legajo</th>
+              <th>Nº Orden</th>
+              <th>Viajes</th>
+              <th>Km Total</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="jornadasBody">
+            <tr><td colspan="7" class="loading">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── ALERTAS ── -->
+    <div class="tab-panel" id="tab-alertas">
+      <div class="section-header">
+        <div class="section-title">Alertas de dispositivos duplicados</div>
+        <button class="btn-refresh" onclick="cargarAlertas()">↺ Actualizar</button>
+      </div>
+      <div id="alertasContainer"><div class="loading">Cargando...</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+// CONFIG SUPABASE
+// ══════════════════════════════════════════
+const SB_URL = 'https://frjeivfpldcigklwepqt.supabase.co';
+const SB_KEY = 'sb_publishable_6A7tufjD-rTAUAPfxyziyw_3kXMumzJ';
+
+let currentUser = null;
+let allChoferes = [];
+let allJornadas = [];
+
+// ══════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════
+async function doLogin() {
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const btn      = document.getElementById('btnLogin');
+  const errEl    = document.getElementById('loginError');
+
+  if (!email || !password) { showError('Completá los campos'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Ingresando...';
+  errEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_KEY
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.access_token) {
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Ingresar';
+      return;
+    }
+
+    currentUser = data;
+    localStorage.setItem('admin_token', data.access_token);
+    localStorage.setItem('admin_email', email);
+
+    document.getElementById('userEmail').textContent = email;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminScreen').style.display = 'block';
+
+    cargarDashboard();
+    cargarChoferes();
+    cargarJornadas();
+    cargarAlertas();
+
+  } catch (e) {
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Ingresar';
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('admin_token');
+  localStorage.removeItem('admin_email');
+  currentUser = null;
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('adminScreen').style.display = 'none';
+}
+
+// Auto-login si hay token guardado
+window.addEventListener('DOMContentLoaded', () => {
+  const token = localStorage.getItem('admin_token');
+  const email = localStorage.getItem('admin_email');
+  if (token && email) {
+    currentUser = { access_token: token };
+    document.getElementById('userEmail').textContent = email;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminScreen').style.display = 'block';
+    cargarDashboard();
+    cargarChoferes();
+    cargarJornadas();
+    cargarAlertas();
+  }
+
+  // Enter en login
+  document.getElementById('loginPassword').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+});
+
+// ══════════════════════════════════════════
+// API HELPER
+// ══════════════════════════════════════════
+async function sbFetch(path, options = {}) {
+  const token = currentUser ? currentUser.access_token : localStorage.getItem('admin_token');
+  const res = await fetch(`${SB_URL}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    }
+  });
+  return res.json();
+}
+
+// ══════════════════════════════════════════
+// NAVEGACIÓN
+// ══════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ══════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════
+async function cargarDashboard() {
+  try {
+    const [choferes, jornadas, alertas] = await Promise.all([
+      sbFetch('choferes?empresa_id=eq.cot&select=id'),
+      sbFetch('jornadas?empresa_id=eq.cot&select=id,data'),
+      sbFetch('registro_alertas?select=id,resuelto')
+    ]);
+
+    document.getElementById('statChoferes').textContent = choferes.length || 0;
+    document.getElementById('statTotal').textContent = jornadas.length || 0;
+
+    const hoy = new Date().toISOString().split('T')[0];
+    const jornadasHoy = jornadas.filter(j => {
+      try { return JSON.parse(j.data || '{}').date === hoy; } catch { return false; }
+    });
+    document.getElementById('statJornadas').textContent = jornadasHoy.length;
+
+    const pendientes = alertas.filter(a => !a.resuelto);
+    document.getElementById('statAlertas').textContent = pendientes.length;
+
+    // Badge en tab
+    const badge = document.getElementById('alertBadge');
+    if (pendientes.length > 0) {
+      badge.textContent = pendientes.length;
+      badge.style.display = 'inline';
+    } else {
+      badge.style.display = 'none';
+    }
+
+    // Últimas alertas en dashboard
+    renderDashAlertas(alertas.slice(0, 5));
+
+  } catch (e) {
+    console.error('Error dashboard:', e);
+  }
+}
+
+function renderDashAlertas(alertas) {
+  const c = document.getElementById('dashAlertasContainer');
+  if (!alertas.length) {
+    c.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>Sin alertas pendientes</p></div>';
+    return;
+  }
+  c.innerHTML = alertas.map(a => alertaCard(a, true)).join('');
+}
+
+// ══════════════════════════════════════════
+// CHOFERES
+// ══════════════════════════════════════════
+async function cargarChoferes() {
+  try {
+    const data = await sbFetch('choferes?empresa_id=eq.cot&select=*&order=nombre.asc');
+    allChoferes = data;
+    renderChoferes(data);
+  } catch(e) {
+    document.getElementById('choferesBody').innerHTML =
+      '<tr><td colspan="7" class="loading">Error al cargar</td></tr>';
+  }
+}
+
+function renderChoferes(choferes) {
+  const tbody = document.getElementById('choferesBody');
+  if (!choferes.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="icon">🚗</div><p>No hay choferes registrados</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = choferes.map(c => `
+    <tr>
+      <td><span class="mono">${c.legajo || '—'}</span></td>
+      <td><strong style="color:var(--text)">${c.nombre || '—'}</strong></td>
+      <td><span class="badge badge-blue">${c.tipo || '—'}</span></td>
+      <td>${c.base || '—'}</td>
+      <td><span class="mono" style="font-size:10px;color:var(--text3)">${(c.device_id || '—').substring(0,20)}…</span></td>
+      <td style="font-size:12px">${c.registrado_at ? new Date(c.registrado_at).toLocaleDateString('es-UY') : '—'}</td>
+      <td><span class="badge ${c.device_id ? 'badge-ok' : 'badge-warn'}">${c.device_id ? '● Activo' : '○ Sin dispositivo'}</span></td>
+    </tr>
+  `).join('');
+}
+
+function filtrarChoferes() {
+  const q = document.getElementById('filterChofer').value.toLowerCase();
+  const filtrados = allChoferes.filter(c =>
+    (c.nombre || '').toLowerCase().includes(q) ||
+    (c.legajo || '').toLowerCase().includes(q)
+  );
+  renderChoferes(filtrados);
+}
+
+// ══════════════════════════════════════════
+// JORNADAS
+// ══════════════════════════════════════════
+async function cargarJornadas() {
+  try {
+    const data = await sbFetch('jornadas?empresa_id=eq.cot&select=*&order=created_at.desc&limit=100');
+    allJornadas = data;
+    renderJornadas(data);
+  } catch(e) {
+    document.getElementById('jornadasBody').innerHTML =
+      '<tr><td colspan="7" class="loading">Error al cargar</td></tr>';
+  }
+}
+
+function renderJornadas(jornadas) {
+  const tbody = document.getElementById('jornadasBody');
+  if (!jornadas.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="icon">📋</div><p>No hay jornadas registradas</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = jornadas.map(j => {
+    let d = {};
+    try { d = JSON.parse(j.data || '{}'); } catch {}
+    const viajes = (d.travels || []).length;
+    const kmTotal = (d.travels || []).reduce((s, t) => s + (t.kmEmpresa || t.kmAuto || 0), 0);
+    const cerrada = d.closed;
+    return `
+      <tr>
+        <td><span class="mono">${d.date || '—'}</span></td>
+        <td><strong style="color:var(--text)">${d.driverName || j.chofer_id || '—'}</strong></td>
+        <td><span class="mono">${d.driverLegajo || '—'}</span></td>
+        <td><span class="mono">${j.order_number || d.orderNumber || '—'}</span></td>
+        <td style="text-align:center">${viajes}</td>
+        <td><span class="mono">${kmTotal.toFixed(1)} km</span></td>
+        <td><span class="badge ${cerrada ? 'badge-ok' : 'badge-warn'}">${cerrada ? '✓ Cerrada' : '● En curso'}</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function filtrarJornadas() {
+  const q = document.getElementById('filterJornadaChofer').value.toLowerCase();
+  const fecha = document.getElementById('filterJornadaFecha').value;
+  const filtradas = allJornadas.filter(j => {
+    let d = {};
+    try { d = JSON.parse(j.data || '{}'); } catch {}
+    const matchQ = !q ||
+      (d.driverName || '').toLowerCase().includes(q) ||
+      (d.driverLegajo || '').toLowerCase().includes(q);
+    const matchF = !fecha || d.date === fecha;
+    return matchQ && matchF;
+  });
+  renderJornadas(filtradas);
+}
+
+// ══════════════════════════════════════════
+// ALERTAS
+// ══════════════════════════════════════════
+async function cargarAlertas() {
+  try {
+    const data = await sbFetch('registro_alertas?select=*&order=created_at.desc');
+    renderAlertas(data);
+
+    const pendientes = data.filter(a => !a.resuelto).length;
+    const badge = document.getElementById('alertBadge');
+    if (pendientes > 0) {
+      badge.textContent = pendientes;
+      badge.style.display = 'inline';
+    } else {
+      badge.style.display = 'none';
+    }
+    document.getElementById('statAlertas').textContent = pendientes;
+  } catch(e) {
+    document.getElementById('alertasContainer').innerHTML =
+      '<div class="empty-state"><div class="icon">❌</div><p>Error al cargar alertas</p></div>';
+  }
+}
+
+function alertaCard(a, mini = false) {
+  const fecha = a.created_at ? new Date(a.created_at).toLocaleString('es-UY') : '—';
+  const resuelto = a.resuelto;
+  return `
+    <div class="alert-card ${resuelto ? 'resolved' : ''}">
+      <div class="alert-info">
+        <div class="alert-title">
+          ${resuelto ? '✅' : '⚠️'} Legajo ${a.legajo || '—'} — ${a.nombre || '—'}
+        </div>
+        <div class="alert-detail">
+          Fecha: ${fecha}<br>
+          Device actual: ${(a.device_id_actual || '—').substring(0,30)}…<br>
+          Device nuevo:  ${(a.device_id_nuevo || '—').substring(0,30)}…
+        </div>
+      </div>
+      ${!mini && !resuelto ? `
+      <div class="alert-actions">
+        <button class="btn-action btn-approve" onclick="resolverAlerta('${a.id}', true)">✓ Autorizar</button>
+        <button class="btn-action btn-reject" onclick="resolverAlerta('${a.id}', false)">✕ Rechazar</button>
+      </div>` : ''}
+    </div>
+  `;
+}
+
+function renderAlertas(alertas) {
+  const c = document.getElementById('alertasContainer');
+  if (!alertas.length) {
+    c.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>Sin alertas</p></div>';
+    return;
+  }
+  c.innerHTML = alertas.map(a => alertaCard(a)).join('');
+}
+
+async function resolverAlerta(id, autorizar) {
+  try {
+    if (autorizar) {
+      // Obtener datos de la alerta
+      const alertas = await sbFetch(`registro_alertas?id=eq.${id}&select=*`);
+      const alerta = alertas[0];
+
+      if (alerta) {
+        // Actualizar device_id del chofer con el nuevo dispositivo
+        await fetch(`${SB_URL}/rest/v1/choferes?empresa_id=eq.cot&legajo=eq.${alerta.legajo}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SB_KEY,
+            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ device_id: alerta.device_id_nuevo })
+        });
+      }
+    }
+
+    // Marcar alerta como resuelta
+    await fetch(`${SB_URL}/rest/v1/registro_alertas?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ resuelto: true, resolucion: autorizar ? 'autorizado' : 'rechazado' })
+    });
+
+    showToast(autorizar ? '✅ Dispositivo autorizado' : '✕ Solicitud rechazada');
+    cargarAlertas();
+    cargarDashboard();
+
+  } catch(e) {
+    showToast('❌ Error al procesar');
+  }
+}
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+function showError(msg) {
+  const e = document.getElementById('loginError');
+  e.textContent = msg;
+  e.style.display = 'block';
+}
+</script>
+</body>
+</html>
