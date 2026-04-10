@@ -1025,7 +1025,29 @@ function renderHistorial() {
       var _ref9, _v$kmAuto4;
       return "<div style=\"font-size:13px; color:#444; margin-top:4px;\">\n        \uD83D\uDE8D ".concat(v.origen, " \u2192 ").concat(v.destino, "\n        &nbsp;\xB7&nbsp; ").concat(v.departureTime || "--", " - ").concat(v.arrivalTime || "--", "\n        &nbsp;\xB7&nbsp; ").concat((_ref9 = (_v$kmAuto4 = v.kmAuto) !== null && _v$kmAuto4 !== void 0 ? _v$kmAuto4 : v.kmEmpresa) !== null && _ref9 !== void 0 ? _ref9 : 0, " km\n        ").concat(v.coche ? "&nbsp;\xB7&nbsp; \uD83D\uDE8C Coche: ".concat(v.coche) : "", "\n      </div>");
     }).join("");
-    card.innerHTML = "\n      <div style=\"font-weight:bold; margin-bottom:6px;\">\uD83D\uDCC5 ".concat(order.date, "</div>\n\n      <div style=\"font-size:13px; line-height:1.7;\">\n        \uD83D\uDEE3 KM: <b>").concat(totales.kmTotal.toFixed(1), "</b>\n        &nbsp;\xB7&nbsp; \uD83C\uDF7D Vi\xE1ticos: <b>").concat(totales.viaticos, "</b>\n        &nbsp;\xB7&nbsp; \uD83D\uDFE2 Tome y Cese: <b>").concat(tieneTomeCese ? "Sí" : "No", "</b><br>\n\n        \uD83D\uDCE6 Viajes: <b>").concat(cantidadViajes, "</b>\n        &nbsp;\xB7&nbsp; \u23F1 Guardias: <b>").concat(cantidadGuardias, "</b><br>\n\n        \uD83E\uDDED Servicios: <b>").concat(textoTipos || "—", "</b>\n        \uD83D\uDCCD Destinos: <b>").concat(textoDestinos || "—", "</b><br>\n      </div>\n\n      ").concat(viajesHTML, "\n    ");
+
+    // Detalle de guardias
+    let guardiasHTML = "";
+    (order.guards || []).forEach(g => {
+      const kmHora = g.type === "especial" ? 40 : 30;
+      let horas = g.hours || 0;
+      let km = g.kmGuardia || 0;
+      if (g.inicio && g.fin) {
+        const [hI, mI] = g.inicio.split(":").map(Number);
+        const [hF, mF] = g.fin.split(":").map(Number);
+        let calc = hF + mF / 60 - (hI + mI / 60);
+        if (calc < 0) calc += 24;
+        if (calc > 0) {
+          horas = calc;
+          km = horas * kmHora;
+        }
+      }
+      const cortada = g.cortadaAuto ? " ✂️" : "";
+      const viatico = g.viatico ? " ✅ Viático" : "";
+      const tipo = g.type === "especial" ? "Especial (40km/h)" : "Común (30km/h)";
+      guardiasHTML += "\n        <div style=\"font-size:12px;color:#555;margin-top:4px;padding:4px 8px;background:#f5f5f5;border-radius:6px;\">\n          \uD83D\uDD50 ".concat(g.inicio || "--", " \u2192 ").concat(g.fin || "--", "\n          &nbsp;\xB7&nbsp; ").concat(horas.toFixed(2), "h\n          &nbsp;\xB7&nbsp; ").concat(km.toFixed(1), " km\n          &nbsp;\xB7&nbsp; ").concat(tipo).concat(cortada).concat(viatico, "\n          ").concat(g.descripcion ? "<br>\uD83D\uDCDD ".concat(g.descripcion) : "", "\n        </div>");
+    });
+    card.innerHTML = "\n      <div style=\"font-weight:bold; margin-bottom:6px;\">\uD83D\uDCC5 ".concat(order.date, "</div>\n\n      <div style=\"font-size:13px; line-height:1.7;\">\n        \uD83D\uDEE3 KM: <b>").concat(totales.kmTotal.toFixed(1), "</b>\n        &nbsp;\xB7&nbsp; \uD83C\uDF7D Vi\xE1ticos: <b>").concat(totales.viaticos, "</b>\n        &nbsp;\xB7&nbsp; \uD83D\uDFE2 Tome y Cese: <b>").concat(tieneTomeCese ? "Sí" : "No", "</b><br>\n\n        \uD83D\uDCE6 Viajes: <b>").concat(cantidadViajes, "</b>\n        &nbsp;\xB7&nbsp; \u23F1 Guardias: <b>").concat(cantidadGuardias, "</b><br>\n\n        \uD83E\uDDED Servicios: <b>").concat(textoTipos || "—", "</b>\n        \uD83D\uDCCD Destinos: <b>").concat(textoDestinos || "—", "</b><br>\n      </div>\n\n      ").concat(viajesHTML, "\n      ").concat(guardiasHTML, "\n    ");
     card.onclick = () => {
       showScreen("detalleOrdenScreen");
       renderDetalleJornadaPorNumero(order.orderNumber);
