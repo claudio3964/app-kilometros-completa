@@ -36,6 +36,10 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('baseChoferBadge').innerText = "Base: " + (driver.base || "Montevideo");
       cargarSelectorOrigen(driver.base || "Montevideo");
       showScreen('mainScreen');
+      // Arrancar bootstrap (verifica cambio de dia, motores, sync)
+      if (typeof iniciarBootstrap === "function") {
+        iniciarBootstrap();
+      }
     }
   }, 900);
 });
@@ -142,6 +146,11 @@ async function registrarChofer() {
     document.getElementById('baseChoferBadge').innerText = "Base: " + base;
     cargarSelectorOrigen(base);
     showScreen('mainScreen');
+
+    // Arrancar bootstrap
+    if (typeof iniciarBootstrap === "function") {
+      iniciarBootstrap();
+    }
   } catch (e) {
     alert("ERROR registrarChofer: " + e.message);
   }
