@@ -85,19 +85,28 @@ function renderTarjetasGuardiasPorDia() {
   const container = document.getElementById("cardsGuardiasContainer");
   if (!container) return;
   container.innerHTML = "";
-  const order = getActiveOrder();
-  if (!order) return;
 
-  // Agrupar guardias por fecha de jornada (order.date)
+  // Buscar guardias en jornada activa Y en historial
   const porDia = {};
-  (order.guards || []).forEach(g => {
-    const fecha = g.dia || order.date;
-    if (!fecha) return;
-    if (!porDia[fecha]) {
-      porDia[fecha] = [];
-    }
-    porDia[fecha].push(g);
-  });
+
+  // Función para agregar guardias de una orden
+  function agregarGuardiasDeOrden(order) {
+    if (!order || !order.guards) return;
+    order.guards.forEach(g => {
+      const fecha = g.dia || order.date;
+      if (!fecha) return;
+      if (!porDia[fecha]) porDia[fecha] = [];
+      porDia[fecha].push(g);
+    });
+  }
+
+  // Primero la jornada activa
+  const activeOrder = getActiveOrder();
+  agregarGuardiasDeOrden(activeOrder);
+
+  // Luego el historial (últimas 7 jornadas cerradas)
+  const orders = getOrders ? getOrders() : [];
+  orders.filter(o => o.closed && o.guards && o.guards.length > 0).slice(-7).forEach(o => agregarGuardiasDeOrden(o));
   const fechas = Object.keys(porDia).filter(f => f && f !== "undefined").sort((a, b) => new Date(b) - new Date(a)).slice(0, 5);
   fechas.forEach(fecha => {
     const card = document.createElement("div");
