@@ -18,6 +18,17 @@ function verificarCambioDeDia() {
     mostrarModalCierrePendiente(order);
   }
 }
+
+// Verificar también buscando directamente en orders (por si getActiveOrder no detecta)
+function verificarCambioDeDiaForzado() {
+  const hoy = new Date().toISOString().split("T")[0];
+  const orders = getOrders ? getOrders() : [];
+  const jornadaAbierta = orders.find(o => !o.closed && o.date !== hoy);
+  if (jornadaAbierta) {
+    console.warn("Jornada de otro día detectada:", jornadaAbierta.date);
+    mostrarModalCierrePendiente(jornadaAbierta);
+  }
+}
 function mostrarModalCierrePendiente(order) {
   if (document.getElementById("modalCambioDia")) return;
   const modal = document.createElement("div");
@@ -101,6 +112,7 @@ function iniciarBootstrap() {
   syncActiveOrderBootstrap();
   refreshMainUI();
   verificarCambioDeDia();
+  verificarCambioDeDiaForzado();
 
   // Cargar viajes programados desde Supabase (efectivos)
   if (typeof cargarViajesProgramadosDesdeSupabase === "function") {
