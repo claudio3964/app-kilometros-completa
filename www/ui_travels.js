@@ -229,11 +229,15 @@ function addTravelUI(event) {
   const arrivalTime = llegadaDate.toTimeString().substring(0, 5);
   const ahora = new Date();
   let ok;
+
+  // Leer número de coche del formulario
+  const cocheInput = document.getElementById("numeroCoche");
+  const numeroCoche = cocheInput ? cocheInput.value.trim() || null : null;
   cortarGuardiaAntesDeViaje(order, departureTime);
   if (salidaDate > ahora) {
-    ok = addTravelProgramado(origen, destino, servicioSeleccionado.turno, departureTime, arrivalTime, duracionEstimadaHoras);
+    ok = addTravelProgramado(origen, destino, servicioSeleccionado.turno, departureTime, arrivalTime, duracionEstimadaHoras, servicioSeleccionado.turno, false, numeroCoche);
   } else {
-    ok = addTravel(origen, destino, servicioSeleccionado.turno, departureTime, arrivalTime, duracionEstimadaHoras);
+    ok = addTravel(origen, destino, servicioSeleccionado.turno, departureTime, arrivalTime, duracionEstimadaHoras, servicioSeleccionado.turno, false, numeroCoche);
   }
   if (!ok) {
     alert("No se pudo programar el viaje");
