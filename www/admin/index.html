@@ -618,7 +618,10 @@
               <th>Legajo</th>
               <th>Nº Orden</th>
               <th>Viajes</th>
+              <th>Guardias</th>
               <th>Km Total</th>
+              <th>Viáticos</th>
+              <th>Monto</th>
               <th>Estado</th>
             </tr>
           </thead>
@@ -706,6 +709,29 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- MODAL DETALLE JORNADA -->
+<div id="modalDetalle" style="
+  display:none; position:fixed; top:0; left:0;
+  width:100%; height:100%; background:rgba(0,0,0,0.7);
+  z-index:1000; overflow-y:auto; padding:20px;
+">
+  <div style="
+    max-width:700px; margin:40px auto;
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:16px; padding:28px;
+  ">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:18px;font-weight:600" id="modalDetalleTitle">Detalle de Jornada</div>
+      <button onclick="cerrarModalDetalle()" style="
+        background:transparent;border:1px solid var(--border);
+        border-radius:6px;padding:6px 14px;color:var(--text2);
+        cursor:pointer;font-family:var(--sans);font-size:13px;
+      ">✕ Cerrar</button>
+    </div>
+    <div id="modalDetalleBody"></div>
   </div>
 </div>
 
@@ -991,23 +1017,37 @@ async function cargarJornadas() {
 function renderJornadas(jornadas) {
   const tbody = document.getElementById('jornadasBody');
   if (!jornadas.length) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="icon">📋</div><p>No hay jornadas registradas</p></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="icon">📋</div><p>No hay jornadas registradas</p></div></td></tr>';
     return;
   }
   tbody.innerHTML = jornadas.map(j => {
     let d = {};
     try { d = JSON.parse(j.data || '{}'); } catch {}
-    const viajes = (d.travels || []).length;
-    const kmTotal = (d.travels || []).reduce((s, t) => s + (t.kmEmpresa || t.kmAuto || 0), 0);
-    const cerrada = d.closed;
+    const travels  = (d.travels || []).filter(t => t.status !== 'cancelado');
+    const guards   = (d.guards || []);
+    const viajes   = travels.length;
+    const guardias = guards.length;
+    const kmViajes = travels.reduce((s, t) => s + (t.kmEmpresa || t.kmAuto || 0), 0);
+    const kmGuardias = guards.reduce((s, g) => s + (g.kmGuardia || 0), 0);
+    const kmTotal  = kmViajes + kmGuardias;
+    const viaticos = d.viaticos || 0;
+    const monto    = kmTotal * 7.637;
+    const cerrada  = d.closed;
+    const tipo     = d.tipo || 'contratado';
+    const jStr = JSON.stringify(j).replace(/'/g, "\\'");
     return `
-      <tr>
+      <tr onclick="abrirDetalleJornada('${j.order_number}')" style="cursor:pointer">
         <td><span class="mono">${d.date || '—'}</span></td>
-        <td><strong style="color:var(--text)">${d.driverName || j.chofer_id || '—'}</strong></td>
-        <td><span class="mono">${d.driverLegajo || '—'}</span></td>
-        <td><span class="mono">${j.order_number || d.orderNumber || '—'}</span></td>
+        <td>
+          <strong style="color:var(--text)">${d.driverName || j.chofer_id || '—'}</strong><br>
+          <span class="badge ${tipo === 'efectivo' ? 'badge-blue' : 'badge-warn'}" style="font-size:10px">${tipo}</span>
+        </td>
+        <td><span class="mono">${d.driverLegajo || j.chofer_id || '—'}</span></td>
         <td style="text-align:center">${viajes}</td>
+        <td style="text-align:center">${guardias}</td>
         <td><span class="mono">${kmTotal.toFixed(1)} km</span></td>
+        <td style="text-align:center">${viaticos}</td>
+        <td><span class="mono">$ ${Math.round(monto)}</span></td>
         <td><span class="badge ${cerrada ? 'badge-ok' : 'badge-warn'}">${cerrada ? '✓ Cerrada' : '● En curso'}</span></td>
       </tr>
     `;
@@ -1315,6 +1355,126 @@ async function generarViajesSiguiente() {
 
   showToast(`✅ ${generados} jornadas generadas para ${fechaManana}${errores ? ` (${errores} errores)` : ''}`);
 }
+
+// ══════════════════════════════════════════
+// DETALLE DE JORNADA
+// ══════════════════════════════════════════
+function abrirDetalleJornada(orderNumber) {
+  const j = allJornadas.find(x => x.order_number === orderNumber);
+  if (!j) return;
+
+  let d = {};
+  try { d = JSON.parse(j.data || '{}'); } catch {}
+
+  const travels  = (d.travels || []).filter(t => t.status !== 'cancelado');
+  const guards   = (d.guards || []);
+  const kmViajes = travels.reduce((s, t) => s + (t.kmEmpresa || t.kmAuto || 0), 0);
+  const kmGuardias = guards.reduce((s, g) => s + (g.kmGuardia || 0), 0);
+  const kmTotal  = kmViajes + kmGuardias;
+  const monto    = Math.round(kmTotal * 7.637);
+  const tipo     = d.tipo || 'contratado';
+
+  document.getElementById('modalDetalleTitle').textContent =
+    `Jornada ${d.date || '—'} — ${d.driverName || j.chofer_id} (${d.driverLegajo || j.chofer_id})`;
+
+  let html = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+      <div class="stat-card" style="padding:14px">
+        <div class="stat-label">Tipo</div>
+        <div style="font-size:14px;margin-top:4px">
+          <span class="badge ${tipo === 'efectivo' ? 'badge-blue' : 'badge-warn'}">${tipo}</span>
+        </div>
+      </div>
+      <div class="stat-card" style="padding:14px">
+        <div class="stat-label">Estado</div>
+        <div style="font-size:14px;margin-top:4px">
+          <span class="badge ${d.closed ? 'badge-ok' : 'badge-warn'}">${d.closed ? '✓ Cerrada' : '● En curso'}</span>
+        </div>
+      </div>
+      <div class="stat-card" style="padding:14px">
+        <div class="stat-label">KM Total</div>
+        <div class="stat-value" style="font-size:24px">${kmTotal.toFixed(1)}</div>
+      </div>
+      <div class="stat-card" style="padding:14px">
+        <div class="stat-label">Monto estimado</div>
+        <div class="stat-value ok" style="font-size:24px">$ ${monto}</div>
+      </div>
+      <div class="stat-card" style="padding:14px">
+        <div class="stat-label">KM Viajes</div>
+        <div style="font-family:var(--mono);font-size:16px;color:var(--text)">${kmViajes.toFixed(1)} km</div>
+      </div>
+      <div class="stat-card" style="padding:14px">
+        <div class="stat-label">KM Guardias</div>
+        <div style="font-family:var(--mono);font-size:16px;color:var(--text)">${kmGuardias.toFixed(1)} km</div>
+      </div>
+    </div>
+  `;
+
+  // Viajes
+  if (travels.length) {
+    html += `<div class="section-title" style="margin-bottom:12px">🚍 Viajes (${travels.length})</div>`;
+    html += '<div class="table-wrap" style="margin-bottom:20px"><table><thead><tr>';
+    html += '<th>Origen</th><th>Destino</th><th>Salida</th><th>Llegada</th><th>Km</th><th>Tipo</th><th>Coche</th>';
+    html += '</tr></thead><tbody>';
+    travels.forEach(v => {
+      const km = (v.kmEmpresa || v.kmAuto || 0).toFixed(1);
+      html += `<tr>
+        <td>${v.origen || '—'}</td>
+        <td>${v.destino || '—'}</td>
+        <td><span class="mono">${v.departureTime || '—'}</span></td>
+        <td><span class="mono">${v.arrivalTime || '—'}</span></td>
+        <td><span class="mono">${km} km</span></td>
+        <td><span class="badge badge-blue" style="font-size:10px">${v.tipoServicio || v.tipo || '—'}</span></td>
+        <td>${v.coche || '—'}</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+  } else {
+    html += '<div class="empty-state" style="padding:20px"><p>Sin viajes registrados</p></div>';
+  }
+
+  // Guardias
+  if (guards.length) {
+    html += `<div class="section-title" style="margin-bottom:12px">🕐 Guardias (${guards.length})</div>`;
+    html += '<div class="table-wrap"><table><thead><tr>';
+    html += '<th>Inicio</th><th>Fin</th><th>Horas</th><th>Km</th><th>Tipo</th><th>Viático</th>';
+    html += '</tr></thead><tbody>';
+    guards.forEach(g => {
+      const kmHora = g.type === 'especial' ? 40 : 30;
+      let horas = g.hours || 0;
+      let km = g.kmGuardia || 0;
+      if (g.inicio && g.fin) {
+        const [hI,mI] = g.inicio.split(':').map(Number);
+        const [hF,mF] = g.fin.split(':').map(Number);
+        let calc = (hF+mF/60)-(hI+mI/60);
+        if(calc<0) calc+=24;
+        if(calc>0){ horas=calc; km=horas*kmHora; }
+      }
+      html += `<tr>
+        <td><span class="mono">${g.inicio || '—'}</span></td>
+        <td><span class="mono">${g.fin || '—'}</span></td>
+        <td><span class="mono">${horas.toFixed(2)} h</span></td>
+        <td><span class="mono">${km.toFixed(1)} km</span></td>
+        <td>${g.type || '—'}</td>
+        <td>${g.viatico ? '✅' : '—'}</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+  }
+
+  document.getElementById('modalDetalleBody').innerHTML = html;
+  document.getElementById('modalDetalle').style.display = 'block';
+}
+
+function cerrarModalDetalle() {
+  document.getElementById('modalDetalle').style.display = 'none';
+}
+
+// Cerrar modal al hacer click fuera
+document.addEventListener('click', function(e) {
+  const modal = document.getElementById('modalDetalle');
+  if (e.target === modal) cerrarModalDetalle();
+});
 
 function showError(msg) {
   const e = document.getElementById('loginError');
