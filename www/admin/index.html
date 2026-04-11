@@ -1022,7 +1022,9 @@ function renderJornadas(jornadas) {
   }
   tbody.innerHTML = jornadas.map(j => {
     let d = {};
-    try { d = JSON.parse(j.data || '{}'); } catch {}
+    try { 
+      d = typeof j.data === 'string' ? JSON.parse(j.data || '{}') : (j.data || {});
+    } catch {}
     const travels  = (d.travels || []).filter(t => t.status !== 'cancelado');
     const guards   = (d.guards || []);
     const viajes   = travels.length;
@@ -1059,7 +1061,9 @@ function filtrarJornadas() {
   const fecha = document.getElementById('filterJornadaFecha').value;
   const filtradas = allJornadas.filter(j => {
     let d = {};
-    try { d = JSON.parse(j.data || '{}'); } catch {}
+    try { 
+      d = typeof j.data === 'string' ? JSON.parse(j.data || '{}') : (j.data || {});
+    } catch {}
     const matchQ = !q ||
       (d.driverName || '').toLowerCase().includes(q) ||
       (d.driverLegajo || '').toLowerCase().includes(q) ||
@@ -1366,7 +1370,9 @@ function abrirDetalleJornada(orderNumber) {
   if (!j) return;
 
   let d = {};
-  try { d = JSON.parse(j.data || '{}'); } catch {}
+  try { 
+    d = typeof j.data === 'string' ? JSON.parse(j.data || '{}') : (j.data || {});
+  } catch {}
 
   const travels  = (d.travels || []).filter(t => t.status !== 'cancelado');
   const guards   = (d.guards || []);
