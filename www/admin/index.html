@@ -1062,7 +1062,9 @@ function filtrarJornadas() {
     try { d = JSON.parse(j.data || '{}'); } catch {}
     const matchQ = !q ||
       (d.driverName || '').toLowerCase().includes(q) ||
-      (d.driverLegajo || '').toLowerCase().includes(q);
+      (d.driverLegajo || '').toLowerCase().includes(q) ||
+      (j.chofer_id || '').toLowerCase().includes(q) ||
+      (j.order_number || '').toLowerCase().includes(q);
     const matchF = !fecha || d.date === fecha;
     return matchQ && matchF;
   });
