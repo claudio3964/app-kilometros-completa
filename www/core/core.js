@@ -1046,6 +1046,122 @@ function finalizarGuardia(createdAt) {
   return g;
 }
 window.finalizarGuardia = finalizarGuardia;
+// =====================================================
+// AGREGAR VIAJE POR ASIGNACIÓN (ADMIN → CHOFER)
+// Maneja jornada activa, misma fecha y fecha futura
+// =====================================================
+function agregarViajeAsignado(viajeData) {
+  const { origen, destino, horaSalida, horaLlegada, tipoServicio, coche } = viajeData;
+
+  if (!origen || !destino || !horaSalida) {
+    console.error("agregarViajeAsignado: datos incompletos", viajeData);
+    return false;
+  }
+
+  const hoy = new Date().toISOString().split("T")[0];
+  const fechaViaje = viajeData.fechaViaje || hoy; // si no viene fecha, asumimos hoy
+  const kmEmpresa = buscarKmRuta(origen, destino) || 0;
+  const ahora = ahoraSistema();
+
+  // Calcular timestamp del inicio programado para la fecha correcta
+  const [h, m] = horaSalida.split(":").map(Number);
+  const fechaObj = new Date(fechaViaje + "T00:00:00");
+  fechaObj.setHours(h, m, 0, 0);
+  const inicioProgramado = fechaObj.getTime();
+
+  const travel = {
+    id: "TRV-" + ahora,
+    origen,
+    destino,
+    turno: tipoServicio || "TURNO",
+    tipoServicio: tipoServicio || "TURNO",
+    departureTime: horaSalida,
+    arrivalTime: horaLlegada || "",
+    kmEmpresa,
+    kmAuto: kmEmpresa,
+    hoursWorked: 2,
+    createdAt: ahora,
+    status: "programado",
+    inicioProgramado,
+    inicioReal: null,
+    llegadaEstimada: inicioProgramado + 2 * 60 * 60 * 1000,
+    acoplado: false,
+    acopladoKm: calcularAcopladoKm(tipoServicio, destino),
+    coche: coche || null,
+    tomeCese: false,
+    syncStatus: "local",
+    asignadoPorAdmin: true  // marca que vino de asignación
+  };
+
+  // ── CASO 1: hay jornada activa ──
+  let order = getActiveOrder();
+  if (order) {
+    if (!order.travels) order.travels = [];
+    _asignarTomeCeseSiCorresponde(order, travel);
+    order.travels.push(travel);
+    saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
+    setActiveOrder(order);
+    console.log("✅ Viaje asignado agregado a jornada activa:", travel.id);
+    return true;
+  }
+
+  // ── CASO 2: no hay jornada activa — buscar jornada abierta para esa fecha ──
+  const orders = getOrders();
+  const jornadaExistente = orders.find(o => o.date === fechaViaje && !o.closed);
+  if (jornadaExistente) {
+    if (!jornadaExistente.travels) jornadaExistente.travels = [];
+    _asignarTomeCeseSiCorresponde(jornadaExistente, travel);
+    jornadaExistente.travels.push(travel);
+    saveOrders(orders.map(o => o.orderNumber === jornadaExistente.orderNumber ? jornadaExistente : o));
+    setActiveOrder(jornadaExistente);
+    console.log("✅ Viaje asignado agregado a jornada existente:", jornadaExistente.orderNumber);
+    return true;
+  }
+
+  // ── CASO 3: no hay jornada para esa fecha — crear una nueva ──
+  const driver = getDriver() || { legajo: "0000", base: "Montevideo" };
+  const legajo = driver.legajo;
+
+  // Generar orderNumber para la fecha del viaje
+  const [yyyy, mm2, dd] = fechaViaje.split("-");
+  const orderNumber = `${legajo}-${yyyy}${mm2}${dd}`;
+
+  // Verificar que no exista ya esa orden
+  const yaExiste = orders.find(o => o.orderNumber === orderNumber);
+  if (yaExiste) {
+    // Si existe pero está cerrada, crear con sufijo
+    if (yaExiste.closed) {
+      travel.id = "TRV-" + ahora + "-asig";
+    }
+  }
+
+  const nuevaJornada = {
+    orderNumber,
+    legajo: driver.legajo,
+    baseInicio: driver.base || "Montevideo",
+    date: fechaViaje,
+    travels: [travel],
+    guards: [],
+    closed: false,
+    tomeCeseGenerado: false,
+    createdAt: ahora,
+    syncStatus: "local"
+  };
+
+  _asignarTomeCeseSiCorresponde(nuevaJornada, travel);
+  orders.push(nuevaJornada);
+  saveOrders(orders);
+
+  // Solo setear como activa si es para hoy
+  if (fechaViaje === hoy) {
+    setActiveOrder(nuevaJornada);
+  }
+
+  console.log("✅ Viaje asignado — nueva jornada creada:", orderNumber, "fecha:", fechaViaje);
+  return true;
+}
+
+window.agregarViajeAsignado = agregarViajeAsignado;
 
 // export global
 window.cancelarViajePorId = cancelarViajePorId;

@@ -142,36 +142,20 @@ async function aceptarAsignacion(id) {
   cerrarNotifMensaje();
  
   // Cargar viaje automáticamente
-  if (viajeData && typeof addTravelProgramado === 'function') {
-    try {
-      let order = typeof getActiveOrder === 'function' ? getActiveOrder() : null;
-      if (!order && typeof createOrder === 'function') order = createOrder();
- 
-      if (order) {
-        const ok = addTravelProgramado(
-          viajeData.origen,
-          viajeData.destino,
-          viajeData.tipoServicio || 'TURNO',
-          viajeData.horaSalida,
-          viajeData.horaLlegada || '',
-          2,
-          viajeData.tipoServicio || 'TURNO',
-          false,
-          viajeData.coche || null
-        );
-        if (ok) {
-          if (typeof renderResumenDia === 'function') renderResumenDia();
-          if (typeof renderListaViajes === 'function') renderListaViajes();
-          if (typeof mostrarViajeEnCursoUI === 'function') mostrarViajeEnCursoUI();
-          if (typeof renderBotonCerrarJornada === 'function') renderBotonCerrarJornada();
-          _mostrarConfirmacion('✅ Viaje cargado en tu jornada', '#10b981');
-          return;
-        }
-      }
-    } catch(e) { console.error("Error cargando viaje:", e); }
-  }
-  _mostrarConfirmacion('✅ Asignación aceptada', '#10b981');
-}
+  if (viajeData && typeof agregarViajeAsignado === 'function') {
+  const ok = agregarViajeAsignado(viajeData);
+  if (ok) {
+    if (typeof renderResumenDia === 'function') renderResumenDia();
+    if (typeof renderListaViajes === 'function') renderListaViajes();
+    if (typeof mostrarViajeEnCursoUI === 'function') mostrarViajeEnCursoUI();
+    if (typeof renderBotonCerrarJornada === 'function') renderBotonCerrarJornada();
+    _mostrarConfirmacion('✅ Viaje cargado en tu jornada', '#10b981');
+    return;
+   }        
+              
+  _mostrarConfirmacion('✅ Asignación aceptada', '...'); 
+}          
+
  
 // =====================================================
 // RECHAZAR
