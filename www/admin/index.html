@@ -7,440 +7,111 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:        #0a0e1a;
-      --bg2:       #111827;
-      --bg3:       #1c2537;
-      --border:    #1e2d45;
-      --accent:    #3b82f6;
-      --accent2:   #06b6d4;
-      --danger:    #ef4444;
-      --warn:      #f59e0b;
-      --ok:        #10b981;
-      --text:      #e2e8f0;
-      --text2:     #94a3b8;
-      --text3:     #475569;
-      --mono:      'Space Mono', monospace;
-      --sans:      'DM Sans', sans-serif;
+      --bg:#0a0e1a;--bg2:#111827;--bg3:#1c2537;--border:#1e2d45;
+      --accent:#3b82f6;--accent2:#06b6d4;--danger:#ef4444;--warn:#f59e0b;
+      --ok:#10b981;--text:#e2e8f0;--text2:#94a3b8;--text3:#475569;
+      --mono:'Space Mono',monospace;--sans:'DM Sans',sans-serif;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: var(--sans);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    #loginScreen {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: radial-gradient(ellipse at 30% 50%, #0f2040 0%, #0a0e1a 70%);
-    }
-
-    .login-box {
-      width: 380px;
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 40px;
-    }
-
-    .login-logo {
-      font-family: var(--mono);
-      font-size: 11px;
-      letter-spacing: 3px;
-      color: var(--accent2);
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-
-    .login-title {
-      font-size: 26px;
-      font-weight: 600;
-      margin-bottom: 32px;
-      line-height: 1.2;
-    }
-
-    .login-title span { color: var(--accent); }
-
-    .field { margin-bottom: 16px; }
-
-    .field label {
-      display: block;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text2);
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-
-    .field input {
-      width: 100%;
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 14px;
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .field input:focus { border-color: var(--accent); }
-
-    .btn-primary {
-      width: 100%;
-      background: var(--accent);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 13px;
-      font-family: var(--sans);
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 8px;
-      transition: opacity 0.2s;
-    }
-
-    .btn-primary:hover { opacity: 0.85; }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    #loginError {
-      color: var(--danger);
-      font-size: 13px;
-      margin-top: 12px;
-      text-align: center;
-      display: none;
-    }
-
-    #adminScreen { display: none; }
-
-    .topbar {
-      height: 56px;
-      background: var(--bg2);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 24px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .topbar-left { display: flex; align-items: center; gap: 16px; }
-
-    .topbar-brand {
-      font-family: var(--mono);
-      font-size: 13px;
-      letter-spacing: 2px;
-      color: var(--accent2);
-      text-transform: uppercase;
-    }
-
-    .topbar-sep { width: 1px; height: 20px; background: var(--border); }
-
-    .topbar-page { font-size: 14px; font-weight: 500; color: var(--text2); }
-
-    .topbar-right { display: flex; align-items: center; gap: 12px; }
-
-    .user-badge { font-size: 12px; color: var(--text3); font-family: var(--mono); }
-
-    .btn-logout {
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 6px 14px;
-      color: var(--text2);
-      font-family: var(--sans);
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
-
-    .nav-tabs {
-      display: flex;
-      gap: 2px;
-      padding: 16px 24px 0;
-      border-bottom: 1px solid var(--border);
-      background: var(--bg2);
-    }
-
-    .nav-tab {
-      padding: 10px 20px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text3);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: all 0.2s;
-      border-radius: 6px 6px 0 0;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-
-    .nav-tab:hover { color: var(--text2); background: var(--bg3); }
-    .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-
-    .tab-badge {
-      background: var(--danger);
-      color: white;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 10px;
-      font-family: var(--mono);
-    }
-
-    .main-content { padding: 24px; max-width: 1200px; }
-
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-
-    .stat-card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-    }
-
-    .stat-label {
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--text3);
-      margin-bottom: 10px;
-    }
-
-    .stat-value {
-      font-family: var(--mono);
-      font-size: 32px;
-      font-weight: 700;
-      color: var(--text);
-      line-height: 1;
-    }
-
-    .stat-value.accent { color: var(--accent); }
-    .stat-value.warn   { color: var(--warn); }
-    .stat-value.ok     { color: var(--ok); }
-
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-
-    .section-title { font-size: 16px; font-weight: 600; color: var(--text); }
-
-    .btn-refresh {
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 7px 14px;
-      color: var(--text2);
-      font-size: 12px;
-      cursor: pointer;
-      font-family: var(--sans);
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
-
-    .table-wrap {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-
-    thead tr { background: var(--bg3); border-bottom: 1px solid var(--border); }
-
-    th {
-      padding: 12px 16px;
-      text-align: left;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--text3);
-    }
-
-    td {
-      padding: 13px 16px;
-      border-bottom: 1px solid var(--border);
-      color: var(--text2);
-      vertical-align: middle;
-    }
-
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: rgba(59,130,246,0.04); }
-
-    .mono { font-family: var(--mono); font-size: 12px; }
-
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-
-    .badge-ok     { background: rgba(16,185,129,0.15); color: var(--ok); }
-    .badge-warn   { background: rgba(245,158,11,0.15);  color: var(--warn); }
-    .badge-danger { background: rgba(239,68,68,0.15);   color: var(--danger); }
-    .badge-blue   { background: rgba(59,130,246,0.15);  color: var(--accent); }
-
-    .btn-action {
-      padding: 5px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      border: none;
-      font-family: var(--sans);
-      transition: opacity 0.2s;
-    }
-
-    .btn-action:hover { opacity: 0.8; }
-    .btn-approve { background: var(--ok);     color: white; }
-    .btn-reject  { background: var(--danger); color: white; }
-
-    .alert-card {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--warn);
-      border-radius: 12px;
-      padding: 18px 20px;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .alert-card.resolved { border-left-color: var(--ok); opacity: 0.6; }
-
-    .alert-info { flex: 1; }
-
-    .alert-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-
-    .alert-detail {
-      font-size: 12px;
-      color: var(--text3);
-      font-family: var(--mono);
-      line-height: 1.8;
-    }
-
-    .alert-actions { display: flex; gap: 8px; flex-shrink: 0; }
-
-    .empty-state { text-align: center; padding: 60px 20px; color: var(--text3); }
-    .empty-state .icon { font-size: 40px; margin-bottom: 12px; }
-    .empty-state p { font-size: 14px; }
-
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: var(--text3);
-      font-size: 13px;
-      font-family: var(--mono);
-    }
-
-    .filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
-
-    .filter-input {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 14px;
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    .filter-input:focus { border-color: var(--accent); }
-
-    #toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: var(--bg3);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px 20px;
-      font-size: 13px;
-      color: var(--text);
-      z-index: 9999;
-      display: none;
-      animation: slideUp 0.3s ease;
-      max-width: 320px;
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(20px); opacity: 0; }
-      to   { transform: translateY(0);    opacity: 1; }
-    }
-
-    .fbtn {
-      font-size: 12px; padding: 5px 12px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      background: transparent; color: var(--text2);
-      cursor: pointer; font-family: var(--sans);
-      transition: all 0.2s;
-    }
-    .fbtn:hover { border-color: var(--accent); color: var(--accent); }
-    .fbtn-active { background: var(--accent); color: white; border-color: var(--accent); }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;}
+    #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 30% 50%,#0f2040 0%,#0a0e1a 70%);}
+    .login-box{width:380px;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:40px;}
+    .login-logo{font-family:var(--mono);font-size:11px;letter-spacing:3px;color:var(--accent2);text-transform:uppercase;margin-bottom:8px;}
+    .login-title{font-size:26px;font-weight:600;margin-bottom:32px;line-height:1.2;}
+    .login-title span{color:var(--accent);}
+    .field{margin-bottom:16px;}
+    .field label{display:block;font-size:12px;font-weight:500;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+    .field input{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--text);font-family:var(--sans);font-size:14px;outline:none;transition:border-color .2s;}
+    .field input:focus{border-color:var(--accent);}
+    .btn-primary{width:100%;background:var(--accent);color:white;border:none;border-radius:8px;padding:13px;font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;transition:opacity .2s;}
+    .btn-primary:hover{opacity:.85;}.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+    #loginError{color:var(--danger);font-size:13px;margin-top:12px;text-align:center;display:none;}
+    #adminScreen{display:none;}
+    .topbar{height:56px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:100;}
+    .topbar-left{display:flex;align-items:center;gap:16px;}
+    .topbar-brand{font-family:var(--mono);font-size:13px;letter-spacing:2px;color:var(--accent2);text-transform:uppercase;}
+    .topbar-sep{width:1px;height:20px;background:var(--border);}
+    .topbar-page{font-size:14px;font-weight:500;color:var(--text2);}
+    .topbar-right{display:flex;align-items:center;gap:12px;}
+    .user-badge{font-size:12px;color:var(--text3);font-family:var(--mono);}
+    .btn-logout{background:transparent;border:1px solid var(--border);border-radius:6px;padding:6px 14px;color:var(--text2);font-family:var(--sans);font-size:12px;cursor:pointer;transition:all .2s;}
+    .btn-logout:hover{border-color:var(--danger);color:var(--danger);}
+    .nav-tabs{display:flex;gap:2px;padding:16px 24px 0;border-bottom:1px solid var(--border);background:var(--bg2);flex-wrap:wrap;}
+    .nav-tab{padding:10px 16px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;border-radius:6px 6px 0 0;display:flex;align-items:center;gap:7px;}
+    .nav-tab:hover{color:var(--text2);background:var(--bg3);}
+    .nav-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+    .tab-badge{background:var(--danger);color:white;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;font-family:var(--mono);}
+    .main-content{padding:24px;max-width:1200px;}
+    .tab-panel{display:none;}.tab-panel.active{display:block;}
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px;}
+    .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;}
+    .stat-label{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;}
+    .stat-value{font-family:var(--mono);font-size:32px;font-weight:700;color:var(--text);line-height:1;}
+    .stat-value.accent{color:var(--accent);}.stat-value.warn{color:var(--warn);}.stat-value.ok{color:var(--ok);}
+    .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+    .section-title{font-size:16px;font-weight:600;color:var(--text);}
+    .btn-refresh{background:transparent;border:1px solid var(--border);border-radius:6px;padding:7px 14px;color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--sans);transition:all .2s;display:flex;align-items:center;gap:6px;}
+    .btn-refresh:hover{border-color:var(--accent);color:var(--accent);}
+    .table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    thead tr{background:var(--bg3);border-bottom:1px solid var(--border);}
+    th{padding:12px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);}
+    td{padding:13px 16px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle;}
+    tr:last-child td{border-bottom:none;}
+    tr:hover td{background:rgba(59,130,246,.04);}
+    .mono{font-family:var(--mono);font-size:12px;}
+    .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.5px;}
+    .badge-ok{background:rgba(16,185,129,.15);color:var(--ok);}
+    .badge-warn{background:rgba(245,158,11,.15);color:var(--warn);}
+    .badge-danger{background:rgba(239,68,68,.15);color:var(--danger);}
+    .badge-blue{background:rgba(59,130,246,.15);color:var(--accent);}
+    .btn-action{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:var(--sans);transition:opacity .2s;}
+    .btn-action:hover{opacity:.8;}.btn-approve{background:var(--ok);color:white;}.btn-reject{background:var(--danger);color:white;}
+    .alert-card{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--warn);border-radius:12px;padding:18px 20px;margin-bottom:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
+    .alert-card.resolved{border-left-color:var(--ok);opacity:.6;}
+    .alert-info{flex:1;}
+    .alert-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;}
+    .alert-detail{font-size:12px;color:var(--text3);font-family:var(--mono);line-height:1.8;}
+    .alert-actions{display:flex;gap:8px;flex-shrink:0;}
+    .empty-state{text-align:center;padding:60px 20px;color:var(--text3);}
+    .empty-state .icon{font-size:40px;margin-bottom:12px;}
+    .empty-state p{font-size:14px;}
+    .loading{text-align:center;padding:40px;color:var(--text3);font-size:13px;font-family:var(--mono);}
+    .filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+    .filter-input{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;transition:border-color .2s;}
+    .filter-input:focus{border-color:var(--accent);}
+    #toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 20px;font-size:13px;color:var(--text);z-index:9999;display:none;animation:slideUp .3s ease;max-width:320px;}
+    @keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+    .fbtn{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:var(--sans);transition:all .2s;}
+    .fbtn:hover{border-color:var(--accent);color:var(--accent);}
+    .fbtn-active{background:var(--accent);color:white;border-color:var(--accent);}
+    /* MENSAJES */
+    .msg-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:10px;}
+    .msg-card.no-leido{border-left:3px solid var(--accent);}
+    .msg-card.leido{opacity:.6;}
+    .msg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+    .msg-para{font-size:12px;font-weight:600;color:var(--accent);}
+    .msg-fecha{font-size:11px;color:var(--text3);font-family:var(--mono);}
+    .msg-texto{font-size:14px;color:var(--text);line-height:1.6;}
+    .msg-tipo{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;}
+    .msg-tipo.mensaje{background:rgba(59,130,246,.15);color:var(--accent);}
+    .msg-tipo.asignacion{background:rgba(16,185,129,.15);color:var(--ok);}
+    .compose-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;}
   </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="loginScreen">
   <div class="login-box">
     <div class="login-logo">DriverLog</div>
     <h1 class="login-title">Panel de <span>Administración</span></h1>
-    <div class="field">
-      <label>Email</label>
-      <input type="email" id="loginEmail" placeholder="admin@cot.com.uy">
-    </div>
-    <div class="field">
-      <label>Contraseña</label>
-      <input type="password" id="loginPassword" placeholder="••••••••">
-    </div>
+    <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="admin@cot.com.uy"></div>
+    <div class="field"><label>Contraseña</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
     <button class="btn-primary" id="btnLogin" onclick="doLogin()">Ingresar</button>
     <div id="loginError">Email o contraseña incorrectos</div>
   </div>
 </div>
 
-<!-- ADMIN -->
 <div id="adminScreen">
   <div class="topbar">
     <div class="topbar-left">
@@ -459,12 +130,14 @@
     <div class="nav-tab" onclick="switchTab('choferes')">🚗 Choferes</div>
     <div class="nav-tab" onclick="switchTab('jornadas')">📋 Jornadas</div>
     <div class="nav-tab" onclick="switchTab('alertas')">
-      🔔 Alertas
-      <span class="tab-badge" id="alertBadge" style="display:none">0</span>
+      🔔 Alertas<span class="tab-badge" id="alertBadge" style="display:none">0</span>
     </div>
     <div class="nav-tab" onclick="switchTab('rotacion')">🔄 Rotación</div>
     <div class="nav-tab" onclick="switchTab('flota')">🚌 Flota</div>
     <div class="nav-tab" onclick="switchTab('estadisticas')">📈 Estadísticas</div>
+    <div class="nav-tab" onclick="switchTab('mensajes')">
+      💬 Mensajes<span class="tab-badge" id="msgBadge" style="display:none">0</span>
+    </div>
   </div>
 
   <div class="main-content">
@@ -472,22 +145,10 @@
     <!-- DASHBOARD -->
     <div class="tab-panel active" id="tab-dashboard">
       <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Choferes registrados</div>
-          <div class="stat-value accent" id="statChoferes">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Jornadas hoy</div>
-          <div class="stat-value ok" id="statJornadas">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Alertas pendientes</div>
-          <div class="stat-value warn" id="statAlertas">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Jornadas totales</div>
-          <div class="stat-value" id="statTotal">—</div>
-        </div>
+        <div class="stat-card"><div class="stat-label">Choferes registrados</div><div class="stat-value accent" id="statChoferes">—</div></div>
+        <div class="stat-card"><div class="stat-label">Jornadas hoy</div><div class="stat-value ok" id="statJornadas">—</div></div>
+        <div class="stat-card"><div class="stat-label">Alertas pendientes</div><div class="stat-value warn" id="statAlertas">—</div></div>
+        <div class="stat-card"><div class="stat-label">Jornadas totales</div><div class="stat-value" id="statTotal">—</div></div>
       </div>
       <div class="section-header">
         <div class="section-title">Últimas alertas</div>
@@ -498,59 +159,30 @@
 
     <!-- CHOFERES -->
     <div class="tab-panel" id="tab-choferes">
-      <div class="section-header">
-        <div class="section-title">Choferes registrados</div>
-        <button class="btn-refresh" onclick="cargarChoferes()">↺ Actualizar</button>
-      </div>
-      <div class="filters">
-        <input class="filter-input" id="filterChofer" placeholder="🔍 Buscar por nombre o legajo..." oninput="filtrarChoferes()" style="width:280px">
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Legajo</th><th>Nombre</th><th>Tipo</th><th>Base</th>
-              <th>Device ID</th><th>Registrado</th><th>Estado</th>
-            </tr>
-          </thead>
-          <tbody id="choferesBody">
-            <tr><td colspan="7" class="loading">Cargando...</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="section-header"><div class="section-title">Choferes registrados</div><button class="btn-refresh" onclick="cargarChoferes()">↺ Actualizar</button></div>
+      <div class="filters"><input class="filter-input" id="filterChofer" placeholder="🔍 Buscar por nombre o legajo..." oninput="filtrarChoferes()" style="width:280px"></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Legajo</th><th>Nombre</th><th>Tipo</th><th>Base</th><th>Device ID</th><th>Registrado</th><th>Estado</th></tr></thead>
+        <tbody id="choferesBody"><tr><td colspan="7" class="loading">Cargando...</td></tr></tbody>
+      </table></div>
     </div>
 
     <!-- JORNADAS -->
     <div class="tab-panel" id="tab-jornadas">
-      <div class="section-header">
-        <div class="section-title">Jornadas</div>
-        <button class="btn-refresh" onclick="cargarJornadas()">↺ Actualizar</button>
-      </div>
+      <div class="section-header"><div class="section-title">Jornadas</div><button class="btn-refresh" onclick="cargarJornadas()">↺ Actualizar</button></div>
       <div class="filters">
         <input class="filter-input" id="filterJornadaChofer" placeholder="🔍 Chofer o legajo..." oninput="filtrarJornadas()" style="width:240px">
         <input class="filter-input" type="date" id="filterJornadaFecha" onchange="filtrarJornadas()">
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Fecha</th><th>Chofer</th><th>Legajo</th><th>Viajes</th>
-              <th>Guardias</th><th>Km Total</th><th>Viáticos</th><th>Monto</th><th>Estado</th>
-            </tr>
-          </thead>
-          <tbody id="jornadasBody">
-            <tr><td colspan="9" class="loading">Cargando...</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Fecha</th><th>Chofer</th><th>Legajo</th><th>Viajes</th><th>Guardias</th><th>Km Total</th><th>Viáticos</th><th>Monto</th><th>Estado</th></tr></thead>
+        <tbody id="jornadasBody"><tr><td colspan="9" class="loading">Cargando...</td></tr></tbody>
+      </table></div>
     </div>
 
     <!-- ALERTAS -->
     <div class="tab-panel" id="tab-alertas">
-      <div class="section-header">
-        <div class="section-title">Alertas de dispositivos duplicados</div>
-        <button class="btn-refresh" onclick="cargarAlertas()">↺ Actualizar</button>
-      </div>
+      <div class="section-header"><div class="section-title">Alertas de dispositivos duplicados</div><button class="btn-refresh" onclick="cargarAlertas()">↺ Actualizar</button></div>
       <div id="alertasContainer"><div class="loading">Cargando...</div></div>
     </div>
 
@@ -560,301 +192,156 @@
         <div class="section-title">Rotación del día — Efectivos Montevideo</div>
         <div style="display:flex;gap:10px">
           <button class="btn-refresh" onclick="cargarRotacion()">↺ Actualizar</button>
-          <button class="btn-refresh" onclick="generarViajesSiguiente()" style="background:rgba(59,130,246,0.15);border-color:var(--accent);color:var(--accent)">
-            ▶ Generar viajes día siguiente
-          </button>
+          <button class="btn-refresh" onclick="generarViajesSiguiente()" style="background:rgba(59,130,246,.15);border-color:var(--accent);color:var(--accent)">▶ Generar viajes día siguiente</button>
         </div>
       </div>
-
       <div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap">
-        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px">
-          <div class="stat-label">Vigencia actual</div>
-          <div style="font-family:var(--mono);font-size:16px;color:var(--accent2)" id="rotVigencia">—</div>
-        </div>
-        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px">
-          <div class="stat-label">Temporada</div>
-          <div style="font-family:var(--mono);font-size:16px;color:var(--text)" id="rotTemporada">invierno</div>
-        </div>
-        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px">
-          <div class="stat-label">En servicio hoy</div>
-          <div style="font-family:var(--mono);font-size:22px;color:var(--ok)" id="rotEnServicio">—</div>
-        </div>
-        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px">
-          <div class="stat-label">De descanso hoy</div>
-          <div style="font-family:var(--mono);font-size:22px;color:var(--text3)" id="rotDescanso">—</div>
-        </div>
-        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px">
-          <div class="stat-label">Pueden agregar</div>
-          <div style="font-family:var(--mono);font-size:22px;color:var(--warn)" id="rotAgregar">—</div>
-        </div>
+        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px"><div class="stat-label">Vigencia actual</div><div style="font-family:var(--mono);font-size:16px;color:var(--accent2)" id="rotVigencia">—</div></div>
+        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px"><div class="stat-label">Temporada</div><div style="font-family:var(--mono);font-size:16px;color:var(--text)" id="rotTemporada">invierno</div></div>
+        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px"><div class="stat-label">En servicio hoy</div><div style="font-family:var(--mono);font-size:22px;color:var(--ok)" id="rotEnServicio">—</div></div>
+        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px"><div class="stat-label">De descanso hoy</div><div style="font-family:var(--mono);font-size:22px;color:var(--text3)" id="rotDescanso">—</div></div>
+        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px"><div class="stat-label">Pueden agregar</div><div style="font-family:var(--mono);font-size:22px;color:var(--warn)" id="rotAgregar">—</div></div>
       </div>
-
       <div class="filters">
         <input class="filter-input" id="filterRotacion" placeholder="🔍 Buscar funcionario..." oninput="filtrarRotacion()" style="width:260px">
         <select class="filter-input" id="filterRotDescanso" onchange="filtrarRotacion()">
-          <option value="">Todos</option>
-          <option value="servicio">En servicio</option>
-          <option value="descanso">Descanso</option>
-          <option value="agregar">Puede agregar</option>
+          <option value="">Todos</option><option value="servicio">En servicio</option><option value="descanso">Descanso</option><option value="agregar">Puede agregar</option>
         </select>
       </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Pos.</th><th>N° Fun</th><th>Nombre</th>
-              <th>Servicio 1</th><th>Servicio 2</th><th>Servicio 3</th><th>Servicio 4</th><th>Estado</th>
-            </tr>
-          </thead>
-          <tbody id="rotacionBody">
-            <tr><td colspan="8" class="loading">Cargando...</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Pos.</th><th>N° Fun</th><th>Nombre</th><th>Servicio 1</th><th>Servicio 2</th><th>Servicio 3</th><th>Servicio 4</th><th>Estado</th></tr></thead>
+        <tbody id="rotacionBody"><tr><td colspan="8" class="loading">Cargando...</td></tr></tbody>
+      </table></div>
     </div>
 
     <!-- FLOTA -->
     <div class="tab-panel" id="tab-flota">
-      <div class="section-header">
-        <div class="section-title">Disponibilidad de flota — hoy</div>
-        <button class="btn-refresh" onclick="cargarFlota()">↺ Actualizar</button>
-      </div>
-
-      <!-- Contadores -->
+      <div class="section-header"><div class="section-title">Disponibilidad de flota — hoy</div><button class="btn-refresh" onclick="cargarFlota()">↺ Actualizar</button></div>
       <div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap">
-        <div class="stat-card" style="flex:1;min-width:120px;padding:14px 18px;border-left:3px solid var(--danger)">
-          <div class="stat-label">En servicio</div>
-          <div style="font-family:var(--mono);font-size:22px;color:var(--danger)" id="flotaCntServicio">—</div>
-        </div>
-        <div class="stat-card" style="flex:1;min-width:120px;padding:14px 18px;border-left:3px solid var(--ok)">
-          <div class="stat-label">Libres</div>
-          <div style="font-family:var(--mono);font-size:22px;color:var(--ok)" id="flotaCntLibre">—</div>
-        </div>
-        <div class="stat-card" style="flex:1;min-width:120px;padding:14px 18px;border-left:3px solid var(--warn)">
-          <div class="stat-label">Sin actividad</div>
-          <div style="font-family:var(--mono);font-size:22px;color:var(--warn)" id="flotaCntInactivo">—</div>
-        </div>
-        <div class="stat-card" style="flex:1;min-width:120px;padding:14px 18px;border-left:3px solid var(--accent)">
-          <div class="stat-label">Taller</div>
-          <div style="font-family:var(--mono);font-size:22px;color:var(--accent)" id="flotaCntTaller">—</div>
-        </div>
+        <div class="stat-card" style="flex:1;min-width:120px;padding:14px 18px;border-left:3px solid var(--danger)"><div class="stat-label">En servicio</div><div style="font-family:var(--mono);font-size:22px;color:var(--danger)" id="flotaCntServicio">—</div></div>
+        <div class="stat-card" style="flex:1;min-width:120px;padding:14px 18px;border-left:3px solid var(--ok)"><div class="stat-label">Libres</div><div style="font-family:var(--mono);font-size:22px;color:var(--ok)" id="flotaCntLibre">—</div></div>
+        <div class="stat-card" style="flex:1;min-width:120px;padding:14px 18px;border-left:3px solid var(--warn)"><div class="stat-label">Sin actividad</div><div style="font-family:var(--mono);font-size:22px;color:var(--warn)" id="flotaCntInactivo">—</div></div>
+        <div class="stat-card" style="flex:1;min-width:120px;padding:14px 18px;border-left:3px solid var(--accent)"><div class="stat-label">Taller</div><div style="font-family:var(--mono);font-size:22px;color:var(--accent)" id="flotaCntTaller">—</div></div>
       </div>
-
-      <!-- Leyenda + filtros -->
       <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap">
         <div style="display:flex;gap:14px;flex-wrap:wrap">
-          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)">
-            <span style="width:12px;height:12px;border-radius:3px;background:var(--danger);display:inline-block"></span>En servicio
-          </span>
-          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)">
-            <span style="width:12px;height:12px;border-radius:3px;background:var(--ok);display:inline-block"></span>Libre
-          </span>
-          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)">
-            <span style="width:12px;height:12px;border-radius:3px;background:var(--warn);display:inline-block"></span>Sin actividad
-          </span>
-          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)">
-            <span style="width:12px;height:12px;border-radius:3px;background:var(--accent);display:inline-block"></span>Taller
-          </span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)"><span style="width:12px;height:12px;border-radius:3px;background:var(--danger);display:inline-block"></span>En servicio</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)"><span style="width:12px;height:12px;border-radius:3px;background:var(--ok);display:inline-block"></span>Libre</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)"><span style="width:12px;height:12px;border-radius:3px;background:var(--warn);display:inline-block"></span>Sin actividad</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)"><span style="width:12px;height:12px;border-radius:3px;background:var(--accent);display:inline-block"></span>Taller</span>
         </div>
         <div style="margin-left:auto;display:flex;gap:6px">
-          <button onclick="setFlotaFiltro('todos')"    id="fbtn-todos"    class="fbtn fbtn-active">Todos</button>
+          <button onclick="setFlotaFiltro('todos')" id="fbtn-todos" class="fbtn fbtn-active">Todos</button>
           <button onclick="setFlotaFiltro('servicio')" id="fbtn-servicio" class="fbtn">En servicio</button>
-          <button onclick="setFlotaFiltro('libre')"    id="fbtn-libre"    class="fbtn">Libres</button>
-          <button onclick="setFlotaFiltro('taller')"   id="fbtn-taller"   class="fbtn">Taller</button>
+          <button onclick="setFlotaFiltro('libre')" id="fbtn-libre" class="fbtn">Libres</button>
+          <button onclick="setFlotaFiltro('taller')" id="fbtn-taller" class="fbtn">Taller</button>
         </div>
       </div>
-
-      <!-- Grid de coches -->
-      <div id="flotaGrid" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px">
-        <div class="loading">Cargando flota...</div>
-      </div>
-
-      <!-- Tooltip -->
-      <div id="flotaTooltip" style="
-        display:none;position:fixed;
-        background:var(--bg2);border:1px solid var(--border);
-        border-radius:10px;padding:12px 16px;font-size:12px;
-        pointer-events:none;z-index:9000;min-width:200px;
-        box-shadow:0 4px 20px rgba(0,0,0,0.4);
-      "></div>
+      <div id="flotaGrid" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px"><div class="loading">Cargando flota...</div></div>
+      <div id="flotaTooltip" style="display:none;position:fixed;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:12px;pointer-events:none;z-index:9000;min-width:200px;box-shadow:0 4px 20px rgba(0,0,0,.4);"></div>
     </div>
 
     <!-- MODAL TALLER -->
-    <div id="modalTaller" style="
-      display:none;position:fixed;top:0;left:0;
-      width:100%;height:100%;background:rgba(0,0,0,0.7);
-      z-index:2000;display:none;align-items:center;justify-content:center;
-    ">
-      <div style="
-        background:var(--bg2);border:1px solid var(--border);
-        border-radius:16px;padding:28px;width:380px;max-width:90%;
-      ">
+    <div id="modalTaller" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:2000;align-items:center;justify-content:center;">
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;width:380px;max-width:90%;">
         <div style="font-size:16px;font-weight:600;margin-bottom:6px" id="modalTallerTitle">Coche 000</div>
         <div style="font-size:12px;color:var(--text3);margin-bottom:20px">Anotá el estado o motivo de taller</div>
-        <textarea id="tallerMotivo" rows="4" style="
-          width:100%;background:var(--bg3);border:1px solid var(--border);
-          border-radius:8px;padding:12px;color:var(--text);
-          font-family:var(--sans);font-size:13px;resize:vertical;outline:none;
-        " placeholder="Ej: Limpieza interior, revisión frenos, mantenimiento programado..."></textarea>
+        <textarea id="tallerMotivo" rows="4" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-family:var(--sans);font-size:13px;resize:vertical;outline:none;" placeholder="Ej: Limpieza interior, revisión frenos..."></textarea>
         <div style="display:flex;gap:10px;margin-top:16px">
-          <button onclick="guardarTaller()" style="
-            flex:1;background:var(--accent);color:white;border:none;
-            border-radius:8px;padding:11px;font-family:var(--sans);
-            font-size:13px;font-weight:600;cursor:pointer;
-          ">Marcar en taller</button>
-          <button onclick="quitarTaller()" style="
-            flex:1;background:transparent;color:var(--danger);
-            border:1px solid var(--danger);border-radius:8px;padding:11px;
-            font-family:var(--sans);font-size:13px;cursor:pointer;
-          ">Quitar de taller</button>
-          <button onclick="cerrarModalTaller()" style="
-            background:transparent;color:var(--text2);border:1px solid var(--border);
-            border-radius:8px;padding:11px 14px;font-family:var(--sans);
-            font-size:13px;cursor:pointer;
-          ">✕</button>
+          <button onclick="guardarTaller()" style="flex:1;background:var(--accent);color:white;border:none;border-radius:8px;padding:11px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;">Marcar en taller</button>
+          <button onclick="quitarTaller()" style="flex:1;background:transparent;color:var(--danger);border:1px solid var(--danger);border-radius:8px;padding:11px;font-family:var(--sans);font-size:13px;cursor:pointer;">Quitar de taller</button>
+          <button onclick="cerrarModalTaller()" style="background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-family:var(--sans);font-size:13px;cursor:pointer;">✕</button>
         </div>
       </div>
     </div>
 
     <!-- ESTADÍSTICAS -->
     <div class="tab-panel" id="tab-estadisticas">
-      <div class="section-header">
-        <div class="section-title">Estadísticas de rutas</div>
-        <button class="btn-refresh" onclick="cargarEstadisticas()">↺ Actualizar</button>
-      </div>
-
-      <!-- Filtros -->
+      <div class="section-header"><div class="section-title">Estadísticas de rutas</div><button class="btn-refresh" onclick="cargarEstadisticas()">↺ Actualizar</button></div>
       <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:flex-end">
-        <div>
-          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Origen</div>
-          <select class="filter-input" id="statOrigen" onchange="cargarEstadisticas()">
-            <option value="">Todos</option>
-          </select>
-        </div>
-        <div>
-          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Destino</div>
-          <select class="filter-input" id="statDestino" onchange="cargarEstadisticas()">
-            <option value="">Todos</option>
-          </select>
-        </div>
-        <div>
-          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Franja horaria</div>
+        <div><div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Origen</div><select class="filter-input" id="statOrigen" onchange="cargarEstadisticas()"><option value="">Todos</option></select></div>
+        <div><div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Destino</div><select class="filter-input" id="statDestino" onchange="cargarEstadisticas()"><option value="">Todos</option></select></div>
+        <div><div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Franja horaria</div>
           <select class="filter-input" id="statFranja" onchange="cargarEstadisticas()">
-            <option value="">Cualquier hora</option>
-            <option value="0-6">00:00 – 06:00</option>
-            <option value="6-10">06:00 – 10:00</option>
-            <option value="10-14">10:00 – 14:00</option>
-            <option value="14-18">14:00 – 18:00</option>
-            <option value="18-22">18:00 – 22:00</option>
-            <option value="22-24">22:00 – 24:00</option>
+            <option value="">Cualquier hora</option><option value="0-6">00:00–06:00</option><option value="6-10">06:00–10:00</option><option value="10-14">10:00–14:00</option><option value="14-18">14:00–18:00</option><option value="18-22">18:00–22:00</option><option value="22-24">22:00–24:00</option>
           </select>
         </div>
-        <div>
-          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Día</div>
+        <div><div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Día</div>
           <select class="filter-input" id="statDia" onchange="cargarEstadisticas()">
-            <option value="">Todos</option>
-            <option value="1">Lunes</option>
-            <option value="2">Martes</option>
-            <option value="3">Miércoles</option>
-            <option value="4">Jueves</option>
-            <option value="5">Viernes</option>
-            <option value="6">Sábado</option>
-            <option value="0">Domingo</option>
+            <option value="">Todos</option><option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option><option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option><option value="0">Domingo</option>
           </select>
         </div>
-        <div>
-          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Temporada</div>
+        <div><div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Temporada</div>
           <select class="filter-input" id="statTemporada" onchange="cargarEstadisticas()">
-            <option value="">Todas</option>
-            <option value="invierno">Invierno (Apr–Oct)</option>
-            <option value="verano">Verano (Nov–Mar)</option>
+            <option value="">Todas</option><option value="invierno">Invierno (Apr–Oct)</option><option value="verano">Verano (Nov–Mar)</option>
           </select>
         </div>
       </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px">
+        <div class="stat-card" style="padding:14px"><div class="stat-label">Duración promedio</div><div style="font-family:var(--mono);font-size:24px;color:var(--text)" id="statPromedio">—</div><div style="font-size:11px;color:var(--text3);margin-top:4px" id="statVsDec"></div></div>
+        <div class="stat-card" style="padding:14px"><div class="stat-label">Rango real</div><div style="font-family:var(--mono);font-size:24px;color:var(--text)" id="statRango">—</div></div>
+        <div class="stat-card" style="padding:14px"><div class="stat-label">Velocidad promedio</div><div style="font-family:var(--mono);font-size:24px;color:var(--text)" id="statVelocidad">—</div><div style="font-size:11px;color:var(--text3);margin-top:4px">basada en km empresa</div></div>
+        <div class="stat-card" style="padding:14px"><div class="stat-label">Si sale a las</div><input type="time" id="statHoraSalida" value="18:00" onchange="recalcularLlegada()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-family:var(--mono);font-size:18px;margin-top:2px;outline:none;width:100%;"></div>
+        <div class="stat-card" style="padding:14px"><div class="stat-label">Llegada estimada</div><div style="font-family:var(--mono);font-size:24px;color:var(--ok)" id="statLlegada">—</div><div style="font-size:11px;color:var(--text3);margin-top:4px" id="statMuestra"></div></div>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Fecha</th><th>Chofer</th><th>Origen</th><th>Destino</th><th>Salida</th><th>Llegada decl.</th><th>Duración real</th><th>vs declarado</th><th>Velocidad</th><th>Tipo</th><th>Coche</th></tr></thead>
+        <tbody id="statBody"><tr><td colspan="11" class="loading">Seleccioná una ruta para ver estadísticas</td></tr></tbody>
+      </table></div>
+      <div id="statAviso" style="margin-top:12px;background:var(--bg3);border-radius:8px;padding:10px 16px;font-size:12px;color:var(--text3);display:none;"></div>
+    </div>
 
-      <!-- Cards resumen -->
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px" id="statCards">
-        <div class="stat-card" style="padding:14px">
-          <div class="stat-label">Duración promedio</div>
-          <div style="font-family:var(--mono);font-size:24px;color:var(--text)" id="statPromedio">—</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:4px" id="statVsDec"></div>
-        </div>
-        <div class="stat-card" style="padding:14px">
-          <div class="stat-label">Rango real</div>
-          <div style="font-family:var(--mono);font-size:24px;color:var(--text)" id="statRango">—</div>
-        </div>
-        <div class="stat-card" style="padding:14px">
-          <div class="stat-label">Velocidad promedio</div>
-          <div style="font-family:var(--mono);font-size:24px;color:var(--text)" id="statVelocidad">—</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:4px">basada en km empresa</div>
-        </div>
-        <div class="stat-card" style="padding:14px">
-          <div class="stat-label">Si sale a las</div>
-          <input type="time" id="statHoraSalida" value="18:00" onchange="recalcularLlegada()" style="
-            background:var(--bg3);border:1px solid var(--border);border-radius:6px;
-            padding:4px 8px;color:var(--text);font-family:var(--mono);
-            font-size:18px;margin-top:2px;outline:none;width:100%;
-          ">
-        </div>
-        <div class="stat-card" style="padding:14px">
-          <div class="stat-label">Llegada estimada</div>
-          <div style="font-family:var(--mono);font-size:24px;color:var(--ok)" id="statLlegada">—</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:4px" id="statMuestra"></div>
-        </div>
+    <!-- MENSAJES -->
+    <div class="tab-panel" id="tab-mensajes">
+      <div class="section-header">
+        <div class="section-title">Mensajes internos</div>
+        <button class="btn-refresh" onclick="cargarMensajes()">↺ Actualizar</button>
       </div>
 
-      <!-- Tabla de viajes -->
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Fecha</th>
-              <th>Chofer</th>
-              <th>Origen</th>
-              <th>Destino</th>
-              <th>Salida</th>
-              <th>Llegada decl.</th>
-              <th>Duración real</th>
-              <th>vs declarado</th>
-              <th>Velocidad</th>
-              <th>Tipo</th>
-              <th>Coche</th>
-            </tr>
-          </thead>
-          <tbody id="statBody">
-            <tr><td colspan="10" class="loading">Seleccioná una ruta para ver estadísticas</td></tr>
-          </tbody>
-        </table>
+      <!-- Redactar -->
+      <div class="compose-box">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">✍️ Nuevo mensaje</div>
+        <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+          <div style="flex:1;min-width:160px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Para</div>
+            <select class="filter-input" id="msgPara" style="width:100%">
+              <option value="todos">📢 Todos los choferes</option>
+            </select>
+          </div>
+          <div style="flex:1;min-width:120px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Tipo</div>
+            <select class="filter-input" id="msgTipo" style="width:100%">
+              <option value="mensaje">💬 Mensaje</option>
+              <option value="asignacion">✅ Asignación</option>
+              <option value="urgente">🔴 Urgente</option>
+            </select>
+          </div>
+        </div>
+        <textarea id="msgTexto" rows="3" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-family:var(--sans);font-size:13px;resize:vertical;outline:none;margin-bottom:12px;" placeholder="Escribí el mensaje para el chofer..."></textarea>
+        <button onclick="enviarMensaje()" style="background:var(--accent);color:white;border:none;border-radius:8px;padding:10px 24px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;">Enviar mensaje</button>
       </div>
 
-      <div id="statAviso" style="
-        margin-top:12px;background:var(--bg3);border-radius:8px;
-        padding:10px 16px;font-size:12px;color:var(--text3);display:none;
-      "></div>
+      <!-- Lista de mensajes enviados -->
+      <div class="section-header" style="margin-top:8px">
+        <div class="section-title" style="font-size:14px">Mensajes enviados</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="filtrarMsgs('todos')" id="mfbtn-todos" class="fbtn fbtn-active">Todos</button>
+          <button onclick="filtrarMsgs('no-leido')" id="mfbtn-no-leido" class="fbtn">No leídos</button>
+          <button onclick="filtrarMsgs('leido')" id="mfbtn-leido" class="fbtn">Leídos</button>
+        </div>
+      </div>
+      <div id="mensajesContainer"><div class="loading">Cargando mensajes...</div></div>
     </div>
 
   </div>
 </div>
 
 <!-- MODAL DETALLE JORNADA -->
-<div id="modalDetalle" style="
-  display:none; position:fixed; top:0; left:0;
-  width:100%; height:100%; background:rgba(0,0,0,0.7);
-  z-index:1000; overflow-y:auto; padding:20px;
-">
-  <div style="
-    max-width:700px; margin:40px auto;
-    background:var(--bg2); border:1px solid var(--border);
-    border-radius:16px; padding:28px;
-  ">
+<div id="modalDetalle" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:1000;overflow-y:auto;padding:20px;">
+  <div style="max-width:700px;margin:40px auto;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
       <div style="font-size:18px;font-weight:600" id="modalDetalleTitle">Detalle de Jornada</div>
-      <button onclick="cerrarModalDetalle()" style="
-        background:transparent;border:1px solid var(--border);
-        border-radius:6px;padding:6px 14px;color:var(--text2);
-        cursor:pointer;font-family:var(--sans);font-size:13px;
-      ">✕ Cerrar</button>
+      <button onclick="cerrarModalDetalle()" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:6px 14px;color:var(--text2);cursor:pointer;font-family:var(--sans);font-size:13px;">✕ Cerrar</button>
     </div>
     <div id="modalDetalleBody"></div>
   </div>
@@ -865,60 +352,41 @@
 <script>
 const SB_URL = 'https://frjeivfpldcigklwepqt.supabase.co';
 const SB_KEY = 'sb_publishable_6A7tufjD-rTAUAPfxyziyw_3kXMumzJ';
+let currentUser = null, allChoferes = [], allJornadas = [], allMensajes = [], msgFiltro = 'todos';
 
-let currentUser = null;
-let allChoferes = [];
-let allJornadas = [];
-
-// ── AUTH ──────────────────────────────────
 async function doLogin() {
-  const email    = document.getElementById('loginEmail').value.trim();
+  const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
-  const btn      = document.getElementById('btnLogin');
-  const errEl    = document.getElementById('loginError');
-
+  const btn = document.getElementById('btnLogin');
+  const errEl = document.getElementById('loginError');
   if (!email || !password) { showError('Completá los campos'); return; }
-  btn.disabled = true;
-  btn.textContent = 'Ingresando...';
-  errEl.style.display = 'none';
-
+  btn.disabled = true; btn.textContent = 'Ingresando...'; errEl.style.display = 'none';
   try {
-    const res  = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY },
-      body: JSON.stringify({ email, password })
-    });
+    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, { method:'POST', headers:{'Content-Type':'application/json','apikey':SB_KEY}, body:JSON.stringify({email,password}) });
     const data = await res.json();
-
-    if (!res.ok || !data.access_token) {
-      errEl.style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = 'Ingresar';
-      return;
-    }
-
+    if (!res.ok || !data.access_token) { errEl.style.display='block'; btn.disabled=false; btn.textContent='Ingresar'; return; }
     currentUser = data;
-    localStorage.setItem('admin_token',         data.access_token);
-    localStorage.setItem('admin_refresh_token', data.refresh_token || '');
-    localStorage.setItem('admin_email',    email);
+    localStorage.setItem('admin_token', data.access_token);
+    localStorage.setItem('admin_refresh_token', data.refresh_token||'');
+    localStorage.setItem('admin_email', email);
     localStorage.setItem('admin_password', password);
-
     document.getElementById('userEmail').textContent = email;
-    document.getElementById('loginScreen').style.display  = 'none';
-    document.getElementById('adminScreen').style.display  = 'block';
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminScreen').style.display = 'block';
+    iniciarAdmin();
+  } catch(e) { errEl.style.display='block'; btn.disabled=false; btn.textContent='Ingresar'; }
+}
 
-    cargarDashboard(); cargarChoferes(); cargarJornadas(); cargarAlertas(); cargarRotacion(); cargarFlota(); cargarEstadisticas();
-
-  } catch (e) {
-    errEl.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = 'Ingresar';
-  }
+function iniciarAdmin() {
+  cargarDashboard(); cargarChoferes(); cargarJornadas(); cargarAlertas(); cargarRotacion(); cargarFlota(); cargarEstadisticas(); cargarMensajes();
+  // polling mensajes cada 30s
+  if (!window.__msgPoller) window.__msgPoller = setInterval(cargarMensajes, 30000);
 }
 
 function doLogout() {
-  ['admin_token','admin_refresh_token','admin_email','admin_password'].forEach(k => localStorage.removeItem(k));
+  ['admin_token','admin_refresh_token','admin_email','admin_password'].forEach(k=>localStorage.removeItem(k));
   currentUser = null;
+  if (window.__msgPoller) { clearInterval(window.__msgPoller); window.__msgPoller = null; }
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('adminScreen').style.display = 'none';
 }
@@ -931,990 +399,533 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('userEmail').textContent = email;
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminScreen').style.display = 'block';
-    cargarDashboard(); cargarChoferes(); cargarJornadas(); cargarAlertas(); cargarRotacion(); cargarFlota(); cargarEstadisticas();
+    iniciarAdmin();
   }
-  document.getElementById('loginPassword').addEventListener('keydown', e => {
-    if (e.key === 'Enter') doLogin();
-  });
+  document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
 });
 
-// ── API HELPER ────────────────────────────
 async function renovarToken() {
   try {
-    const email    = localStorage.getItem('admin_email');
+    const email = localStorage.getItem('admin_email');
     const password = localStorage.getItem('admin_password');
     if (!email || !password) return false;
-    const res  = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY },
-      body: JSON.stringify({ email, password })
-    });
+    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, { method:'POST', headers:{'Content-Type':'application/json','apikey':SB_KEY}, body:JSON.stringify({email,password}) });
     const data = await res.json();
-    if (data.access_token) {
-      currentUser = data;
-      localStorage.setItem('admin_token',         data.access_token);
-      localStorage.setItem('admin_refresh_token', data.refresh_token || '');
-      return true;
-    }
+    if (data.access_token) { currentUser=data; localStorage.setItem('admin_token',data.access_token); localStorage.setItem('admin_refresh_token',data.refresh_token||''); return true; }
   } catch(e) {}
   return false;
 }
 
-async function sbFetch(path, options = {}) {
+async function sbFetch(path, options={}) {
   const token = currentUser ? currentUser.access_token : localStorage.getItem('admin_token');
-  const res = await fetch(`${SB_URL}/rest/v1/${path}`, {
-    ...options,
-    headers: {
-      'apikey': SB_KEY,
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-      ...(options.headers || {})
-    }
-  });
-  if (res.status === 401) {
+  const res = await fetch(`${SB_URL}/rest/v1/${path}`, { ...options, headers:{'apikey':SB_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json',...(options.headers||{})} });
+  if (res.status===401) {
     const ok = await renovarToken();
-    if (ok) {
-      const res2 = await fetch(`${SB_URL}/rest/v1/${path}`, {
-        ...options,
-        headers: {
-          'apikey': SB_KEY,
-          'Authorization': `Bearer ${currentUser.access_token}`,
-          'Content-Type': 'application/json',
-          ...(options.headers || {})
-        }
-      });
-      return res2.json();
-    }
+    if (ok) { const res2 = await fetch(`${SB_URL}/rest/v1/${path}`, { ...options, headers:{'apikey':SB_KEY,'Authorization':`Bearer ${currentUser.access_token}`,'Content-Type':'application/json',...(options.headers||{})} }); return res2.json(); }
   }
   return res.json();
 }
 
-// ── NAVEGACIÓN ────────────────────────────
 function switchTab(tab) {
-  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
   event.currentTarget.classList.add('active');
 }
 
-// ── DASHBOARD ─────────────────────────────
 async function cargarDashboard() {
   try {
-    const [choferes, jornadas, alertas] = await Promise.all([
-      sbFetch('choferes?empresa_id=eq.cot&select=id'),
-      sbFetch('jornadas?empresa_id=eq.cot&select=id,data'),
-      sbFetch('registro_alertas?select=id,resuelto,intentado_at&order=intentado_at.desc')
-    ]);
-
-    const choferesArr = Array.isArray(choferes) ? choferes : [];
-    const jornadasArr = Array.isArray(jornadas)  ? jornadas  : [];
-    const alertasArr  = Array.isArray(alertas)   ? alertas   : [];
-
-    document.getElementById('statChoferes').textContent = choferesArr.length;
-    document.getElementById('statTotal').textContent    = jornadasArr.length;
-
+    const [choferes,jornadas,alertas] = await Promise.all([sbFetch('choferes?empresa_id=eq.cot&select=id'),sbFetch('jornadas?empresa_id=eq.cot&select=id,data'),sbFetch('registro_alertas?select=id,resuelto,intentado_at&order=intentado_at.desc')]);
+    const ca=Array.isArray(choferes)?choferes:[], ja=Array.isArray(jornadas)?jornadas:[], aa=Array.isArray(alertas)?alertas:[];
+    document.getElementById('statChoferes').textContent = ca.length;
+    document.getElementById('statTotal').textContent = ja.length;
     const hoy = new Date().toISOString().split('T')[0];
-    const jornadasHoy = jornadasArr.filter(j => {
-      try {
-        const d = typeof j.data === 'string' ? JSON.parse(j.data || '{}') : (j.data || {});
-        return d.date === hoy;
-      } catch { return false; }
-    });
-    document.getElementById('statJornadas').textContent = jornadasHoy.length;
-
-    const pendientes = alertasArr.filter(a => !a.resuelto);
-    document.getElementById('statAlertas').textContent = pendientes.length;
-
+    document.getElementById('statJornadas').textContent = ja.filter(j=>{try{const d=typeof j.data==='string'?JSON.parse(j.data||'{}'):(j.data||{});return d.date===hoy;}catch{return false;}}).length;
+    const pend = aa.filter(a=>!a.resuelto);
+    document.getElementById('statAlertas').textContent = pend.length;
     const badge = document.getElementById('alertBadge');
-    if (pendientes.length > 0) { badge.textContent = pendientes.length; badge.style.display = 'inline'; }
-    else { badge.style.display = 'none'; }
-
-    renderDashAlertas(alertasArr.slice(0, 5));
-  } catch (e) { console.error('Error dashboard:', e); }
+    pend.length>0?(badge.textContent=pend.length,badge.style.display='inline'):badge.style.display='none';
+    renderDashAlertas(aa.slice(0,5));
+  } catch(e){console.error('Error dashboard:',e);}
 }
 
 function renderDashAlertas(alertas) {
   const c = document.getElementById('dashAlertasContainer');
-  if (!alertas.length) {
-    c.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>Sin alertas pendientes</p></div>';
-    return;
-  }
-  c.innerHTML = alertas.map(a => alertaCard(a, true)).join('');
+  if (!alertas.length) { c.innerHTML='<div class="empty-state"><div class="icon">✅</div><p>Sin alertas pendientes</p></div>'; return; }
+  c.innerHTML = alertas.map(a=>alertaCard(a,true)).join('');
 }
 
-// ── CHOFERES ─────────────────────────────
 async function cargarChoferes() {
   try {
     const data = await sbFetch('choferes?empresa_id=eq.cot&select=*&order=nombre.asc');
     allChoferes = data;
     renderChoferes(data);
-  } catch(e) {
-    document.getElementById('choferesBody').innerHTML =
-      '<tr><td colspan="7" class="loading">Error al cargar</td></tr>';
-  }
+    // poblar selector de mensajes
+    const sel = document.getElementById('msgPara');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="todos">📢 Todos los choferes</option>';
+    (Array.isArray(data)?data:[]).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.legajo;
+      opt.textContent = `${c.nombre || c.legajo} (${c.legajo})`;
+      sel.appendChild(opt);
+    });
+    sel.value = prev;
+  } catch(e) { document.getElementById('choferesBody').innerHTML='<tr><td colspan="7" class="loading">Error al cargar</td></tr>'; }
 }
 
 function renderChoferes(choferes) {
   const tbody = document.getElementById('choferesBody');
-  if (!choferes.length) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="icon">🚗</div><p>No hay choferes registrados</p></div></td></tr>';
-    return;
-  }
-  tbody.innerHTML = choferes.map(c => `
-    <tr>
-      <td><span class="mono">${c.legajo || '—'}</span></td>
-      <td><strong style="color:var(--text)">${c.nombre || '—'}</strong></td>
-      <td><span class="badge badge-blue">${c.tipo || '—'}</span></td>
-      <td>${c.base || '—'}</td>
-      <td><span class="mono" style="font-size:10px;color:var(--text3)">${(c.device_id || '—').substring(0,20)}…</span></td>
-      <td style="font-size:12px">${c.registrado_at ? new Date(c.registrado_at).toLocaleDateString('es-UY') : '—'}</td>
-      <td><span class="badge ${c.device_id ? 'badge-ok' : 'badge-warn'}">${c.device_id ? '● Activo' : '○ Sin dispositivo'}</span></td>
-    </tr>
-  `).join('');
+  if (!choferes.length) { tbody.innerHTML='<tr><td colspan="7"><div class="empty-state"><div class="icon">🚗</div><p>No hay choferes registrados</p></div></td></tr>'; return; }
+  tbody.innerHTML = choferes.map(c=>`<tr>
+    <td><span class="mono">${c.legajo||'—'}</span></td>
+    <td><strong style="color:var(--text)">${c.nombre||'—'}</strong></td>
+    <td><span class="badge badge-blue">${c.tipo||'—'}</span></td>
+    <td>${c.base||'—'}</td>
+    <td><span class="mono" style="font-size:10px;color:var(--text3)">${(c.device_id||'—').substring(0,20)}…</span></td>
+    <td style="font-size:12px">${c.registrado_at?new Date(c.registrado_at).toLocaleDateString('es-UY'):'—'}</td>
+    <td><span class="badge ${c.device_id?'badge-ok':'badge-warn'}">${c.device_id?'● Activo':'○ Sin dispositivo'}</span></td>
+  </tr>`).join('');
 }
 
 function filtrarChoferes() {
   const q = document.getElementById('filterChofer').value.toLowerCase();
-  renderChoferes(allChoferes.filter(c =>
-    (c.nombre || '').toLowerCase().includes(q) || (c.legajo || '').toLowerCase().includes(q)
-  ));
+  renderChoferes(allChoferes.filter(c=>(c.nombre||'').toLowerCase().includes(q)||(c.legajo||'').toLowerCase().includes(q)));
 }
 
-// ── JORNADAS ─ FIX: usa totalsSnapshot ───
 async function cargarJornadas() {
   try {
     const data = await sbFetch('jornadas?empresa_id=eq.cot&select=*&order=id.desc&limit=100');
-    allJornadas = data;
-    renderJornadas(data);
-  } catch(e) {
-    document.getElementById('jornadasBody').innerHTML =
-      '<tr><td colspan="9" class="loading">Error al cargar</td></tr>';
-  }
+    allJornadas = data; renderJornadas(data);
+  } catch(e) { document.getElementById('jornadasBody').innerHTML='<tr><td colspan="9" class="loading">Error al cargar</td></tr>'; }
 }
 
 function renderJornadas(jornadas) {
   const tbody = document.getElementById('jornadasBody');
-  if (!jornadas.length) {
-    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="icon">📋</div><p>No hay jornadas registradas</p></div></td></tr>';
-    return;
-  }
-  tbody.innerHTML = jornadas.map(j => {
-    let d = {};
-    try { d = typeof j.data === 'string' ? JSON.parse(j.data || '{}') : (j.data || {}); } catch {}
-
-    const travels  = (d.travels || []).filter(t => t.status !== 'cancelado');
-    const guards   = (d.guards  || []);
-
-    // ✅ FIX: leer desde totalsSnapshot si existe
-    const snap       = d.totalsSnapshot || {};
-    const kmViajes   = snap.kmViajes   ?? travels.reduce((s,t) => s + (t.kmEmpresa || t.kmAuto || 0), 0);
-    const kmGuardias = snap.kmGuardias ?? guards.reduce((s,g) => s + (g.kmGuardia || 0), 0);
-    const kmTotal    = snap.kmTotal    ?? (kmViajes + kmGuardias);
-    const viaticos   = snap.viaticos   ?? 0;
-    const monto      = snap.monto      ?? Math.round(kmTotal * 7.637);
-
-    const cerrada = d.closed;
-    const tipo    = d.tipo || 'contratado';
-
-    return `
-      <tr onclick="abrirDetalleJornada('${j.order_number}')" style="cursor:pointer">
-        <td><span class="mono">${d.date || '—'}</span></td>
-        <td>
-          <strong style="color:var(--text)">${d.driverName || j.chofer_id || '—'}</strong><br>
-          <span class="badge ${tipo === 'efectivo' ? 'badge-blue' : 'badge-warn'}" style="font-size:10px">${tipo}</span>
-        </td>
-        <td><span class="mono">${d.driverLegajo || j.chofer_id || '—'}</span></td>
-        <td style="text-align:center">${travels.length}</td>
-        <td style="text-align:center">${guards.length}</td>
-        <td><span class="mono">${Number(kmTotal).toFixed(1)} km</span></td>
-        <td style="text-align:center">${viaticos}</td>
-        <td><span class="mono">$ ${Math.round(monto)}</span></td>
-        <td><span class="badge ${cerrada ? 'badge-ok' : 'badge-warn'}">${cerrada ? '✓ Cerrada' : '● En curso'}</span></td>
-      </tr>
-    `;
-  }).join('');
-}
-
-function filtrarJornadas() {
-  const q     = document.getElementById('filterJornadaChofer').value.toLowerCase();
-  const fecha = document.getElementById('filterJornadaFecha').value;
-  renderJornadas(allJornadas.filter(j => {
-    let d = {};
-    try { d = typeof j.data === 'string' ? JSON.parse(j.data || '{}') : (j.data || {}); } catch {}
-    const matchQ = !q ||
-      (d.driverName   || '').toLowerCase().includes(q) ||
-      (d.driverLegajo || '').toLowerCase().includes(q) ||
-      (j.chofer_id    || '').toLowerCase().includes(q) ||
-      (j.order_number || '').toLowerCase().includes(q);
-    const matchF = !fecha || d.date === fecha;
-    return matchQ && matchF;
-  }));
-}
-
-// ── ALERTAS ───────────────────────────────
-async function cargarAlertas() {
-  try {
-    const data = await sbFetch('registro_alertas?select=*&order=intentado_at.desc');
-    renderAlertas(data);
-    const pendientes = data.filter(a => !a.resuelto).length;
-    const badge = document.getElementById('alertBadge');
-    if (pendientes > 0) { badge.textContent = pendientes; badge.style.display = 'inline'; }
-    else { badge.style.display = 'none'; }
-    document.getElementById('statAlertas').textContent = pendientes;
-  } catch(e) {
-    document.getElementById('alertasContainer').innerHTML =
-      '<div class="empty-state"><div class="icon">❌</div><p>Error al cargar alertas</p></div>';
-  }
-}
-
-function alertaCard(a, mini = false) {
-  const fecha    = a.intentado_at ? new Date(a.intentado_at).toLocaleString('es-UY') : '—';
-  const resuelto = a.resuelto;
-  return `
-    <div class="alert-card ${resuelto ? 'resolved' : ''}">
-      <div class="alert-info">
-        <div class="alert-title">${resuelto ? '✅' : '⚠️'} Legajo ${a.legajo || '—'} — ${a.nombre || '—'}</div>
-        <div class="alert-detail">
-          Fecha: ${fecha}<br>
-          Device actual: ${(a.device_id_actual || '—').substring(0,30)}…<br>
-          Device nuevo:  ${(a.device_id_nuevo  || '—').substring(0,30)}…
-        </div>
-      </div>
-      ${!mini && !resuelto ? `
-      <div class="alert-actions">
-        <button class="btn-action btn-approve" onclick="resolverAlerta('${a.id}', true)">✓ Autorizar</button>
-        <button class="btn-action btn-reject"  onclick="resolverAlerta('${a.id}', false)">✕ Rechazar</button>
-      </div>` : ''}
-    </div>
-  `;
-}
-
-function renderAlertas(alertas) {
-  const c = document.getElementById('alertasContainer');
-  if (!alertas.length) {
-    c.innerHTML = '<div class="empty-state"><div class="icon">✅</div><p>Sin alertas</p></div>';
-    return;
-  }
-  c.innerHTML = alertas.map(a => alertaCard(a)).join('');
-}
-
-async function resolverAlerta(id, autorizar) {
-  try {
-    if (autorizar) {
-      const alertas = await sbFetch(`registro_alertas?id=eq.${id}&select=*`);
-      const alerta  = alertas[0];
-      if (alerta) {
-        await fetch(`${SB_URL}/rest/v1/choferes?empresa_id=eq.cot&legajo=eq.${alerta.legajo}`, {
-          method: 'PATCH',
-          headers: {
-            'apikey': SB_KEY,
-            'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ device_id: alerta.device_id_nuevo })
-        });
-      }
-    }
-    await fetch(`${SB_URL}/rest/v1/registro_alertas?id=eq.${id}`, {
-      method: 'PATCH',
-      headers: {
-        'apikey': SB_KEY,
-        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ resuelto: true, resolucion: autorizar ? 'autorizado' : 'rechazado' })
-    });
-    showToast(autorizar ? '✅ Dispositivo autorizado' : '✕ Solicitud rechazada');
-    cargarAlertas(); cargarDashboard();
-  } catch(e) { showToast('❌ Error al procesar'); }
-}
-
-// ── TOAST ─────────────────────────────────
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.display = 'block';
-  setTimeout(() => { t.style.display = 'none'; }, 3000);
-}
-
-// ── ROTACIÓN ──────────────────────────────
-let allRotacion = [];
-
-async function cargarRotacion() {
-  try {
-    const funcionarios = await sbFetch('rotacion?select=*&order=posicion_actual.asc');
-    const servicios    = await sbFetch('servicios_rotacion?temporada=eq.invierno&select=*&order=posicion.asc');
-
-    const rotacion = funcionarios.map(f => ({
-      ...f, servicio: servicios.find(s => s.posicion === f.posicion_actual) || null
-    }));
-    allRotacion = rotacion;
-
-    document.getElementById('rotEnServicio').textContent = rotacion.filter(r => r.servicio && !r.servicio.es_descanso).length;
-    document.getElementById('rotDescanso').textContent   = rotacion.filter(r => r.servicio &&  r.servicio.es_descanso).length;
-    document.getElementById('rotAgregar').textContent    = rotacion.filter(r => r.servicio &&  r.servicio.puede_agregar).length;
-    const v = servicios[0] ? servicios[0].vigencia_desde : null;
-    document.getElementById('rotVigencia').textContent   = v ? new Date(v).toLocaleDateString('es-UY') : '—';
-
-    renderRotacion(rotacion);
-  } catch(e) {
-    console.error('Error rotacion:', e);
-    document.getElementById('rotacionBody').innerHTML =
-      '<tr><td colspan="8" class="loading">Error al cargar rotación</td></tr>';
-  }
-}
-
-function formatServicio(hora, destino, tipo) {
-  if (!hora && !destino) return null;
-  if (!hora && destino) return `<span style="color:var(--text3);font-size:11px">${destino}</span>`;
-  const color = tipo === 'DIRECTO' ? 'var(--accent2)' : tipo === 'TURNO' ? 'var(--text)' : 'var(--text2)';
-  return `<div style="line-height:1.6">
-    <span style="font-family:var(--mono);font-size:12px;color:var(--ok)">${hora}</span>
-    <span style="font-size:12px;color:${color};margin-left:4px">${destino || ''}</span>
-    ${tipo ? `<span style="font-size:10px;color:var(--text3);margin-left:4px">${tipo}</span>` : ''}
-  </div>`;
-}
-
-function renderRotacion(rotacion) {
-  const tbody = document.getElementById('rotacionBody');
-  if (!rotacion.length) {
-    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="icon">🔄</div><p>No hay datos de rotación</p></div></td></tr>';
-    return;
-  }
-  tbody.innerHTML = rotacion.map(r => {
-    const s = r.servicio;
-    const esDescanso   = s && s.es_descanso;
-    const puedeAgregar = s && s.puede_agregar;
-
-    const srv1 = s ? formatServicio(s.servicio_1_hora, s.servicio_1_destino, s.servicio_1_tipo) : null;
-    const srv2 = s ? formatServicio(s.servicio_2_hora, s.servicio_2_destino, s.servicio_2_tipo) : null;
-    const srv3 = s ? formatServicio(s.servicio_3_hora, s.servicio_3_destino, s.servicio_3_tipo) : null;
-    const srv4 = s ? formatServicio(s.servicio_4_hora, s.servicio_4_destino, s.servicio_4_tipo) : null;
-
-    let estadoBadge = esDescanso
-      ? '<span class="badge" style="background:rgba(71,85,105,0.3);color:var(--text3)">🟢 Descanso</span>'
-      : puedeAgregar
-        ? '<span class="badge badge-warn">+ Puede agregar</span>'
-        : '<span class="badge badge-ok">● En servicio</span>';
-
-    if (r.es_suplente) {
-      estadoBadge += `<br><span style="font-size:10px;color:var(--warn);font-family:var(--mono)">suplente de ${r.funcionario_titular}</span>`;
-    }
-
-    return `
-      <tr style="${esDescanso ? 'opacity:0.5' : ''}">
-        <td><span class="mono" style="color:var(--accent)">${r.posicion_actual}</span></td>
-        <td><span class="mono">${r.nro_fun}</span></td>
-        <td style="color:var(--text);font-size:13px">${r.apellidos_nombres}</td>
-        <td>${esDescanso ? '<span style="color:var(--text3);font-size:12px">— DESCANSO —</span>' : (srv1 || '—')}</td>
-        <td>${srv2 || '—'}</td>
-        <td>${srv3 || '—'}</td>
-        <td>${srv4 || '—'}</td>
-        <td>${estadoBadge}</td>
-      </tr>
-    `;
-  }).join('');
-}
-
-function filtrarRotacion() {
-  const q      = document.getElementById('filterRotacion').value.toLowerCase();
-  const filtro = document.getElementById('filterRotDescanso').value;
-  renderRotacion(allRotacion.filter(r => {
-    const matchQ = !q || (r.apellidos_nombres || '').toLowerCase().includes(q) || (r.nro_fun || '').toLowerCase().includes(q);
-    const s = r.servicio;
-    let matchF = true;
-    if (filtro === 'servicio') matchF = s && !s.es_descanso;
-    if (filtro === 'descanso') matchF = s &&  s.es_descanso;
-    if (filtro === 'agregar')  matchF = s &&  s.puede_agregar;
-    return matchQ && matchF;
-  }));
-}
-
-async function generarViajesSiguiente() {
-  if (!confirm('¿Generar viajes programados para mañana basados en la rotación actual?')) return;
-
-  const manana = new Date();
-  manana.setDate(manana.getDate() + 1);
-  const fechaManana = manana.toISOString().split('T')[0];
-
-  let generados = 0, errores = 0;
-
-  for (const r of allRotacion) {
-    const s = r.servicio;
-    if (!s || s.es_descanso) continue;
-
-    const viajes = [[s.servicio_1_hora, s.servicio_1_destino, s.servicio_1_tipo],
-                    [s.servicio_2_hora, s.servicio_2_destino, s.servicio_2_tipo],
-                    [s.servicio_3_hora, s.servicio_3_destino, s.servicio_3_tipo],
-                    [s.servicio_4_hora, s.servicio_4_destino, s.servicio_4_tipo]]
-      .filter(([hora, destino]) => hora && destino)
-      .map(([hora, destino, tipo]) => ({ hora, destino, tipo, status: 'programado' }));
-
-    if (!viajes.length) continue;
-
-    try {
-      await fetch(`${SB_URL}/rest/v1/jornadas`, {
-        method: 'POST',
-        headers: {
-          'apikey': SB_KEY,
-          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=ignore-duplicates'
-        },
-        body: JSON.stringify({
-          empresa_id:   'cot',
-          chofer_id:    r.nro_fun,
-          order_number: `${fechaManana}-${r.nro_fun}`,
-          data: JSON.stringify({
-            date: fechaManana, driverLegajo: r.nro_fun, driverName: r.apellidos_nombres,
-            posicion: r.posicion_actual, travels: viajes, tipo: 'efectivo', generado_auto: true
-          })
-        })
-      });
-      generados++;
-    } catch(e) { errores++; }
-  }
-
-  showToast(`✅ ${generados} jornadas generadas para ${fechaManana}${errores ? ` (${errores} errores)` : ''}`);
-}
-
-// ── DETALLE JORNADA ─ FIX: usa totalsSnapshot ──
-function abrirDetalleJornada(orderNumber) {
-  const j = allJornadas.find(x => x.order_number === orderNumber);
-  if (!j) return;
-
-  let d = {};
-  try { d = typeof j.data === 'string' ? JSON.parse(j.data || '{}') : (j.data || {}); } catch {}
-
-  const travels = (d.travels || []).filter(t => t.status !== 'cancelado');
-  const guards  = (d.guards  || []);
-  const tipo    = d.tipo || 'contratado';
-
-  // ✅ FIX: leer desde totalsSnapshot si existe, fallback a cálculo manual
-  const snap        = d.totalsSnapshot || {};
-  const kmViajes    = snap.kmViajes    ?? travels.reduce((s,t) => s + (t.kmEmpresa || t.kmAuto || 0), 0);
-  const kmGuardias  = snap.kmGuardias  ?? guards.reduce((s,g) => s + (g.kmGuardia || 0), 0);
-  const kmTomeCese  = snap.kmTomeCese  ?? 0;
-  const kmAcoplados = snap.kmAcoplados ?? 0;
-  const kmTotal     = snap.kmTotal     ?? (kmViajes + kmGuardias);
-  const viaticos    = snap.viaticos    ?? 0;
-  const monto       = snap.monto       ?? Math.round(kmTotal * 7.637);
-
-  document.getElementById('modalDetalleTitle').textContent =
-    `Jornada ${d.date || '—'} — ${d.driverName || j.chofer_id} (${d.driverLegajo || j.chofer_id})`;
-
-  let html = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
-      <div class="stat-card" style="padding:14px">
-        <div class="stat-label">Tipo</div>
-        <div style="font-size:14px;margin-top:4px">
-          <span class="badge ${tipo === 'efectivo' ? 'badge-blue' : 'badge-warn'}">${tipo}</span>
-        </div>
-      </div>
-      <div class="stat-card" style="padding:14px">
-        <div class="stat-label">Estado</div>
-        <div style="font-size:14px;margin-top:4px">
-          <span class="badge ${d.closed ? 'badge-ok' : 'badge-warn'}">${d.closed ? '✓ Cerrada' : '● En curso'}</span>
-        </div>
-      </div>
-      <div class="stat-card" style="padding:14px">
-        <div class="stat-label">KM Total</div>
-        <div class="stat-value" style="font-size:24px">${Number(kmTotal).toFixed(1)}</div>
-      </div>
-      <div class="stat-card" style="padding:14px">
-        <div class="stat-label">Monto</div>
-        <div class="stat-value ok" style="font-size:24px">$ ${Math.round(monto)}</div>
-      </div>
-      <div class="stat-card" style="padding:14px">
-        <div class="stat-label">KM Viajes</div>
-        <div style="font-family:var(--mono);font-size:16px;color:var(--text)">${Number(kmViajes).toFixed(1)} km</div>
-      </div>
-      <div class="stat-card" style="padding:14px">
-        <div class="stat-label">KM Guardias</div>
-        <div style="font-family:var(--mono);font-size:16px;color:var(--text)">${Number(kmGuardias).toFixed(1)} km</div>
-      </div>
-      <div class="stat-card" style="padding:14px">
-        <div class="stat-label">Tome y Cese</div>
-        <div style="font-family:var(--mono);font-size:16px;color:var(--text)">${Number(kmTomeCese).toFixed(1)} km</div>
-      </div>
-      <div class="stat-card" style="padding:14px">
-        <div class="stat-label">Acoplados</div>
-        <div style="font-family:var(--mono);font-size:16px;color:var(--text)">${Number(kmAcoplados).toFixed(1)} km</div>
-      </div>
-      <div class="stat-card" style="padding:14px;grid-column:1/-1">
-        <div class="stat-label">Viáticos</div>
-        <div style="font-family:var(--mono);font-size:16px;color:var(--text)">
-          ${viaticos} × $455 = <span style="color:var(--ok)">$ ${viaticos * 455}</span>
-        </div>
-      </div>
-    </div>
-  `;
-
-  if (travels.length) {
-    html += `<div class="section-title" style="margin-bottom:12px">🚍 Viajes (${travels.length})</div>`;
-    html += '<div class="table-wrap" style="margin-bottom:20px"><table><thead><tr>';
-    html += '<th>Origen</th><th>Destino</th><th>Salida</th><th>Llegada</th><th>Km</th><th>Tipo</th><th>Acoplado</th><th>Coche</th>';
-    html += '</tr></thead><tbody>';
-    travels.forEach(v => {
-      const km     = Number(v.kmEmpresa || v.kmAuto || 0).toFixed(1);
-      const acopKm = Number(v.acopladoKm || 0).toFixed(1);
-      const tc     = v.tomeCese ? ' <span style="font-size:10px;color:var(--accent2)">[T/C]</span>' : '';
-      html += `<tr>
-        <td>${v.origen || '—'}${tc}</td>
-        <td>${v.destino || '—'}</td>
-        <td><span class="mono">${v.departureTime || '—'}</span></td>
-        <td><span class="mono">${v.arrivalTime   || '—'}</span></td>
-        <td><span class="mono">${km} km</span></td>
-        <td><span class="badge badge-blue" style="font-size:10px">${v.tipoServicio || v.turno || '—'}</span></td>
-        <td><span class="mono" style="color:${v.acoplado ? 'var(--warn)' : 'var(--text3)'}">${v.acoplado ? acopKm + ' km' : '—'}</span></td>
-        <td>${v.coche || '—'}</td>
-      </tr>`;
-    });
-    html += '</tbody></table></div>';
-  } else {
-    html += '<div class="empty-state" style="padding:20px"><p>Sin viajes registrados</p></div>';
-  }
-
-  if (guards.length) {
-    html += `<div class="section-title" style="margin-bottom:12px">🕐 Guardias (${guards.length})</div>`;
-    html += '<div class="table-wrap"><table><thead><tr>';
-    html += '<th>Inicio</th><th>Fin</th><th>Horas</th><th>Km</th><th>Tipo</th><th>Auto-cortada</th><th>Viático</th>';
-    html += '</tr></thead><tbody>';
-    guards.forEach(g => {
-      const kmHora = g.type === 'especial' ? 40 : 30;
-      let horas = g.hours || 0;
-      let km    = g.kmGuardia || 0;
-      if (g.inicio && g.fin) {
-        const [hI,mI] = g.inicio.split(':').map(Number);
-        const [hF,mF] = g.fin.split(':').map(Number);
-        let calc = (hF + mF/60) - (hI + mI/60);
-        if (calc < 0) calc += 24;
-        if (calc > 0) { horas = calc; km = horas * kmHora; }
-      }
-      html += `<tr>
-        <td><span class="mono">${g.inicio || '—'}</span></td>
-        <td><span class="mono">${g.fin    || '—'}</span></td>
-        <td><span class="mono">${Number(horas).toFixed(2)} h</span></td>
-        <td><span class="mono">${Number(km).toFixed(1)} km</span></td>
-        <td>${g.type || '—'}</td>
-        <td>${g.cortadaAuto ? '<span style="color:var(--warn)">✓ Sí</span>' : '—'}</td>
-        <td>${g.viatico ? '✅' : '—'}</td>
-      </tr>`;
-    });
-    html += '</tbody></table></div>';
-  }
-
-  document.getElementById('modalDetalleBody').innerHTML = html;
-  document.getElementById('modalDetalle').style.display = 'block';
-}
-
-function cerrarModalDetalle() {
-  document.getElementById('modalDetalle').style.display = 'none';
-}
-
-document.addEventListener('click', e => {
-  if (e.target === document.getElementById('modalDetalle')) cerrarModalDetalle();
-});
-
-// ══════════════════════════════════════════
-// FLOTA
-// ══════════════════════════════════════════
-const FLOTA_MIN = 915;
-const FLOTA_MAX = 998;
-let flotaData    = [];
-let flotaTaller  = [];
-let flotaViajes  = [];
-let flotaFiltro  = 'todos';
-let cocheSeleccionado = null;
-
-async function cargarFlota() {
-  const hoy = new Date().toISOString().split('T')[0];
-  try {
-    const [jornadas, taller] = await Promise.all([
-      sbFetch(`jornadas?empresa_id=eq.cot&fecha=eq.${hoy}&select=data,chofer_id`),
-      sbFetch('coches_taller?empresa_id=eq.cot&select=*')
-    ]);
-
-    flotaTaller = Array.isArray(taller) ? taller : [];
-
-    // extraer coches en servicio y libres desde jornadas de hoy
-    const cochesServicio = new Set();
-    const cochesLibre    = new Set();
-
-    (Array.isArray(jornadas) ? jornadas : []).forEach(j => {
-      let d = {};
-      try { d = typeof j.data === 'string' ? JSON.parse(j.data) : (j.data || {}); } catch {}
-      const travels = (d.travels || []).filter(t => t.status !== 'cancelado');
-      travels.forEach(t => {
-        if (!t.coche) return;
-        const num = parseInt(t.coche);
-        if (isNaN(num)) return;
-        if (t.status === 'en_curso') cochesServicio.add(num);
-        else cochesLibre.add(num);
-      });
-    });
-
-    const enTaller = new Set(flotaTaller.map(t => t.coche_num));
-
-    flotaData = [];
-    for (let n = FLOTA_MIN; n <= FLOTA_MAX; n++) {
-      let estado = 'inactivo';
-      if (enTaller.has(n))        estado = 'taller';
-      else if (cochesServicio.has(n)) estado = 'servicio';
-      else if (cochesLibre.has(n))    estado = 'libre';
-
-      const tallerInfo = flotaTaller.find(t => t.coche_num === n) || null;
-      flotaData.push({ num: n, estado, tallerInfo });
-    }
-
-    // guardar viajes para tooltip
-    flotaViajes = [];
-    (Array.isArray(jornadas) ? jornadas : []).forEach(j => {
-      let d = {};
-      try { d = typeof j.data === 'string' ? JSON.parse(j.data) : (j.data || {}); } catch {}
-      (d.travels || []).filter(t => t.coche && t.status !== 'cancelado').forEach(t => {
-        flotaViajes.push({
-          coche: parseInt(t.coche),
-          chofer: j.chofer_id,
-          origen: t.origen,
-          destino: t.destino,
-          salida: t.departureTime,
-          llegada: t.arrivalTime,
-          status: t.status
-        });
-      });
-    });
-
-    renderFlotaGrid();
-  } catch(e) {
-    console.error('Error flota:', e);
-    document.getElementById('flotaGrid').innerHTML = '<div class="loading">Error al cargar flota</div>';
-  }
-}
-
-function renderFlotaGrid() {
-  const COLORES = { servicio: '#ef4444', libre: '#10b981', inactivo: '#f59e0b', taller: '#3b82f6' };
-  let s=0, l=0, i=0, t=0;
-  flotaData.forEach(c => {
-    if (c.estado==='servicio') s++;
-    else if (c.estado==='libre') l++;
-    else if (c.estado==='inactivo') i++;
-    else if (c.estado==='taller') t++;
-  });
-  document.getElementById('flotaCntServicio').textContent = s;
-  document.getElementById('flotaCntLibre').textContent    = l;
-  document.getElementById('flotaCntInactivo').textContent = i;
-  document.getElementById('flotaCntTaller').textContent   = t;
-
-  const filtered = flotaFiltro === 'todos' ? flotaData : flotaData.filter(c => c.estado === flotaFiltro);
-  const grid = document.getElementById('flotaGrid');
-  grid.innerHTML = filtered.map(c => `
-    <div
-      onclick="abrirModalTaller(${c.num})"
-      onmouseenter="showFlotaTip(event,${c.num})"
-      onmouseleave="hideFlotaTip()"
-      style="
-        width:48px;height:38px;border-radius:6px;
-        background:${COLORES[c.estado]};
-        display:flex;align-items:center;justify-content:center;
-        font-size:11px;font-weight:600;color:white;cursor:pointer;
-        opacity:${c.estado==='inactivo'?'0.4':'1'};
-        transition:transform 0.1s, opacity 0.2s;
-        font-family:'Space Mono',monospace;
-      "
-      onmouseover="this.style.transform='scale(1.12)'"
-      onmouseout="this.style.transform='scale(1)'"
-    >${c.num}</div>
-  `).join('');
-}
-
-function showFlotaTip(e, num) {
-  const c = flotaData.find(x => x.num === num);
-  if (!c) return;
-  const tip = document.getElementById('flotaTooltip');
-  const viaje = flotaViajes.find(v => v.coche === num);
-
-  let html = `<div style="font-weight:600;margin-bottom:8px;color:var(--text)">Coche ${num}</div>`;
-  if (c.estado === 'servicio' && viaje) {
-    html += `<div style="color:var(--text2);line-height:1.9">
-      Ruta: ${viaje.origen} → ${viaje.destino}<br>
-      Salida: <span style="font-family:var(--mono)">${viaje.salida}</span>
-      &nbsp;Llegada: <span style="font-family:var(--mono)">${viaje.llegada}</span><br>
-      Chofer: ${viaje.chofer}
-    </div>`;
-  } else if (c.estado === 'libre') {
-    html += `<div style="color:var(--ok)">Disponible — sin viaje activo</div>`;
-  } else if (c.estado === 'taller' && c.tallerInfo) {
-    html += `<div style="color:var(--accent)">En taller</div>
-    <div style="color:var(--text2);margin-top:4px">${c.tallerInfo.motivo || '—'}</div>`;
-  } else {
-    html += `<div style="color:var(--text3)">Sin actividad hoy</div>
-    <div style="color:var(--text3);font-size:11px;margin-top:4px">Clic para agregar al taller</div>`;
-  }
-
-  tip.innerHTML = html;
-  tip.style.display = 'block';
-  tip.style.left = (e.clientX + 14) + 'px';
-  tip.style.top  = (e.clientY - 10) + 'px';
-}
-
-function hideFlotaTip() {
-  document.getElementById('flotaTooltip').style.display = 'none';
-}
-
-function setFlotaFiltro(f) {
-  flotaFiltro = f;
-  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('fbtn-active'));
-  const btn = document.getElementById('fbtn-' + f);
-  if (btn) btn.classList.add('fbtn-active');
-  renderFlotaGrid();
-}
-
-function abrirModalTaller(num) {
-  hideFlotaTip();
-  cocheSeleccionado = num;
-  const c = flotaData.find(x => x.num === num);
-  document.getElementById('modalTallerTitle').textContent = `Coche ${num}`;
-  document.getElementById('tallerMotivo').value = c?.tallerInfo?.motivo || '';
-  const modal = document.getElementById('modalTaller');
-  modal.style.display = 'flex';
-}
-
-function cerrarModalTaller() {
-  document.getElementById('modalTaller').style.display = 'none';
-  cocheSeleccionado = null;
-}
-
-async function guardarTaller() {
-  if (!cocheSeleccionado) return;
-  const motivo = document.getElementById('tallerMotivo').value.trim();
-  try {
-    await fetch(`${SB_URL}/rest/v1/coches_taller?empresa_id=eq.cot&coche_num=eq.${cocheSeleccionado}`, {
-      method: 'DELETE',
-      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
-    });
-    await fetch(`${SB_URL}/rest/v1/coches_taller`, {
-      method: 'POST',
-      headers: {
-        'apikey': SB_KEY,
-        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({ empresa_id: 'cot', coche_num: cocheSeleccionado, motivo, desde: new Date().toISOString() })
-    });
-    showToast(`✅ Coche ${cocheSeleccionado} marcado en taller`);
-    cerrarModalTaller();
-    cargarFlota();
-  } catch(e) { showToast('❌ Error al guardar'); }
-}
-
-async function quitarTaller() {
-  if (!cocheSeleccionado) return;
-  try {
-    await fetch(`${SB_URL}/rest/v1/coches_taller?empresa_id=eq.cot&coche_num=eq.${cocheSeleccionado}`, {
-      method: 'DELETE',
-      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
-    });
-    showToast(`✅ Coche ${cocheSeleccionado} quitado del taller`);
-    cerrarModalTaller();
-    cargarFlota();
-  } catch(e) { showToast('❌ Error al quitar'); }
-}
-
-document.addEventListener('click', e => {
-  if (e.target === document.getElementById('modalTaller')) cerrarModalTaller();
-});
-
-// ══════════════════════════════════════════
-// ESTADÍSTICAS
-// ══════════════════════════════════════════
-let todosLosViajes = [];
-let viajesFiltrados = [];
-
-async function cargarEstadisticas() {
-  try {
-    const data = await sbFetch('jornadas?empresa_id=eq.cot&select=data,chofer_id&limit=500');
-    todosLosViajes = [];
-
-    (Array.isArray(data) ? data : []).forEach(j => {
-      let d = {};
-      try { d = typeof j.data === 'string' ? JSON.parse(j.data) : (j.data || {}); } catch {}
-      (d.travels || []).filter(t => t.status === 'finalizado' && t.inicioReal && t.llegadaReal).forEach(t => {
-        const durReal = Math.round((t.llegadaReal - t.inicioReal) / 60000);
-        if (durReal <= 0 || durReal > 600) return;
-        const salida = t.departureTime || '';
-        const horaNum = salida ? parseInt(salida.split(':')[0]) : -1;
-        const fecha = new Date(d.date || Date.now());
-        const mes = fecha.getMonth() + 1;
-        const temporada = (mes >= 11 || mes <= 3) ? 'verano' : 'invierno';
-
-        todosLosViajes.push({
-          fecha: d.date,
-          chofer: j.chofer_id,
-          origen: t.origen || '',
-          destino: t.destino || '',
-          salida,
-          llegadaDecl: t.arrivalTime || '',
-          durReal,
-          durDecl: t.duracionMinutos || 120,
-          tipo: t.tipoServicio || t.turno || '',
-          coche: t.coche || '—',
-          hora: horaNum,
-          diaSemana: fecha.getDay(),
-          temporada,
-          kmEmpresa: t.kmEmpresa || t.kmAuto || 0
-        });
-      });
-    });
-
-    // poblar selects de origen/destino
-    const origenes  = [...new Set(todosLosViajes.map(v => v.origen))].filter(Boolean).sort();
-    const destinos  = [...new Set(todosLosViajes.map(v => v.destino))].filter(Boolean).sort();
-    const selOrigen  = document.getElementById('statOrigen');
-    const selDestino = document.getElementById('statDestino');
-    const oVal = selOrigen.value;
-    const dVal = selDestino.value;
-
-    selOrigen.innerHTML  = '<option value="">Todos los orígenes</option>' + origenes.map(o => `<option value="${o}" ${o===oVal?'selected':''}>${o}</option>`).join('');
-    selDestino.innerHTML = '<option value="">Todos los destinos</option>' + destinos.map(d => `<option value="${d}" ${d===dVal?'selected':''}>${d}</option>`).join('');
-
-    filtrarEstadisticas();
-  } catch(e) {
-    console.error('Error estadísticas:', e);
-  }
-}
-
-function filtrarEstadisticas() {
-  const origen    = document.getElementById('statOrigen').value;
-  const destino   = document.getElementById('statDestino').value;
-  const franja    = document.getElementById('statFranja').value;
-  const dia       = document.getElementById('statDia').value;
-  const temporada = document.getElementById('statTemporada').value;
-
-  viajesFiltrados = todosLosViajes.filter(v => {
-    if (origen    && v.origen    !== origen)    return false;
-    if (destino   && v.destino   !== destino)   return false;
-    if (temporada && v.temporada !== temporada) return false;
-    if (dia !== '' && v.diaSemana !== parseInt(dia)) return false;
-    if (franja) {
-      const [h1, h2] = franja.split('-').map(Number);
-      if (v.hora < h1 || v.hora >= h2) return false;
-    }
-    return true;
-  });
-
-  renderEstadisticas();
-}
-
-function formatMin(min) {
-  if (!min) return '—';
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  return h > 0 ? `${h}h ${m}min` : `${m}min`;
-}
-
-function renderEstadisticas() {
-  const n = viajesFiltrados.length;
-  const promedio  = n ? Math.round(viajesFiltrados.reduce((s,v) => s+v.durReal, 0) / n) : null;
-  const minReal   = n ? Math.min(...viajesFiltrados.map(v=>v.durReal)) : null;
-  const maxReal   = n ? Math.max(...viajesFiltrados.map(v=>v.durReal)) : null;
-  const promDecl  = n ? Math.round(viajesFiltrados.reduce((s,v) => s+v.durDecl, 0) / n) : null;
-
-  // velocidad promedio — solo viajes con km conocidos
-  const viajesConKm = viajesFiltrados.filter(v => v.kmEmpresa > 0 && v.durReal > 0);
-  const velProm = viajesConKm.length
-    ? Math.round(viajesConKm.reduce((s,v) => s + (v.kmEmpresa / (v.durReal / 60)), 0) / viajesConKm.length)
-    : null;
-
-  document.getElementById('statPromedio').innerHTML = promedio
-    ? `${promedio} <span style="font-size:14px;color:var(--text2)">min</span>
-       <div style="font-size:13px;color:var(--accent2);margin-top:2px">${formatMin(promedio)}</div>`
-    : '—';
-  document.getElementById('statVsDec').textContent = promedio && promDecl
-    ? `Declarado: ${promDecl} min (${formatMin(promDecl)})` : '';
-
-  document.getElementById('statRango').innerHTML = minReal !== null
-    ? `${minReal}–${maxReal} <span style="font-size:14px;color:var(--text2)">min</span>
-       <div style="font-size:12px;color:var(--text3);margin-top:2px">${formatMin(minReal)} – ${formatMin(maxReal)}</div>`
-    : '—';
-
-  document.getElementById('statVelocidad').innerHTML = velProm
-    ? `${velProm} <span style="font-size:14px;color:var(--text2)">km/h</span>
-       <div style="font-size:11px;color:var(--text3);margin-top:2px">${viajesConKm.length} viaje${viajesConKm.length===1?'':'s'} con km</div>`
-    : '—';
-
-  document.getElementById('statMuestra').textContent = n
-    ? `${n} viaje${n===1?'':'s'} de muestra` : 'Sin datos';
-
-  if (n < 3) {
-    document.getElementById('statAviso').style.display = 'block';
-    document.getElementById('statAviso').textContent = n === 0
-      ? 'No hay viajes registrados para estos filtros.'
-      : `Muestra baja (${n} viaje${n===1?'':'s'}). Las estadísticas van a mejorar con el uso.`;
-  } else {
-    document.getElementById('statAviso').style.display = 'none';
-  }
-
-  recalcularLlegada();
-  renderTablaEstadisticas();
-}
-
-function recalcularLlegada() {
-  const hora = document.getElementById('statHoraSalida').value;
-  const n = viajesFiltrados.length;
-  if (!hora || !n) { document.getElementById('statLlegada').textContent = '—'; return; }
-  const promedio = Math.round(viajesFiltrados.reduce((s,v) => s+v.durReal, 0) / n);
-  const [h, m] = hora.split(':').map(Number);
-  const totalMin = h*60 + m + promedio;
-  const hh = String(Math.floor(totalMin/60) % 24).padStart(2,'0');
-  const mm = String(totalMin % 60).padStart(2,'0');
-  document.getElementById('statLlegada').textContent = `${hh}:${mm}`;
-}
-
-function renderTablaEstadisticas() {
-  const tbody = document.getElementById('statBody');
-  if (!viajesFiltrados.length) {
-    tbody.innerHTML = '<tr><td colspan="11"><div class="empty-state" style="padding:30px"><p>Sin viajes para estos filtros</p></div></td></tr>';
-    return;
-  }
-
-  const promedio = Math.round(viajesFiltrados.reduce((s,v) => s+v.durReal, 0) / viajesFiltrados.length);
-
-  tbody.innerHTML = [...viajesFiltrados].reverse().map(v => {
-    const diff = v.durReal - v.durDecl;
-    const barra = Math.min(100, Math.round((v.durReal / (promedio * 1.5)) * 100));
-    const color = v.durReal <= promedio ? '#10b981' : v.durReal <= promedio * 1.2 ? '#f59e0b' : '#ef4444';
-    const diffStr = diff >= 0 ? `+${diff} min` : `${diff} min`;
-    const diffColor = diff <= 0 ? '#10b981' : diff <= 15 ? '#f59e0b' : '#ef4444';
-    const velViaje = v.kmEmpresa > 0 ? Math.round(v.kmEmpresa / (v.durReal / 60)) : null;
-
-    return `<tr>
-      <td><span class="mono" style="font-size:11px">${v.fecha || '—'}</span></td>
-      <td><span class="mono" style="font-size:11px">${v.chofer}</span></td>
-      <td>${v.origen}</td>
-      <td>${v.destino}</td>
-      <td><span class="mono">${v.salida}</span></td>
-      <td><span class="mono">${v.llegadaDecl}</span></td>
-      <td>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:50px;height:4px;border-radius:2px;background:var(--border);position:relative;overflow:hidden;flex-shrink:0">
-            <div style="position:absolute;left:0;top:0;height:100%;width:${barra}%;background:${color};border-radius:2px"></div>
-          </div>
-          <div>
-            <span class="mono" style="font-size:11px">${v.durReal} min</span>
-            <span style="font-size:10px;color:var(--text3);margin-left:4px">${formatMin(v.durReal)}</span>
-          </div>
-        </div>
-      </td>
-      <td><span class="mono" style="font-size:11px;color:${diffColor}">${diffStr}</span></td>
-      <td><span class="mono" style="font-size:11px;color:var(--text2)">${velViaje ? velViaje + ' km/h' : '—'}</span></td>
-      <td><span class="badge badge-blue" style="font-size:10px">${v.tipo}</span></td>
-      <td><span class="mono" style="font-size:11px">${v.coche}</span></td>
+  if (!jornadas.length) { tbody.innerHTML='<tr><td colspan="9"><div class="empty-state"><div class="icon">📋</div><p>No hay jornadas registradas</p></div></td></tr>'; return; }
+  tbody.innerHTML = jornadas.map(j=>{
+    let d={};try{d=typeof j.data==='string'?JSON.parse(j.data||'{}'):(j.data||{});}catch{}
+    const travels=(d.travels||[]).filter(t=>t.status!=='cancelado'), guards=d.guards||[];
+    const snap=d.totalsSnapshot||{};
+    const kmViajes=snap.kmViajes??travels.reduce((s,t)=>s+(t.kmEmpresa||t.kmAuto||0),0);
+    const kmGuardias=snap.kmGuardias??guards.reduce((s,g)=>s+(g.kmGuardia||0),0);
+    const kmTotal=snap.kmTotal??(kmViajes+kmGuardias);
+    const viaticos=snap.viaticos??0;
+    const monto=snap.monto??Math.round(kmTotal*7.637);
+    const tipo=d.tipo||'contratado';
+    return `<tr onclick="abrirDetalleJornada('${j.order_number}')" style="cursor:pointer">
+      <td><span class="mono">${d.date||'—'}</span></td>
+      <td><strong style="color:var(--text)">${d.driverName||j.chofer_id||'—'}</strong><br><span class="badge ${tipo==='efectivo'?'badge-blue':'badge-warn'}" style="font-size:10px">${tipo}</span></td>
+      <td><span class="mono">${d.driverLegajo||j.chofer_id||'—'}</span></td>
+      <td style="text-align:center">${travels.length}</td>
+      <td style="text-align:center">${guards.length}</td>
+      <td><span class="mono">${Number(kmTotal).toFixed(1)} km</span></td>
+      <td style="text-align:center">${viaticos}</td>
+      <td><span class="mono">$ ${Math.round(monto)}</span></td>
+      <td><span class="badge ${d.closed?'badge-ok':'badge-warn'}">${d.closed?'✓ Cerrada':'● En curso'}</span></td>
     </tr>`;
   }).join('');
 }
 
+function filtrarJornadas() {
+  const q=document.getElementById('filterJornadaChofer').value.toLowerCase(), fecha=document.getElementById('filterJornadaFecha').value;
+  renderJornadas(allJornadas.filter(j=>{
+    let d={};try{d=typeof j.data==='string'?JSON.parse(j.data||'{}'):(j.data||{});}catch{}
+    return (!q||(d.driverName||'').toLowerCase().includes(q)||(d.driverLegajo||'').toLowerCase().includes(q)||(j.chofer_id||'').toLowerCase().includes(q))&&(!fecha||d.date===fecha);
+  }));
+}
+
+async function cargarAlertas() {
+  try {
+    const data = await sbFetch('registro_alertas?select=*&order=intentado_at.desc');
+    renderAlertas(data);
+    const pend=data.filter(a=>!a.resuelto).length;
+    const badge=document.getElementById('alertBadge');
+    pend>0?(badge.textContent=pend,badge.style.display='inline'):badge.style.display='none';
+    document.getElementById('statAlertas').textContent=pend;
+  } catch(e){document.getElementById('alertasContainer').innerHTML='<div class="empty-state"><div class="icon">❌</div><p>Error al cargar alertas</p></div>';}
+}
+
+function alertaCard(a,mini=false) {
+  const fecha=a.intentado_at?new Date(a.intentado_at).toLocaleString('es-UY'):'—';
+  return `<div class="alert-card ${a.resuelto?'resolved':''}">
+    <div class="alert-info">
+      <div class="alert-title">${a.resuelto?'✅':'⚠️'} Legajo ${a.legajo||'—'} — ${a.nombre||'—'}</div>
+      <div class="alert-detail">Fecha: ${fecha}<br>Device actual: ${(a.device_id_actual||'—').substring(0,30)}…<br>Device nuevo: ${(a.device_id_nuevo||'—').substring(0,30)}…</div>
+    </div>
+    ${!mini&&!a.resuelto?`<div class="alert-actions"><button class="btn-action btn-approve" onclick="resolverAlerta('${a.id}',true)">✓ Autorizar</button><button class="btn-action btn-reject" onclick="resolverAlerta('${a.id}',false)">✕ Rechazar</button></div>`:''}
+  </div>`;
+}
+
+function renderAlertas(alertas) {
+  const c=document.getElementById('alertasContainer');
+  if (!alertas.length){c.innerHTML='<div class="empty-state"><div class="icon">✅</div><p>Sin alertas</p></div>';return;}
+  c.innerHTML=alertas.map(a=>alertaCard(a)).join('');
+}
+
+async function resolverAlerta(id,autorizar) {
+  try {
+    if (autorizar) {
+      const alertas=await sbFetch(`registro_alertas?id=eq.${id}&select=*`);
+      const alerta=alertas[0];
+      if (alerta) await fetch(`${SB_URL}/rest/v1/choferes?empresa_id=eq.cot&legajo=eq.${alerta.legajo}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${localStorage.getItem('admin_token')}`,'Content-Type':'application/json'},body:JSON.stringify({device_id:alerta.device_id_nuevo})});
+    }
+    await fetch(`${SB_URL}/rest/v1/registro_alertas?id=eq.${id}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${localStorage.getItem('admin_token')}`,'Content-Type':'application/json'},body:JSON.stringify({resuelto:true,resolucion:autorizar?'autorizado':'rechazado'})});
+    showToast(autorizar?'✅ Dispositivo autorizado':'✕ Solicitud rechazada');
+    cargarAlertas(); cargarDashboard();
+  } catch(e){showToast('❌ Error al procesar');}
+}
+
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.display='block';
+  setTimeout(()=>{t.style.display='none';},3000);
+}
+
+let allRotacion=[];
+async function cargarRotacion() {
+  try {
+    const funcionarios=await sbFetch('rotacion?select=*&order=posicion_actual.asc');
+    const servicios=await sbFetch('servicios_rotacion?temporada=eq.invierno&select=*&order=posicion.asc');
+    const rotacion=funcionarios.map(f=>({...f,servicio:servicios.find(s=>s.posicion===f.posicion_actual)||null}));
+    allRotacion=rotacion;
+    document.getElementById('rotEnServicio').textContent=rotacion.filter(r=>r.servicio&&!r.servicio.es_descanso).length;
+    document.getElementById('rotDescanso').textContent=rotacion.filter(r=>r.servicio&&r.servicio.es_descanso).length;
+    document.getElementById('rotAgregar').textContent=rotacion.filter(r=>r.servicio&&r.servicio.puede_agregar).length;
+    const v=servicios[0]?servicios[0].vigencia_desde:null;
+    document.getElementById('rotVigencia').textContent=v?new Date(v).toLocaleDateString('es-UY'):'—';
+    renderRotacion(rotacion);
+  } catch(e){console.error('Error rotacion:',e);document.getElementById('rotacionBody').innerHTML='<tr><td colspan="8" class="loading">Error al cargar rotación</td></tr>';}
+}
+
+function formatServicio(hora,destino,tipo) {
+  if (!hora&&!destino) return null;
+  if (!hora&&destino) return `<span style="color:var(--text3);font-size:11px">${destino}</span>`;
+  const color=tipo==='DIRECTO'?'var(--accent2)':tipo==='TURNO'?'var(--text)':'var(--text2)';
+  return `<div style="line-height:1.6"><span style="font-family:var(--mono);font-size:12px;color:var(--ok)">${hora}</span><span style="font-size:12px;color:${color};margin-left:4px">${destino||''}</span>${tipo?`<span style="font-size:10px;color:var(--text3);margin-left:4px">${tipo}</span>`:''}</div>`;
+}
+
+function renderRotacion(rotacion) {
+  const tbody=document.getElementById('rotacionBody');
+  if (!rotacion.length){tbody.innerHTML='<tr><td colspan="8"><div class="empty-state"><div class="icon">🔄</div><p>No hay datos de rotación</p></div></td></tr>';return;}
+  tbody.innerHTML=rotacion.map(r=>{
+    const s=r.servicio,esDescanso=s&&s.es_descanso,puedeAgregar=s&&s.puede_agregar;
+    const srv1=s?formatServicio(s.servicio_1_hora,s.servicio_1_destino,s.servicio_1_tipo):null;
+    const srv2=s?formatServicio(s.servicio_2_hora,s.servicio_2_destino,s.servicio_2_tipo):null;
+    const srv3=s?formatServicio(s.servicio_3_hora,s.servicio_3_destino,s.servicio_3_tipo):null;
+    const srv4=s?formatServicio(s.servicio_4_hora,s.servicio_4_destino,s.servicio_4_tipo):null;
+    let estadoBadge=esDescanso?'<span class="badge" style="background:rgba(71,85,105,.3);color:var(--text3)">🟢 Descanso</span>':puedeAgregar?'<span class="badge badge-warn">+ Puede agregar</span>':'<span class="badge badge-ok">● En servicio</span>';
+    if (r.es_suplente) estadoBadge+=`<br><span style="font-size:10px;color:var(--warn);font-family:var(--mono)">suplente de ${r.funcionario_titular}</span>`;
+    return `<tr style="${esDescanso?'opacity:.5':''}">
+      <td><span class="mono" style="color:var(--accent)">${r.posicion_actual}</span></td>
+      <td><span class="mono">${r.nro_fun}</span></td>
+      <td style="color:var(--text);font-size:13px">${r.apellidos_nombres}</td>
+      <td>${esDescanso?'<span style="color:var(--text3);font-size:12px">— DESCANSO —</span>':(srv1||'—')}</td>
+      <td>${srv2||'—'}</td><td>${srv3||'—'}</td><td>${srv4||'—'}</td>
+      <td>${estadoBadge}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filtrarRotacion() {
+  const q=document.getElementById('filterRotacion').value.toLowerCase(), filtro=document.getElementById('filterRotDescanso').value;
+  renderRotacion(allRotacion.filter(r=>{
+    const matchQ=!q||(r.apellidos_nombres||'').toLowerCase().includes(q)||(r.nro_fun||'').toLowerCase().includes(q);
+    const s=r.servicio; let matchF=true;
+    if (filtro==='servicio') matchF=s&&!s.es_descanso;
+    if (filtro==='descanso') matchF=s&&s.es_descanso;
+    if (filtro==='agregar') matchF=s&&s.puede_agregar;
+    return matchQ&&matchF;
+  }));
+}
+
+async function generarViajesSiguiente() {
+  if (!confirm('¿Generar viajes programados para mañana?')) return;
+  const manana=new Date(); manana.setDate(manana.getDate()+1);
+  const fechaManana=manana.toISOString().split('T')[0];
+  let generados=0,errores=0;
+  for (const r of allRotacion) {
+    const s=r.servicio; if (!s||s.es_descanso) continue;
+    const viajes=[[s.servicio_1_hora,s.servicio_1_destino,s.servicio_1_tipo],[s.servicio_2_hora,s.servicio_2_destino,s.servicio_2_tipo],[s.servicio_3_hora,s.servicio_3_destino,s.servicio_3_tipo],[s.servicio_4_hora,s.servicio_4_destino,s.servicio_4_tipo]].filter(([h,d])=>h&&d).map(([hora,destino,tipo])=>({hora,destino,tipo,status:'programado'}));
+    if (!viajes.length) continue;
+    try {
+      await fetch(`${SB_URL}/rest/v1/jornadas`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${localStorage.getItem('admin_token')}`,'Content-Type':'application/json','Prefer':'resolution=ignore-duplicates'},body:JSON.stringify({empresa_id:'cot',chofer_id:r.nro_fun,order_number:`${fechaManana}-${r.nro_fun}`,data:JSON.stringify({date:fechaManana,driverLegajo:r.nro_fun,driverName:r.apellidos_nombres,posicion:r.posicion_actual,travels:viajes,tipo:'efectivo',generado_auto:true})})});
+      generados++;
+    } catch(e){errores++;}
+  }
+  showToast(`✅ ${generados} jornadas generadas${errores?` (${errores} errores)`:''}`);
+}
+
+function abrirDetalleJornada(orderNumber) {
+  const j=allJornadas.find(x=>x.order_number===orderNumber); if (!j) return;
+  let d={};try{d=typeof j.data==='string'?JSON.parse(j.data||'{}'):(j.data||{});}catch{}
+  const travels=(d.travels||[]).filter(t=>t.status!=='cancelado'), guards=d.guards||[], tipo=d.tipo||'contratado';
+  const snap=d.totalsSnapshot||{};
+  const kmViajes=snap.kmViajes??travels.reduce((s,t)=>s+(t.kmEmpresa||t.kmAuto||0),0);
+  const kmGuardias=snap.kmGuardias??guards.reduce((s,g)=>s+(g.kmGuardia||0),0);
+  const kmTomeCese=snap.kmTomeCese??0, kmAcoplados=snap.kmAcoplados??0;
+  const kmTotal=snap.kmTotal??(kmViajes+kmGuardias), viaticos=snap.viaticos??0, monto=snap.monto??Math.round(kmTotal*7.637);
+  document.getElementById('modalDetalleTitle').textContent=`Jornada ${d.date||'—'} — ${d.driverName||j.chofer_id} (${d.driverLegajo||j.chofer_id})`;
+  let html=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+    <div class="stat-card" style="padding:14px"><div class="stat-label">Tipo</div><div style="font-size:14px;margin-top:4px"><span class="badge ${tipo==='efectivo'?'badge-blue':'badge-warn'}">${tipo}</span></div></div>
+    <div class="stat-card" style="padding:14px"><div class="stat-label">Estado</div><div style="font-size:14px;margin-top:4px"><span class="badge ${d.closed?'badge-ok':'badge-warn'}">${d.closed?'✓ Cerrada':'● En curso'}</span></div></div>
+    <div class="stat-card" style="padding:14px"><div class="stat-label">KM Total</div><div class="stat-value" style="font-size:24px">${Number(kmTotal).toFixed(1)}</div></div>
+    <div class="stat-card" style="padding:14px"><div class="stat-label">Monto</div><div class="stat-value ok" style="font-size:24px">$ ${Math.round(monto)}</div></div>
+    <div class="stat-card" style="padding:14px"><div class="stat-label">KM Viajes</div><div style="font-family:var(--mono);font-size:16px;color:var(--text)">${Number(kmViajes).toFixed(1)} km</div></div>
+    <div class="stat-card" style="padding:14px"><div class="stat-label">KM Guardias</div><div style="font-family:var(--mono);font-size:16px;color:var(--text)">${Number(kmGuardias).toFixed(1)} km</div></div>
+    <div class="stat-card" style="padding:14px"><div class="stat-label">Tome y Cese</div><div style="font-family:var(--mono);font-size:16px;color:var(--text)">${Number(kmTomeCese).toFixed(1)} km</div></div>
+    <div class="stat-card" style="padding:14px"><div class="stat-label">Acoplados</div><div style="font-family:var(--mono);font-size:16px;color:var(--text)">${Number(kmAcoplados).toFixed(1)} km</div></div>
+    <div class="stat-card" style="padding:14px;grid-column:1/-1"><div class="stat-label">Viáticos</div><div style="font-family:var(--mono);font-size:16px;color:var(--text)">${viaticos} × $455 = <span style="color:var(--ok)">$ ${viaticos*455}</span></div></div>
+  </div>`;
+  if (travels.length) {
+    html+=`<div class="section-title" style="margin-bottom:12px">🚍 Viajes (${travels.length})</div><div class="table-wrap" style="margin-bottom:20px"><table><thead><tr><th>Origen</th><th>Destino</th><th>Salida</th><th>Llegada</th><th>Km</th><th>Tipo</th><th>Acoplado</th><th>Coche</th></tr></thead><tbody>`;
+    travels.forEach(v=>{
+      const km=Number(v.kmEmpresa||v.kmAuto||0).toFixed(1), acopKm=Number(v.acopladoKm||0).toFixed(1), tc=v.tomeCese?' <span style="font-size:10px;color:var(--accent2)">[T/C]</span>':'';
+      html+=`<tr><td>${v.origen||'—'}${tc}</td><td>${v.destino||'—'}</td><td><span class="mono">${v.departureTime||'—'}</span></td><td><span class="mono">${v.arrivalTime||'—'}</span></td><td><span class="mono">${km} km</span></td><td><span class="badge badge-blue" style="font-size:10px">${v.tipoServicio||v.turno||'—'}</span></td><td><span class="mono" style="color:${v.acoplado?'var(--warn)':'var(--text3)'}">${v.acoplado?acopKm+' km':'—'}</span></td><td>${v.coche||'—'}</td></tr>`;
+    });
+    html+='</tbody></table></div>';
+  }
+  if (guards.length) {
+    html+=`<div class="section-title" style="margin-bottom:12px">🕐 Guardias (${guards.length})</div><div class="table-wrap"><table><thead><tr><th>Inicio</th><th>Fin</th><th>Horas</th><th>Km</th><th>Tipo</th><th>Auto-cortada</th><th>Viático</th></tr></thead><tbody>`;
+    guards.forEach(g=>{
+      const kmHora=g.type==='especial'?40:30; let horas=g.hours||0,km=g.kmGuardia||0;
+      if (g.inicio&&g.fin){const[hI,mI]=g.inicio.split(':').map(Number),[hF,mF]=g.fin.split(':').map(Number);let calc=(hF+mF/60)-(hI+mI/60);if(calc<0)calc+=24;if(calc>0){horas=calc;km=horas*kmHora;}}
+      html+=`<tr><td><span class="mono">${g.inicio||'—'}</span></td><td><span class="mono">${g.fin||'—'}</span></td><td><span class="mono">${Number(horas).toFixed(2)} h</span></td><td><span class="mono">${Number(km).toFixed(1)} km</span></td><td>${g.type||'—'}</td><td>${g.cortadaAuto?'<span style="color:var(--warn)">✓ Sí</span>':'—'}</td><td>${g.viatico?'✅':'—'}</td></tr>`;
+    });
+    html+='</tbody></table></div>';
+  }
+  document.getElementById('modalDetalleBody').innerHTML=html;
+  document.getElementById('modalDetalle').style.display='block';
+}
+
+function cerrarModalDetalle(){document.getElementById('modalDetalle').style.display='none';}
+document.addEventListener('click',e=>{if(e.target===document.getElementById('modalDetalle'))cerrarModalDetalle();});
+
+// ── FLOTA ──
+const FLOTA_MIN=915,FLOTA_MAX=998;
+let flotaData=[],flotaTaller=[],flotaViajes=[],flotaFiltro='todos',cocheSeleccionado=null;
+
+async function cargarFlota() {
+  const hoy=new Date().toISOString().split('T')[0];
+  try {
+    const [jornadas,taller]=await Promise.all([sbFetch(`jornadas?empresa_id=eq.cot&fecha=eq.${hoy}&select=data,chofer_id`),sbFetch('coches_taller?empresa_id=eq.cot&select=*')]);
+    flotaTaller=Array.isArray(taller)?taller:[];
+    const cochesServicio=new Set(),cochesLibre=new Set();
+    (Array.isArray(jornadas)?jornadas:[]).forEach(j=>{
+      let d={};try{d=typeof j.data==='string'?JSON.parse(j.data):(j.data||{});}catch{}
+      (d.travels||[]).filter(t=>t.status!=='cancelado').forEach(t=>{
+        if (!t.coche) return; const num=parseInt(t.coche); if (isNaN(num)) return;
+        t.status==='en_curso'?cochesServicio.add(num):cochesLibre.add(num);
+      });
+    });
+    const enTaller=new Set(flotaTaller.map(t=>t.coche_num));
+    flotaData=[];
+    for (let n=FLOTA_MIN;n<=FLOTA_MAX;n++) {
+      let estado='inactivo';
+      if (enTaller.has(n)) estado='taller';
+      else if (cochesServicio.has(n)) estado='servicio';
+      else if (cochesLibre.has(n)) estado='libre';
+      flotaData.push({num:n,estado,tallerInfo:flotaTaller.find(t=>t.coche_num===n)||null});
+    }
+    flotaViajes=[];
+    (Array.isArray(jornadas)?jornadas:[]).forEach(j=>{
+      let d={};try{d=typeof j.data==='string'?JSON.parse(j.data):(j.data||{});}catch{}
+      (d.travels||[]).filter(t=>t.coche&&t.status!=='cancelado').forEach(t=>{flotaViajes.push({coche:parseInt(t.coche),chofer:j.chofer_id,origen:t.origen,destino:t.destino,salida:t.departureTime,llegada:t.arrivalTime,status:t.status});});
+    });
+    renderFlotaGrid();
+  } catch(e){console.error('Error flota:',e);document.getElementById('flotaGrid').innerHTML='<div class="loading">Error al cargar flota</div>';}
+}
+
+function renderFlotaGrid() {
+  const COLORES={servicio:'#ef4444',libre:'#10b981',inactivo:'#f59e0b',taller:'#3b82f6'};
+  let s=0,l=0,i=0,t=0;
+  flotaData.forEach(c=>{if(c.estado==='servicio')s++;else if(c.estado==='libre')l++;else if(c.estado==='inactivo')i++;else if(c.estado==='taller')t++;});
+  document.getElementById('flotaCntServicio').textContent=s;
+  document.getElementById('flotaCntLibre').textContent=l;
+  document.getElementById('flotaCntInactivo').textContent=i;
+  document.getElementById('flotaCntTaller').textContent=t;
+  const filtered=flotaFiltro==='todos'?flotaData:flotaData.filter(c=>c.estado===flotaFiltro);
+  document.getElementById('flotaGrid').innerHTML=filtered.map(c=>`<div onclick="abrirModalTaller(${c.num})" onmouseenter="showFlotaTip(event,${c.num})" onmouseleave="hideFlotaTip()" style="width:48px;height:38px;border-radius:6px;background:${COLORES[c.estado]};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:white;cursor:pointer;opacity:${c.estado==='inactivo'?'.4':'1'};transition:transform .1s;font-family:'Space Mono',monospace;" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">${c.num}</div>`).join('');
+}
+
+function showFlotaTip(e,num) {
+  const c=flotaData.find(x=>x.num===num); if (!c) return;
+  const tip=document.getElementById('flotaTooltip'), viaje=flotaViajes.find(v=>v.coche===num);
+  let html=`<div style="font-weight:600;margin-bottom:8px;color:var(--text)">Coche ${num}</div>`;
+  if (c.estado==='servicio'&&viaje) html+=`<div style="color:var(--text2);line-height:1.9">Ruta: ${viaje.origen} → ${viaje.destino}<br>Salida: <span style="font-family:var(--mono)">${viaje.salida}</span> Llegada: <span style="font-family:var(--mono)">${viaje.llegada}</span><br>Chofer: ${viaje.chofer}</div>`;
+  else if (c.estado==='libre') html+=`<div style="color:var(--ok)">Disponible — sin viaje activo</div>`;
+  else if (c.estado==='taller'&&c.tallerInfo) html+=`<div style="color:var(--accent)">En taller</div><div style="color:var(--text2);margin-top:4px">${c.tallerInfo.motivo||'—'}</div>`;
+  else html+=`<div style="color:var(--text3)">Sin actividad hoy</div><div style="color:var(--text3);font-size:11px;margin-top:4px">Clic para agregar al taller</div>`;
+  tip.innerHTML=html; tip.style.display='block'; tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY-10)+'px';
+}
+function hideFlotaTip(){document.getElementById('flotaTooltip').style.display='none';}
+function setFlotaFiltro(f){flotaFiltro=f;document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('fbtn-active'));const btn=document.getElementById('fbtn-'+f);if(btn)btn.classList.add('fbtn-active');renderFlotaGrid();}
+function abrirModalTaller(num){hideFlotaTip();cocheSeleccionado=num;const c=flotaData.find(x=>x.num===num);document.getElementById('modalTallerTitle').textContent=`Coche ${num}`;document.getElementById('tallerMotivo').value=c?.tallerInfo?.motivo||'';document.getElementById('modalTaller').style.display='flex';}
+function cerrarModalTaller(){document.getElementById('modalTaller').style.display='none';cocheSeleccionado=null;}
+async function guardarTaller(){
+  if (!cocheSeleccionado) return;
+  const motivo=document.getElementById('tallerMotivo').value.trim();
+  try {
+    await fetch(`${SB_URL}/rest/v1/coches_taller?empresa_id=eq.cot&coche_num=eq.${cocheSeleccionado}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${localStorage.getItem('admin_token')}`}});
+    await fetch(`${SB_URL}/rest/v1/coches_taller`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${localStorage.getItem('admin_token')}`,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({empresa_id:'cot',coche_num:cocheSeleccionado,motivo,desde:new Date().toISOString()})});
+    showToast(`✅ Coche ${cocheSeleccionado} marcado en taller`); cerrarModalTaller(); cargarFlota();
+  } catch(e){showToast('❌ Error al guardar');}
+}
+async function quitarTaller(){
+  if (!cocheSeleccionado) return;
+  try {
+    await fetch(`${SB_URL}/rest/v1/coches_taller?empresa_id=eq.cot&coche_num=eq.${cocheSeleccionado}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${localStorage.getItem('admin_token')}`}});
+    showToast(`✅ Coche ${cocheSeleccionado} quitado del taller`); cerrarModalTaller(); cargarFlota();
+  } catch(e){showToast('❌ Error al quitar');}
+}
+document.addEventListener('click',e=>{if(e.target===document.getElementById('modalTaller'))cerrarModalTaller();});
+
+// ── ESTADÍSTICAS ──
+let todosLosViajes=[],viajesFiltrados=[];
+async function cargarEstadisticas(){
+  try {
+    const data=await sbFetch('jornadas?empresa_id=eq.cot&select=data,chofer_id&limit=500');
+    todosLosViajes=[];
+    (Array.isArray(data)?data:[]).forEach(j=>{
+      let d={};try{d=typeof j.data==='string'?JSON.parse(j.data):(j.data||{});}catch{}
+      (d.travels||[]).filter(t=>t.status==='finalizado'&&t.inicioReal&&t.llegadaReal).forEach(t=>{
+        const durReal=Math.round((t.llegadaReal-t.inicioReal)/60000);
+        if (durReal<=0||durReal>600) return;
+        const salida=t.departureTime||'', horaNum=salida?parseInt(salida.split(':')[0]):-1;
+        const fecha=new Date(d.date||Date.now()), mes=fecha.getMonth()+1;
+        todosLosViajes.push({fecha:d.date,chofer:j.chofer_id,origen:t.origen||'',destino:t.destino||'',salida,llegadaDecl:t.arrivalTime||'',durReal,durDecl:t.duracionMinutos||120,tipo:t.tipoServicio||t.turno||'',coche:t.coche||'—',hora:horaNum,diaSemana:fecha.getDay(),temporada:(mes>=11||mes<=3)?'verano':'invierno',kmEmpresa:t.kmEmpresa||t.kmAuto||0});
+      });
+    });
+    const origenes=[...new Set(todosLosViajes.map(v=>v.origen))].filter(Boolean).sort();
+    const destinos=[...new Set(todosLosViajes.map(v=>v.destino))].filter(Boolean).sort();
+    const selO=document.getElementById('statOrigen'), selD=document.getElementById('statDestino');
+    const oV=selO.value, dV=selD.value;
+    selO.innerHTML='<option value="">Todos los orígenes</option>'+origenes.map(o=>`<option value="${o}" ${o===oV?'selected':''}>${o}</option>`).join('');
+    selD.innerHTML='<option value="">Todos los destinos</option>'+destinos.map(d=>`<option value="${d}" ${d===dV?'selected':''}>${d}</option>`).join('');
+    filtrarEstadisticas();
+  } catch(e){console.error('Error estadísticas:',e);}
+}
+function filtrarEstadisticas(){
+  const origen=document.getElementById('statOrigen').value, destino=document.getElementById('statDestino').value;
+  const franja=document.getElementById('statFranja').value, dia=document.getElementById('statDia').value;
+  const temporada=document.getElementById('statTemporada').value;
+  viajesFiltrados=todosLosViajes.filter(v=>{
+    if (origen&&v.origen!==origen) return false;
+    if (destino&&v.destino!==destino) return false;
+    if (temporada&&v.temporada!==temporada) return false;
+    if (dia!==''&&v.diaSemana!==parseInt(dia)) return false;
+    if (franja){const[h1,h2]=franja.split('-').map(Number);if(v.hora<h1||v.hora>=h2)return false;}
+    return true;
+  });
+  renderEstadisticas();
+}
+function formatMin(min){if(!min)return'—';const h=Math.floor(min/60),m=min%60;return h>0?`${h}h ${m}min`:`${m}min`;}
+function renderEstadisticas(){
+  const n=viajesFiltrados.length;
+  const promedio=n?Math.round(viajesFiltrados.reduce((s,v)=>s+v.durReal,0)/n):null;
+  const minReal=n?Math.min(...viajesFiltrados.map(v=>v.durReal)):null;
+  const maxReal=n?Math.max(...viajesFiltrados.map(v=>v.durReal)):null;
+  const promDecl=n?Math.round(viajesFiltrados.reduce((s,v)=>s+v.durDecl,0)/n):null;
+  const viajesConKm=viajesFiltrados.filter(v=>v.kmEmpresa>0&&v.durReal>0);
+  const velProm=viajesConKm.length?Math.round(viajesConKm.reduce((s,v)=>s+(v.kmEmpresa/(v.durReal/60)),0)/viajesConKm.length):null;
+  document.getElementById('statPromedio').innerHTML=promedio?`${promedio} <span style="font-size:14px;color:var(--text2)">min</span><div style="font-size:13px;color:var(--accent2);margin-top:2px">${formatMin(promedio)}</div>`:'—';
+  document.getElementById('statVsDec').textContent=promedio&&promDecl?`Declarado: ${promDecl} min (${formatMin(promDecl)})`:'';
+  document.getElementById('statRango').innerHTML=minReal!==null?`${minReal}–${maxReal} <span style="font-size:14px;color:var(--text2)">min</span><div style="font-size:12px;color:var(--text3);margin-top:2px">${formatMin(minReal)} – ${formatMin(maxReal)}</div>`:'—';
+  document.getElementById('statVelocidad').innerHTML=velProm?`${velProm} <span style="font-size:14px;color:var(--text2)">km/h</span><div style="font-size:11px;color:var(--text3);margin-top:2px">${viajesConKm.length} viaje${viajesConKm.length===1?'':'s'} con km</div>`:'—';
+  document.getElementById('statMuestra').textContent=n?`${n} viaje${n===1?'':'s'} de muestra`:'Sin datos';
+  if (n<3){document.getElementById('statAviso').style.display='block';document.getElementById('statAviso').textContent=n===0?'No hay viajes registrados para estos filtros.':`Muestra baja (${n} viaje${n===1?'':'s'}). Las estadísticas van a mejorar con el uso.`;}
+  else document.getElementById('statAviso').style.display='none';
+  recalcularLlegada(); renderTablaEstadisticas();
+}
+function recalcularLlegada(){
+  const hora=document.getElementById('statHoraSalida').value, n=viajesFiltrados.length;
+  if (!hora||!n){document.getElementById('statLlegada').textContent='—';return;}
+  const promedio=Math.round(viajesFiltrados.reduce((s,v)=>s+v.durReal,0)/n);
+  const[h,m]=hora.split(':').map(Number), totalMin=h*60+m+promedio;
+  document.getElementById('statLlegada').textContent=`${String(Math.floor(totalMin/60)%24).padStart(2,'0')}:${String(totalMin%60).padStart(2,'0')}`;
+}
+function renderTablaEstadisticas(){
+  const tbody=document.getElementById('statBody');
+  if (!viajesFiltrados.length){tbody.innerHTML='<tr><td colspan="11"><div class="empty-state" style="padding:30px"><p>Sin viajes para estos filtros</p></div></td></tr>';return;}
+  const promedio=Math.round(viajesFiltrados.reduce((s,v)=>s+v.durReal,0)/viajesFiltrados.length);
+  tbody.innerHTML=[...viajesFiltrados].reverse().map(v=>{
+    const diff=v.durReal-v.durDecl, barra=Math.min(100,Math.round((v.durReal/(promedio*1.5))*100));
+    const color=v.durReal<=promedio?'#10b981':v.durReal<=promedio*1.2?'#f59e0b':'#ef4444';
+    const diffStr=diff>=0?`+${diff} min`:`${diff} min`, diffColor=diff<=0?'#10b981':diff<=15?'#f59e0b':'#ef4444';
+    const velViaje=v.kmEmpresa>0?Math.round(v.kmEmpresa/(v.durReal/60)):null;
+    return `<tr><td><span class="mono" style="font-size:11px">${v.fecha||'—'}</span></td><td><span class="mono" style="font-size:11px">${v.chofer}</span></td><td>${v.origen}</td><td>${v.destino}</td><td><span class="mono">${v.salida}</span></td><td><span class="mono">${v.llegadaDecl}</span></td>
+    <td><div style="display:flex;align-items:center;gap:8px"><div style="width:50px;height:4px;border-radius:2px;background:var(--border);position:relative;overflow:hidden;flex-shrink:0"><div style="position:absolute;left:0;top:0;height:100%;width:${barra}%;background:${color};border-radius:2px"></div></div><div><span class="mono" style="font-size:11px">${v.durReal} min</span><span style="font-size:10px;color:var(--text3);margin-left:4px">${formatMin(v.durReal)}</span></div></div></td>
+    <td><span class="mono" style="font-size:11px;color:${diffColor}">${diffStr}</span></td><td><span class="mono" style="font-size:11px;color:var(--text2)">${velViaje?velViaje+' km/h':'—'}</span></td><td><span class="badge badge-blue" style="font-size:10px">${v.tipo}</span></td><td><span class="mono" style="font-size:11px">${v.coche}</span></td></tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// MENSAJES
+// ══════════════════════════════════════════
+async function cargarMensajes() {
+  try {
+    const data = await sbFetch('mensajes?empresa_id=eq.cot&order=creado_at.desc&limit=50');
+    allMensajes = Array.isArray(data) ? data : [];
+    const noLeidos = allMensajes.filter(m => !m.leido).length;
+    const badge = document.getElementById('msgBadge');
+    noLeidos > 0 ? (badge.textContent = noLeidos, badge.style.display = 'inline') : badge.style.display = 'none';
+    renderMensajes();
+  } catch(e) { console.error('Error mensajes:', e); }
+}
+
+function filtrarMsgs(f) {
+  msgFiltro = f;
+  document.querySelectorAll('[id^="mfbtn-"]').forEach(b => b.classList.remove('fbtn-active'));
+  const btn = document.getElementById('mfbtn-' + f);
+  if (btn) btn.classList.add('fbtn-active');
+  renderMensajes();
+}
+
+function renderMensajes() {
+  const c = document.getElementById('mensajesContainer');
+  let lista = allMensajes;
+  if (msgFiltro === 'no-leido') lista = lista.filter(m => !m.leido);
+  if (msgFiltro === 'leido') lista = lista.filter(m => m.leido);
+  if (!lista.length) { c.innerHTML = '<div class="empty-state"><div class="icon">💬</div><p>No hay mensajes</p></div>'; return; }
+
+  c.innerHTML = lista.map(m => {
+    const fecha = m.creado_at ? new Date(m.creado_at).toLocaleString('es-UY') : '—';
+    const para = m.para === 'todos' ? '📢 Todos' : `👤 Legajo ${m.para}`;
+    const tipoClass = m.tipo === 'asignacion' ? 'asignacion' : m.tipo === 'urgente' ? 'asignacion' : 'mensaje';
+    const tipoLabel = m.tipo === 'asignacion' ? '✅ Asignación' : m.tipo === 'urgente' ? '🔴 Urgente' : '💬 Mensaje';
+    return `<div class="msg-card ${m.leido ? 'leido' : 'no-leido'}">
+      <div class="msg-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="msg-para">${para}</span>
+          <span class="msg-tipo ${tipoClass}">${tipoLabel}</span>
+          ${!m.leido ? '<span class="tab-badge" style="font-size:9px">NUEVO</span>' : ''}
+        </div>
+        <span class="msg-fecha">${fecha}</span>
+      </div>
+      <div class="msg-texto">${m.texto || '—'}</div>
+    </div>`;
+  }).join('');
+}
+
+async function enviarMensaje() {
+  const para = document.getElementById('msgPara').value;
+  const tipo = document.getElementById('msgTipo').value;
+  const texto = document.getElementById('msgTexto').value.trim();
+  if (!texto) { showToast('⚠️ Escribí un mensaje'); return; }
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/mensajes`, {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${localStorage.getItem('admin_token')}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ empresa_id: 'cot', de: 'admin', para, tipo, texto, leido: false })
+    });
+    if (!res.ok) { showToast('❌ Error al enviar'); return; }
+    document.getElementById('msgTexto').value = '';
+    showToast(`✅ Mensaje enviado a ${para === 'todos' ? 'todos' : 'legajo ' + para}`);
+    cargarMensajes();
+  } catch(e) { showToast('❌ Error al enviar'); }
+}
+
+function showError(msg) { const e=document.getElementById('loginError'); e.textContent=msg; e.style.display='block'; }
 </script>
 </body>
 </html>

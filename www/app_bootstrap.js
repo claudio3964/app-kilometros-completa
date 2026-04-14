@@ -220,6 +220,10 @@ function iniciarBootstrap() {
     btnLimpiar._bound = true;
     btnLimpiar.addEventListener("click", limpiarTodosLosDatos);
   }
+  // Iniciar polling de mensajes
+if (typeof iniciarPollingMensajes === 'function') {
+  iniciarPollingMensajes();
+}
 }
 
 window.iniciarBootstrap = iniciarBootstrap;
