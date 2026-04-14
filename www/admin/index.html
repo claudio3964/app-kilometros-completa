@@ -96,11 +96,45 @@
     .msg-tipo{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;}
     .msg-tipo.mensaje{background:rgba(59,130,246,.15);color:var(--accent);}
     .msg-tipo.asignacion{background:rgba(16,185,129,.15);color:var(--ok);}
+    .msg-tipo.urgente{background:rgba(239,68,68,.15);color:var(--danger);}
     .compose-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;}
+    /* ASIGNACION FIELDS */
+    #camposAsignacion{
+      background:rgba(16,185,129,.05);
+      border:1px solid rgba(16,185,129,.2);
+      border-radius:10px;
+      padding:16px;
+      margin-bottom:12px;
+      display:none;
+    }
+    #camposAsignacion.visible{display:block;}
+    .asig-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .asig-field label{display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+    .asig-field input, .asig-field select{
+      width:100%;background:var(--bg3);border:1px solid var(--border);
+      border-radius:8px;padding:9px 12px;color:var(--text);
+      font-family:var(--sans);font-size:13px;outline:none;
+    }
+    .asig-field input:focus, .asig-field select:focus{border-color:var(--ok);}
+    /* MSG CARD VIAJE */
+    .msg-viaje-data{
+      margin-top:10px;padding:10px 12px;
+      background:var(--bg3);border-radius:8px;
+      font-size:12px;color:var(--text2);line-height:1.8;
+    }
+    .msg-viaje-data span{color:var(--text);font-weight:600;}
+    .msg-respuesta{
+      margin-top:8px;padding:6px 10px;
+      border-radius:6px;font-size:11px;font-weight:600;
+      display:inline-block;
+    }
+    .msg-respuesta.aceptado{background:rgba(16,185,129,.15);color:var(--ok);}
+    .msg-respuesta.rechazado{background:rgba(239,68,68,.15);color:var(--danger);}
+    .msg-respuesta.pendiente{background:rgba(245,158,11,.15);color:var(--warn);}
   </style>
 </head>
 <body>
-
+ 
 <div id="loginScreen">
   <div class="login-box">
     <div class="login-logo">DriverLog</div>
@@ -111,7 +145,7 @@
     <div id="loginError">Email o contraseña incorrectos</div>
   </div>
 </div>
-
+ 
 <div id="adminScreen">
   <div class="topbar">
     <div class="topbar-left">
@@ -124,7 +158,7 @@
       <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
     </div>
   </div>
-
+ 
   <div class="nav-tabs">
     <div class="nav-tab active" onclick="switchTab('dashboard')">📊 Dashboard</div>
     <div class="nav-tab" onclick="switchTab('choferes')">🚗 Choferes</div>
@@ -139,9 +173,9 @@
       💬 Mensajes<span class="tab-badge" id="msgBadge" style="display:none">0</span>
     </div>
   </div>
-
+ 
   <div class="main-content">
-
+ 
     <!-- DASHBOARD -->
     <div class="tab-panel active" id="tab-dashboard">
       <div class="stats-grid">
@@ -156,7 +190,7 @@
       </div>
       <div id="dashAlertasContainer"><div class="loading">Cargando...</div></div>
     </div>
-
+ 
     <!-- CHOFERES -->
     <div class="tab-panel" id="tab-choferes">
       <div class="section-header"><div class="section-title">Choferes registrados</div><button class="btn-refresh" onclick="cargarChoferes()">↺ Actualizar</button></div>
@@ -166,7 +200,7 @@
         <tbody id="choferesBody"><tr><td colspan="7" class="loading">Cargando...</td></tr></tbody>
       </table></div>
     </div>
-
+ 
     <!-- JORNADAS -->
     <div class="tab-panel" id="tab-jornadas">
       <div class="section-header"><div class="section-title">Jornadas</div><button class="btn-refresh" onclick="cargarJornadas()">↺ Actualizar</button></div>
@@ -179,13 +213,13 @@
         <tbody id="jornadasBody"><tr><td colspan="9" class="loading">Cargando...</td></tr></tbody>
       </table></div>
     </div>
-
+ 
     <!-- ALERTAS -->
     <div class="tab-panel" id="tab-alertas">
       <div class="section-header"><div class="section-title">Alertas de dispositivos duplicados</div><button class="btn-refresh" onclick="cargarAlertas()">↺ Actualizar</button></div>
       <div id="alertasContainer"><div class="loading">Cargando...</div></div>
     </div>
-
+ 
     <!-- ROTACIÓN -->
     <div class="tab-panel" id="tab-rotacion">
       <div class="section-header">
@@ -213,7 +247,7 @@
         <tbody id="rotacionBody"><tr><td colspan="8" class="loading">Cargando...</td></tr></tbody>
       </table></div>
     </div>
-
+ 
     <!-- FLOTA -->
     <div class="tab-panel" id="tab-flota">
       <div class="section-header"><div class="section-title">Disponibilidad de flota — hoy</div><button class="btn-refresh" onclick="cargarFlota()">↺ Actualizar</button></div>
@@ -240,7 +274,7 @@
       <div id="flotaGrid" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px"><div class="loading">Cargando flota...</div></div>
       <div id="flotaTooltip" style="display:none;position:fixed;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:12px;pointer-events:none;z-index:9000;min-width:200px;box-shadow:0 4px 20px rgba(0,0,0,.4);"></div>
     </div>
-
+ 
     <!-- MODAL TALLER -->
     <div id="modalTaller" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:2000;align-items:center;justify-content:center;">
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;width:380px;max-width:90%;">
@@ -254,7 +288,7 @@
         </div>
       </div>
     </div>
-
+ 
     <!-- ESTADÍSTICAS -->
     <div class="tab-panel" id="tab-estadisticas">
       <div class="section-header"><div class="section-title">Estadísticas de rutas</div><button class="btn-refresh" onclick="cargarEstadisticas()">↺ Actualizar</button></div>
@@ -290,14 +324,14 @@
       </table></div>
       <div id="statAviso" style="margin-top:12px;background:var(--bg3);border-radius:8px;padding:10px 16px;font-size:12px;color:var(--text3);display:none;"></div>
     </div>
-
+ 
     <!-- MENSAJES -->
     <div class="tab-panel" id="tab-mensajes">
       <div class="section-header">
         <div class="section-title">Mensajes internos</div>
         <button class="btn-refresh" onclick="cargarMensajes()">↺ Actualizar</button>
       </div>
-
+ 
       <!-- Redactar -->
       <div class="compose-box">
         <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">✍️ Nuevo mensaje</div>
@@ -310,17 +344,79 @@
           </div>
           <div style="flex:1;min-width:120px">
             <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Tipo</div>
-            <select class="filter-input" id="msgTipo" style="width:100%">
+            <select class="filter-input" id="msgTipo" style="width:100%" onchange="toggleCamposAsignacion()">
               <option value="mensaje">💬 Mensaje</option>
-              <option value="asignacion">✅ Asignación</option>
+              <option value="asignacion">✅ Asignación de viaje</option>
               <option value="urgente">🔴 Urgente</option>
             </select>
           </div>
         </div>
-        <textarea id="msgTexto" rows="3" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-family:var(--sans);font-size:13px;resize:vertical;outline:none;margin-bottom:12px;" placeholder="Escribí el mensaje para el chofer..."></textarea>
+ 
+        <!-- CAMPOS EXTRA PARA ASIGNACIÓN -->
+        <div id="camposAsignacion">
+          <div style="font-size:12px;color:var(--ok);font-weight:600;margin-bottom:12px">🚍 Datos del viaje a asignar</div>
+          <div class="asig-grid">
+            <div class="asig-field">
+              <label>Origen</label>
+              <select id="asigOrigen">
+                <option value="Montevideo">Montevideo</option>
+                <option value="Punta del Este">Punta del Este</option>
+                <option value="Piriápolis">Piriápolis</option>
+                <option value="Punta Negra">Punta Negra</option>
+                <option value="La Paloma">La Paloma</option>
+                <option value="La Pedrera">La Pedrera</option>
+                <option value="Rocha">Rocha</option>
+                <option value="Chuy">Chuy</option>
+                <option value="Colonia">Colonia</option>
+                <option value="Aguas Dulces">Aguas Dulces</option>
+                <option value="Laguna Garzón">Laguna Garzón</option>
+              </select>
+            </div>
+            <div class="asig-field">
+              <label>Destino</label>
+              <select id="asigDestino">
+                <option value="Punta del Este">Punta del Este</option>
+                <option value="Montevideo">Montevideo</option>
+                <option value="Piriápolis">Piriápolis</option>
+                <option value="Punta Negra">Punta Negra</option>
+                <option value="La Paloma">La Paloma</option>
+                <option value="La Pedrera">La Pedrera</option>
+                <option value="Rocha">Rocha</option>
+                <option value="Chuy">Chuy</option>
+                <option value="Colonia">Colonia</option>
+                <option value="Aguas Dulces">Aguas Dulces</option>
+                <option value="Laguna Garzón">Laguna Garzón</option>
+              </select>
+            </div>
+            <div class="asig-field">
+              <label>Hora salida</label>
+              <input type="time" id="asigHoraSalida">
+            </div>
+            <div class="asig-field">
+              <label>Tipo servicio</label>
+              <select id="asigTipoServicio">
+                <option value="TURNO">Turno</option>
+                <option value="SEMI">Semi-directo</option>
+                <option value="DIRECTO">Directo</option>
+                <option value="EXPRESO">Expreso</option>
+                <option value="CONTRATADO">Contratado</option>
+              </select>
+            </div>
+            <div class="asig-field">
+              <label>N° Coche</label>
+              <input type="number" id="asigCoche" placeholder="Ej: 961" min="900" max="999">
+            </div>
+            <div class="asig-field">
+              <label>Hora llegada estimada</label>
+              <input type="time" id="asigHoraLlegada">
+            </div>
+          </div>
+        </div>
+ 
+        <textarea id="msgTexto" rows="2" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-family:var(--sans);font-size:13px;resize:vertical;outline:none;margin-bottom:12px;" placeholder="Mensaje adicional (opcional para asignaciones)..."></textarea>
         <button onclick="enviarMensaje()" style="background:var(--accent);color:white;border:none;border-radius:8px;padding:10px 24px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;">Enviar mensaje</button>
       </div>
-
+ 
       <!-- Lista de mensajes enviados -->
       <div class="section-header" style="margin-top:8px">
         <div class="section-title" style="font-size:14px">Mensajes enviados</div>
@@ -328,14 +424,15 @@
           <button onclick="filtrarMsgs('todos')" id="mfbtn-todos" class="fbtn fbtn-active">Todos</button>
           <button onclick="filtrarMsgs('no-leido')" id="mfbtn-no-leido" class="fbtn">No leídos</button>
           <button onclick="filtrarMsgs('leido')" id="mfbtn-leido" class="fbtn">Leídos</button>
+          <button onclick="filtrarMsgs('asignacion')" id="mfbtn-asignacion" class="fbtn">Asignaciones</button>
         </div>
       </div>
       <div id="mensajesContainer"><div class="loading">Cargando mensajes...</div></div>
     </div>
-
+ 
   </div>
 </div>
-
+ 
 <!-- MODAL DETALLE JORNADA -->
 <div id="modalDetalle" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:1000;overflow-y:auto;padding:20px;">
   <div style="max-width:700px;margin:40px auto;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;">
@@ -346,14 +443,14 @@
     <div id="modalDetalleBody"></div>
   </div>
 </div>
-
+ 
 <div id="toast"></div>
-
+ 
 <script>
 const SB_URL = 'https://frjeivfpldcigklwepqt.supabase.co';
 const SB_KEY = 'sb_publishable_6A7tufjD-rTAUAPfxyziyw_3kXMumzJ';
 let currentUser = null, allChoferes = [], allJornadas = [], allMensajes = [], msgFiltro = 'todos';
-
+ 
 async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
@@ -376,13 +473,12 @@ async function doLogin() {
     iniciarAdmin();
   } catch(e) { errEl.style.display='block'; btn.disabled=false; btn.textContent='Ingresar'; }
 }
-
+ 
 function iniciarAdmin() {
   cargarDashboard(); cargarChoferes(); cargarJornadas(); cargarAlertas(); cargarRotacion(); cargarFlota(); cargarEstadisticas(); cargarMensajes();
-  // polling mensajes cada 30s
   if (!window.__msgPoller) window.__msgPoller = setInterval(cargarMensajes, 30000);
 }
-
+ 
 function doLogout() {
   ['admin_token','admin_refresh_token','admin_email','admin_password'].forEach(k=>localStorage.removeItem(k));
   currentUser = null;
@@ -390,7 +486,7 @@ function doLogout() {
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('adminScreen').style.display = 'none';
 }
-
+ 
 window.addEventListener('DOMContentLoaded', () => {
   const token = localStorage.getItem('admin_token');
   const email = localStorage.getItem('admin_email');
@@ -402,8 +498,13 @@ window.addEventListener('DOMContentLoaded', () => {
     iniciarAdmin();
   }
   document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
+  // Set hora actual por defecto en asignación
+  const ahora = new Date();
+  const hh = String(ahora.getHours()).padStart(2,'0');
+  const mm = String(ahora.getMinutes()).padStart(2,'0');
+  document.getElementById('asigHoraSalida').value = `${hh}:${mm}`;
 });
-
+ 
 async function renovarToken() {
   try {
     const email = localStorage.getItem('admin_email');
@@ -415,7 +516,7 @@ async function renovarToken() {
   } catch(e) {}
   return false;
 }
-
+ 
 async function sbFetch(path, options={}) {
   const token = currentUser ? currentUser.access_token : localStorage.getItem('admin_token');
   const res = await fetch(`${SB_URL}/rest/v1/${path}`, { ...options, headers:{'apikey':SB_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json',...(options.headers||{})} });
@@ -425,14 +526,28 @@ async function sbFetch(path, options={}) {
   }
   return res.json();
 }
-
+ 
 function switchTab(tab) {
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   event.currentTarget.classList.add('active');
 }
-
+ 
+// ── TOGGLE CAMPOS ASIGNACIÓN ──
+function toggleCamposAsignacion() {
+  const tipo = document.getElementById('msgTipo').value;
+  const campos = document.getElementById('camposAsignacion');
+  const textarea = document.getElementById('msgTexto');
+  if (tipo === 'asignacion') {
+    campos.classList.add('visible');
+    textarea.placeholder = 'Instrucciones adicionales (opcional)...';
+  } else {
+    campos.classList.remove('visible');
+    textarea.placeholder = 'Escribí el mensaje para el chofer...';
+  }
+}
+ 
 async function cargarDashboard() {
   try {
     const [choferes,jornadas,alertas] = await Promise.all([sbFetch('choferes?empresa_id=eq.cot&select=id'),sbFetch('jornadas?empresa_id=eq.cot&select=id,data'),sbFetch('registro_alertas?select=id,resuelto,intentado_at&order=intentado_at.desc')]);
@@ -448,19 +563,18 @@ async function cargarDashboard() {
     renderDashAlertas(aa.slice(0,5));
   } catch(e){console.error('Error dashboard:',e);}
 }
-
+ 
 function renderDashAlertas(alertas) {
   const c = document.getElementById('dashAlertasContainer');
   if (!alertas.length) { c.innerHTML='<div class="empty-state"><div class="icon">✅</div><p>Sin alertas pendientes</p></div>'; return; }
   c.innerHTML = alertas.map(a=>alertaCard(a,true)).join('');
 }
-
+ 
 async function cargarChoferes() {
   try {
     const data = await sbFetch('choferes?empresa_id=eq.cot&select=*&order=nombre.asc');
     allChoferes = data;
     renderChoferes(data);
-    // poblar selector de mensajes
     const sel = document.getElementById('msgPara');
     const prev = sel.value;
     sel.innerHTML = '<option value="todos">📢 Todos los choferes</option>';
@@ -473,7 +587,7 @@ async function cargarChoferes() {
     sel.value = prev;
   } catch(e) { document.getElementById('choferesBody').innerHTML='<tr><td colspan="7" class="loading">Error al cargar</td></tr>'; }
 }
-
+ 
 function renderChoferes(choferes) {
   const tbody = document.getElementById('choferesBody');
   if (!choferes.length) { tbody.innerHTML='<tr><td colspan="7"><div class="empty-state"><div class="icon">🚗</div><p>No hay choferes registrados</p></div></td></tr>'; return; }
@@ -487,19 +601,19 @@ function renderChoferes(choferes) {
     <td><span class="badge ${c.device_id?'badge-ok':'badge-warn'}">${c.device_id?'● Activo':'○ Sin dispositivo'}</span></td>
   </tr>`).join('');
 }
-
+ 
 function filtrarChoferes() {
   const q = document.getElementById('filterChofer').value.toLowerCase();
   renderChoferes(allChoferes.filter(c=>(c.nombre||'').toLowerCase().includes(q)||(c.legajo||'').toLowerCase().includes(q)));
 }
-
+ 
 async function cargarJornadas() {
   try {
     const data = await sbFetch('jornadas?empresa_id=eq.cot&select=*&order=id.desc&limit=100');
     allJornadas = data; renderJornadas(data);
   } catch(e) { document.getElementById('jornadasBody').innerHTML='<tr><td colspan="9" class="loading">Error al cargar</td></tr>'; }
 }
-
+ 
 function renderJornadas(jornadas) {
   const tbody = document.getElementById('jornadasBody');
   if (!jornadas.length) { tbody.innerHTML='<tr><td colspan="9"><div class="empty-state"><div class="icon">📋</div><p>No hay jornadas registradas</p></div></td></tr>'; return; }
@@ -526,7 +640,7 @@ function renderJornadas(jornadas) {
     </tr>`;
   }).join('');
 }
-
+ 
 function filtrarJornadas() {
   const q=document.getElementById('filterJornadaChofer').value.toLowerCase(), fecha=document.getElementById('filterJornadaFecha').value;
   renderJornadas(allJornadas.filter(j=>{
@@ -534,7 +648,7 @@ function filtrarJornadas() {
     return (!q||(d.driverName||'').toLowerCase().includes(q)||(d.driverLegajo||'').toLowerCase().includes(q)||(j.chofer_id||'').toLowerCase().includes(q))&&(!fecha||d.date===fecha);
   }));
 }
-
+ 
 async function cargarAlertas() {
   try {
     const data = await sbFetch('registro_alertas?select=*&order=intentado_at.desc');
@@ -545,7 +659,7 @@ async function cargarAlertas() {
     document.getElementById('statAlertas').textContent=pend;
   } catch(e){document.getElementById('alertasContainer').innerHTML='<div class="empty-state"><div class="icon">❌</div><p>Error al cargar alertas</p></div>';}
 }
-
+ 
 function alertaCard(a,mini=false) {
   const fecha=a.intentado_at?new Date(a.intentado_at).toLocaleString('es-UY'):'—';
   return `<div class="alert-card ${a.resuelto?'resolved':''}">
@@ -556,13 +670,13 @@ function alertaCard(a,mini=false) {
     ${!mini&&!a.resuelto?`<div class="alert-actions"><button class="btn-action btn-approve" onclick="resolverAlerta('${a.id}',true)">✓ Autorizar</button><button class="btn-action btn-reject" onclick="resolverAlerta('${a.id}',false)">✕ Rechazar</button></div>`:''}
   </div>`;
 }
-
+ 
 function renderAlertas(alertas) {
   const c=document.getElementById('alertasContainer');
   if (!alertas.length){c.innerHTML='<div class="empty-state"><div class="icon">✅</div><p>Sin alertas</p></div>';return;}
   c.innerHTML=alertas.map(a=>alertaCard(a)).join('');
 }
-
+ 
 async function resolverAlerta(id,autorizar) {
   try {
     if (autorizar) {
@@ -575,13 +689,13 @@ async function resolverAlerta(id,autorizar) {
     cargarAlertas(); cargarDashboard();
   } catch(e){showToast('❌ Error al procesar');}
 }
-
+ 
 function showToast(msg) {
   const t=document.getElementById('toast');
   t.textContent=msg; t.style.display='block';
   setTimeout(()=>{t.style.display='none';},3000);
 }
-
+ 
 let allRotacion=[];
 async function cargarRotacion() {
   try {
@@ -597,14 +711,14 @@ async function cargarRotacion() {
     renderRotacion(rotacion);
   } catch(e){console.error('Error rotacion:',e);document.getElementById('rotacionBody').innerHTML='<tr><td colspan="8" class="loading">Error al cargar rotación</td></tr>';}
 }
-
+ 
 function formatServicio(hora,destino,tipo) {
   if (!hora&&!destino) return null;
   if (!hora&&destino) return `<span style="color:var(--text3);font-size:11px">${destino}</span>`;
   const color=tipo==='DIRECTO'?'var(--accent2)':tipo==='TURNO'?'var(--text)':'var(--text2)';
   return `<div style="line-height:1.6"><span style="font-family:var(--mono);font-size:12px;color:var(--ok)">${hora}</span><span style="font-size:12px;color:${color};margin-left:4px">${destino||''}</span>${tipo?`<span style="font-size:10px;color:var(--text3);margin-left:4px">${tipo}</span>`:''}</div>`;
 }
-
+ 
 function renderRotacion(rotacion) {
   const tbody=document.getElementById('rotacionBody');
   if (!rotacion.length){tbody.innerHTML='<tr><td colspan="8"><div class="empty-state"><div class="icon">🔄</div><p>No hay datos de rotación</p></div></td></tr>';return;}
@@ -626,7 +740,7 @@ function renderRotacion(rotacion) {
     </tr>`;
   }).join('');
 }
-
+ 
 function filtrarRotacion() {
   const q=document.getElementById('filterRotacion').value.toLowerCase(), filtro=document.getElementById('filterRotDescanso').value;
   renderRotacion(allRotacion.filter(r=>{
@@ -638,7 +752,7 @@ function filtrarRotacion() {
     return matchQ&&matchF;
   }));
 }
-
+ 
 async function generarViajesSiguiente() {
   if (!confirm('¿Generar viajes programados para mañana?')) return;
   const manana=new Date(); manana.setDate(manana.getDate()+1);
@@ -655,7 +769,7 @@ async function generarViajesSiguiente() {
   }
   showToast(`✅ ${generados} jornadas generadas${errores?` (${errores} errores)`:''}`);
 }
-
+ 
 function abrirDetalleJornada(orderNumber) {
   const j=allJornadas.find(x=>x.order_number===orderNumber); if (!j) return;
   let d={};try{d=typeof j.data==='string'?JSON.parse(j.data||'{}'):(j.data||{});}catch{}
@@ -697,14 +811,14 @@ function abrirDetalleJornada(orderNumber) {
   document.getElementById('modalDetalleBody').innerHTML=html;
   document.getElementById('modalDetalle').style.display='block';
 }
-
+ 
 function cerrarModalDetalle(){document.getElementById('modalDetalle').style.display='none';}
 document.addEventListener('click',e=>{if(e.target===document.getElementById('modalDetalle'))cerrarModalDetalle();});
-
+ 
 // ── FLOTA ──
 const FLOTA_MIN=915,FLOTA_MAX=998;
 let flotaData=[],flotaTaller=[],flotaViajes=[],flotaFiltro='todos',cocheSeleccionado=null;
-
+ 
 async function cargarFlota() {
   const hoy=new Date().toISOString().split('T')[0];
   try {
@@ -735,7 +849,7 @@ async function cargarFlota() {
     renderFlotaGrid();
   } catch(e){console.error('Error flota:',e);document.getElementById('flotaGrid').innerHTML='<div class="loading">Error al cargar flota</div>';}
 }
-
+ 
 function renderFlotaGrid() {
   const COLORES={servicio:'#ef4444',libre:'#10b981',inactivo:'#f59e0b',taller:'#3b82f6'};
   let s=0,l=0,i=0,t=0;
@@ -747,7 +861,7 @@ function renderFlotaGrid() {
   const filtered=flotaFiltro==='todos'?flotaData:flotaData.filter(c=>c.estado===flotaFiltro);
   document.getElementById('flotaGrid').innerHTML=filtered.map(c=>`<div onclick="abrirModalTaller(${c.num})" onmouseenter="showFlotaTip(event,${c.num})" onmouseleave="hideFlotaTip()" style="width:48px;height:38px;border-radius:6px;background:${COLORES[c.estado]};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:white;cursor:pointer;opacity:${c.estado==='inactivo'?'.4':'1'};transition:transform .1s;font-family:'Space Mono',monospace;" onmouseover="this.style.transform='scale(1.12)'" onmouseout="this.style.transform='scale(1)'">${c.num}</div>`).join('');
 }
-
+ 
 function showFlotaTip(e,num) {
   const c=flotaData.find(x=>x.num===num); if (!c) return;
   const tip=document.getElementById('flotaTooltip'), viaje=flotaViajes.find(v=>v.coche===num);
@@ -755,7 +869,7 @@ function showFlotaTip(e,num) {
   if (c.estado==='servicio'&&viaje) html+=`<div style="color:var(--text2);line-height:1.9">Ruta: ${viaje.origen} → ${viaje.destino}<br>Salida: <span style="font-family:var(--mono)">${viaje.salida}</span> Llegada: <span style="font-family:var(--mono)">${viaje.llegada}</span><br>Chofer: ${viaje.chofer}</div>`;
   else if (c.estado==='libre') html+=`<div style="color:var(--ok)">Disponible — sin viaje activo</div>`;
   else if (c.estado==='taller'&&c.tallerInfo) html+=`<div style="color:var(--accent)">En taller</div><div style="color:var(--text2);margin-top:4px">${c.tallerInfo.motivo||'—'}</div>`;
-  else html+=`<div style="color:var(--text3)">Sin actividad hoy</div><div style="color:var(--text3);font-size:11px;margin-top:4px">Clic para agregar al taller</div>`;
+  else html+=`<div style="color:var(--text3)">Sin actividad hoy</div>`;
   tip.innerHTML=html; tip.style.display='block'; tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY-10)+'px';
 }
 function hideFlotaTip(){document.getElementById('flotaTooltip').style.display='none';}
@@ -779,7 +893,7 @@ async function quitarTaller(){
   } catch(e){showToast('❌ Error al quitar');}
 }
 document.addEventListener('click',e=>{if(e.target===document.getElementById('modalTaller'))cerrarModalTaller();});
-
+ 
 // ── ESTADÍSTICAS ──
 let todosLosViajes=[],viajesFiltrados=[];
 async function cargarEstadisticas(){
@@ -858,7 +972,7 @@ function renderTablaEstadisticas(){
     <td><span class="mono" style="font-size:11px;color:${diffColor}">${diffStr}</span></td><td><span class="mono" style="font-size:11px;color:var(--text2)">${velViaje?velViaje+' km/h':'—'}</span></td><td><span class="badge badge-blue" style="font-size:10px">${v.tipo}</span></td><td><span class="mono" style="font-size:11px">${v.coche}</span></td></tr>`;
   }).join('');
 }
-
+ 
 // ══════════════════════════════════════════
 // MENSAJES
 // ══════════════════════════════════════════
@@ -872,7 +986,7 @@ async function cargarMensajes() {
     renderMensajes();
   } catch(e) { console.error('Error mensajes:', e); }
 }
-
+ 
 function filtrarMsgs(f) {
   msgFiltro = f;
   document.querySelectorAll('[id^="mfbtn-"]').forEach(b => b.classList.remove('fbtn-active'));
@@ -880,19 +994,43 @@ function filtrarMsgs(f) {
   if (btn) btn.classList.add('fbtn-active');
   renderMensajes();
 }
-
+ 
 function renderMensajes() {
   const c = document.getElementById('mensajesContainer');
   let lista = allMensajes;
   if (msgFiltro === 'no-leido') lista = lista.filter(m => !m.leido);
   if (msgFiltro === 'leido') lista = lista.filter(m => m.leido);
+  if (msgFiltro === 'asignacion') lista = lista.filter(m => m.tipo === 'asignacion');
   if (!lista.length) { c.innerHTML = '<div class="empty-state"><div class="icon">💬</div><p>No hay mensajes</p></div>'; return; }
-
+ 
   c.innerHTML = lista.map(m => {
     const fecha = m.creado_at ? new Date(m.creado_at).toLocaleString('es-UY') : '—';
     const para = m.para === 'todos' ? '📢 Todos' : `👤 Legajo ${m.para}`;
-    const tipoClass = m.tipo === 'asignacion' ? 'asignacion' : m.tipo === 'urgente' ? 'asignacion' : 'mensaje';
+    const tipoClass = m.tipo === 'asignacion' ? 'asignacion' : m.tipo === 'urgente' ? 'urgente' : 'mensaje';
     const tipoLabel = m.tipo === 'asignacion' ? '✅ Asignación' : m.tipo === 'urgente' ? '🔴 Urgente' : '💬 Mensaje';
+ 
+    // Datos de viaje si es asignación
+    let viajeHTML = '';
+    if (m.tipo === 'asignacion' && m.data) {
+      const vd = typeof m.data === 'string' ? JSON.parse(m.data) : m.data;
+      if (vd && vd.viaje) {
+        const v = vd.viaje;
+        viajeHTML = `<div class="msg-viaje-data">
+          🚍 <span>${v.origen}</span> → <span>${v.destino}</span> &nbsp;|&nbsp;
+          🕒 <span>${v.horaSalida||'—'}</span> - <span>${v.horaLlegada||'—'}</span> &nbsp;|&nbsp;
+          🚌 Coche: <span>${v.coche||'—'}</span> &nbsp;|&nbsp;
+          🎫 <span>${v.tipoServicio||'—'}</span>
+        </div>`;
+        // Respuesta del chofer
+        const resp = vd.respuesta;
+        if (resp) {
+          viajeHTML += `<span class="msg-respuesta ${resp}">${resp === 'aceptado' ? '✓ Aceptado' : '✕ Rechazado'}</span>`;
+        } else {
+          viajeHTML += `<span class="msg-respuesta pendiente">⏳ Sin respuesta</span>`;
+        }
+      }
+    }
+ 
     return `<div class="msg-card ${m.leido ? 'leido' : 'no-leido'}">
       <div class="msg-header">
         <div style="display:flex;align-items:center;gap:10px">
@@ -902,29 +1040,78 @@ function renderMensajes() {
         </div>
         <span class="msg-fecha">${fecha}</span>
       </div>
-      <div class="msg-texto">${m.texto || '—'}</div>
+      ${m.texto ? `<div class="msg-texto">${m.texto}</div>` : ''}
+      ${viajeHTML}
     </div>`;
   }).join('');
 }
-
+ 
+// ── ENVIAR MENSAJE (con soporte asignación) ──
 async function enviarMensaje() {
   const para = document.getElementById('msgPara').value;
   const tipo = document.getElementById('msgTipo').value;
   const texto = document.getElementById('msgTexto').value.trim();
-  if (!texto) { showToast('⚠️ Escribí un mensaje'); return; }
+ 
+  // Validar destinatario para asignación
+  if (tipo === 'asignacion' && para === 'todos') {
+    showToast('⚠️ Las asignaciones deben ir a un chofer específico');
+    return;
+  }
+ 
+  // Validar texto para mensajes normales
+  if (tipo !== 'asignacion' && !texto) {
+    showToast('⚠️ Escribí un mensaje');
+    return;
+  }
+ 
+  // Armar data de viaje si es asignación
+  let dataViaje = null;
+  if (tipo === 'asignacion') {
+    const origen = document.getElementById('asigOrigen').value;
+    const destino = document.getElementById('asigDestino').value;
+    const horaSalida = document.getElementById('asigHoraSalida').value;
+    const horaLlegada = document.getElementById('asigHoraLlegada').value;
+    const tipoServicio = document.getElementById('asigTipoServicio').value;
+    const coche = document.getElementById('asigCoche').value;
+ 
+    if (!horaSalida) { showToast('⚠️ Ingresá la hora de salida'); return; }
+    if (!coche) { showToast('⚠️ Ingresá el número de coche'); return; }
+ 
+    dataViaje = {
+      viaje: { origen, destino, horaSalida, horaLlegada, tipoServicio, coche },
+      respuesta: null,
+      respondidoAt: null
+    };
+  }
+ 
+  // Texto automático para asignación si no escribieron nada
+  const textoFinal = texto || (tipo === 'asignacion'
+    ? `Asignación de viaje: ${document.getElementById('asigOrigen').value} → ${document.getElementById('asigDestino').value} a las ${document.getElementById('asigHoraSalida').value}`
+    : '');
+ 
   try {
+    const body = {
+      empresa_id: 'cot',
+      de: 'admin',
+      para,
+      tipo,
+      texto: textoFinal,
+      leido: false
+    };
+    if (dataViaje) body.data = dataViaje;
+ 
     const res = await fetch(`${SB_URL}/rest/v1/mensajes`, {
       method: 'POST',
       headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${localStorage.getItem('admin_token')}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ empresa_id: 'cot', de: 'admin', para, tipo, texto, leido: false })
+      body: JSON.stringify(body)
     });
     if (!res.ok) { showToast('❌ Error al enviar'); return; }
     document.getElementById('msgTexto').value = '';
-    showToast(`✅ Mensaje enviado a ${para === 'todos' ? 'todos' : 'legajo ' + para}`);
+    showToast(`✅ ${tipo === 'asignacion' ? 'Asignación enviada' : 'Mensaje enviado'} a ${para === 'todos' ? 'todos' : 'legajo ' + para}`);
     cargarMensajes();
   } catch(e) { showToast('❌ Error al enviar'); }
 }
-
+ 
 function showError(msg) { const e=document.getElementById('loginError'); e.textContent=msg; e.style.display='block'; }
 </script>
 </body>

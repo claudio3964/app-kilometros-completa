@@ -1,25 +1,16 @@
 "use strict";
-
-// =====================================================
-// UI MENSAJES — COT Driver App
-// Polling cada 30s para mensajes del admin
-// =====================================================
-
+ 
 console.log("ui_mensajes cargado");
-
+ 
 const SUPABASE_URL_MSG = "https://frjeivfpldcigklwepqt.supabase.co";
 const SUPABASE_KEY_MSG = "sb_publishable_6A7tufjD-rTAUAPfxyziyw_3kXMumzJ";
-
+ 
 let _mensajesVistos = new Set(JSON.parse(localStorage.getItem('mensajes_vistos') || '[]'));
 let _pollerMensajes = null;
-
-// =====================================================
-// CONSULTAR MENSAJES PARA ESTE CHOFER
-// =====================================================
+ 
 async function consultarMensajes() {
   const driver = getDriver ? getDriver() : null;
   if (!driver || !driver.legajo) return;
-
   try {
     const res = await fetch(
       `${SUPABASE_URL_MSG}/rest/v1/mensajes?empresa_id=eq.cot&or=(para.eq.todos,para.eq.${driver.legajo})&leido=eq.false&order=creado_at.desc&limit=10`,
@@ -27,165 +18,204 @@ async function consultarMensajes() {
     );
     const mensajes = await res.json();
     if (!Array.isArray(mensajes) || mensajes.length === 0) return;
-
-    // Filtrar los que ya vimos en esta sesión
     const nuevos = mensajes.filter(m => !_mensajesVistos.has(m.id));
     if (nuevos.length === 0) return;
-
-    // Mostrar el más reciente
     mostrarNotificacionMensaje(nuevos[0]);
-
-    // Marcar todos los nuevos como vistos localmente
     nuevos.forEach(m => _mensajesVistos.add(m.id));
     localStorage.setItem('mensajes_vistos', JSON.stringify([..._mensajesVistos]));
-
-    // Marcar como leído en Supabase
-    nuevos.forEach(m => marcarLeido(m.id));
-
-  } catch(e) {
-    console.warn("Error consultando mensajes:", e.message);
-  }
+    // Solo marcar leído automáticamente los que no son asignaciones
+    nuevos.forEach(m => { if (m.tipo !== 'asignacion') marcarLeido(m.id); });
+  } catch(e) { console.warn("Error mensajes:", e.message); }
 }
-
-// =====================================================
-// MARCAR MENSAJE COMO LEÍDO EN SUPABASE
-// =====================================================
+ 
 async function marcarLeido(id) {
   try {
     await fetch(`${SUPABASE_URL_MSG}/rest/v1/mensajes?id=eq.${id}`, {
       method: 'PATCH',
-      headers: {
-        "apikey": SUPABASE_KEY_MSG,
-        "Authorization": `Bearer ${SUPABASE_KEY_MSG}`,
-        "Content-Type": "application/json"
-      },
+      headers: { "apikey": SUPABASE_KEY_MSG, "Authorization": `Bearer ${SUPABASE_KEY_MSG}`, "Content-Type": "application/json" },
       body: JSON.stringify({ leido: true })
     });
-  } catch(e) { console.warn("Error marcando leído:", e.message); }
+  } catch(e) {}
 }
-
-// =====================================================
-// MOSTRAR NOTIFICACIÓN EN LA APP
-// =====================================================
+ 
 function mostrarNotificacionMensaje(msg) {
-  // Quitar notificación anterior si existe
   const anterior = document.getElementById('notifMensaje');
   if (anterior) anterior.remove();
-
+ 
   const tipoColor = msg.tipo === 'urgente' ? '#ef4444' : msg.tipo === 'asignacion' ? '#10b981' : '#3b82f6';
   const tipoIcon  = msg.tipo === 'urgente' ? '🔴' : msg.tipo === 'asignacion' ? '✅' : '💬';
-  const tipoLabel = msg.tipo === 'urgente' ? 'URGENTE' : msg.tipo === 'asignacion' ? 'ASIGNACIÓN' : 'MENSAJE';
-
+  const tipoLabel = msg.tipo === 'urgente' ? 'URGENTE' : msg.tipo === 'asignacion' ? 'ASIGNACIÓN DE VIAJE' : 'MENSAJE';
+ 
+  // Parsear datos del viaje
+  let viajeData = null;
+  if (msg.tipo === 'asignacion' && msg.data) {
+    try {
+      const d = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
+      viajeData = d.viaje || null;
+    } catch(e) {}
+  }
+ 
+  // HTML del viaje
+  let viajeHTML = '';
+  if (viajeData) {
+    viajeHTML = `
+      <div style="background:#1c2537;border-radius:8px;padding:10px 12px;margin:10px 0;font-size:13px;line-height:1.9;color:#94a3b8;">
+        🚍 <b style="color:#e2e8f0">${viajeData.origen}</b> → <b style="color:#e2e8f0">${viajeData.destino}</b><br>
+        🕒 Salida: <b style="color:#10b981">${viajeData.horaSalida || '—'}</b>
+        ${viajeData.horaLlegada ? ` &nbsp;–&nbsp; Llegada: <b style="color:#94a3b8">${viajeData.horaLlegada}</b>` : ''}<br>
+        🚌 Coche: <b style="color:#e2e8f0">${viajeData.coche || '—'}</b>
+        &nbsp;|&nbsp; 🎫 <b style="color:#e2e8f0">${viajeData.tipoServicio || '—'}</b>
+      </div>`;
+  }
+ 
+  // Botones
+  let botonesHTML = '';
+  if (msg.tipo === 'asignacion' && viajeData) {
+    botonesHTML = `
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button onclick="aceptarAsignacion(${msg.id})" style="flex:1;background:#10b981;color:white;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;">✓ Aceptar</button>
+        <button onclick="rechazarAsignacion(${msg.id})" style="flex:1;background:transparent;color:#ef4444;border:2px solid #ef4444;border-radius:8px;padding:11px;font-size:14px;cursor:pointer;">✕ Rechazar</button>
+      </div>`;
+  } else {
+    botonesHTML = `<button onclick="cerrarNotifMensaje()" style="width:100%;background:transparent;color:${tipoColor};border:1px solid ${tipoColor};border-radius:8px;padding:10px;font-size:14px;cursor:pointer;margin-top:12px;">Entendido</button>`;
+  }
+ 
   const notif = document.createElement('div');
   notif.id = 'notifMensaje';
   notif.style.cssText = `
-    position: fixed;
-    top: 16px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 92%;
-    max-width: 420px;
-    background: #111827;
-    border: 2px solid ${tipoColor};
-    border-radius: 14px;
-    padding: 16px 18px;
-    z-index: 9999;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-    animation: slideDownMsg 0.3s ease;
+    position:fixed;top:70px;left:50%;transform:translateX(-50%);
+    width:92%;max-width:420px;background:#111827;
+    border:2px solid ${tipoColor};border-radius:14px;padding:16px 18px;
+    z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.5);
+    animation:slideDownMsg .3s ease;
   `;
-
   notif.innerHTML = `
-    <style>
-      @keyframes slideDownMsg {
-        from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
-        to   { transform: translateX(-50%) translateY(0);     opacity: 1; }
-      }
-    </style>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <style>@keyframes slideDownMsg{from{transform:translateX(-50%) translateY(-20px);opacity:0;}to{transform:translateX(-50%) translateY(0);opacity:1;}}</style>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:18px">${tipoIcon}</span>
         <span style="font-size:11px;font-weight:700;color:${tipoColor};letter-spacing:1px">${tipoLabel} — TRÁNSITO</span>
       </div>
-      <button onclick="cerrarNotifMensaje()" style="
-        background:transparent;border:none;color:#94a3b8;
-        font-size:18px;cursor:pointer;padding:0 4px;line-height:1;
-      ">✕</button>
+      <button onclick="cerrarNotifMensaje()" style="background:transparent;border:none;color:#94a3b8;font-size:18px;cursor:pointer;">✕</button>
     </div>
-    <div style="font-size:15px;color:#e2e8f0;line-height:1.5;margin-bottom:12px">${msg.texto || '—'}</div>
+    ${msg.texto ? `<div style="font-size:14px;color:#e2e8f0;line-height:1.5;margin-bottom:4px">${msg.texto}</div>` : ''}
+    ${viajeHTML}
     <div style="font-size:11px;color:#475569">${msg.creado_at ? new Date(msg.creado_at).toLocaleString('es-UY') : ''}</div>
-    ${msg.tipo === 'asignacion' ? `
-    <div style="display:flex;gap:10px;margin-top:14px">
-      <button onclick="responderMensaje(${msg.id},'aceptado')" style="
-        flex:1;background:#10b981;color:white;border:none;border-radius:8px;
-        padding:10px;font-size:14px;font-weight:600;cursor:pointer;">
-        ✓ Aceptar
-      </button>
-      <button onclick="responderMensaje(${msg.id},'rechazado')" style="
-        flex:1;background:transparent;color:#ef4444;border:2px solid #ef4444;
-        border-radius:8px;padding:10px;font-size:14px;cursor:pointer;">
-        ✕ Rechazar
-      </button>
-    </div>` : `
-    <button onclick="cerrarNotifMensaje()" style="
-      width:100%;background:transparent;color:#3b82f6;border:1px solid #3b82f6;
-      border-radius:8px;padding:10px;font-size:14px;cursor:pointer;margin-top:12px;">
-      Entendido
-    </button>`}
+    ${botonesHTML}
   `;
-
   document.body.appendChild(notif);
-
-  // Auto-cerrar mensajes normales después de 15s
-  if (msg.tipo === 'mensaje') {
-    setTimeout(() => cerrarNotifMensaje(), 15000);
-  }
+ 
+  if (msg.tipo !== 'asignacion') setTimeout(() => cerrarNotifMensaje(), 15000);
 }
-
+ 
 function cerrarNotifMensaje() {
   const n = document.getElementById('notifMensaje');
   if (n) n.remove();
 }
-
+ 
 // =====================================================
-// RESPONDER ASIGNACIÓN
+// ACEPTAR — carga el viaje automáticamente
 // =====================================================
-async function responderMensaje(id, respuesta) {
+async function aceptarAsignacion(id) {
+  let viajeData = null;
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL_MSG}/rest/v1/mensajes?id=eq.${id}&select=data`,
+      { headers: { "apikey": SUPABASE_KEY_MSG, "Authorization": `Bearer ${SUPABASE_KEY_MSG}` } }
+    );
+    const msgs = await res.json();
+    if (msgs && msgs[0] && msgs[0].data) {
+      const d = typeof msgs[0].data === 'string' ? JSON.parse(msgs[0].data) : msgs[0].data;
+      viajeData = d.viaje || null;
+    }
+  } catch(e) {}
+ 
+  // Guardar respuesta en Supabase
   try {
     await fetch(`${SUPABASE_URL_MSG}/rest/v1/mensajes?id=eq.${id}`, {
       method: 'PATCH',
-      headers: {
-        "apikey": SUPABASE_KEY_MSG,
-        "Authorization": `Bearer ${SUPABASE_KEY_MSG}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ leido: true, data: { respuesta, respondidoAt: new Date().toISOString() } })
+      headers: { "apikey": SUPABASE_KEY_MSG, "Authorization": `Bearer ${SUPABASE_KEY_MSG}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ leido: true, data: { viaje: viajeData, respuesta: 'aceptado', respondidoAt: new Date().toISOString() } })
     });
-    cerrarNotifMensaje();
-    // Mostrar confirmación breve
-    const conf = document.createElement('div');
-    conf.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#111827;border:1px solid #10b981;border-radius:12px;padding:20px 32px;z-index:9999;font-size:16px;color:#10b981;font-weight:600;';
-    conf.textContent = respuesta === 'aceptado' ? '✅ Asignación aceptada' : '✕ Asignación rechazada';
-    document.body.appendChild(conf);
-    setTimeout(() => conf.remove(), 2500);
-  } catch(e) { console.warn("Error respondiendo:", e.message); }
+  } catch(e) {}
+ 
+  cerrarNotifMensaje();
+ 
+  // Cargar viaje automáticamente
+  if (viajeData && typeof addTravelProgramado === 'function') {
+    try {
+      let order = typeof getActiveOrder === 'function' ? getActiveOrder() : null;
+      if (!order && typeof createOrder === 'function') order = createOrder();
+ 
+      if (order) {
+        const ok = addTravelProgramado(
+          viajeData.origen,
+          viajeData.destino,
+          viajeData.tipoServicio || 'TURNO',
+          viajeData.horaSalida,
+          viajeData.horaLlegada || '',
+          2,
+          viajeData.tipoServicio || 'TURNO',
+          false,
+          viajeData.coche || null
+        );
+        if (ok) {
+          if (typeof renderResumenDia === 'function') renderResumenDia();
+          if (typeof renderListaViajes === 'function') renderListaViajes();
+          if (typeof mostrarViajeEnCursoUI === 'function') mostrarViajeEnCursoUI();
+          if (typeof renderBotonCerrarJornada === 'function') renderBotonCerrarJornada();
+          _mostrarConfirmacion('✅ Viaje cargado en tu jornada', '#10b981');
+          return;
+        }
+      }
+    } catch(e) { console.error("Error cargando viaje:", e); }
+  }
+  _mostrarConfirmacion('✅ Asignación aceptada', '#10b981');
 }
-
+ 
 // =====================================================
-// INICIAR POLLING
+// RECHAZAR
 // =====================================================
+async function rechazarAsignacion(id) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL_MSG}/rest/v1/mensajes?id=eq.${id}&select=data`,
+      { headers: { "apikey": SUPABASE_KEY_MSG, "Authorization": `Bearer ${SUPABASE_KEY_MSG}` } }
+    );
+    const msgs = await res.json();
+    const dataActual = msgs && msgs[0] ? (typeof msgs[0].data === 'string' ? JSON.parse(msgs[0].data) : msgs[0].data) : {};
+    await fetch(`${SUPABASE_URL_MSG}/rest/v1/mensajes?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: { "apikey": SUPABASE_KEY_MSG, "Authorization": `Bearer ${SUPABASE_KEY_MSG}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ leido: true, data: { ...dataActual, respuesta: 'rechazado', respondidoAt: new Date().toISOString() } })
+    });
+  } catch(e) {}
+  cerrarNotifMensaje();
+  _mostrarConfirmacion('✕ Asignación rechazada', '#ef4444');
+}
+ 
+function _mostrarConfirmacion(texto, color) {
+  const conf = document.createElement('div');
+  conf.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#111827;border:2px solid ${color};border-radius:12px;padding:20px 32px;z-index:9999;font-size:16px;color:${color};font-weight:600;text-align:center;`;
+  conf.textContent = texto;
+  document.body.appendChild(conf);
+  setTimeout(() => conf.remove(), 2500);
+}
+ 
 function iniciarPollingMensajes() {
-  if (_pollerMensajes) return; // ya está corriendo
+  if (_pollerMensajes) return;
   console.log("📬 Polling mensajes iniciado");
-  consultarMensajes(); // primera consulta inmediata
+  consultarMensajes();
   _pollerMensajes = setInterval(consultarMensajes, 30000);
 }
-
+ 
 function detenerPollingMensajes() {
   if (_pollerMensajes) { clearInterval(_pollerMensajes); _pollerMensajes = null; }
 }
-
-// Exportar
-window.iniciarPollingMensajes  = iniciarPollingMensajes;
-window.detenerPollingMensajes  = detenerPollingMensajes;
-window.cerrarNotifMensaje      = cerrarNotifMensaje;
-window.responderMensaje        = responderMensaje;
+ 
+window.iniciarPollingMensajes = iniciarPollingMensajes;
+window.detenerPollingMensajes = detenerPollingMensajes;
+window.cerrarNotifMensaje     = cerrarNotifMensaje;
+window.aceptarAsignacion      = aceptarAsignacion;
+window.rechazarAsignacion     = rechazarAsignacion;
+ 
