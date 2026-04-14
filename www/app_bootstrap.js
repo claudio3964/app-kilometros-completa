@@ -19,7 +19,6 @@ function verificarCambioDeDia() {
   }
 }
 
-// Verificar también buscando directamente en orders (por si getActiveOrder no detecta)
 function verificarCambioDeDiaForzado() {
   const hoy = new Date().toISOString().split("T")[0];
   const orders = getOrders ? getOrders() : [];
@@ -29,21 +28,40 @@ function verificarCambioDeDiaForzado() {
     mostrarModalCierrePendiente(jornadaAbierta);
   }
 }
+
 function mostrarModalCierrePendiente(order) {
   if (document.getElementById("modalCambioDia")) return;
   const modal = document.createElement("div");
   modal.id = "modalCambioDia";
-  modal.style.cssText = "\n    position:fixed; top:0; left:0;\n    width:100%; height:100%;\n    background:rgba(0,0,0,0.6);\n    display:flex; align-items:center;\n    justify-content:center; z-index:9999;\n  ";
-  modal.innerHTML = "\n    <div style=\"background:white; padding:20px; border-radius:8px;\n                max-width:340px; text-align:center;\">\n      <h3>Jornada pendiente</h3>\n      <p>Ten\xE9s una jornada pendiente del d\xEDa <b>".concat(order.date, "</b>.<br>\n         Deb\xE9s finalizarla antes de continuar.</p>\n      <button id=\"btnForzarCierre\" style=\"\n        background:#c62828; color:white;\n        padding:10px 20px; border:none;\n        border-radius:6px; font-weight:bold; cursor:pointer;\">\n        Finalizar Jornada\n      </button>\n    </div>\n  ");
+  modal.style.cssText = `
+    position:fixed; top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.6);
+    display:flex; align-items:center;
+    justify-content:center; z-index:9999;
+  `;
+  modal.innerHTML = `
+    <div style="background:white; padding:20px; border-radius:8px;
+                max-width:340px; text-align:center;">
+      <h3>Jornada pendiente</h3>
+      <p>Tenés una jornada pendiente del día <b>${order.date}</b>.<br>
+         Debés finalizarla antes de continuar.</p>
+      <button id="btnForzarCierre" style="
+        background:#c62828; color:white;
+        padding:10px 20px; border:none;
+        border-radius:6px; font-weight:bold; cursor:pointer;">
+        Finalizar Jornada
+      </button>
+    </div>
+  `;
   document.body.appendChild(modal);
   document.getElementById("btnForzarCierre").addEventListener("click", async function () {
     const resultado = closeActiveOrder();
     if (resultado) {
-      var _renderBotonCerrarJor, _renderOrdenActivaUI;
       document.body.removeChild(modal);
       await exportarJornada(resultado);
-      (_renderBotonCerrarJor = renderBotonCerrarJornada) === null || _renderBotonCerrarJor === void 0 || _renderBotonCerrarJor();
-      (_renderOrdenActivaUI = renderOrdenActivaUI) === null || _renderOrdenActivaUI === void 0 || _renderOrdenActivaUI();
+      renderBotonCerrarJornada?.();
+      renderOrdenActivaUI?.();
     }
   });
 }
@@ -56,7 +74,6 @@ function syncActiveOrderBootstrap() {
   let active = getActiveOrder();
   const orders = getOrders();
 
-  // Recuperar orden abierta si no hay activa
   if (!active && orders.length) {
     const last = orders[orders.length - 1];
     if (!last.closed) {
@@ -104,8 +121,52 @@ function refreshMainUI() {
 }
 
 // =====================================================
-// BOOTSTRAP PRINCIPAL — se ejecuta después del registro
-// (llamado desde ui_registro.js al mostrar mainScreen)
+// LIMPIAR DATOS COMPLETO — funciona en PWA iOS/Android
+// =====================================================
+
+async function limpiarTodosLosDatos() {
+  const c1 = confirm("¿Borrar todos los datos de este dispositivo?");
+  if (!c1) return;
+  const c2 = confirm("Esta acción no se puede deshacer.\n\nLos datos ya subidos a Supabase NO se borran.\n¿Confirmar?");
+  if (!c2) return;
+
+  try {
+    // 1. Limpiar localStorage y sessionStorage
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // 2. Limpiar cache del service worker (crítico en PWA iOS Safari)
+    if ('caches' in window) {
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map(name => caches.delete(name)));
+      console.log("✅ Cache limpiado:", cacheNames);
+    }
+
+    // 3. Desregistrar service worker
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(reg => reg.unregister()));
+      console.log("✅ Service workers desregistrados:", registrations.length);
+    }
+
+    // 4. Esperar un momento y recargar forzando recarga desde servidor
+    setTimeout(() => {
+      // location.reload(true) fuerza recarga ignorando cache en la mayoría de browsers
+      window.location.href = window.location.href.split('?')[0] + '?limpio=' + Date.now();
+    }, 600);
+
+  } catch (e) {
+    console.error("Error limpiando datos:", e);
+    // Fallback: solo limpiar localStorage y recargar
+    localStorage.clear();
+    sessionStorage.clear();
+    setTimeout(() => location.reload(), 400);
+  }
+}
+window.limpiarTodosLosDatos = limpiarTodosLosDatos;
+
+// =====================================================
+// BOOTSTRAP PRINCIPAL
 // =====================================================
 
 function iniciarBootstrap() {
@@ -134,7 +195,7 @@ function iniciarBootstrap() {
     }, 15000);
   }
 
-  // Motor de viajes programados (cada 60s)
+  // Motor de sync (cada 60s)
   if (!window.__motorSync) {
     window.__motorSync = setInterval(() => {
       if (typeof activarViajesProgramados === "function") activarViajesProgramados();
@@ -153,20 +214,14 @@ function iniciarBootstrap() {
     });
   }
 
-  // Botón limpiar storage
+  // ── Botón limpiar storage (versión vieja — por compatibilidad) ──
   const btnLimpiar = document.getElementById("btnLimpiarStorage");
   if (btnLimpiar && !btnLimpiar._bound) {
     btnLimpiar._bound = true;
-    btnLimpiar.addEventListener("click", function () {
-      const c1 = confirm("¿Borrar todos los datos?");
-      if (!c1) return;
-      const c2 = confirm("Esta acción no se puede deshacer. ¿Confirmar?");
-      if (!c2) return;
-      localStorage.clear();
-      location.reload();
-    });
+    btnLimpiar.addEventListener("click", limpiarTodosLosDatos);
   }
 }
+
 window.iniciarBootstrap = iniciarBootstrap;
 window.refreshMainUI = refreshMainUI;
 window.verificarCambioDeDia = verificarCambioDeDia;
