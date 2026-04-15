@@ -222,7 +222,7 @@ function iniciarBootstrap() {
   }
   // Iniciar polling de mensajes
 if (typeof iniciarPollingMensajes === 'function') {
-  iniciarPollingMensajes();
+  setTimeout(() => iniciarPollingMensajes(), 3000);
 }
 }
 
