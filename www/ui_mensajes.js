@@ -11,6 +11,7 @@ let _asignacionPendiente = null; // guarda datos del viaje en memoria
 
 async function consultarMensajes() {
   const driver = getDriver ? getDriver() : null;
+  alert("Driver: " + (driver ? driver.legajo : "NULL"))
   if (!driver || !driver.legajo) return;
   try {
     const res = await fetch(
