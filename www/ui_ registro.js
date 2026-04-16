@@ -59,10 +59,10 @@ document.addEventListener('DOMContentLoaded', () => {
 async function registrarChofer(){
   try {
 
-    const legajo = document.getElementById('regLegajo').value.trim();
-    const nombre = document.getElementById('regNombre').value.trim();
-    const base   = document.getElementById('regBase').value;
-    const tipo   = document.getElementById('regTipo').value;
+  const legajo = document.getElementById('regLegajo').value.trim();
+const nombre = document.getElementById('regNombre').value.trim();
+const base   = document.getElementById('regBase').value || 'Montevideo';
+const tipo   = document.getElementById('regTipo').value || 'contratado';
 
     if(!legajo || !nombre){
       alert("Completá legajo y nombre");

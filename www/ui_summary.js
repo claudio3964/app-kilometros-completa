@@ -177,7 +177,6 @@ async function generarPDFJornada(order) {
     return null;
   }
 
-  // ✅ FIX: verificar que order es válido
   if (!order || !order.orderNumber) {
     console.error("generarPDFJornada: order inválido", order);
     return null;
@@ -190,7 +189,12 @@ async function generarPDFJornada(order) {
   const driver = getDriver?.() || {};
 
   let y = 15;
-  const add = (txt, salto = 7) => { doc.text(txt, 15, y); y += salto; };
+  const add = (txt, salto = 7) => {
+    // evitar que el texto se salga de la página
+    if (y > 270) { doc.addPage(); y = 15; }
+    doc.text(String(txt), 15, y);
+    y += salto;
+  };
 
   doc.setFontSize(14);
   add("COT Driver - Resumen de Jornada", 10);
@@ -236,7 +240,55 @@ async function generarPDFJornada(order) {
   if (returnBase64) return doc.output('base64');
 
   const fecha = order.date || new Date().toISOString().split("T")[0];
-  doc.save(`jornada_${fecha}_${order.orderNumber}.pdf`);
+  const nombreArchivo = `jornada_${fecha}_${order.orderNumber}.pdf`;
+
+  // ── CAPACITOR (APK Android) ──
+  const esNativo = window.Capacitor?.isNativePlatform?.();
+  if (esNativo) {
+    try {
+      const base64 = doc.output('base64');
+      const { Filesystem, Directory } = window.Capacitor.Plugins;
+
+      // Guardar en carpeta Documents del dispositivo
+      await Filesystem.writeFile({
+        path: nombreArchivo,
+        data: base64,
+        directory: Directory.Documents,
+        recursive: true
+      });
+
+      // Intentar abrir el PDF con la app del sistema
+      const { Share } = window.Capacitor.Plugins;
+      const fileUri = await Filesystem.getUri({
+        path: nombreArchivo,
+        directory: Directory.Documents
+      });
+
+      await Share.share({
+        title: nombreArchivo,
+        url: fileUri.uri,
+        dialogTitle: 'Guardar o compartir PDF'
+      });
+
+    } catch (e) {
+      console.error("Error guardando PDF en Android:", e);
+      // Fallback — compartir como base64 via Share
+      try {
+        const base64 = doc.output('datauristring');
+        const { Share } = window.Capacitor.Plugins;
+        await Share.share({
+          title: nombreArchivo,
+          text: 'Resumen de jornada COT Driver',
+          dialogTitle: 'Compartir PDF'
+        });
+      } catch(e2) {
+        alert("No se pudo guardar el PDF. Verificá los permisos de la app.");
+      }
+    }
+  } else {
+    // ── WEB / PC ── comportamiento normal
+    doc.save(nombreArchivo);
+  }
 }
 
 // EXPORT GLOBAL

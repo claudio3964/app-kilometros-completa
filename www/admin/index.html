@@ -477,6 +477,7 @@ async function doLogin() {
 function iniciarAdmin() {
   cargarDashboard(); cargarChoferes(); cargarJornadas(); cargarAlertas(); cargarRotacion(); cargarFlota(); cargarEstadisticas(); cargarMensajes();
   if (!window.__msgPoller) window.__msgPoller = setInterval(cargarMensajes, 30000);
+  iniciarRealtime(); 
 }
  
 function doLogout() {
@@ -1113,6 +1114,17 @@ async function enviarMensaje() {
 }
  
 function showError(msg) { const e=document.getElementById('loginError'); e.textContent=msg; e.style.display='block'; }
+// ══════════════════════════════════════════
+// REALTIME
+// ══════════════════════════════════════════
+function iniciarRealtime() {
+  // Polling cada 10 segundos
+  setInterval(() => {
+    cargarJornadas();
+    cargarDashboard();
+  }, 10000);
+  console.log('Auto-refresh activo ✅ (cada 10s)');
+}
 </script>
 </body>
 </html>

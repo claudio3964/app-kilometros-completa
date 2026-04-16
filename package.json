@@ -11,6 +11,7 @@
     "@capacitor/share": "^8.0.1"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "jest": "^27.5.1",
     "typescript": "^6.0.2"
   },

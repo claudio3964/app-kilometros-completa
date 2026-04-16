@@ -110,50 +110,56 @@ async function registrarChofer() {
       }
     }
 
-    // ── REGISTRAR EN SUPABASE ──
-    const insertRes = await fetch("".concat(SUPABASE_URL_REG, "/rest/v1/choferes?on_conflict=empresa_id,legajo"), {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": SUPABASE_KEY_REG,
-        "Authorization": "Bearer ".concat(SUPABASE_KEY_REG),
-        "Prefer": "resolution=merge-duplicates,return=minimal"
-      },
-      body: JSON.stringify({
-        empresa_id: "cot",
-        legajo,
-        nombre,
-        base,
-        tipo,
-        device_id: deviceId,
-        registrado_at: new Date().toISOString()
-      })
-    });
-    if (!insertRes.ok) {
-      const err = await insertRes.text();
-      alert("Error al registrar en servidor: " + err);
-      return;
-    }
+  // ── REGISTRAR EN SUPABASE ──
+const insertRes = await fetch(`${SUPABASE_URL_REG}/rest/v1/choferes?on_conflict=empresa_id,legajo`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "apikey": SUPABASE_KEY_REG,
+    "Authorization": `Bearer ${SUPABASE_KEY_REG}`,
+    "Prefer": "resolution=merge-duplicates,return=representation"
+  },
+  body: JSON.stringify({
+    empresa_id: "cot",
+    legajo,
+    nombre,
+    base,
+    tipo,
+    device_id: deviceId,
+    registrado_at: new Date().toISOString()
+  })
+});
 
-    // ── GUARDAR LOCAL ──
-    initDriverProfile({
-      legajo,
-      nombre,
-      base,
-      tipo,
-      deviceId
-    });
-    document.getElementById('baseChoferBadge').innerText = "Base: " + base;
-    cargarSelectorOrigen(base);
-    showScreen('mainScreen');
+const insertData = await insertRes.json();
 
-    // Arrancar bootstrap
-    if (typeof iniciarBootstrap === "function") {
-      iniciarBootstrap();
-    }
-  } catch (e) {
-    alert("ERROR registrarChofer: " + e.message);
-  }
+if (!insertRes.ok) {
+  alert("Error al registrar en servidor: " + JSON.stringify(insertData));
+  return;
+}
+
+const supabaseId = insertData[0]?.id;
+
+// ── GUARDAR LOCAL ──
+initDriverProfile({
+  legajo,
+  nombre,
+  base,
+  tipo,
+  deviceId,
+  supabaseId
+});
+
+document.getElementById('baseChoferBadge').innerText = "Base: " + base;
+cargarSelectorOrigen(base);
+showScreen('mainScreen');
+
+if (typeof iniciarBootstrap === "function") {
+  iniciarBootstrap();
+}
+
+} catch (e) {
+  alert("ERROR registrarChofer: " + e.message);
+}
 }
 window.registrarChofer = registrarChofer;
 window.cargarSelectorOrigen = cargarSelectorOrigen;
