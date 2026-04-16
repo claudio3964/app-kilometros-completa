@@ -617,16 +617,25 @@ async function cargarJornadas() {
  
 function renderJornadas(jornadas) {
   const tbody = document.getElementById('jornadasBody');
-  if (!jornadas.length) { tbody.innerHTML='<tr><td colspan="9"><div class="empty-state"><div class="icon">📋</div><p>No hay jornadas registradas</p></div></td></tr>'; return; }
-  tbody.innerHTML = jornadas.map(j=>{
-    let d={};try{d=typeof j.data==='string'?JSON.parse(j.data||'{}'):(j.data||{});}catch{}
-    const travels=(d.travels||[]).filter(t=>t.status!=='cancelado'), guards=d.guards||[];
-    const snap=d.totalsSnapshot||{};
-    const kmViajes=snap.kmViajes??travels.reduce((s,t)=>s+(t.kmEmpresa||t.kmAuto||0),0);
-    const kmGuardias=snap.kmGuardias??guards.reduce((s,g)=>s+(g.kmGuardia||0),0);
-    const kmTotal=snap.kmTotal??(kmViajes+kmGuardias);
-    const viaticos=snap.viaticos??0;
-    const monto=snap.monto??Math.round(kmTotal*7.637);
+  if (!jornadas.length) {
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="icon">📋</div><p>No hay jornadas registradas</p></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = jornadas.map(j => {
+    let d = {};
+    try { 
+      d = typeof j.data === 'string' ? JSON.parse(j.data || '{}') : (j.data || {});
+    } catch {}
+    const travels  = (d.travels || []).filter(t => t.status !== 'cancelado');
+    const guards   = (d.guards || []);
+    const viajes   = travels.length;
+    const guardias = guards.length;
+
+    // ── usar totalsSnapshot si existe (jornada cerrada) ──
+    const snap = d.totalsSnapshot;
+    const kmTotal  = snap ? snap.kmTotal  : travels.reduce((s,t) => s+(t.kmEmpresa||t.kmAuto||0),0) + guards.reduce((s,g) => s+(g.kmGuardia||0),0);
+    const viaticos = snap ? snap.viaticos : (d.viaticos || 0);
+    const monto    = snap ? snap.monto    : kmTotal * 7.637;
     const tipo=d.tipo||'contratado';
     return `<tr onclick="abrirDetalleJornada('${j.order_number}')" style="cursor:pointer">
       <td><span class="mono">${d.date||'—'}</span></td>
