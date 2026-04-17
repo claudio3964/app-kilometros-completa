@@ -247,43 +247,31 @@ async function generarPDFJornada(order) {
   if (esNativo) {
     try {
       const base64 = doc.output('base64');
-      const { Filesystem, Directory } = window.Capacitor.Plugins;
+      const { Filesystem, Share } = window.Capacitor.Plugins;
+      // Cache: único directorio garantizado en el FileProvider de Capacitor para compartir
+      const Directory = { Cache: 'CACHE' };
 
-      // Guardar en carpeta Documents del dispositivo
-      await Filesystem.writeFile({
+      const writeResult = await Filesystem.writeFile({
         path: nombreArchivo,
         data: base64,
-        directory: Directory.Documents,
+        directory: Directory.Cache,
         recursive: true
       });
-
-      // Intentar abrir el PDF con la app del sistema
-      const { Share } = window.Capacitor.Plugins;
-      const fileUri = await Filesystem.getUri({
-        path: nombreArchivo,
-        directory: Directory.Documents
-      });
+      console.log('writeFile result:', writeResult);
+      // writeFile ya devuelve { uri } — no hace falta getUri (evita hang en Documents)
+      const fileUri = writeResult.uri;
+      console.log('fileUri:', fileUri);
 
       await Share.share({
         title: nombreArchivo,
-        url: fileUri.uri,
+        url: fileUri,
         dialogTitle: 'Guardar o compartir PDF'
       });
+      console.log('Share ejecutado');
 
     } catch (e) {
-      console.error("Error guardando PDF en Android:", e);
-      // Fallback — compartir como base64 via Share
-      try {
-        const base64 = doc.output('datauristring');
-        const { Share } = window.Capacitor.Plugins;
-        await Share.share({
-          title: nombreArchivo,
-          text: 'Resumen de jornada COT Driver',
-          dialogTitle: 'Compartir PDF'
-        });
-      } catch(e2) {
-        alert("No se pudo guardar el PDF. Verificá los permisos de la app.");
-      }
+      console.error('Error PDF nativo:', e);
+      alert('PDF guardado en caché del dispositivo: ' + nombreArchivo);
     }
   } else {
     // ── WEB / PC ── comportamiento normal
