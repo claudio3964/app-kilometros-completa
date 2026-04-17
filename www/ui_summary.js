@@ -183,10 +183,12 @@ async function generarPDFJornada(order) {
   }
 
   console.log("GENERANDO PDF DE JORNADA", order.orderNumber);
+  console.log('jspdf:', !!window.jspdf, 'jsPDF:', !!window.jspdf?.jsPDF, 'type:', typeof window.jspdf?.jsPDF);
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
+  console.log('doc pages:', doc.internal?.pages?.length, '| doc type:', typeof doc, '| output type:', typeof doc.output);
   const totals = calculateOrderTotals(order);
-  const driver = getDriver?.() || {};
+  const driver = window.getDriver?.() || {};
 
   let y = 15;
   const add = (txt, salto = 7) => {
@@ -237,7 +239,13 @@ async function generarPDFJornada(order) {
   add("Firma chofer: ____________________", 10);
   add("Firma tránsito: ____________________", 10);
 
-  if (returnBase64) return doc.output('base64');
+  if (returnBase64) {
+    const datauri = doc.output('datauristring');
+    console.log('datauristring length:', datauri?.length, '| prefix:', datauri?.substring(0, 40));
+    const b64 = datauri?.split(',')[1] || '';
+    console.log('b64 length:', b64.length);
+    return b64;
+  }
 
   const fecha = order.date || new Date().toISOString().split("T")[0];
   const nombreArchivo = `jornada_${fecha}_${order.orderNumber}.pdf`;
@@ -270,8 +278,8 @@ async function generarPDFJornada(order) {
       console.log('Share ejecutado');
 
     } catch (e) {
-      console.error('Error PDF nativo:', e);
-      alert('PDF guardado en caché del dispositivo: ' + nombreArchivo);
+      console.error('Error PDF nativo:', e?.message || e, e);
+      alert('Error al generar PDF: ' + (e?.message || String(e)));
     }
   } else {
     // ── WEB / PC ── comportamiento normal

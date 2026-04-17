@@ -676,95 +676,6 @@ function calcularAcoplados(viajes) {
     cantidad
   };
 }
-async function generarPDFJornada(order) {
-  let {
-    returnBase64 = false
-  } = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-  if (!window.jspdf || !window.jspdf.jsPDF) {
-    console.warn("jsPDF no cargado");
-    return null;
-  }
-  const {
-    jsPDF
-  } = window.jspdf;
-  const doc = new jsPDF();
-  const totals = calculateOrderTotals(order);
-
-  // helpers reutilizados
-  const kmPorTipo = calcularKmPorTipo(order.travels || []);
-  const kmPorCategoria = calcularKmPorCategoria(order.travels || []);
-  const guardiasDetalle = calcularGuardiasDetalle(order.guards || []);
-  const acopladosDetalle = calcularAcoplados(order.travels || []);
-  let y = 15;
-  const add = function (txt) {
-    let salto = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 7;
-    doc.text(txt, 15, y);
-    y += salto;
-  };
-  doc.setFontSize(14);
-  add("COT Driver - Resumen de Jornada", 10);
-  doc.setFontSize(11);
-  add("Fecha: ".concat(order.date));
-  add("Orden: ".concat(order.orderNumber));
-  add("Base: ".concat(order.baseInicio || "Montevideo"));
-  y += 5;
-
-  // =========================
-  // TOTALES
-  // =========================
-  add("=== TOTALES ===");
-  add("KM Totales: ".concat(redondear(totals.kmTotal)));
-  add("KM Viajes: ".concat(redondear(totals.kmViajes)));
-  add("KM Guardias: ".concat(redondear(totals.kmGuardias)));
-  add("KM Acoplados: ".concat(redondear(totals.kmAcoplados)));
-  add("Vi\xE1ticos: ".concat(totals.viaticos));
-  add("Total $: ".concat(Math.round(totals.monto)));
-  y += 5;
-
-  // =========================
-  // KM POR TIPO
-  // =========================
-  add("=== KM POR TIPO ===");
-  add("Directo: ".concat(redondear(kmPorTipo.directo)));
-  add("Semi Directo: ".concat(redondear(kmPorTipo.semi_directo)));
-  add("Expreso: ".concat(redondear(kmPorTipo.expreso)));
-  add("Turno: ".concat(redondear(kmPorTipo.turno)));
-  add("Vac\xEDo: ".concat(redondear(kmPorTipo.vacio)));
-  y += 5;
-
-  // =========================
-  // CATEGORÍA
-  // =========================
-  add("=== KM POR CATEGORÍA ===");
-  add("Pasajero: ".concat(redondear(kmPorCategoria.pasajero)));
-  add("Vac\xEDo: ".concat(redondear(kmPorCategoria.vacio)));
-  y += 5;
-
-  // =========================
-  // GUARDIAS
-  // =========================
-  add("=== GUARDIAS ===");
-  add("Com\xFAn: ".concat(redondear(guardiasDetalle.km.comun), " km (").concat(redondear(guardiasDetalle.horas.comun), " h)"));
-  add("Especial: ".concat(redondear(guardiasDetalle.km.especial), " km (").concat(redondear(guardiasDetalle.horas.especial), " h)"));
-  y += 5;
-
-  // =========================
-  // ACOPLADOS
-  // =========================
-  add("=== ACOPLADOS ===");
-  add("Cantidad: ".concat(acopladosDetalle.cantidad));
-  add("KM: ".concat(redondear(acopladosDetalle.km)));
-  y += 10;
-
-  // =========================
-  // FIRMAS
-  // =========================
-  add("Firma chofer: ____________________", 10);
-  add("Firma tránsito: ____________________", 10);
-  if (returnBase64) return doc.output('base64');
-  const fechaPdf = order.date || new Date().toISOString().split("T")[0];
-  doc.save("jornada_".concat(fechaPdf, "_").concat(order.orderNumber, ".pdf"));
-}
 // ===============================
 // EXPORTAR JORNADA
 // ===============================
@@ -840,39 +751,51 @@ async function exportarJornada(order) {
   const fecha = order.date || new Date().toISOString().split("T")[0];
   const basename = "jornada_".concat(fecha, "_").concat(order.orderNumber, "_").concat(hh).concat(mm);
   const isNative = (_window$Capacitor = window.Capacitor) === null || _window$Capacitor === void 0 || (_window$Capacitor$isN = _window$Capacitor.isNativePlatform) === null || _window$Capacitor$isN === void 0 ? void 0 : _window$Capacitor$isN.call(_window$Capacitor);
+  console.log('[exportar] isNative:', isNative);
   if (isNative) {
     try {
       const Filesystem = window.Capacitor.Plugins.Filesystem;
       const Share = window.Capacitor.Plugins.Share;
+      console.log('[exportar] Filesystem:', !!Filesystem, '| Share:', !!Share);
+      const Directory = { Cache: 'CACHE' };
 
       // PDF → base64
       const pdfBase64 = await generarPDFJornada(order, {
         returnBase64: true
       });
+      console.log('[exportar] pdfBase64 length:', pdfBase64?.length || 0);
       if (pdfBase64) {
         const pdfResult = await Filesystem.writeFile({
           path: basename + ".pdf",
           data: pdfBase64,
-          directory: "CACHE"
+          directory: Directory.Cache,
+          recursive: true
         });
+        console.log('[exportar] pdfResult.uri:', pdfResult?.uri);
+        console.log('[exportar] llamando Share.share...');
         await Share.share({
           title: "Jornada ".concat(order.date),
           text: "Resumen jornada ".concat(order.orderNumber),
           files: [pdfResult.uri],
           dialogTitle: "Compartir jornada"
         });
+        console.log('[exportar] Share.share completó');
+      } else {
+        console.warn('[exportar] pdfBase64 es falsy, se saltea PDF');
       }
 
-      // JSON → también guardar en cache por si se necesita
+      // JSON
       const jsonB64 = btoa(unescape(encodeURIComponent(json)));
-      await Filesystem.writeFile({
+      const jsonResult = await Filesystem.writeFile({
         path: basename + ".json",
         data: jsonB64,
-        directory: "CACHE"
+        directory: Directory.Cache,
+        recursive: true
       });
+      console.log('[exportar] JSON guardado:', jsonResult?.uri);
     } catch (e) {
-      console.error("Error exportando en Android:", e);
-      alert("Error al exportar: " + e.message);
+      console.error('[exportar] ERROR:', e?.message, e);
+      alert("Error al exportar: " + (e?.message || String(e)));
     }
   } else {
     // Fallback navegador: descarga JSON
