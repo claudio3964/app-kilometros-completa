@@ -130,10 +130,13 @@ async function limpiarTodosLosDatos() {
   const c2 = confirm("Esta acción no se puede deshacer.\n\nLos datos ya subidos a Supabase NO se borran.\n¿Confirmar?");
   if (!c2) return;
 
-  try {
-    // 1. Limpiar localStorage y sessionStorage
-    localStorage.clear();
-    sessionStorage.clear();
+ try {
+  
+  const conservar = ['device_id', 'driverProfile'];
+  Object.keys(localStorage).forEach(k => {
+    if (!conservar.includes(k)) localStorage.removeItem(k);
+  });
+  sessionStorage.clear();
 
     // 2. Limpiar cache del service worker (crítico en PWA iOS Safari)
     if ('caches' in window) {
@@ -156,12 +159,15 @@ async function limpiarTodosLosDatos() {
     }, 600);
 
   } catch (e) {
-    console.error("Error limpiando datos:", e);
-    // Fallback: solo limpiar localStorage y recargar
-    localStorage.clear();
-    sessionStorage.clear();
-    setTimeout(() => location.reload(), 400);
-  }
+  console.error("Error limpiando datos:", e);
+  // Fallback: solo limpiar localStorage y recargar
+  const conservar2 = ['device_id', 'driverProfile'];
+  Object.keys(localStorage).forEach(k => {
+    if (!conservar2.includes(k)) localStorage.removeItem(k);
+  });
+  sessionStorage.clear();
+  setTimeout(() => location.reload(), 400);
+}
 }
 window.limpiarTodosLosDatos = limpiarTodosLosDatos;
 

@@ -82,11 +82,12 @@ async function registrarChofer() {
 
       // ── Mismo dispositivo — ya registrado ──
       if (choferExistente.device_id === deviceId) {
-        alert("Ya estás registrado en este dispositivo.");
-        cargarSelectorOrigen(base);
-        showScreen('mainScreen');
-        return;
-      }
+  initDriverProfile({ legajo, nombre, base, tipo, deviceId });
+  document.getElementById('baseChoferBadge').innerText = "Base: " + base;
+  cargarSelectorOrigen(base);
+  showScreen('mainScreen');
+  return;
+}
 
       // ── Otro dispositivo — alerta al admin ──
       if (choferExistente.device_id && choferExistente.device_id !== deviceId) {

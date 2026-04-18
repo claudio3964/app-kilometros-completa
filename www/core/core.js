@@ -798,12 +798,6 @@ function getTodaySummary() {
 
 // ===== DRIVER REG =====
 function initDriverProfile(d) {
-  const existing = Storage.get("driverProfile");
-  if (existing) {
-    console.warn("Driver ya registrado:", existing);
-    alert("Este dispositivo ya tiene un chofer registrado");
-    return false;
-  }
   Storage.set("driverProfile", {
     ...d,
     createdAt: ahoraSistema()

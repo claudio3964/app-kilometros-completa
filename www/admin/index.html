@@ -196,8 +196,8 @@
       <div class="section-header"><div class="section-title">Choferes registrados</div><button class="btn-refresh" onclick="cargarChoferes()">↺ Actualizar</button></div>
       <div class="filters"><input class="filter-input" id="filterChofer" placeholder="🔍 Buscar por nombre o legajo..." oninput="filtrarChoferes()" style="width:280px"></div>
       <div class="table-wrap"><table>
-        <thead><tr><th>Legajo</th><th>Nombre</th><th>Tipo</th><th>Base</th><th>Device ID</th><th>Registrado</th><th>Estado</th></tr></thead>
-        <tbody id="choferesBody"><tr><td colspan="7" class="loading">Cargando...</td></tr></tbody>
+        <thead><tr><th>Legajo</th><th>Nombre</th><th>Tipo</th><th>Base</th><th>Device ID</th><th>Registrado</th><th>Estado</th><th>Acciones</th></tr></thead>
+<tbody id="choferesBody"><tr><td colspan="8" class="loading">Cargando...</td></tr></tbody>
       </table></div>
     </div>
  
@@ -435,7 +435,7 @@
  
 <!-- MODAL DETALLE JORNADA -->
 <div id="modalDetalle" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:1000;overflow-y:auto;padding:20px;">
-  <div style="max-width:700px;margin:40px auto;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;">
+  <div style="max-width:960px;margin:40px auto;background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
       <div style="font-size:18px;font-weight:600" id="modalDetalleTitle">Detalle de Jornada</div>
       <button onclick="cerrarModalDetalle()" style="background:transparent;border:1px solid var(--border);border-radius:6px;padding:6px 14px;color:var(--text2);cursor:pointer;font-family:var(--sans);font-size:13px;">✕ Cerrar</button>
@@ -600,7 +600,8 @@ function renderChoferes(choferes) {
     <td><span class="mono" style="font-size:10px;color:var(--text3)">${(c.device_id||'—').substring(0,20)}…</span></td>
     <td style="font-size:12px">${c.registrado_at?new Date(c.registrado_at).toLocaleDateString('es-UY'):'—'}</td>
     <td><span class="badge ${c.device_id?'badge-ok':'badge-warn'}">${c.device_id?'● Activo':'○ Sin dispositivo'}</span></td>
-  </tr>`).join('');
+      <td>${c.device_id?`<button class="btn-action" style="background:rgba(239,68,68,0.15);color:var(--danger);border:1px solid rgba(239,68,68,0.3)" onclick="enviarComandoLimpiar('${c.id}','${c.device_id}','${c.nombre}')">🗑 Limpiar jornadas</button>`:'—'}</td>
+    </tr>`).join('');
 }
  
 function filtrarChoferes() {
@@ -649,6 +650,37 @@ function renderJornadas(jornadas) {
       <td><span class="badge ${d.closed?'badge-ok':'badge-warn'}">${d.closed?'✓ Cerrada':'● En curso'}</span></td>
     </tr>`;
   }).join('');
+}
+async function enviarComandoLimpiar(chofer_id, device_id, nombre) {
+  if (!confirm(`¿Limpiar todas las jornadas locales de ${nombre}?\nEsto borrará el localStorage de su celular.`)) return;
+  try {
+    const token = currentUser ? currentUser.access_token : localStorage.getItem('admin_token');
+    const res = await fetch(`${SB_URL}/rest/v1/comandos_dispositivo`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        chofer_id,
+        device_id,
+        tipo: 'limpiar_jornadas',
+        empresa_id: 'cot'
+      })
+    });
+    if (res.ok) {
+      showToast(`✓ Comando enviado a ${nombre} — se ejecutará al abrir la app`);
+    } else {
+      const err = await res.text();
+      console.error('Supabase error:', err);
+      showToast('Error al enviar comando');
+    }
+  } catch(e) {
+    console.error('Error enviarComandoLimpiar:', e);
+    showToast('Error al enviar comando');
+  }
 }
  
 function filtrarJornadas() {
@@ -789,7 +821,9 @@ function abrirDetalleJornada(orderNumber) {
   const kmGuardias=snap.kmGuardias??guards.reduce((s,g)=>s+(g.kmGuardia||0),0);
   const kmTomeCese=snap.kmTomeCese??0, kmAcoplados=snap.kmAcoplados??0;
   const kmTotal=snap.kmTotal??(kmViajes+kmGuardias), viaticos=snap.viaticos??0, monto=snap.monto??Math.round(kmTotal*7.637);
+
   document.getElementById('modalDetalleTitle').textContent=`Jornada ${d.date||'—'} — ${d.driverName||j.chofer_id} (${d.driverLegajo||j.chofer_id})`;
+
   let html=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
     <div class="stat-card" style="padding:14px"><div class="stat-label">Tipo</div><div style="font-size:14px;margin-top:4px"><span class="badge ${tipo==='efectivo'?'badge-blue':'badge-warn'}">${tipo}</span></div></div>
     <div class="stat-card" style="padding:14px"><div class="stat-label">Estado</div><div style="font-size:14px;margin-top:4px"><span class="badge ${d.closed?'badge-ok':'badge-warn'}">${d.closed?'✓ Cerrada':'● En curso'}</span></div></div>
@@ -801,7 +835,35 @@ function abrirDetalleJornada(orderNumber) {
     <div class="stat-card" style="padding:14px"><div class="stat-label">Acoplados</div><div style="font-family:var(--mono);font-size:16px;color:var(--text)">${Number(kmAcoplados).toFixed(1)} km</div></div>
     <div class="stat-card" style="padding:14px;grid-column:1/-1"><div class="stat-label">Viáticos</div><div style="font-family:var(--mono);font-size:16px;color:var(--text)">${viaticos} × $455 = <span style="color:var(--ok)">$ ${viaticos*455}</span></div></div>
   </div>`;
+
   if (travels.length) {
+    // ── DESGLOSE KM POR TIPO DE SERVICIO ──
+    const kmPorTipo = {};
+    travels.forEach(v => {
+      const tipo = (v.tipoServicio || v.turno || 'SIN TIPO').toUpperCase();
+      kmPorTipo[tipo] = (kmPorTipo[tipo] || 0) + (v.kmEmpresa || v.kmAuto || 0);
+    });
+    const ORDEN_TIPOS = ['TURNO','DIRECTO','EXPRESO','PASAJERO','CONTRATADO'];
+    const tiposOrdenados = [
+      ...ORDEN_TIPOS.filter(t => kmPorTipo[t]),
+      ...Object.keys(kmPorTipo).filter(t => !ORDEN_TIPOS.includes(t))
+    ];
+    const COLORES_TIPO = {
+      TURNO:'var(--accent)', DIRECTO:'var(--accent2)', EXPRESO:'#a78bfa',
+      PASAJERO:'var(--ok)', CONTRATADO:'var(--warn)'
+    };
+
+    html += `<div class="section-title" style="margin-bottom:12px">📊 KM por tipo de servicio</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px">
+      ${tiposOrdenados.map(t => `
+        <div class="stat-card" style="padding:12px;border-left:3px solid ${COLORES_TIPO[t]||'var(--text3)'}">
+          <div class="stat-label" style="font-size:10px">${t}</div>
+          <div style="font-family:var(--mono);font-size:18px;color:${COLORES_TIPO[t]||'var(--text)'}">${Number(kmPorTipo[t]).toFixed(1)}<span style="font-size:11px;color:var(--text3)"> km</span></div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">${travels.filter(v=>(v.tipoServicio||v.turno||'SIN TIPO').toUpperCase()===t).length} viaje(s)</div>
+        </div>`).join('')}
+    </div>`;
+
+    // ── TABLA DE VIAJES ──
     html+=`<div class="section-title" style="margin-bottom:12px">🚍 Viajes (${travels.length})</div><div class="table-wrap" style="margin-bottom:20px"><table><thead><tr><th>Origen</th><th>Destino</th><th>Salida</th><th>Llegada</th><th>Km</th><th>Tipo</th><th>Acoplado</th><th>Coche</th></tr></thead><tbody>`;
     travels.forEach(v=>{
       const km=Number(v.kmEmpresa||v.kmAuto||0).toFixed(1), acopKm=Number(v.acopladoKm||0).toFixed(1), tc=v.tomeCese?' <span style="font-size:10px;color:var(--accent2)">[T/C]</span>':'';
@@ -809,6 +871,7 @@ function abrirDetalleJornada(orderNumber) {
     });
     html+='</tbody></table></div>';
   }
+
   if (guards.length) {
     html+=`<div class="section-title" style="margin-bottom:12px">🕐 Guardias (${guards.length})</div><div class="table-wrap"><table><thead><tr><th>Inicio</th><th>Fin</th><th>Horas</th><th>Km</th><th>Tipo</th><th>Auto-cortada</th><th>Viático</th></tr></thead><tbody>`;
     guards.forEach(g=>{
@@ -818,6 +881,7 @@ function abrirDetalleJornada(orderNumber) {
     });
     html+='</tbody></table></div>';
   }
+
   document.getElementById('modalDetalleBody').innerHTML=html;
   document.getElementById('modalDetalle').style.display='block';
 }
