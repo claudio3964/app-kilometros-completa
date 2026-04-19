@@ -75,8 +75,6 @@ for (const cmd of comandos) {
     Object.keys(localStorage).forEach(k => {
       if (!conservar.includes(k)) localStorage.removeItem(k);
     });
-    console.log('DESPUES de limpiar:', Object.keys(localStorage));
-    console.log('Jornadas locales limpiadas por comando admin');
   }
 }
 setInterval(checkComandosPendientes, 30000);

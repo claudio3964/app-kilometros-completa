@@ -43,20 +43,23 @@ function addGuardUI(event) {
   try {
     guardia = addGuard(tipo, inicio, dia, descripcion);
   } catch (e) {
-    if (e.message.startsWith("GUARDIA_TIPO_INVALIDO")) {
-      alert("Elegí tipo de guardia válido (común o especial)");
-    } else if (e.message.startsWith("GUARDIA_INICIO_INVALIDO")) {
-      alert("Ingresá hora de inicio en formato HH:mm");
-    } else if (e.message.startsWith("GUARDIA_DESCRIPCION_REQUERIDA")) {
-      alert("Si es guardia especial, debés completar la descripción");
-    } else if (e.message.startsWith("YA_EXISTE_JORNADA_ACTIVA")) {
-      alert("No se pudo crear la jornada automática");
-    } else {
-      alert("Error al registrar guardia: " + e.message);
-      console.error(e);
-    }
-    return;
+  if (e.message.startsWith("GUARDIA_TIPO_INVALIDO")) {
+    alert("Elegí tipo de guardia válido (común o especial)");
+  } else if (e.message.startsWith("GUARDIA_INICIO_INVALIDO")) {
+    alert("Ingresá hora de inicio en formato HH:mm");
+  } else if (e.message.startsWith("GUARDIA_DESCRIPCION_REQUERIDA")) {
+    alert("Si es guardia especial, debés completar la descripción");
+  } else if (e.message.startsWith("YA_EXISTE_JORNADA_ACTIVA")) {
+    alert("No se pudo crear la jornada automática");
+  } else if (e.message.startsWith("GUARDIA_HORA_INVALIDA")) {
+    const hora = e.message.split('(')[1]?.replace(')', '') || '';
+    alert(`⚠️ La guardia no puede iniciar antes del fin del último viaje${hora ? ' (' + hora + ')' : ''}`);
+  } else {
+    alert("Error al registrar guardia: " + e.message);
+    console.error(e);
   }
+  return;
+}
   const order = getActiveOrder();
   if (!validarConsistenciaOrder(order, {
     strict: true

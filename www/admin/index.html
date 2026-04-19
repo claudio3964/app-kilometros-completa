@@ -463,8 +463,9 @@ async function doLogin() {
     const data = await res.json();
     if (!res.ok || !data.access_token) { errEl.style.display='block'; btn.disabled=false; btn.textContent='Ingresar'; return; }
     currentUser = data;
-    localStorage.setItem('admin_email', email);
-   // localStorage.setItem('admin_password', password);
+    sessionStorage.setItem('admin_token', data.access_token);
+    sessionStorage.setItem('admin_refresh_token', data.refresh_token || '');
+    sessionStorage.setItem('admin_email', email);
     document.getElementById('userEmail').textContent = email;
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminScreen').style.display = 'block';
@@ -478,8 +479,18 @@ function iniciarAdmin() {
   iniciarRealtime(); 
 }
  
-function doLogout() {
-  ['admin_token','admin_refresh_token','admin_email','admin_password'].forEach(k=>localStorage.removeItem(k));
+async function doLogout() {
+  try {
+    const token = (currentUser && currentUser.access_token) || sessionStorage.getItem('admin_token');
+    if (token) {
+      await fetch(`${SB_URL}/auth/v1/logout`, {
+        method: 'POST',
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${token}` }
+      });
+    }
+  } catch(e) {}
+  const keys = ['admin_token','admin_refresh_token','admin_email','admin_password'];
+  keys.forEach(k => { sessionStorage.removeItem(k); localStorage.removeItem(k); });
   currentUser = null;
   if (window.__msgPoller) { clearInterval(window.__msgPoller); window.__msgPoller = null; }
   document.getElementById('loginScreen').style.display = 'flex';
@@ -487,10 +498,10 @@ function doLogout() {
 }
  
 window.addEventListener('DOMContentLoaded', () => {
-  const token = localStorage.getItem('admin_token');
+  const token = sessionStorage.getItem('admin_token');
 if (token) {
     currentUser = { access_token: token };
-    document.getElementById('userEmail').textContent = localStorage.getItem('admin_email') || '';
+    document.getElementById('userEmail').textContent = sessionStorage.getItem('admin_email') || '';
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminScreen').style.display = 'block';
     iniciarAdmin();
@@ -505,7 +516,7 @@ if (token) {
  
 async function renovarToken() {
   try {
-    const refreshToken = localStorage.getItem('admin_refresh_token');
+    const refreshToken = sessionStorage.getItem('admin_refresh_token');
     if (!refreshToken) return false;
 
     const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
@@ -516,8 +527,8 @@ async function renovarToken() {
     const data = await res.json();
     if (data.access_token) {
       currentUser = data;
-      localStorage.setItem('admin_token', data.access_token);
-      localStorage.setItem('admin_refresh_token', data.refresh_token || refreshToken);
+      sessionStorage.setItem('admin_token', data.access_token);
+      sessionStorage.setItem('admin_refresh_token', data.refresh_token || refreshToken);
       return true;
     }
   } catch(e) {}
@@ -525,7 +536,7 @@ async function renovarToken() {
 }
  
 async function sbFetch(path, options={}) {
-  const token = currentUser ? currentUser.access_token : localStorage.getItem('admin_token');
+  const token = currentUser ? currentUser.access_token : sessionStorage.getItem('admin_token');
   const res = await fetch(`${SB_URL}/rest/v1/${path}`, {
     ...options,
     headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...(options.headers||{}) }
@@ -673,7 +684,7 @@ function renderJornadas(jornadas) {
 async function enviarComandoLimpiar(chofer_id, device_id, nombre) {
   if (!confirm(`¿Limpiar todas las jornadas locales de ${nombre}?\nEsto borrará el localStorage de su celular.`)) return;
   try {
-    const token = currentUser ? currentUser.access_token : localStorage.getItem('admin_token');
+    const token = currentUser ? currentUser.access_token : sessionStorage.getItem('admin_token');
     const res = await fetch(`${SB_URL}/rest/v1/comandos_dispositivo`, {
       method: 'POST',
       headers: {
@@ -742,10 +753,10 @@ async function resolverAlerta(id,autorizar) {
   try {
     if (autorizar) {
       const alertas=await sbFetch(`registro_alertas?id=eq.${id}&select=*`);
-      const alerta=alertas[0];
-      if (alerta) await fetch(`${SB_URL}/rest/v1/choferes?empresa_id=eq.cot&legajo=eq.${alerta.legajo}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${localStorage.getItem('admin_token')}`,'Content-Type':'application/json'},body:JSON.stringify({device_id:alerta.device_id_nuevo})});
+      const alerta=Array.isArray(alertas) && alertas[0];
+      if (alerta) await fetch(`${SB_URL}/rest/v1/choferes?empresa_id=eq.cot&legajo=eq.${alerta.legajo}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${sessionStorage.getItem('admin_token')}`,'Content-Type':'application/json'},body:JSON.stringify({device_id:alerta.device_id_nuevo})});
     }
-    await fetch(`${SB_URL}/rest/v1/registro_alertas?id=eq.${id}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${localStorage.getItem('admin_token')}`,'Content-Type':'application/json'},body:JSON.stringify({resuelto:true,resolucion:autorizar?'autorizado':'rechazado'})});
+    await fetch(`${SB_URL}/rest/v1/registro_alertas?id=eq.${id}`,{method:'PATCH',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${sessionStorage.getItem('admin_token')}`,'Content-Type':'application/json'},body:JSON.stringify({resuelto:true,resolucion:autorizar?'autorizado':'rechazado'})});
     showToast(autorizar?'✅ Dispositivo autorizado':'✕ Solicitud rechazada');
     cargarAlertas(); cargarDashboard();
   } catch(e){showToast('❌ Error al procesar');}
@@ -824,7 +835,7 @@ async function generarViajesSiguiente() {
     const viajes=[[s.servicio_1_hora,s.servicio_1_destino,s.servicio_1_tipo],[s.servicio_2_hora,s.servicio_2_destino,s.servicio_2_tipo],[s.servicio_3_hora,s.servicio_3_destino,s.servicio_3_tipo],[s.servicio_4_hora,s.servicio_4_destino,s.servicio_4_tipo]].filter(([h,d])=>h&&d).map(([hora,destino,tipo])=>({hora,destino,tipo,status:'programado'}));
     if (!viajes.length) continue;
     try {
-      await fetch(`${SB_URL}/rest/v1/jornadas`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${localStorage.getItem('admin_token')}`,'Content-Type':'application/json','Prefer':'resolution=ignore-duplicates'},body:JSON.stringify({empresa_id:'cot',chofer_id:r.nro_fun,order_number:`${fechaManana}-${r.nro_fun}`,data:JSON.stringify({date:fechaManana,driverLegajo:r.nro_fun,driverName:r.apellidos_nombres,posicion:r.posicion_actual,travels:viajes,tipo:'efectivo',generado_auto:true})})});
+      await fetch(`${SB_URL}/rest/v1/jornadas`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${sessionStorage.getItem('admin_token')}`,'Content-Type':'application/json','Prefer':'resolution=ignore-duplicates'},body:JSON.stringify({empresa_id:'cot',chofer_id:r.nro_fun,order_number:`${fechaManana}-${r.nro_fun}`,data:JSON.stringify({date:fechaManana,driverLegajo:r.nro_fun,driverName:r.apellidos_nombres,posicion:r.posicion_actual,travels:viajes,tipo:'efectivo',generado_auto:true})})});
       generados++;
     } catch(e){errores++;}
   }
@@ -973,15 +984,15 @@ async function guardarTaller(){
   if (!cocheSeleccionado) return;
   const motivo=document.getElementById('tallerMotivo').value.trim();
   try {
-    await fetch(`${SB_URL}/rest/v1/coches_taller?empresa_id=eq.cot&coche_num=eq.${cocheSeleccionado}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${localStorage.getItem('admin_token')}`}});
-    await fetch(`${SB_URL}/rest/v1/coches_taller`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${localStorage.getItem('admin_token')}`,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({empresa_id:'cot',coche_num:cocheSeleccionado,motivo,desde:new Date().toISOString()})});
+    await fetch(`${SB_URL}/rest/v1/coches_taller?empresa_id=eq.cot&coche_num=eq.${cocheSeleccionado}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${sessionStorage.getItem('admin_token')}`}});
+    await fetch(`${SB_URL}/rest/v1/coches_taller`,{method:'POST',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${sessionStorage.getItem('admin_token')}`,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({empresa_id:'cot',coche_num:cocheSeleccionado,motivo,desde:new Date().toISOString()})});
     showToast(`✅ Coche ${cocheSeleccionado} marcado en taller`); cerrarModalTaller(); cargarFlota();
   } catch(e){showToast('❌ Error al guardar');}
 }
 async function quitarTaller(){
   if (!cocheSeleccionado) return;
   try {
-    await fetch(`${SB_URL}/rest/v1/coches_taller?empresa_id=eq.cot&coche_num=eq.${cocheSeleccionado}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${localStorage.getItem('admin_token')}`}});
+    await fetch(`${SB_URL}/rest/v1/coches_taller?empresa_id=eq.cot&coche_num=eq.${cocheSeleccionado}`,{method:'DELETE',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${sessionStorage.getItem('admin_token')}`}});
     showToast(`✅ Coche ${cocheSeleccionado} quitado del taller`); cerrarModalTaller(); cargarFlota();
   } catch(e){showToast('❌ Error al quitar');}
 }

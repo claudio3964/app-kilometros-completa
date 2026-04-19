@@ -1,18 +1,28 @@
 "use strict";
 
-console.log("ui_mensajes cargado");
-
 const SUPABASE_URL_MSG = "https://frjeivfpldcigklwepqt.supabase.co";
 const SUPABASE_KEY_MSG = "sb_publishable_6A7tufjD-rTAUAPfxyziyw_3kXMumzJ";
 
 let _mensajesVistos = new Set(JSON.parse(localStorage.getItem('mensajes_vistos') || '[]'));
 let _pollerMensajes = null;
-let _asignacionPendiente = null; // guarda datos del viaje en memoria
+let _consultandoMensajes = false;
+let _asignacionPendiente = null;
+
+function _escHtml(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 async function consultarMensajes() {
+  if (_consultandoMensajes) return;
   const driver = getDriver ? getDriver() : null;
-  
   if (!driver || !driver.legajo) return;
+  _consultandoMensajes = true;
   try {
     const res = await fetch(
       `${SUPABASE_URL_MSG}/rest/v1/mensajes?empresa_id=eq.cot&or=(para.eq.todos,para.eq.${driver.legajo})&leido=eq.false&order=creado_at.desc&limit=10`,
@@ -27,6 +37,7 @@ async function consultarMensajes() {
     localStorage.setItem('mensajes_vistos', JSON.stringify([..._mensajesVistos]));
     nuevos.forEach(m => { if (m.tipo !== 'asignacion') marcarLeido(m.id); });
   } catch(e) { console.warn("Error mensajes:", e.message); }
+  finally { _consultandoMensajes = false; }
 }
 
 async function marcarLeido(id) {
@@ -55,21 +66,19 @@ function mostrarNotificacionMensaje(msg) {
     } catch(e) {}
   }
 
-  // FIX: guardar en memoria para usar al aceptar sin fetch extra
   if (msg.tipo === 'asignacion' && viajeData) {
     _asignacionPendiente = { id: msg.id, viaje: viajeData };
-    console.log("Asignacion pendiente guardada:", _asignacionPendiente);
   }
 
   let viajeHTML = '';
   if (viajeData) {
     viajeHTML = `
       <div style="background:#1c2537;border-radius:8px;padding:10px 12px;margin:10px 0;font-size:13px;line-height:1.9;color:#94a3b8;">
-        🚍 <b style="color:#e2e8f0">${viajeData.origen}</b> → <b style="color:#e2e8f0">${viajeData.destino}</b><br>
-        🕒 Salida: <b style="color:#10b981">${viajeData.horaSalida || '—'}</b>
-        ${viajeData.horaLlegada ? ` &nbsp;–&nbsp; Llegada: <b style="color:#94a3b8">${viajeData.horaLlegada}</b>` : ''}<br>
-        🚌 Coche: <b style="color:#e2e8f0">${viajeData.coche || '—'}</b>
-        &nbsp;|&nbsp; 🎫 <b style="color:#e2e8f0">${viajeData.tipoServicio || '—'}</b>
+        🚍 <b style="color:#e2e8f0">${_escHtml(viajeData.origen)}</b> → <b style="color:#e2e8f0">${_escHtml(viajeData.destino)}</b><br>
+        🕒 Salida: <b style="color:#10b981">${_escHtml(viajeData.horaSalida) || '—'}</b>
+        ${viajeData.horaLlegada ? ` &nbsp;–&nbsp; Llegada: <b style="color:#94a3b8">${_escHtml(viajeData.horaLlegada)}</b>` : ''}<br>
+        🚌 Coche: <b style="color:#e2e8f0">${_escHtml(viajeData.coche) || '—'}</b>
+        &nbsp;|&nbsp; 🎫 <b style="color:#e2e8f0">${_escHtml(viajeData.tipoServicio) || '—'}</b>
       </div>`;
   }
 
@@ -77,8 +86,8 @@ function mostrarNotificacionMensaje(msg) {
   if (msg.tipo === 'asignacion' && viajeData) {
     botonesHTML = `
       <div style="display:flex;gap:10px;margin-top:14px">
-        <button onclick="aceptarAsignacion(${msg.id})" style="flex:1;background:#10b981;color:white;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;">✓ Aceptar</button>
-        <button onclick="rechazarAsignacion(${msg.id})" style="flex:1;background:transparent;color:#ef4444;border:2px solid #ef4444;border-radius:8px;padding:11px;font-size:14px;cursor:pointer;">✕ Rechazar</button>
+        <button onclick="aceptarAsignacion(${parseInt(msg.id, 10)})" style="flex:1;background:#10b981;color:white;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;">✓ Aceptar</button>
+        <button onclick="rechazarAsignacion(${parseInt(msg.id, 10)})" style="flex:1;background:transparent;color:#ef4444;border:2px solid #ef4444;border-radius:8px;padding:11px;font-size:14px;cursor:pointer;">✕ Rechazar</button>
       </div>`;
   } else {
     botonesHTML = `<button onclick="cerrarNotifMensaje()" style="width:100%;background:transparent;color:${tipoColor};border:1px solid ${tipoColor};border-radius:8px;padding:10px;font-size:14px;cursor:pointer;margin-top:12px;">Entendido</button>`;
@@ -102,7 +111,7 @@ function mostrarNotificacionMensaje(msg) {
       </div>
       <button onclick="cerrarNotifMensaje()" style="background:transparent;border:none;color:#94a3b8;font-size:18px;cursor:pointer;">✕</button>
     </div>
-    ${msg.texto ? `<div style="font-size:14px;color:#e2e8f0;line-height:1.5;margin-bottom:4px">${msg.texto}</div>` : ''}
+    ${msg.texto ? `<div style="font-size:14px;color:#e2e8f0;line-height:1.5;margin-bottom:4px">${_escHtml(msg.texto)}</div>` : ''}
     ${viajeHTML}
     <div style="font-size:11px;color:#475569">${msg.creado_at ? new Date(msg.creado_at).toLocaleString('es-UY') : ''}</div>
     ${botonesHTML}
@@ -124,7 +133,6 @@ async function aceptarAsignacion(id) {
     viajeData = _asignacionPendiente.viaje;
     _asignacionPendiente = null;
   }
-  console.log("Aceptando id:", id, "viaje:", viajeData);
 
   // Guardar respuesta en Supabase con datos del viaje incluidos
   try {
@@ -167,7 +175,7 @@ async function aceptarAsignacion(id) {
     return;
   }
 }
-  _mostrarConfirmacion('✅ Asignación aceptada', '#10b981');
+  _mostrarConfirmacion('⚠️ No se pudo agregar el viaje a la jornada', '#f59e0b');
 }
 
 async function rechazarAsignacion(id) {

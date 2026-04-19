@@ -982,6 +982,23 @@ function addGuard(tipo, inicio, dia, descripcion) {
   if (!/^\d{2}:\d{2}$/.test(inicio)) {
     throw new Error("GUARDIA_INICIO_INVALIDO: \"".concat(inicio, "\". Formato esperado: HH:mm"));
   }
+  // Validar que la hora de inicio no sea anterior al fin del último viaje
+const ordenActual = getActiveOrder();
+if (ordenActual && ordenActual.travels) {
+  const viajesFinalizados = ordenActual.travels.filter(t => 
+    t.status === 'finalizado' && t.arrivalTime
+  );
+  if (viajesFinalizados.length > 0) {
+    const ultimoViaje = viajesFinalizados[viajesFinalizados.length - 1];
+    const [hI, mI] = inicio.split(':').map(Number);
+    const [hF, mF] = ultimoViaje.arrivalTime.split(':').map(Number);
+    const minInicio = hI * 60 + mI;
+    const minFin = hF * 60 + mF;
+    if (minInicio < minFin) {
+      throw new Error(`GUARDIA_HORA_INVALIDA: la guardia no puede iniciar antes del fin del último viaje (${ultimoViaje.arrivalTime})`);
+    }
+  }
+}
   if (tipo === "especial" && !(descripcion || "").trim()) {
     throw new Error("GUARDIA_DESCRIPCION_REQUERIDA: la guardia especial requiere descripción");
   }
