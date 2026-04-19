@@ -464,7 +464,7 @@ async function doLogin() {
     if (!res.ok || !data.access_token) { errEl.style.display='block'; btn.disabled=false; btn.textContent='Ingresar'; return; }
     currentUser = data;
     localStorage.setItem('admin_email', email);
-    localStorage.setItem('admin_password', password);
+   // localStorage.setItem('admin_password', password);
     document.getElementById('userEmail').textContent = email;
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminScreen').style.display = 'block';
@@ -490,7 +490,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const token = localStorage.getItem('admin_token');
 if (token) {
     currentUser = { access_token: token };
-    document.getElementById('userEmail').textContent = email;
+    document.getElementById('userEmail').textContent = localStorage.getItem('admin_email') || '';
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminScreen').style.display = 'block';
     iniciarAdmin();
@@ -526,12 +526,25 @@ async function renovarToken() {
  
 async function sbFetch(path, options={}) {
   const token = currentUser ? currentUser.access_token : localStorage.getItem('admin_token');
-  const res = await fetch(`${SB_URL}/rest/v1/${path}`, { ...options, headers:{'apikey':SB_KEY,'Authorization':`Bearer ${token}`,'Content-Type':'application/json',...(options.headers||{})} });
-  if (res.status===401) {
+  const res = await fetch(`${SB_URL}/rest/v1/${path}`, {
+    ...options,
+    headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...(options.headers||{}) }
+  });
+
+  if (res.status === 401) {
     const ok = await renovarToken();
-    if (ok) { const res2 = await fetch(`${SB_URL}/rest/v1/${path}`, { ...options, headers:{'apikey':SB_KEY,'Authorization':`Bearer ${currentUser.access_token}`,'Content-Type':'application/json',...(options.headers||{})} }); return res2.json(); }
+    if (ok) {
+      const res2 = await fetch(`${SB_URL}/rest/v1/${path}`, {
+        ...options,
+        headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${currentUser.access_token}`, 'Content-Type': 'application/json', ...(options.headers||{}) }
+      });
+      const text2 = await res2.text();
+      return text2 ? JSON.parse(text2) : null;
+    }
   }
-  return res.json();
+
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
  
 function switchTab(tab) {
@@ -1131,20 +1144,17 @@ async function enviarMensaje() {
   const para = document.getElementById('msgPara').value;
   const tipo = document.getElementById('msgTipo').value;
   const texto = document.getElementById('msgTexto').value.trim();
- 
-  // Validar destinatario para asignación
+
   if (tipo === 'asignacion' && para === 'todos') {
     showToast('⚠️ Las asignaciones deben ir a un chofer específico');
     return;
   }
- 
-  // Validar texto para mensajes normales
+
   if (tipo !== 'asignacion' && !texto) {
     showToast('⚠️ Escribí un mensaje');
     return;
   }
- 
-  // Armar data de viaje si es asignación
+
   let dataViaje = null;
   if (tipo === 'asignacion') {
     const origen = document.getElementById('asigOrigen').value;
@@ -1153,34 +1163,39 @@ async function enviarMensaje() {
     const horaLlegada = document.getElementById('asigHoraLlegada').value;
     const tipoServicio = document.getElementById('asigTipoServicio').value;
     const coche = document.getElementById('asigCoche').value;
- 
+
     if (!horaSalida) { showToast('⚠️ Ingresá la hora de salida'); return; }
     if (!coche) { showToast('⚠️ Ingresá el número de coche'); return; }
     if (!origen) { showToast('⚠️ Ingresá el origen'); return; }
     if (!destino) { showToast('⚠️ Ingresá el destino'); return; }
-   //if (!horaLlegada) { showToast('⚠️ Ingresá la hora de llegada'); return; }
     if (!tipoServicio) { showToast('⚠️ Seleccioná el tipo de servicio'); return; }
-   // Validar formato de horas HH:MM
-     const regexHora = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+    const regexHora = /^([01]\d|2[0-3]):([0-5]\d)$/;
     if (!regexHora.test(horaSalida)) { showToast('⚠️ Hora de salida inválida (HH:MM)'); return; }
- //if (!regexHora.test(horaLlegada)) { showToast('⚠️ Hora de llegada inválida (HH:MM)'); return; }
+    if (isNaN(coche) || coche.trim() === '') { showToast('⚠️ El número de coche debe ser numérico'); return; }
 
-
-// Validar que coche sea numérico
-if (isNaN(coche) || coche.trim() === '') { showToast('⚠️ El número de coche debe ser numérico'); return; }
- 
     dataViaje = {
       viaje: { origen, destino, horaSalida, horaLlegada, tipoServicio, coche },
       respuesta: null,
       respondidoAt: null
     };
   }
- 
-  // Texto automático para asignación si no escribieron nada
+
   const textoFinal = texto || (tipo === 'asignacion'
     ? `Asignación de viaje: ${document.getElementById('asigOrigen').value} → ${document.getElementById('asigDestino').value} a las ${document.getElementById('asigHoraSalida').value}`
     : '');
- 
+
+  if (para !== 'todos') {
+    const choferData = await sbFetch(`choferes?empresa_id=eq.cot&legajo=eq.${para}&select=id,nombre,device_id`);
+    if (!Array.isArray(choferData) || choferData.length === 0) {
+      showToast(`❌ El legajo ${para} no existe en el sistema`);
+      return;
+    }
+    if (!choferData[0].device_id) {
+      showToast(`⚠️ El legajo ${para} existe pero no tiene dispositivo registrado`);
+    }
+  }
+
   try {
     const body = {
       empresa_id: 'cot',
@@ -1191,17 +1206,20 @@ if (isNaN(coche) || coche.trim() === '') { showToast('⚠️ El número de coche
       leido: false
     };
     if (dataViaje) body.data = dataViaje;
- 
-    const res = await fetch(`${SB_URL}/rest/v1/mensajes`, {
+
+    await sbFetch('mensajes', {
       method: 'POST',
-      headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${localStorage.getItem('admin_token')}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      headers: { 'Prefer': 'return=minimal' },
       body: JSON.stringify(body)
     });
-    if (!res.ok) { showToast('❌ Error al enviar'); return; }
+
     document.getElementById('msgTexto').value = '';
     showToast(`✅ ${tipo === 'asignacion' ? 'Asignación enviada' : 'Mensaje enviado'} a ${para === 'todos' ? 'todos' : 'legajo ' + para}`);
     cargarMensajes();
-  } catch(e) { showToast('❌ Error al enviar'); }
+  } catch(e) {
+    console.error('Error enviarMensaje:', e);
+    showToast('❌ Error al enviar');
+  }
 }
  
 function showError(msg) { const e=document.getElementById('loginError'); e.textContent=msg; e.style.display='block'; }
