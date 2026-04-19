@@ -137,18 +137,36 @@ async function aceptarAsignacion(id) {
 
   cerrarNotifMensaje();
 
-  // Cargar viaje en jornada
+ 
   if (viajeData && typeof agregarViajeAsignado === 'function') {
-    const ok = agregarViajeAsignado(viajeData);
-    if (ok) {
-      if (typeof renderResumenDia === 'function') renderResumenDia();
-      if (typeof renderListaViajes === 'function') renderListaViajes();
-      if (typeof mostrarViajeEnCursoUI === 'function') mostrarViajeEnCursoUI();
-      if (typeof renderBotonCerrarJornada === 'function') renderBotonCerrarJornada();
-      _mostrarConfirmacion('✅ Viaje cargado en tu jornada', '#10b981');
-      return;
-    }
+  
+  const ordenActual = getActiveOrder ? getActiveOrder() : null;
+  if (!ordenActual) {
+    _mostrarConfirmacion('⚠️ No hay jornada activa — abrí una jornada primero', '#f59e0b');
+    return;
   }
+  const travels = ordenActual.travels || [];
+  const yaExiste = travels.some(t =>
+    t.origen === viajeData.origen &&
+    t.destino === viajeData.destino &&
+    t.departureTime === viajeData.horaSalida &&
+    t.status !== 'cancelado'
+  );
+  if (yaExiste) {
+    _mostrarConfirmacion('⚠️ Este viaje ya está en tu jornada', '#f59e0b');
+    return;
+  }
+
+  const ok = agregarViajeAsignado(viajeData);
+  if (ok) {
+    if (typeof renderResumenDia === 'function') renderResumenDia();
+    if (typeof renderListaViajes === 'function') renderListaViajes();
+    if (typeof mostrarViajeEnCursoUI === 'function') mostrarViajeEnCursoUI();
+    if (typeof renderBotonCerrarJornada === 'function') renderBotonCerrarJornada();
+    _mostrarConfirmacion('✅ Viaje cargado en tu jornada', '#10b981');
+    return;
+  }
+}
   _mostrarConfirmacion('✅ Asignación aceptada', '#10b981');
 }
 
