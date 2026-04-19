@@ -50,44 +50,33 @@ async function syncPendientes() {
     console.log("💾 Storage actualizado con syncStatus synced");
   }
 }
-async function checkComandosPendientes() {
-  console.log('checkComandos ejecutando... deviceId:', localStorage.getItem('device_id'));
-  try {
-    const deviceId = localStorage.getItem('device_id');
-    if (!deviceId) return;
-
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/comandos_dispositivo?device_id=eq.${deviceId}&ejecutado=eq.false&select=*`,
-      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
-    );
-    const comandos = await res.json();
-    if (!Array.isArray(comandos) || !comandos.length) return;
-
-    for (const cmd of comandos) {
-      if (cmd.tipo === 'limpiar_jornadas') {
-        const conservar = ['device_id', 'driverProfile'];
-        Object.keys(localStorage).forEach(k => {
-          if (!conservar.includes(k)) localStorage.removeItem(k);
-        });
-        console.log('DESPUES de limpiar:', Object.keys(localStorage));
-  console.log('Jornadas locales limpiadas por comando admin');
-      }
-
-      await fetch(
-        `${SUPABASE_URL}/rest/v1/comandos_dispositivo?id=eq.${cmd.id}`,
-        {
-          method: 'PATCH',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ ejecutado: true, ejecutado_at: new Date().toISOString() })
-        }
-      );
+for (const cmd of comandos) {
+  // ── Marcar como ejecutado PRIMERO (idempotencia) ──
+  const patchRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/comandos_dispositivo?id=eq.${cmd.id}&ejecutado=eq.false`,
+    {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ ejecutado: true, ejecutado_at: new Date().toISOString() })
     }
-  } catch(e) {
-    console.warn('checkComandos error:', e);
+  );
+
+  // Solo procesar si el PATCH actualizó algo (rowCount > 0)
+  // Si otra instancia ya lo marcó, el PATCH no actualiza nada y lo ignoramos
+  if (!patchRes.ok) continue;
+
+  if (cmd.tipo === 'limpiar_jornadas') {
+    const conservar = ['device_id', 'driverProfile'];
+    Object.keys(localStorage).forEach(k => {
+      if (!conservar.includes(k)) localStorage.removeItem(k);
+    });
+    console.log('DESPUES de limpiar:', Object.keys(localStorage));
+    console.log('Jornadas locales limpiadas por comando admin');
   }
 }
 setInterval(checkComandosPendientes, 30000);
