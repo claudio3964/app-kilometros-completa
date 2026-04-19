@@ -463,8 +463,6 @@ async function doLogin() {
     const data = await res.json();
     if (!res.ok || !data.access_token) { errEl.style.display='block'; btn.disabled=false; btn.textContent='Ingresar'; return; }
     currentUser = data;
-    localStorage.setItem('admin_token', data.access_token);
-    localStorage.setItem('admin_refresh_token', data.refresh_token||'');
     localStorage.setItem('admin_email', email);
     localStorage.setItem('admin_password', password);
     document.getElementById('userEmail').textContent = email;
@@ -490,8 +488,7 @@ function doLogout() {
  
 window.addEventListener('DOMContentLoaded', () => {
   const token = localStorage.getItem('admin_token');
-  const email = localStorage.getItem('admin_email');
-  if (token && email) {
+if (token) {
     currentUser = { access_token: token };
     document.getElementById('userEmail').textContent = email;
     document.getElementById('loginScreen').style.display = 'none';
@@ -508,12 +505,21 @@ window.addEventListener('DOMContentLoaded', () => {
  
 async function renovarToken() {
   try {
-    const email = localStorage.getItem('admin_email');
-    const password = localStorage.getItem('admin_password');
-    if (!email || !password) return false;
-    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=password`, { method:'POST', headers:{'Content-Type':'application/json','apikey':SB_KEY}, body:JSON.stringify({email,password}) });
+    const refreshToken = localStorage.getItem('admin_refresh_token');
+    if (!refreshToken) return false;
+
+    const res = await fetch(`${SB_URL}/auth/v1/token?grant_type=refresh_token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY },
+      body: JSON.stringify({ refresh_token: refreshToken })
+    });
     const data = await res.json();
-    if (data.access_token) { currentUser=data; localStorage.setItem('admin_token',data.access_token); localStorage.setItem('admin_refresh_token',data.refresh_token||''); return true; }
+    if (data.access_token) {
+      currentUser = data;
+      localStorage.setItem('admin_token', data.access_token);
+      localStorage.setItem('admin_refresh_token', data.refresh_token || refreshToken);
+      return true;
+    }
   } catch(e) {}
   return false;
 }
@@ -1150,6 +1156,18 @@ async function enviarMensaje() {
  
     if (!horaSalida) { showToast('⚠️ Ingresá la hora de salida'); return; }
     if (!coche) { showToast('⚠️ Ingresá el número de coche'); return; }
+    if (!origen) { showToast('⚠️ Ingresá el origen'); return; }
+    if (!destino) { showToast('⚠️ Ingresá el destino'); return; }
+   //if (!horaLlegada) { showToast('⚠️ Ingresá la hora de llegada'); return; }
+    if (!tipoServicio) { showToast('⚠️ Seleccioná el tipo de servicio'); return; }
+   // Validar formato de horas HH:MM
+     const regexHora = /^([01]\d|2[0-3]):([0-5]\d)$/;
+    if (!regexHora.test(horaSalida)) { showToast('⚠️ Hora de salida inválida (HH:MM)'); return; }
+ //if (!regexHora.test(horaLlegada)) { showToast('⚠️ Hora de llegada inválida (HH:MM)'); return; }
+
+
+// Validar que coche sea numérico
+if (isNaN(coche) || coche.trim() === '') { showToast('⚠️ El número de coche debe ser numérico'); return; }
  
     dataViaje = {
       viaje: { origen, destino, horaSalida, horaLlegada, tipoServicio, coche },
