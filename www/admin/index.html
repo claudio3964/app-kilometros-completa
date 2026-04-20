@@ -207,10 +207,22 @@
     <!-- JORNADAS -->
     <div class="tab-panel" id="tab-jornadas">
       <div class="section-header"><div class="section-title">Jornadas</div><button class="btn-refresh" onclick="cargarJornadas()">↺ Actualizar</button></div>
-      <div class="filters">
-        <input class="filter-input" id="filterJornadaChofer" placeholder="🔍 Chofer o legajo..." oninput="filtrarJornadas()" style="width:240px">
-        <input class="filter-input" type="date" id="filterJornadaFecha" onchange="filtrarJornadas()">
-      </div>
+      <div class="filters" style="flex-wrap:wrap;gap:8px;margin-bottom:12px">
+  <input class="filter-input" id="filterJornadaChofer" placeholder="🔍 Chofer o legajo..." oninput="filtrarJornadas()" style="width:200px">
+  <input class="filter-input" type="date" id="filterJornadaFecha" onchange="filtrarJornadas()">
+  <select class="filter-input" id="filterJornadaEstado" onchange="filtrarJornadas()">
+    <option value="">Todos los estados</option>
+    <option value="cerrada">✓ Cerradas</option>
+    <option value="curso">● En curso</option>
+  </select>
+  <select class="filter-input" id="filterJornadaTipo" onchange="filtrarJornadas()">
+    <option value="">Todos los tipos</option>
+    <option value="efectivo">Efectivo</option>
+    <option value="contratado">Contratado</option>
+  </select>
+  <button class="filter-input" onclick="limpiarFiltrosJornadas()" style="cursor:pointer;color:var(--text3);border-color:var(--border)">✕ Limpiar</button>
+</div>
+<div id="jornadasInfo" style="font-size:12px;color:var(--text3);font-family:var(--mono);margin-bottom:8px"></div>
       <div class="table-wrap"><table>
         <thead><tr><th>Fecha</th><th>Chofer</th><th>Legajo</th><th>Viajes</th><th>Guardias</th><th>Km Total</th><th>Viáticos</th><th>Monto</th><th>Estado</th></tr></thead>
         <tbody id="jornadasBody"><tr><td colspan="9" class="loading">Cargando...</td></tr></tbody>
@@ -836,11 +848,80 @@ function filtrarChoferes() {
   renderChoferes(allChoferes.filter(c=>(c.nombre||'').toLowerCase().includes(q)||(c.legajo||'').toLowerCase().includes(q)));
 }
  
+// ── JORNADAS — estado de paginación ──
+let jornadasPagina = 1;
+const JORNADAS_POR_PAGINA = 20;
+
 async function cargarJornadas() {
   try {
-    const data = await sbFetch('jornadas?empresa_id=eq.cot&select=*&order=id.desc&limit=100');
-    allJornadas = data; renderJornadas(data);
-  } catch(e) { document.getElementById('jornadasBody').innerHTML='<tr><td colspan="9" class="loading">Error al cargar</td></tr>'; }
+    const data = await sbFetch('jornadas?empresa_id=eq.cot&select=*&order=id.desc&limit=500');
+    allJornadas = data;
+    jornadasPagina = 1;
+    filtrarJornadas();
+  } catch(e) {
+    document.getElementById('jornadasBody').innerHTML='<tr><td colspan="9" class="loading">Error al cargar</td></tr>';
+  }
+}
+
+function filtrarJornadas() {
+  const txtChofer  = (document.getElementById('filterJornadaChofer')?.value||'').toLowerCase();
+  const txtFecha   = document.getElementById('filterJornadaFecha')?.value||'';
+  const txtEstado  = document.getElementById('filterJornadaEstado')?.value||'';
+  const txtTipo    = document.getElementById('filterJornadaTipo')?.value||'';
+
+  let filtradas = allJornadas.filter(j => {
+    let d = {};
+    try { d = typeof j.data==='string' ? JSON.parse(j.data||'{}') : (j.data||{}); } catch {}
+
+    if (txtChofer) {
+      const nombre = (d.driverName||'').toLowerCase();
+      const legajo = (d.driverLegajo||j.chofer_id||'').toLowerCase();
+      if (!nombre.includes(txtChofer) && !legajo.includes(txtChofer)) return false;
+    }
+    if (txtFecha && d.date !== txtFecha) return false;
+    if (txtEstado === 'cerrada' && !d.closed) return false;
+    if (txtEstado === 'curso'   &&  d.closed) return false;
+    if (txtTipo && (d.tipo||'contratado') !== txtTipo) return false;
+    return true;
+  });
+
+  const total   = filtradas.length;
+  const inicio  = (jornadasPagina - 1) * JORNADAS_POR_PAGINA;
+  const fin     = inicio + JORNADAS_POR_PAGINA;
+  const pagina  = filtradas.slice(inicio, fin);
+  const totalPaginas = Math.ceil(total / JORNADAS_POR_PAGINA) || 1;
+
+  // Info + paginación
+  const infoEl = document.getElementById('jornadasInfo');
+  if (infoEl) {
+    const desde = total ? inicio+1 : 0;
+    const hasta = Math.min(fin, total);
+    infoEl.innerHTML = `
+      Mostrando <strong style="color:var(--text)">${desde}–${hasta}</strong> de <strong style="color:var(--text)">${total}</strong> jornadas
+      &nbsp;|&nbsp;
+      <button onclick="cambiarPaginaJornadas(-1)" style="background:none;border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px" ${jornadasPagina<=1?'disabled':''}>◀</button>
+      <span style="margin:0 6px">Pág ${jornadasPagina} / ${totalPaginas}</span>
+      <button onclick="cambiarPaginaJornadas(1)" style="background:none;border:1px solid var(--border);color:var(--text2);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px" ${jornadasPagina>=totalPaginas?'disabled':''}>▶</button>
+    `;
+  }
+
+  renderJornadas(pagina);
+}
+
+function cambiarPaginaJornadas(dir) {
+  const total = allJornadas.length;
+  const totalPaginas = Math.ceil(total / JORNADAS_POR_PAGINA) || 1;
+  jornadasPagina = Math.max(1, Math.min(jornadasPagina + dir, totalPaginas));
+  filtrarJornadas();
+}
+
+function limpiarFiltrosJornadas() {
+  document.getElementById('filterJornadaChofer').value = '';
+  document.getElementById('filterJornadaFecha').value  = '';
+  document.getElementById('filterJornadaEstado').value = '';
+  document.getElementById('filterJornadaTipo').value   = '';
+  jornadasPagina = 1;
+  filtrarJornadas();
 }
  
 function renderJornadas(jornadas) {
@@ -874,7 +955,10 @@ function renderJornadas(jornadas) {
       <td><span class="mono">${Number(kmTotal).toFixed(1)} km</span></td>
       <td style="text-align:center">${viaticos}</td>
       <td><span class="mono">$ ${Math.round(monto)}</span></td>
-      <td><span class="badge ${d.closed?'badge-ok':'badge-warn'}">${d.closed?'✓ Cerrada':'● En curso'}</span></td>
+      <td style="display:flex;gap:6px;align-items:center">
+  <span class="badge ${d.closed?'badge-ok':'badge-warn'}">${d.closed?'✓ Cerrada':'● En curso'}</span>
+  ${d.closed?`<button onclick="event.stopPropagation();exportarJornadaJSON('${j.order_number}')" style="background:rgba(6,182,212,0.1);border:1px solid var(--accent2);color:var(--accent2);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;font-family:var(--mono)">JSON</button>`:''}
+</td>
     </tr>`;
   }).join('');
 }
@@ -909,24 +993,60 @@ async function enviarComandoLimpiar(chofer_id, device_id, nombre) {
     showToast('Error al enviar comando');
   }
 }
- 
-function filtrarJornadas() {
-  const q=document.getElementById('filterJornadaChofer').value.toLowerCase(), fecha=document.getElementById('filterJornadaFecha').value;
-  renderJornadas(allJornadas.filter(j=>{
-    let d={};try{d=typeof j.data==='string'?JSON.parse(j.data||'{}'):(j.data||{});}catch{}
-    return (!q||(d.driverName||'').toLowerCase().includes(q)||(d.driverLegajo||'').toLowerCase().includes(q)||(j.chofer_id||'').toLowerCase().includes(q))&&(!fecha||d.date===fecha);
-  }));
-}
- 
-async function cargarAlertas() {
-  try {
-    const data = await sbFetch('registro_alertas?select=*&order=intentado_at.desc');
-    renderAlertas(data);
-    const pend=data.filter(a=>!a.resuelto).length;
-    const badge=document.getElementById('alertBadge');
-    pend>0?(badge.textContent=pend,badge.style.display='inline'):badge.style.display='none';
-    document.getElementById('statAlertas').textContent=pend;
-  } catch(e){document.getElementById('alertasContainer').innerHTML='<div class="empty-state"><div class="icon">❌</div><p>Error al cargar alertas</p></div>';}
+
+ function exportarJornadaJSON(orderNumber) {
+  const j = allJornadas.find(x => x.order_number === orderNumber);
+  if (!j) return;
+  let d = {};
+  try { d = typeof j.data==='string' ? JSON.parse(j.data||'{}') : (j.data||{}); } catch {}
+  const snap = d.totalsSnapshot || {};
+
+  const payload = {
+    sistema: 'DriverLog',
+    version: '1.0',
+    exportado_at: new Date().toISOString(),
+    jornada: {
+      order_number:  j.order_number,
+      fecha:         d.date || '',
+      chofer_nombre: d.driverName || j.chofer_id || '',
+      chofer_legajo: d.driverLegajo || j.chofer_id || '',
+      tipo:          d.tipo || 'contratado',
+      coche:         d.coche || '',
+      estado:        d.closed ? 'cerrada' : 'en_curso',
+      km_total:      Math.round((snap.kmTotal   ||0)*10)/10,
+      km_viajes:     Math.round((snap.kmViajes  ||0)*10)/10,
+      km_guardias:   Math.round((snap.kmGuardias||0)*10)/10,
+      km_tome_cese:  Math.round((snap.kmTomeCese||0)*10)/10,
+      km_acoplados:  Math.round((snap.kmAcoplados||0)*10)/10,
+      viaticos:      snap.viaticos || 0,
+      monto:         Math.round(snap.monto || 0),
+      viajes: (d.travels||[]).filter(t=>t.status!=='cancelado').map(v=>({
+        origen:       v.origen||'',
+        destino:      v.destino||'',
+        salida:       v.departureTime||'',
+        llegada:      v.arrivalTime||'',
+        km:           v.kmEmpresa||v.kmAuto||0,
+        tipo_servicio:v.tipoServicio||v.turno||'',
+        acoplado:     v.acoplado||false,
+        coche:        v.coche||''
+      })),
+      guardias: (d.guards||[]).map(g=>({
+        inicio: g.inicio||'',
+        fin:    g.fin||'',
+        horas:  g.hours||0,
+        km:     g.kmGuardia||0,
+        tipo:   g.type||''
+      }))
+    }
+  };
+
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+a.download = `jornada_${d.driverLegajo||j.chofer_id||'chofer'}_${d.date||'fecha'}.json`;  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📦 JSON exportado');
 }
  
 function alertaCard(a,mini=false) {
