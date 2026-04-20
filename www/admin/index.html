@@ -159,20 +159,21 @@
     </div>
   </div>
  
-  <div class="nav-tabs">
-    <div class="nav-tab active" onclick="switchTab('dashboard')">📊 Dashboard</div>
-    <div class="nav-tab" onclick="switchTab('choferes')">🚗 Choferes</div>
-    <div class="nav-tab" onclick="switchTab('jornadas')">📋 Jornadas</div>
-    <div class="nav-tab" onclick="switchTab('alertas')">
-      🔔 Alertas<span class="tab-badge" id="alertBadge" style="display:none">0</span>
-    </div>
-    <div class="nav-tab" onclick="switchTab('rotacion')">🔄 Rotación</div>
-    <div class="nav-tab" onclick="switchTab('flota')">🚌 Flota</div>
-    <div class="nav-tab" onclick="switchTab('estadisticas')">📈 Estadísticas</div>
-    <div class="nav-tab" onclick="switchTab('mensajes')">
-      💬 Mensajes<span class="tab-badge" id="msgBadge" style="display:none">0</span>
-    </div>
-          <div class="nav-tab" id="tabAdmins" onclick="switchTab('admins')" style="display:none">👤 Admins</div>
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="switchTab('dashboard')">📊 Dashboard</div>
+  <div class="nav-tab" onclick="switchTab('choferes')">🚗 Choferes</div>
+  <div class="nav-tab" onclick="switchTab('jornadas')">📋 Jornadas</div>
+  <div class="nav-tab" onclick="switchTab('alertas')">
+    🔔 Alertas<span class="tab-badge" id="alertBadge" style="display:none">0</span>
+  </div>
+  <div class="nav-tab" id="tabRotacion" onclick="switchTab('rotacion')">🔄 Rotación</div>
+  <div class="nav-tab" id="tabFlota" onclick="switchTab('flota')">🚌 Flota</div>
+  <div class="nav-tab" onclick="switchTab('estadisticas')">📈 Estadísticas</div>
+  <div class="nav-tab" id="tabMensajes" onclick="switchTab('mensajes')">
+    💬 Mensajes<span class="tab-badge" id="msgBadge" style="display:none">0</span>
+  </div>
+  <div class="nav-tab" id="tabAdmins" onclick="switchTab('admins')" style="display:none">👤 Admins</div>
+</div>
 
   </div>
  
@@ -297,6 +298,40 @@
   </div>
 </div>
  
+<!-- MODAL NUEVO ADMIN -->
+<div id="modalNuevoAdmin" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:2000;align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;width:420px;max-width:90%;">
+    <div style="font-size:16px;font-weight:600;margin-bottom:6px">➕ Nuevo Administrador</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:20px">Se creará un usuario en Supabase Auth y se registrará en la tabla admins.</div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px">Nombre completo</label>
+        <input id="newAdminNombre" type="text" placeholder="Juan Pérez" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px">Email</label>
+        <input id="newAdminEmail" type="email" placeholder="admin@cot.com.uy" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px">Contraseña temporal</label>
+        <input id="newAdminPass" type="password" placeholder="Mínimo 8 caracteres" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px">Rol</label>
+        <select id="newAdminRol" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;">
+          <option value="despachador">Despachador</option>
+          <option value="supervisor">Supervisor</option>
+          <option value="superadmin">Superadmin</option>
+        </select>
+      </div>
+    </div>
+    <div id="newAdminError" style="display:none;margin-top:12px;font-size:12px;color:var(--danger);background:rgba(239,68,68,0.1);border-radius:6px;padding:8px 12px;"></div>
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button id="btnCrearAdmin" onclick="crearNuevoAdmin()" style="flex:1;background:var(--accent);color:white;border:none;border-radius:8px;padding:11px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;">Crear admin</button>
+      <button onclick="cerrarModalNuevoAdmin()" style="flex:1;background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:8px;padding:11px;font-family:var(--sans);font-size:13px;cursor:pointer;">Cancelar</button>
+    </div>
+  </div>
+</div>
     <!-- MODAL TALLER -->
     <div id="modalTaller" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:2000;align-items:center;justify-content:center;">
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;width:380px;max-width:90%;">
@@ -471,8 +506,107 @@
 <script>
 const SB_URL = 'https://frjeivfpldcigklwepqt.supabase.co';
 const SB_KEY = 'sb_publishable_6A7tufjD-rTAUAPfxyziyw_3kXMumzJ';
+const SB_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZyamVpdmZwbGRjaWdrbHdlcHF0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTUxNjQ3NywiZXhwIjoyMDkxMDkyNDc3fQ.E98s7p5bvmETfVlrLABaakgyUHrTr57FvtKOgFvIzWA';
+
 let currentUser = null, allChoferes = [], allJornadas = [], allMensajes = [], msgFiltro = 'todos';
  
+function abrirModalNuevoAdmin() {
+  document.getElementById('newAdminNombre').value = '';
+  document.getElementById('newAdminEmail').value = '';
+  document.getElementById('newAdminPass').value = '';
+  document.getElementById('newAdminRol').value = 'despachador';
+  document.getElementById('newAdminError').style.display = 'none';
+  const m = document.getElementById('modalNuevoAdmin');
+  m.style.display = 'flex';
+}
+
+function cerrarModalNuevoAdmin() {
+  document.getElementById('modalNuevoAdmin').style.display = 'none';
+}
+
+async function crearNuevoAdmin() {
+  const nombre = document.getElementById('newAdminNombre').value.trim();
+  const email  = document.getElementById('newAdminEmail').value.trim();
+  const pass   = document.getElementById('newAdminPass').value;
+  const rol    = document.getElementById('newAdminRol').value;
+  const errEl  = document.getElementById('newAdminError');
+  const btn    = document.getElementById('btnCrearAdmin');
+
+  errEl.style.display = 'none';
+
+  if (!nombre || !email || !pass) {
+    errEl.textContent = 'Completá todos los campos.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (pass.length < 8) {
+    errEl.textContent = 'La contraseña debe tener al menos 8 caracteres.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Creando...';
+
+  try {
+    // 1. Crear usuario en Supabase Auth (requiere service_role key — usamos Admin API)
+    const resAuth = await fetch(`${SB_URL}/auth/v1/admin/users`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_SERVICE_KEY,
+        'Authorization': `Bearer ${SB_SERVICE_KEY}`
+      },
+      body: JSON.stringify({
+        email,
+        password: pass,
+        email_confirm: true   // no requiere verificación de email
+      })
+    });
+
+    const authData = await resAuth.json();
+    if (!resAuth.ok) throw new Error(authData.message || authData.msg || 'Error en Auth');
+
+    const newUserId = authData.id;
+
+    // 2. Insertar en tabla admins
+    const resAdmin = await fetch(`${SB_URL}/rest/v1/admins`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${sessionStorage.getItem('admin_token')}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        id: newUserId,
+        empresa_id: 'cot',
+        nombre,
+        email,
+        rol,
+        activo: true,
+        created_by: currentUser.user?.id || null
+      })
+    });
+
+    if (!resAdmin.ok) {
+      const e = await resAdmin.json();
+      throw new Error(e.message || 'Error al guardar en admins');
+    }
+
+    cerrarModalNuevoAdmin();
+    showToast(`✅ Admin "${nombre}" creado correctamente`);
+    cargarAdmins();
+
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Crear admin';
+  }
+}
+
 async function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
@@ -518,9 +652,26 @@ function iniciarAdmin() {
   iniciarRealtime(); 
   // Mostrar tab admins solo para superadmin
 const rol = sessionStorage.getItem('admin_rol');
+// Control de acceso por rol
+const tabAdmins    = document.getElementById('tabAdmins');
+const tabRotacion  = document.getElementById('tabRotacion');
+const tabFlota     = document.getElementById('tabFlota');
+const tabMensajes  = document.getElementById('tabMensajes');
+
+// Por defecto ocultar Admins
+tabAdmins.style.display = 'none';
+
 if (rol === 'superadmin') {
-  document.getElementById('tabAdmins').style.display = 'flex';
+  tabAdmins.style.display = 'flex';
   cargarAdmins();
+}
+
+// Rotacion, Flota y Mensajes — ocultar solo para supervisor
+// (despachador y superadmin los ven)
+if (rol === 'supervisor') {
+  if (tabRotacion) tabRotacion.style.display = 'none';
+  if (tabFlota)    tabFlota.style.display    = 'none';
+  if (tabMensajes) tabMensajes.style.display = 'none';
 }
 }
  
