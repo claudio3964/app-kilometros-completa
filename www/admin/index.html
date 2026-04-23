@@ -656,9 +656,16 @@ if (rol === 'supervisor') {
   if (tabFlota)    tabFlota.style.display    = 'none';
   if (tabMensajes) tabMensajes.style.display = 'none';
 }
+iniciarSessionTimer();
 }
- 
+ // ── TIMEOUT DE SESIÓN — 5 minutos de inactividad ──
+const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutos
+const SESSION_WARN_MS    = 4 * 60 * 1000; // aviso al minuto 4
+let _sessionTimer = null;
+let _sessionWarnTimer = null;
+let _sessionWarnVisible = false;
 async function doLogout() {
+  detenerSessionTimer();
   try {
     const token = (currentUser && currentUser.access_token) || sessionStorage.getItem('admin_token');
     if (token) {
@@ -674,6 +681,62 @@ async function doLogout() {
   if (window.__msgPoller) { clearInterval(window.__msgPoller); window.__msgPoller = null; }
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('adminScreen').style.display = 'none';
+}
+
+function resetSessionTimer() {
+  clearTimeout(_sessionTimer);
+  clearTimeout(_sessionWarnTimer);
+
+  // Ocultar aviso si estaba visible
+  if (_sessionWarnVisible) {
+    const w = document.getElementById('sessionWarn');
+    if (w) w.remove();
+    _sessionWarnVisible = false;
+  }
+
+  // Aviso al minuto 4
+  _sessionWarnTimer = setTimeout(() => {
+    if (document.getElementById('adminScreen').style.display === 'none') return;
+    _sessionWarnVisible = true;
+    const warn = document.createElement('div');
+    warn.id = 'sessionWarn';
+    warn.style.cssText = `
+      position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+      background:#1e293b;border:2px solid #f59e0b;border-radius:12px;
+      padding:14px 24px;z-index:9999;font-size:13px;color:#f59e0b;
+      font-weight:600;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.4);
+    `;
+    warn.innerHTML = `
+      ⚠️ Tu sesión expira en <b>1 minuto</b> por inactividad.
+      <button onclick="resetSessionTimer()" style="
+        margin-left:12px;background:#f59e0b;color:#1e293b;border:none;
+        border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;
+      ">Mantener sesión</button>
+    `;
+    document.body.appendChild(warn);
+  }, SESSION_WARN_MS);
+
+  // Cierre al minuto 5
+  _sessionTimer = setTimeout(() => {
+    if (document.getElementById('adminScreen').style.display === 'none') return;
+    const w = document.getElementById('sessionWarn');
+    if (w) w.remove();
+    showToast('⏱️ Sesión cerrada por inactividad');
+    setTimeout(() => doLogout(), 1500);
+  }, SESSION_TIMEOUT_MS);
+}
+
+function iniciarSessionTimer() {
+  const eventos = ['mousemove','mousedown','keydown','touchstart','scroll','click'];
+  eventos.forEach(e => document.addEventListener(e, resetSessionTimer, { passive: true }));
+  resetSessionTimer();
+}
+
+function detenerSessionTimer() {
+  clearTimeout(_sessionTimer);
+  clearTimeout(_sessionWarnTimer);
+  const eventos = ['mousemove','mousedown','keydown','touchstart','scroll','click'];
+  eventos.forEach(e => document.removeEventListener(e, resetSessionTimer));
 }
  
 window.addEventListener('DOMContentLoaded', () => {
