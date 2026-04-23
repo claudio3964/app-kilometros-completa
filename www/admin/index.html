@@ -1705,11 +1705,41 @@ function showError(msg) { const e=document.getElementById('loginError'); e.textC
 // REALTIME
 // ══════════════════════════════════════════
 function iniciarRealtime() {
-  // Polling cada 10 segundos
+  // Polling cada 10 segundos para jornadas y dashboard
   setInterval(() => {
     cargarJornadas();
     cargarDashboard();
   }, 10000);
+
+  // Polling cada 5 segundos para mensajes — feedback rápido de asignaciones
+  setInterval(() => {
+    cargarMensajes();
+  }, 5000);
+
+  // Realtime Supabase — suscripción a cambios en mensajes
+  const REALTIME_URL = `${SB_URL}/realtime/v1/websocket?apikey=${SB_KEY}&vsn=1.0.0`;
+  const socket = new WebSocket(REALTIME_URL);
+
+  socket.onopen = () => {
+    socket.send(JSON.stringify({
+      topic: 'realtime:public:mensajes',
+      event: 'phx_join',
+      payload: { config: { broadcast: { self: false }, presence: { key: '' } } },
+      ref: '1'
+    }));
+    console.log('Realtime mensajes conectado ✅');
+  };
+
+  socket.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.event === 'UPDATE' || msg.event === 'INSERT') {
+      cargarMensajes();
+    }
+  };
+
+  socket.onerror = () => console.warn('Realtime desconectado — usando polling');
+  socket.onclose = () => console.warn('Realtime cerrado');
+
   console.log('Auto-refresh activo ✅ (cada 10s)');
 }
 </script>
