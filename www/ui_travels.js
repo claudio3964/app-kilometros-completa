@@ -330,10 +330,20 @@ function abrirViajeSimple() {
     alert("Hay un viaje en curso.\n\n" + travelEnCurso.origen + " → " + travelEnCurso.destino + "\nSalida: " + travelEnCurso.departureTime + "\n\nEl nuevo viaje se cargará como PROGRAMADO.");
   }
   const driver = getDriver();
-  if (driver) {
-    const sel = document.getElementById("originTravels");
-    if (sel) sel.value = driver.base || "Montevideo";
+  const base = driver?.base || "Montevideo";
+
+  // Cargar opciones del select de origen
+  const sel = document.getElementById("originTravels");
+  if (sel) {
+    if (typeof cargarSelectorOrigen === 'function') {
+      cargarSelectorOrigen(base);
+    } else {
+      // Fallback — cargar opciones manualmente
+      const BASES = ['Montevideo','Punta del Este','Piriápolis','Punta Colorada','Punta Negra','Rocha','Colonia','Chuy','La Pedrera','La Paloma','Aguas Dulces','Otro'];
+      sel.innerHTML = BASES.map(b => `<option value="${b}" ${b === base ? 'selected' : ''}>${b}</option>`).join('');
+    }
   }
+
   showScreen("travelScreen");
 }
 // =====================================================
@@ -495,30 +505,35 @@ function finalizarViajeUI() {
     return;
   }
 
-  // Delegar todo el cierre al CORE
+  // Guardar datos antes de finalizar
+  const genRetorno = document.getElementById('idaYVueltaAuto')?.checked || false;
+  const datosViaje = {
+    origen:              travel.origen,
+    destino:             travel.destino,
+    coche:               travel.coche || '',
+    servicio:            travel.tipoServicio || travel.turno || '',
+    horaSalida:          '',
+    horaLlegadaEstimada: ''
+  };
+
+  // Finalizar viaje
   const finalizado = finalizarViajeActual();
   if (!finalizado) {
     alert("Error al finalizar viaje");
     return;
   }
-  alert("Viaje finalizado correctamente");
+
   mostrarViajeEnCursoUI();
   (_renderResumenDia = renderResumenDia) === null || _renderResumenDia === void 0 || _renderResumenDia();
   (_renderBotonCerrarJor = renderBotonCerrarJornada) === null || _renderBotonCerrarJor === void 0 || _renderBotonCerrarJor();
+
+  // Si tenía marcado retorno automático
+  if (genRetorno && datosViaje.destino) {
+    cargarViajeRetornoAutomatico(datosViaje);
+  }
+
+  alert("Viaje finalizado correctamente");
 }
-
-// =========================
-// AUTO REFRESH LISTA VIAJES
-// =========================
-
-if (!window.__travelListTimer) {
-  window.__travelListTimer = setInterval(() => {
-    const pantalla = document.getElementById("listaViajesScreen");
-    if (pantalla && pantalla.classList.contains("active")) {
-      verificarViajesProgramados();
-      renderListaViajes();
-    }
-  }, 30000); // cada 30 segundos
 }
 // =====================================================
 // CANCELAR VIAJE DESDE UI (CON CÁLCULO REAL)
