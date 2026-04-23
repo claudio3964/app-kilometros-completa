@@ -1515,13 +1515,13 @@ function renderMensajes() {
   if (msgFiltro === 'leido') lista = lista.filter(m => m.leido);
   if (msgFiltro === 'asignacion') lista = lista.filter(m => m.tipo === 'asignacion');
   if (!lista.length) { c.innerHTML = '<div class="empty-state"><div class="icon">💬</div><p>No hay mensajes</p></div>'; return; }
- 
+
   c.innerHTML = lista.map(m => {
     const fecha = m.creado_at ? new Date(m.creado_at).toLocaleString('es-UY') : '—';
     const para = m.para === 'todos' ? '📢 Todos' : `👤 Legajo ${m.para}`;
     const tipoClass = m.tipo === 'asignacion' ? 'asignacion' : m.tipo === 'urgente' ? 'urgente' : 'mensaje';
     const tipoLabel = m.tipo === 'asignacion' ? '✅ Asignación' : m.tipo === 'urgente' ? '🔴 Urgente' : '💬 Mensaje';
- 
+
     // Datos de viaje si es asignación
     let viajeHTML = '';
     if (m.tipo === 'asignacion' && m.data) {
@@ -1534,7 +1534,6 @@ function renderMensajes() {
           🚌 Coche: <span>${v.coche||'—'}</span> &nbsp;|&nbsp;
           🎫 <span>${v.tipoServicio||'—'}</span>
         </div>`;
-        // Respuesta del chofer
         const resp = vd.respuesta;
         if (resp) {
           viajeHTML += `<span class="msg-respuesta ${resp}">${resp === 'aceptado' ? '✓ Aceptado' : '✕ Rechazado'}</span>`;
@@ -1543,7 +1542,21 @@ function renderMensajes() {
         }
       }
     }
- 
+
+    // Botón anular — solo para asignaciones sin respuesta o rechazadas
+    let anularHTML = '';
+    if (m.tipo === 'asignacion' && m.data) {
+      const vd = typeof m.data === 'string' ? JSON.parse(m.data) : m.data;
+      const resp = vd?.respuesta;
+      if (!resp || resp === 'rechazado') {
+        anularHTML = `<button onclick="anularAsignacion(${m.id})" style="
+          margin-top:10px;background:transparent;color:var(--danger);
+          border:1px solid var(--danger);border-radius:6px;padding:5px 14px;
+          font-size:11px;font-weight:600;cursor:pointer;font-family:var(--sans);
+        ">🚫 Anular asignación</button>`;
+      }
+    }
+
     return `<div class="msg-card ${m.leido ? 'leido' : 'no-leido'}">
       <div class="msg-header">
         <div style="display:flex;align-items:center;gap:10px">
@@ -1555,8 +1568,53 @@ function renderMensajes() {
       </div>
       ${m.texto ? `<div class="msg-texto">${m.texto}</div>` : ''}
       ${viajeHTML}
+      ${anularHTML}
     </div>`;
   }).join('');
+}
+
+async function anularAsignacion(id) {
+  if (!confirm('¿Anular esta asignación? El chofer recibirá un aviso.')) return;
+  try {
+    await fetch(`${SB_URL}/rest/v1/mensajes?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${sessionStorage.getItem('admin_token')}`
+      },
+      body: JSON.stringify({
+        leido: true,
+        data: { respuesta: 'anulado', anuladoAt: new Date().toISOString(), anuladoPor: sessionStorage.getItem('admin_email') }
+      })
+    });
+
+    const msgOriginal = allMensajes.find(m => m.id === id);
+    if (msgOriginal) {
+      await fetch(`${SB_URL}/rest/v1/mensajes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SB_KEY,
+          'Authorization': `Bearer ${sessionStorage.getItem('admin_token')}`,
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify({
+          empresa_id: 'cot',
+          para: msgOriginal.para,
+          tipo: 'urgente',
+          texto: '🚫 Una asignación de viaje fue anulada por tránsito. Consultá con tu despachador.',
+          leido: false,
+          creado_at: new Date().toISOString()
+        })
+      });
+    }
+
+    showToast('🚫 Asignación anulada — se notificó al chofer');
+    cargarMensajes();
+  } catch(e) {
+    showToast('❌ Error al anular: ' + e.message);
+  }
 }
  
 // ── ENVIAR MENSAJE (con soporte asignación) ──
