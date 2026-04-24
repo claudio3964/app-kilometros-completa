@@ -229,11 +229,18 @@ function iniciarBootstrap() {
   // Iniciar polling de mensajes
 if (typeof iniciarPollingMensajes === 'function') {
   setTimeout(() => {
-    
     iniciarPollingMensajes();
   }, 5000);
 }
+
+// Registrar token FCM para push notifications
+setTimeout(() => {
+  if (typeof registrarTokenFCM === 'function') {
+    registrarTokenFCM();
+  }
+}, 3000);
 }
+
 
 window.iniciarBootstrap = iniciarBootstrap;
 window.refreshMainUI = refreshMainUI;

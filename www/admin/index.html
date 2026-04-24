@@ -1691,6 +1691,35 @@ async function enviarMensaje() {
       body: JSON.stringify(body)
     });
 
+    // ── Enviar Push FCM si hay token ──
+    try {
+      let tokens = [];
+      if (para === 'todos') {
+        const choferes = await sbFetch('choferes?empresa_id=eq.cot&fcm_token=not.is.null&select=fcm_token');
+        tokens = choferes.map(c => c.fcm_token).filter(Boolean);
+      } else {
+        const choferes = await sbFetch(`choferes?empresa_id=eq.cot&legajo=eq.${para}&select=fcm_token`);
+        if (choferes[0]?.fcm_token) tokens = [choferes[0].fcm_token];
+      }
+
+      const pushTitle = tipo === 'asignacion' ? '🚍 Nueva asignación de viaje' :
+                        tipo === 'urgente'    ? '🔴 Mensaje urgente de tránsito' :
+                        '💬 Mensaje de tránsito';
+
+      for (const token of tokens) {
+        await fetch('https://frjeivfpldcigklwepqt.supabase.co/functions/v1/bright-processor', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SB_KEY}`
+          },
+          body: JSON.stringify({ token, title: pushTitle, body: textoFinal })
+        });
+      }
+    } catch(pushErr) {
+      console.warn('Push FCM error:', pushErr.message);
+    }
+
     document.getElementById('msgTexto').value = '';
     showToast(`✅ ${tipo === 'asignacion' ? 'Asignación enviada' : 'Mensaje enviado'} a ${para === 'todos' ? 'todos' : 'legajo ' + para}`);
     cargarMensajes();
