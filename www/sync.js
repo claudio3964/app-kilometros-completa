@@ -26,7 +26,7 @@ async function syncPendientes() {
           legajo: driver.legajo || "unknown",
           order_number: order.orderNumber,
           fecha: order.date,
-          data: {
+          data: {      
             ...order,
             syncStatus: "synced"
           }
@@ -42,7 +42,7 @@ async function syncPendientes() {
       console.log("✅ Sync OK:", order.orderNumber);
     } catch (e) {
       console.error("❌ Sync fallo:", e.message);
-      // no marcar como synced — se reintenta la próxima vez
+// no marcar como synced — se reintenta la próxima vez
     }
   }
   if (algoCambio) {
@@ -50,7 +50,8 @@ async function syncPendientes() {
     console.log("💾 Storage actualizado con syncStatus synced");
   }
 }
-for (const cmd of comandos) {
+async function procesarComandos(comandos) {
+  for (const cmd of comandos) {
   // ── Marcar como ejecutado PRIMERO (idempotencia) ──
   const patchRes = await fetch(
     `${SUPABASE_URL}/rest/v1/comandos_dispositivo?id=eq.${cmd.id}&ejecutado=eq.false`,
@@ -77,5 +78,29 @@ for (const cmd of comandos) {
     });
   }
 }
+}
+async function checkComandosPendientes() {
+  try {
+    const deviceId = localStorage.getItem('device_id');
+    if (!deviceId) return;
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/comandos_dispositivo?device_id=eq.${deviceId}&ejecutado=eq.false&order=created_at.asc`,
+      {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+    if (!res.ok) return;
+    const comandos = await res.json();
+    if (!Array.isArray(comandos) || comandos.length === 0) return;
+    await procesarComandos(comandos);
+  } catch(e) {
+    console.warn('checkComandosPendientes error:', e.message);
+  }
+}
+
 setInterval(checkComandosPendientes, 30000);
 checkComandosPendientes();
+
