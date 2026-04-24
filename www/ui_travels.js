@@ -152,24 +152,56 @@ window.renderListaViajes = renderListaViajes;
 function cargarViajeRetornoAutomatico(data) {
   console.log("📡 Recibiendo retorno automático:", data);
 
-  // 🔁 INVERTIMOS origen y destino para retorno
   const origenRetorno = data.destino;
   const destinoRetorno = data.origen;
 
   // 1) Abrimos pantalla de viaje
   showScreen("travelScreen");
 
-  // 2) Cargamos datos invertidos
-  document.getElementById("originTravels").value = origenRetorno;
+  // 2) Cargamos datos invertidos ← ESTE BLOQUE ES EL QUE CAMBIA
+  const selOrigen = document.getElementById("originTravels");
+  if (typeof cargarSelectorOrigen === 'function') {
+    cargarSelectorOrigen(origenRetorno);
+  }
+  const opcionExiste = Array.from(selOrigen.options).some(
+    o => o.value.toLowerCase() === origenRetorno.toLowerCase()
+  );
+  if (!opcionExiste) {
+    const opt = document.createElement('option');
+    opt.value = origenRetorno;
+    opt.textContent = origenRetorno;
+    selOrigen.appendChild(opt);
+  }
+  selOrigen.value = origenRetorno;
+
   document.getElementById("destinationTravels").value = destinoRetorno;
   document.getElementById("departureTimeTravels").value = data.horaSalida || "";
   document.getElementById("arrivalTimeTravels").value = data.horaLlegadaEstimada || "";
 
-  // 3) Servicio si existe
+  
+   // 3) Servicio si existe
   if (data.servicio) {
-    document.getElementById("numeroServicio").value = data.servicio;
-    actualizarInfoServicio();
+    const selectServ = document.getElementById("numeroServicio");
+    if (selectServ) {
+      selectServ.value = data.servicio;
+      if (typeof actualizarInfoServicio === 'function') {
+        actualizarInfoServicio();
+      }
+    }
+  } else {
+    const selectServ = document.getElementById("numeroServicio");
+    if (selectServ) {
+      selectServ.value = "TURNO";
+      if (typeof actualizarInfoServicio === 'function') {
+        actualizarInfoServicio();
+      }
+    }
   }
+  // Forzar servicioSeleccionado para bypass de validación
+  window.servicioSeleccionado = {
+    turno: data.servicio || 'TURNO',
+    tipo: data.servicio || 'TURNO'
+  };
 
   // 4) Calculamos KM correctamente con ruta invertida
   const km = buscarKmRuta(origenRetorno, destinoRetorno);
@@ -180,9 +212,7 @@ function cargarViajeRetornoAutomatico(data) {
   const aviso = document.createElement("div");
   aviso.style.cssText = "\n    padding:10px;\n    margin-bottom:10px;\n    background:#e8f3ff;\n    border-left:5px solid #2f80ed;\n    border-radius:6px;\n  ";
   aviso.innerHTML = "\n    <b>\uD83D\uDD01 Retorno cargado autom\xE1ticamente por sistema</b><br>\n    Revis\xE1 horas y toc\xE1 <b>Guardar Viaje</b>.\n  ";
-  const form = document.querySelector("#travelScreen form");
-
-  // Evita duplicar aviso
+  const form = document.querySelector("#travelScreen .card");
   const avisoAnterior = form.querySelector(".aviso-retorno");
   if (avisoAnterior) avisoAnterior.remove();
   aviso.classList.add("aviso-retorno");
@@ -209,8 +239,14 @@ function addTravelUI(event) {
   // ── FIX: usar km guardado al seleccionar sugerencia ──
   const kmSeleccionado = window._kmSeleccionado || null;
   if (!servicioSeleccionado) {
-    alert("Seleccioná un servicio válido");
-    return;
+    // Intentar leer del select directamente
+    const selectServ = document.getElementById("numeroServicio");
+    if (selectServ && selectServ.value) {
+      servicioSeleccionado = { tipo: selectServ.value, turno: selectServ.value };
+    } else {
+      alert("Seleccioná un servicio válido");
+      return;
+    }
   }
   if (!origen || !destino) {
     alert("Completá origen y destino");
@@ -534,7 +570,7 @@ function finalizarViajeUI() {
 
   alert("Viaje finalizado correctamente");
 }
-}
+
 // =====================================================
 // CANCELAR VIAJE DESDE UI (CON CÁLCULO REAL)
 // =====================================================
