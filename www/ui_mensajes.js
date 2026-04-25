@@ -1,6 +1,4 @@
 
-Copiar
-
 const SUPABASE_URL_MSG = "https://frjeivfpldcigklwepqt.supabase.co";
 const SUPABASE_KEY_MSG = "sb_publishable_6A7tufjD-rTAUAPfxyziyw_3kXMumzJ";
  
