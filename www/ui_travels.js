@@ -298,6 +298,8 @@ function addTravelUI(event) {
   window._destinoReal = null;
   window._kmSeleccionado = null;
   window._destinoSeleccionado = false;
+  // Iniciar monitoreo GPS terminal
+  if (typeof onViajeIniciado === 'function') onViajeIniciado();
   renderResumenDia();
   renderListaViajes();
   showScreen("mainScreen");
@@ -558,8 +560,11 @@ function finalizarViajeUI() {
     alert("Error al finalizar viaje");
     return;
   }
-
+// Detener monitoreo GPS terminal
+  if (typeof onViajeFinalizado === 'function') onViajeFinalizado();
+  
   mostrarViajeEnCursoUI();
+
   (_renderResumenDia = renderResumenDia) === null || _renderResumenDia === void 0 || _renderResumenDia();
   (_renderBotonCerrarJor = renderBotonCerrarJornada) === null || _renderBotonCerrarJor === void 0 || _renderBotonCerrarJor();
 

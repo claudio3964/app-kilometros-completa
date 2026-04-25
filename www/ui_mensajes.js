@@ -1,13 +1,14 @@
-"use strict";
+
+Copiar
 
 const SUPABASE_URL_MSG = "https://frjeivfpldcigklwepqt.supabase.co";
 const SUPABASE_KEY_MSG = "sb_publishable_6A7tufjD-rTAUAPfxyziyw_3kXMumzJ";
-
+ 
 let _mensajesVistos = new Set(JSON.parse(localStorage.getItem('mensajes_vistos') || '[]'));
 let _pollerMensajes = null;
 let _consultandoMensajes = false;
 let _asignacionPendiente = null;
-
+ 
 function _escHtml(s) {
   if (s == null) return '';
   return String(s)
@@ -17,7 +18,7 @@ function _escHtml(s) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
-
+ 
 async function consultarMensajes() {
   if (_consultandoMensajes) return;
   const driver = getDriver ? getDriver() : null;
@@ -39,7 +40,7 @@ async function consultarMensajes() {
   } catch(e) { console.warn("Error mensajes:", e.message); }
   finally { _consultandoMensajes = false; }
 }
-
+ 
 async function marcarLeido(id) {
   try {
     await fetch(`${SUPABASE_URL_MSG}/rest/v1/mensajes?id=eq.${id}`, {
@@ -49,15 +50,15 @@ async function marcarLeido(id) {
     });
   } catch(e) {}
 }
-
+ 
 function mostrarNotificacionMensaje(msg) {
   const anterior = document.getElementById('notifMensaje');
   if (anterior) anterior.remove();
-
+ 
   const tipoColor = msg.tipo === 'urgente' ? '#ef4444' : msg.tipo === 'asignacion' ? '#10b981' : '#3b82f6';
   const tipoIcon  = msg.tipo === 'urgente' ? '🔴' : msg.tipo === 'asignacion' ? '✅' : '💬';
   const tipoLabel = msg.tipo === 'urgente' ? 'URGENTE' : msg.tipo === 'asignacion' ? 'ASIGNACIÓN DE VIAJE' : 'MENSAJE';
-
+ 
   let viajeData = null;
   if (msg.tipo === 'asignacion' && msg.data) {
     try {
@@ -65,11 +66,11 @@ function mostrarNotificacionMensaje(msg) {
       viajeData = d.viaje || null;
     } catch(e) {}
   }
-
+ 
   if (msg.tipo === 'asignacion' && viajeData) {
     _asignacionPendiente = { id: msg.id, viaje: viajeData };
   }
-
+ 
   let viajeHTML = '';
   if (viajeData) {
     viajeHTML = `
@@ -81,7 +82,7 @@ function mostrarNotificacionMensaje(msg) {
         &nbsp;|&nbsp; 🎫 <b style="color:#e2e8f0">${_escHtml(viajeData.tipoServicio) || '—'}</b>
       </div>`;
   }
-
+ 
   let botonesHTML = '';
   if (msg.tipo === 'asignacion' && viajeData) {
     botonesHTML = `
@@ -92,7 +93,7 @@ function mostrarNotificacionMensaje(msg) {
   } else {
     botonesHTML = `<button onclick="cerrarNotifMensaje()" style="width:100%;background:transparent;color:${tipoColor};border:1px solid ${tipoColor};border-radius:8px;padding:10px;font-size:14px;cursor:pointer;margin-top:12px;">Entendido</button>`;
   }
-
+ 
   const notif = document.createElement('div');
   notif.id = 'notifMensaje';
   notif.style.cssText = `
@@ -117,24 +118,23 @@ function mostrarNotificacionMensaje(msg) {
     ${botonesHTML}
   `;
   document.body.appendChild(notif);
-
+ 
   if (msg.tipo !== 'asignacion') setTimeout(() => cerrarNotifMensaje(), 15000);
 }
-
+ 
 function cerrarNotifMensaje() {
   const n = document.getElementById('notifMensaje');
   if (n) n.remove();
 }
-
+ 
 async function aceptarAsignacion(id) {
-  // FIX: usar datos en memoria, no hacer fetch extra
   let viajeData = null;
   if (_asignacionPendiente && _asignacionPendiente.id === id) {
     viajeData = _asignacionPendiente.viaje;
     _asignacionPendiente = null;
   }
-
-  // Guardar respuesta en Supabase con datos del viaje incluidos
+ 
+  // Guardar respuesta en Supabase
   try {
     await fetch(`${SUPABASE_URL_MSG}/rest/v1/mensajes?id=eq.${id}`, {
       method: 'PATCH',
@@ -142,42 +142,54 @@ async function aceptarAsignacion(id) {
       body: JSON.stringify({ leido: true, data: { viaje: viajeData, respuesta: 'aceptado', respondidoAt: new Date().toISOString() } })
     });
   } catch(e) { console.warn("Error guardando respuesta:", e); }
-
+ 
   cerrarNotifMensaje();
-
  
   if (viajeData && typeof agregarViajeAsignado === 'function') {
-  
-  const ordenActual = getActiveOrder ? getActiveOrder() : null;
-  if (!ordenActual) {
-    _mostrarConfirmacion('⚠️ No hay jornada activa — abrí una jornada primero', '#f59e0b');
-    return;
+ 
+    // ── AUTO-APERTURA DE JORNADA ──────────────────────────────────────────
+    let ordenActual = getActiveOrder ? getActiveOrder() : null;
+    if (!ordenActual) {
+      try {
+        ordenActual = createOrder();
+        // Pequeña pausa visual para que el chofer note que se abrió la jornada
+        _mostrarConfirmacion('📋 Jornada abierta automáticamente', '#3b82f6');
+        if (typeof renderResumenDia === 'function') renderResumenDia();
+        // Esperar que se vea el mensaje antes de continuar
+        await new Promise(r => setTimeout(r, 1200));
+      } catch(e) {
+        _mostrarConfirmacion('⚠️ No se pudo abrir la jornada: ' + e.message, '#ef4444');
+        return;
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────
+ 
+    const travels = ordenActual.travels || [];
+    const yaExiste = travels.some(t =>
+      t.origen === viajeData.origen &&
+      t.destino === viajeData.destino &&
+      t.departureTime === viajeData.horaSalida &&
+      t.status !== 'cancelado'
+    );
+    if (yaExiste) {
+      _mostrarConfirmacion('⚠️ Este viaje ya está en tu jornada', '#f59e0b');
+      return;
+    }
+ 
+    const ok = agregarViajeAsignado(viajeData);
+    if (ok) {
+      if (typeof renderResumenDia === 'function') renderResumenDia();
+      if (typeof renderListaViajes === 'function') renderListaViajes();
+      if (typeof mostrarViajeEnCursoUI === 'function') mostrarViajeEnCursoUI();
+      if (typeof renderBotonCerrarJornada === 'function') renderBotonCerrarJornada();
+      _mostrarConfirmacion('✅ Viaje cargado en tu jornada', '#10b981');
+      return;
+    }
   }
-  const travels = ordenActual.travels || [];
-  const yaExiste = travels.some(t =>
-    t.origen === viajeData.origen &&
-    t.destino === viajeData.destino &&
-    t.departureTime === viajeData.horaSalida &&
-    t.status !== 'cancelado'
-  );
-  if (yaExiste) {
-    _mostrarConfirmacion('⚠️ Este viaje ya está en tu jornada', '#f59e0b');
-    return;
-  }
-
-  const ok = agregarViajeAsignado(viajeData);
-  if (ok) {
-    if (typeof renderResumenDia === 'function') renderResumenDia();
-    if (typeof renderListaViajes === 'function') renderListaViajes();
-    if (typeof mostrarViajeEnCursoUI === 'function') mostrarViajeEnCursoUI();
-    if (typeof renderBotonCerrarJornada === 'function') renderBotonCerrarJornada();
-    _mostrarConfirmacion('✅ Viaje cargado en tu jornada', '#10b981');
-    return;
-  }
-}
+ 
   _mostrarConfirmacion('⚠️ No se pudo agregar el viaje a la jornada', '#f59e0b');
 }
-
+ 
 async function rechazarAsignacion(id) {
   let viajeData = null;
   if (_asignacionPendiente && _asignacionPendiente.id === id) {
@@ -194,7 +206,7 @@ async function rechazarAsignacion(id) {
   cerrarNotifMensaje();
   _mostrarConfirmacion('✕ Asignación rechazada', '#ef4444');
 }
-
+ 
 function _mostrarConfirmacion(texto, color) {
   const conf = document.createElement('div');
   conf.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#111827;border:2px solid ${color};border-radius:12px;padding:20px 32px;z-index:9999;font-size:16px;color:${color};font-weight:600;text-align:center;`;
@@ -202,18 +214,18 @@ function _mostrarConfirmacion(texto, color) {
   document.body.appendChild(conf);
   setTimeout(() => conf.remove(), 2500);
 }
-
+ 
 function iniciarPollingMensajes() {
   if (_pollerMensajes) return;
   console.log("📬 Polling mensajes iniciado");
   consultarMensajes();
   _pollerMensajes = setInterval(consultarMensajes, 30000);
 }
-
+ 
 function detenerPollingMensajes() {
   if (_pollerMensajes) { clearInterval(_pollerMensajes); _pollerMensajes = null; }
 }
-
+ 
 window.iniciarPollingMensajes = iniciarPollingMensajes;
 window.detenerPollingMensajes = detenerPollingMensajes;
 window.cerrarNotifMensaje     = cerrarNotifMensaje;

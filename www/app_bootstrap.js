@@ -121,7 +121,7 @@ function refreshMainUI() {
 }
 
 // =====================================================
-// LIMPIAR DATOS COMPLETO — funciona en PWA iOS/Android
+// LIMPIAR DATOS COMPLETO
 // =====================================================
 
 async function limpiarTodosLosDatos() {
@@ -130,46 +130,105 @@ async function limpiarTodosLosDatos() {
   const c2 = confirm("Esta acción no se puede deshacer.\n\nLos datos ya subidos a Supabase NO se borran.\n¿Confirmar?");
   if (!c2) return;
 
- try {
-  
-  const conservar = ['device_id', 'driverProfile'];
-  Object.keys(localStorage).forEach(k => {
-    if (!conservar.includes(k)) localStorage.removeItem(k);
-  });
-  sessionStorage.clear();
+  try {
+    // Limpiar estado BG del SW antes de borrar todo
+    enviarMensajeSW({ tipo: 'LIMPIAR_ESTADO_BG' });
 
-    // 2. Limpiar cache del service worker (crítico en PWA iOS Safari)
+    const conservar = ['device_id', 'driverProfile'];
+    Object.keys(localStorage).forEach(k => {
+      if (!conservar.includes(k)) localStorage.removeItem(k);
+    });
+    sessionStorage.clear();
+
     if ('caches' in window) {
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames.map(name => caches.delete(name)));
-      console.log("✅ Cache limpiado:", cacheNames);
     }
 
-    // 3. Desregistrar service worker
     if ('serviceWorker' in navigator) {
       const registrations = await navigator.serviceWorker.getRegistrations();
       await Promise.all(registrations.map(reg => reg.unregister()));
-      console.log("✅ Service workers desregistrados:", registrations.length);
     }
 
-    // 4. Esperar un momento y recargar forzando recarga desde servidor
     setTimeout(() => {
-      // location.reload(true) fuerza recarga ignorando cache en la mayoría de browsers
       window.location.href = window.location.href.split('?')[0] + '?limpio=' + Date.now();
     }, 600);
 
   } catch (e) {
-  console.error("Error limpiando datos:", e);
-  // Fallback: solo limpiar localStorage y recargar
-  const conservar2 = ['device_id', 'driverProfile'];
-  Object.keys(localStorage).forEach(k => {
-    if (!conservar2.includes(k)) localStorage.removeItem(k);
-  });
-  sessionStorage.clear();
-  setTimeout(() => location.reload(), 400);
-}
+    console.error("Error limpiando datos:", e);
+    const conservar2 = ['device_id', 'driverProfile'];
+    Object.keys(localStorage).forEach(k => {
+      if (!conservar2.includes(k)) localStorage.removeItem(k);
+    });
+    sessionStorage.clear();
+    setTimeout(() => location.reload(), 400);
+  }
 }
 window.limpiarTodosLosDatos = limpiarTodosLosDatos;
+
+// =====================================================
+// COMUNICACIÓN CON SERVICE WORKER
+// =====================================================
+
+function enviarMensajeSW(mensaje) {
+  if (!navigator.serviceWorker?.controller) return;
+  navigator.serviceWorker.controller.postMessage(mensaje);
+}
+
+// Sincroniza el estado de viajes programados al SW
+// para que pueda verificar aunque la app esté en background
+function syncEstadoAlSW() {
+  const order = getActiveOrder ? getActiveOrder() : null;
+  if (!order) return;
+
+  const viajesProgramados = (order.travels || []).filter(
+    t => t.status === 'programado' || t.status === 'en_curso'
+  );
+
+  enviarMensajeSW({
+    tipo: 'SYNC_ESTADO_BG',
+    payload: {
+      viajes: viajesProgramados,
+      orderNumber: order.orderNumber,
+      ts: Date.now()
+    }
+  });
+}
+
+// Escuchar mensajes del SW → app
+function iniciarListenerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  if (window.__swListenerActivo) return;
+  window.__swListenerActivo = true;
+
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    const { tipo, data } = event.data || {};
+
+    switch (tipo) {
+
+      // SW detectó que un viaje programado debe activarse
+      case 'ACTIVAR_VIAJES_PROGRAMADOS':
+        console.log('📬 SW: activar viajes programados');
+        if (typeof verificarViajesProgramados === 'function') {
+          verificarViajesProgramados();
+        }
+        if (typeof renderListaViajes === 'function') renderListaViajes();
+        if (typeof mostrarViajeEnCursoUI === 'function') mostrarViajeEnCursoUI();
+        if (typeof renderBotonCerrarJornada === 'function') renderBotonCerrarJornada();
+        if (typeof renderResumenDia === 'function') renderResumenDia();
+        // Re-sincronizar estado actualizado al SW
+        syncEstadoAlSW();
+        break;
+
+      // Usuario clickeó la notificación push
+      case 'NOTIF_CLICK':
+        console.log('🔔 Notificación clickeada:', data);
+        if (typeof showScreen === 'function') showScreen('mainScreen');
+        if (typeof mostrarViajeEnCursoUI === 'function') mostrarViajeEnCursoUI();
+        break;
+    }
+  });
+}
 
 // =====================================================
 // BOOTSTRAP PRINCIPAL
@@ -181,7 +240,7 @@ function iniciarBootstrap() {
   verificarCambioDeDia();
   verificarCambioDeDiaForzado();
 
-  // Cargar viajes programados desde Supabase (efectivos)
+  // Cargar viajes programados desde Supabase
   if (typeof cargarViajesProgramadosDesdeSupabase === "function") {
     setTimeout(() => cargarViajesProgramadosDesdeSupabase(), 2000);
   }
@@ -191,7 +250,7 @@ function iniciarBootstrap() {
     setTimeout(() => syncPendientes(), 1000);
   }
 
-  // Motor automático de viajes programados (cada 15s)
+  // ── Motor local de viajes programados (foreground) — cada 15s ──────────
   if (!window.__motorViajesProgramados) {
     window.__motorViajesProgramados = setInterval(() => {
       if (typeof verificarViajesProgramados === "function") verificarViajesProgramados();
@@ -201,48 +260,70 @@ function iniciarBootstrap() {
     }, 15000);
   }
 
-  // Motor de sync (cada 60s)
+  // ── Motor de sync (cada 60s) ───────────────────────────────────────────
   if (!window.__motorSync) {
     window.__motorSync = setInterval(() => {
       if (typeof activarViajesProgramados === "function") activarViajesProgramados();
     }, 60000);
   }
 
-  // Reactivación al volver a la app
+  // ── Sync al SW cada 60s para mantener estado fresco ───────────────────
+  if (!window.__motorSyncSW) {
+    window.__motorSyncSW = setInterval(() => {
+      syncEstadoAlSW();
+    }, 60000);
+  }
+
+  // ── Listener de mensajes del SW ────────────────────────────────────────
+  iniciarListenerSW();
+
+  // ── Sync inicial al SW (esperar a que el SW esté listo) ───────────────
+  setTimeout(() => syncEstadoAlSW(), 3000);
+
+  // ── Visibilitychange — foreground/background ───────────────────────────
   if (!window.__visibilityHandler) {
     window.__visibilityHandler = true;
+
     document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) {
+      if (document.hidden) {
+        // App va a background — sincronizar estado al SW
+        console.log("📴 App a background — sincronizando estado al SW");
+        enviarMensajeSW({ tipo: 'APP_BACKGROUND' });
+        syncEstadoAlSW();
+      } else {
+        // App vuelve a foreground
         console.log("🔄 App volvió a foreground");
+        enviarMensajeSW({ tipo: 'APP_FOREGROUND' });
+        if (typeof verificarViajesProgramados === "function") verificarViajesProgramados();
         if (typeof activarViajesProgramados === "function") activarViajesProgramados();
         if (typeof mostrarViajeEnCursoUI === "function") mostrarViajeEnCursoUI();
+        if (typeof renderResumenDia === "function") renderResumenDia();
+        syncEstadoAlSW();
       }
     });
   }
 
-  // ── Botón limpiar storage (versión vieja — por compatibilidad) ──
+  // ── Botón limpiar storage ──────────────────────────────────────────────
   const btnLimpiar = document.getElementById("btnLimpiarStorage");
   if (btnLimpiar && !btnLimpiar._bound) {
     btnLimpiar._bound = true;
     btnLimpiar.addEventListener("click", limpiarTodosLosDatos);
   }
-  // Iniciar polling de mensajes
-if (typeof iniciarPollingMensajes === 'function') {
-  setTimeout(() => {
-    iniciarPollingMensajes();
-  }, 5000);
-}
 
-// Registrar token FCM para push notifications
-setTimeout(() => {
-  if (typeof registrarTokenFCM === 'function') {
-    registrarTokenFCM();
+  // ── Polling de mensajes ────────────────────────────────────────────────
+  if (typeof iniciarPollingMensajes === 'function') {
+    setTimeout(() => iniciarPollingMensajes(), 5000);
   }
-}, 3000);
+
+  // ── Token FCM ─────────────────────────────────────────────────────────
+  setTimeout(() => {
+    if (typeof registrarTokenFCM === 'function') registrarTokenFCM();
+  }, 3000);
 }
 
-
-window.iniciarBootstrap = iniciarBootstrap;
-window.refreshMainUI = refreshMainUI;
-window.verificarCambioDeDia = verificarCambioDeDia;
+window.iniciarBootstrap        = iniciarBootstrap;
+window.refreshMainUI           = refreshMainUI;
+window.verificarCambioDeDia    = verificarCambioDeDia;
 window.mostrarModalCierrePendiente = mostrarModalCierrePendiente;
+window.syncEstadoAlSW          = syncEstadoAlSW;
+window.enviarMensajeSW         = enviarMensajeSW;

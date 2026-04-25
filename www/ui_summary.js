@@ -2,6 +2,14 @@
 
 console.log("ui_summary cargado");
 
+const SUPABASE_URL_SUM = "https://frjeivfpldcigklwepqt.supabase.co";
+const SUPABASE_KEY_SUM = "sb_publishable_6A7tufjD-rTAUAPfxyziyw_3kXMumzJ";
+const PAGE_SIZE = 5;
+
+// Estado de paginación
+let _paginaActual = 1;
+let _totalJornadas = 0;
+
 // =====================================================
 // LIMPIAR FILTROS
 // =====================================================
@@ -14,6 +22,7 @@ function limpiarFiltrosResumen() {
   if (fDesde) fDesde.value = "";
   if (fHasta) fHasta.value = "";
   if (ordenar) ordenar.value = "fecha_desc";
+  _paginaActual = 1;
   renderResumenGeneral();
 }
 
@@ -61,7 +70,7 @@ function renderResumenDia() {
 }
 
 // =====================================================
-// BOTÓN CERRAR JORNADA — FIX: await closeActiveOrder
+// BOTÓN CERRAR JORNADA
 // =====================================================
 function renderBotonCerrarJornada() {
   const cont = document.getElementById("bloqueCerrarJornada");
@@ -69,7 +78,7 @@ function renderBotonCerrarJornada() {
   const order = getActiveOrder();
   if (!order) { cont.innerHTML = ""; return; }
 
-  const hayViajeEnCurso   = order.travels?.some(t => t.status === "en_curso");
+  const hayViajeEnCurso    = order.travels?.some(t => t.status === "en_curso");
   const hayViajeProgramado = order.travels?.some(t => t.status === "programado");
   const hayGuardiaActiva   = order.guards?.some(g => g.status === "activa");
 
@@ -93,7 +102,6 @@ function renderBotonCerrarJornada() {
     const confirmar = confirm("¿Confirma que desea finalizar la jornada?");
     if (!confirmar) return;
 
-    // ✅ FIX CRÍTICO: await — closeActiveOrder es async
     const resultado = await closeActiveOrder();
 
     if (resultado) {
@@ -111,36 +119,105 @@ function renderBotonCerrarJornada() {
 }
 
 // =====================================================
-// RESUMEN GENERAL
+// RESUMEN GENERAL — con paginación desde Supabase
 // =====================================================
-function renderResumenGeneral() {
+async function renderResumenGeneral() {
   const container = document.getElementById("resumenGeneralContainer");
   if (!container) return;
+
+  // Spinner mientras carga
+  container.innerHTML = `<div class="card" style="text-align:center;color:#94a3b8;padding:20px;">Cargando jornadas…</div>`;
+
+  const driver = window.getDriver ? getDriver() : null;
+  const legajo = driver?.legajo;
+
+  // ── INTENTAR SUPABASE ─────────────────────────────────────────────────
+  if (legajo) {
+    try {
+      const offset = (_paginaActual - 1) * PAGE_SIZE;
+
+      // Primero: contar total para saber cuántas páginas hay
+      const resCount = await fetch(
+        `${SUPABASE_URL_SUM}/rest/v1/jornadas?empresa_id=eq.cot&chofer_id=eq.${legajo}&select=id`,
+        {
+          headers: {
+            "apikey": SUPABASE_KEY_SUM,
+            "Authorization": `Bearer ${SUPABASE_KEY_SUM}`,
+            "Prefer": "count=exact",
+            "Range": "0-0"
+          }
+        }
+      );
+      const contentRange = resCount.headers.get("content-range") || "";
+      _totalJornadas = parseInt(contentRange.split("/")[1] || "0", 10);
+
+      // Luego: traer la página actual
+      const res = await fetch(
+        `${SUPABASE_URL_SUM}/rest/v1/jornadas?empresa_id=eq.cot&chofer_id=eq.${legajo}&order=created_at.desc&limit=${PAGE_SIZE}&offset=${offset}&select=*`,
+        {
+          headers: {
+            "apikey": SUPABASE_KEY_SUM,
+            "Authorization": `Bearer ${SUPABASE_KEY_SUM}`
+          }
+        }
+      );
+
+      if (res.ok) {
+        const jornadas = await res.json();
+        if (Array.isArray(jornadas)) {
+          _renderCardsJornadas(container, jornadas.map(j => j.data || j), "supabase");
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Supabase no disponible, usando localStorage:", e.message);
+    }
+  }
+
+  // ── FALLBACK: localStorage ────────────────────────────────────────────
   const orders = getOrders();
   if (!orders || orders.length === 0) {
     container.innerHTML = `<div class="card">No hay jornadas registradas</div>`;
     return;
   }
+  const ordenadas = [...orders].sort((a, b) => new Date(b.date) - new Date(a.date));
+  _totalJornadas = ordenadas.length;
+  const offset = (_paginaActual - 1) * PAGE_SIZE;
+  const pagina = ordenadas.slice(offset, offset + PAGE_SIZE);
+  _renderCardsJornadas(container, pagina, "local");
+}
+
+// =====================================================
+// RENDER CARDS + PAGINACIÓN
+// =====================================================
+function _renderCardsJornadas(container, jornadas, fuente) {
   container.innerHTML = "";
 
-  const ordenadas = [...orders].sort((a, b) => new Date(b.date) - new Date(a.date));
-  const unicosPorDia = [];
-  const fechasVistas = new Set();
-  ordenadas.forEach(o => {
-    if (!fechasVistas.has(o.date)) { unicosPorDia.push(o); fechasVistas.add(o.date); }
-  });
+  if (!jornadas || jornadas.length === 0) {
+    container.innerHTML = `<div class="card">No hay jornadas en esta página</div>`;
+    _renderPaginacion(container);
+    return;
+  }
 
-  const ultimos5 = unicosPorDia.slice(0, 5);
-  ultimos5.forEach(order => {
-    const totals = calculateOrderTotals(order);
+  // Badge de fuente (debug — podés sacarlo en producción)
+  if (fuente === "local") {
+    const badge = document.createElement("div");
+    badge.style.cssText = "font-size:11px;color:#f59e0b;text-align:right;margin-bottom:6px;";
+    badge.textContent = "⚠️ Sin conexión — datos locales";
+    container.appendChild(badge);
+  }
+
+  jornadas.forEach(order => {
+    const totals = (order.closed && order.totalsSnapshot) ? order.totalsSnapshot : calculateOrderTotals(order);
     const card = document.createElement("div");
     card.className = "card";
     card.style.marginBottom = "10px";
     card.innerHTML = `
-      <b>📅 ${order.date}</b><br>
+      <b>📅 ${order.date || '—'}</b>
+      <span style="font-size:11px;color:#64748b;margin-left:8px;">${order.orderNumber || ''}</span><br>
       KM totales: ${(totals.kmTotal || 0).toFixed(1)} km<br>
       KM tome y cese: ${(totals.kmTomeCese || 0).toFixed(1)} km<br>
-      Viáticos: ${totals.viaticos || 0}<br><br>
+      Viáticos: ${totals.viaticos || 0} &nbsp;|&nbsp; Total: <b>$${Math.round(totals.monto || 0)}</b><br><br>
       <button onclick="showScreen('detalleJornadaScreen'); renderDetalleJornadaPorNumero('${order.orderNumber}');">
         Ver detalle
       </button>
@@ -150,6 +227,8 @@ function renderResumenGeneral() {
     `;
     container.appendChild(card);
   });
+
+  _renderPaginacion(container);
 
   // Botón limpiar storage
   const btnLimpiar = document.createElement("div");
@@ -164,6 +243,52 @@ function renderResumenGeneral() {
   `;
   container.appendChild(btnLimpiar);
   document.getElementById("btnLimpiarStorage").addEventListener("click", limpiarTodosLosDatos);
+}
+
+// =====================================================
+// CONTROLES DE PAGINACIÓN
+// =====================================================
+function _renderPaginacion(container) {
+  const totalPaginas = Math.ceil(_totalJornadas / PAGE_SIZE);
+  if (totalPaginas <= 1) return;
+
+  const nav = document.createElement("div");
+  nav.style.cssText = "display:flex;align-items:center;justify-content:center;gap:12px;margin:16px 0 8px;";
+
+  const btnAnterior = document.createElement("button");
+  btnAnterior.textContent = "← Anterior";
+  btnAnterior.disabled = _paginaActual <= 1;
+  btnAnterior.style.cssText = `
+    padding:8px 14px;border-radius:8px;border:1px solid #334155;
+    background:${_paginaActual <= 1 ? '#1e293b' : '#0f172a'};
+    color:${_paginaActual <= 1 ? '#475569' : '#e2e8f0'};
+    cursor:${_paginaActual <= 1 ? 'default' : 'pointer'};font-size:13px;
+  `;
+  btnAnterior.addEventListener("click", () => {
+    if (_paginaActual > 1) { _paginaActual--; renderResumenGeneral(); }
+  });
+
+  const info = document.createElement("span");
+  info.style.cssText = "font-size:13px;color:#94a3b8;";
+  info.textContent = `Página ${_paginaActual} de ${totalPaginas}`;
+
+  const btnSiguiente = document.createElement("button");
+  btnSiguiente.textContent = "Siguiente →";
+  btnSiguiente.disabled = _paginaActual >= totalPaginas;
+  btnSiguiente.style.cssText = `
+    padding:8px 14px;border-radius:8px;border:1px solid #334155;
+    background:${_paginaActual >= totalPaginas ? '#1e293b' : '#0f172a'};
+    color:${_paginaActual >= totalPaginas ? '#475569' : '#e2e8f0'};
+    cursor:${_paginaActual >= totalPaginas ? 'default' : 'pointer'};font-size:13px;
+  `;
+  btnSiguiente.addEventListener("click", () => {
+    if (_paginaActual < totalPaginas) { _paginaActual++; renderResumenGeneral(); }
+  });
+
+  nav.appendChild(btnAnterior);
+  nav.appendChild(info);
+  nav.appendChild(btnSiguiente);
+  container.appendChild(nav);
 }
 
 // =====================================================
@@ -182,17 +307,13 @@ async function generarPDFJornada(order) {
     return null;
   }
 
-  console.log("GENERANDO PDF DE JORNADA", order.orderNumber);
-  console.log('jspdf:', !!window.jspdf, 'jsPDF:', !!window.jspdf?.jsPDF, 'type:', typeof window.jspdf?.jsPDF);
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-  console.log('doc pages:', doc.internal?.pages?.length, '| doc type:', typeof doc, '| output type:', typeof doc.output);
   const totals = calculateOrderTotals(order);
   const driver = window.getDriver?.() || {};
 
   let y = 15;
   const add = (txt, salto = 7) => {
-    // evitar que el texto se salga de la página
     if (y > 270) { doc.addPage(); y = 15; }
     doc.text(String(txt), 15, y);
     y += salto;
@@ -217,7 +338,6 @@ async function generarPDFJornada(order) {
   add(`Total $: ${Math.round(totals.monto || 0)}`);
   y += 5;
 
-  // Viajes
   if (order.travels?.length) {
     add("=== VIAJES ===");
     order.travels.filter(v => v.status !== 'cancelado').forEach(v => {
@@ -226,7 +346,6 @@ async function generarPDFJornada(order) {
     y += 3;
   }
 
-  // Guardias
   if (order.guards?.length) {
     add("=== GUARDIAS ===");
     order.guards.forEach(g => {
@@ -241,58 +360,48 @@ async function generarPDFJornada(order) {
 
   if (returnBase64) {
     const datauri = doc.output('datauristring');
-    console.log('datauristring length:', datauri?.length, '| prefix:', datauri?.substring(0, 40));
     const b64 = datauri?.split(',')[1] || '';
-    console.log('b64 length:', b64.length);
     return b64;
   }
 
   const fecha = order.date || new Date().toISOString().split("T")[0];
   const nombreArchivo = `jornada_${fecha}_${order.orderNumber}.pdf`;
 
-  // ── CAPACITOR (APK Android) ──
   const esNativo = window.Capacitor?.isNativePlatform?.();
   if (esNativo) {
     try {
       const base64 = doc.output('base64');
       const { Filesystem, Share } = window.Capacitor.Plugins;
-      // Cache: único directorio garantizado en el FileProvider de Capacitor para compartir
       const Directory = { Cache: 'CACHE' };
-
       const writeResult = await Filesystem.writeFile({
         path: nombreArchivo,
         data: base64,
         directory: Directory.Cache,
         recursive: true
       });
-      console.log('writeFile result:', writeResult);
-      // writeFile ya devuelve { uri } — no hace falta getUri (evita hang en Documents)
       const fileUri = writeResult.uri;
-      console.log('fileUri:', fileUri);
-
       await Share.share({
         title: nombreArchivo,
         url: fileUri,
         dialogTitle: 'Guardar o compartir PDF'
       });
-      console.log('Share ejecutado');
-
     } catch (e) {
-      console.error('Error PDF nativo:', e?.message || e, e);
+      console.error('Error PDF nativo:', e?.message || e);
       alert('Error al generar PDF: ' + (e?.message || String(e)));
     }
   } else {
-    // ── WEB / PC ── comportamiento normal
     doc.save(nombreArchivo);
   }
 }
 
-// EXPORT GLOBAL
-window.renderResumenGeneral    = renderResumenGeneral;
-window.limpiarFiltrosResumen   = limpiarFiltrosResumen;
-window.renderResumenDia        = renderResumenDia;
+// =====================================================
+// EXPORTS
+// =====================================================
+window.renderResumenGeneral     = renderResumenGeneral;
+window.limpiarFiltrosResumen    = limpiarFiltrosResumen;
+window.renderResumenDia         = renderResumenDia;
 window.renderBotonCerrarJornada = renderBotonCerrarJornada;
-window.generarPDFJornada       = generarPDFJornada;
+window.generarPDFJornada        = generarPDFJornada;
 
 function exportarJornadaPorNumero(orderNumber) {
   const order = getOrders().find(o => o.orderNumber === orderNumber);
