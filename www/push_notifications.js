@@ -20,6 +20,17 @@ async function registrarTokenFCM() {
     // Registrar
     await PushNotifications.register();
 
+// 🟢 Crear canal de notificación (Android)
+await PushNotifications.createChannel({
+  id: "driverlog_high",
+  name: "Asignaciones de viaje",
+  description: "Alertas importantes",
+  importance: 5, // HIGH
+  visibility: 1, // visible en lockscreen
+  sound: "default",
+  vibration: true
+});
+
     // Escuchar token
     PushNotifications.addListener('registration', async (token) => {
       console.log('📱 FCM Token:', token.value);

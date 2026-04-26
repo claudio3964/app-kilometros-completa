@@ -464,8 +464,8 @@ function addTravelProgramado(origen, destino, turno, departureTime, arrivalTime,
   if (!order) return false;
   const ahora = ahoraSistema();
   const kmEmpresa = buscarKmRuta(origen, destino) || 0;
-  const hoy = new Date();
   const [h, m] = departureTime.split(":").map(Number);
+  const hoy = new Date();
   const inicioProgramado = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate(), h, m, 0, 0).getTime();
   const travel = {
     id: "TRV-" + ahora,
@@ -480,7 +480,6 @@ function addTravelProgramado(origen, destino, turno, departureTime, arrivalTime,
     hoursWorked,
     createdAt: ahora,
     status: "programado",
-    // ← FIX CRITICO
     inicioProgramado,
     inicioReal: null,
     // ← FIX CRITICO
@@ -1069,16 +1068,16 @@ function agregarViajeAsignado(viajeData) {
     return false;
   }
 
-  const hoy = new Date().toISOString().split("T")[0];
+  const _d = new Date();
+  const hoy = `${_d.getFullYear()}-${String(_d.getMonth()+1).padStart(2,'0')}-${String(_d.getDate()).padStart(2,'0')}`;
   const fechaViaje = viajeData.fechaViaje || hoy; // si no viene fecha, asumimos hoy
   const kmEmpresa = buscarKmRuta(origen, destino) || 0;
   const ahora = ahoraSistema();
 
   // Calcular timestamp del inicio programado para la fecha correcta
   const [h, m] = horaSalida.split(":").map(Number);
-  const fechaObj = new Date(fechaViaje + "T00:00:00");
-  fechaObj.setHours(h, m, 0, 0);
-  const inicioProgramado = fechaObj.getTime();
+  const [fAnio, fMes, fDia] = fechaViaje.split("-").map(Number);
+  const inicioProgramado = new Date(fAnio, fMes - 1, fDia, h, m, 0, 0).getTime();
 
   const travel = {
     id: "TRV-" + ahora,
