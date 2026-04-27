@@ -553,6 +553,7 @@ function verificarViajesProgramados() {
   if (cambio) {
     saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
     setActiveOrder(order);
+    if (typeof renderOrdenActivaUI === 'function') renderOrdenActivaUI();
   }
 }
 function calcularHorasJornada(o) {
@@ -1163,9 +1164,7 @@ function agregarViajeAsignado(viajeData) {
   saveOrders(orders);
 
   // Solo setear como activa si es para hoy
-  if (fechaViaje === hoy) {
-    setActiveOrder(nuevaJornada);
-  }
+  setActiveOrder(nuevaJornada);
 
   console.log("✅ Viaje asignado — nueva jornada creada:", orderNumber, "fecha:", fechaViaje);
   return true;

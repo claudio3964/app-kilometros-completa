@@ -216,16 +216,18 @@ function iniciarListenerSW() {
         if (typeof mostrarViajeEnCursoUI === 'function') mostrarViajeEnCursoUI();
         if (typeof renderBotonCerrarJornada === 'function') renderBotonCerrarJornada();
         if (typeof renderResumenDia === 'function') renderResumenDia();
-        // Re-sincronizar estado actualizado al SW
+         // ── NUEVO: toast visual + vibración ──
+       _mostrarToastViajeIniciado();
+        if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500]);
         syncEstadoAlSW();
         break;
-
       // Usuario clickeó la notificación push
       case 'NOTIF_CLICK':
         console.log('🔔 Notificación clickeada:', data);
         if (typeof showScreen === 'function') showScreen('mainScreen');
         if (typeof mostrarViajeEnCursoUI === 'function') mostrarViajeEnCursoUI();
         break;
+        
     }
   });
 }
@@ -302,6 +304,37 @@ function iniciarBootstrap() {
       }
     });
   }
+
+  function _mostrarToastViajeIniciado() {
+  const order = getActiveOrder ? getActiveOrder() : null;
+  const viaje = order?.travels?.find(t => t.status === 'en_curso');
+  if (!viaje) return;
+  
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position:fixed;top:70px;left:50%;transform:translateX(-50%);
+    width:92%;max-width:420px;background:#111827;
+    border:2px solid #10b981;border-radius:14px;padding:16px 18px;
+    z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.5);
+    animation:slideDownMsg .3s ease;
+  `;
+  toast.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <span style="font-size:22px;">🚍</span>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#10b981;">VIAJE INICIADO</div>
+        <div style="font-size:12px;color:#94a3b8;">${viaje.origen} → ${viaje.destino}</div>
+      </div>
+      <button onclick="this.parentElement.parentElement.remove()" 
+        style="margin-left:auto;background:transparent;border:none;color:#94a3b8;font-size:18px;cursor:pointer;">✕</button>
+    </div>
+    <div style="font-size:13px;color:#e2e8f0;">
+      🕒 Salida: <b style="color:#10b981;">${viaje.departureTime}</b>
+    </div>
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 10000);
+}
 
   // ── Botón limpiar storage ──────────────────────────────────────────────
   const btnLimpiar = document.getElementById("btnLimpiarStorage");

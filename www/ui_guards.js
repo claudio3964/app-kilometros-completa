@@ -73,6 +73,7 @@ function addGuardUI(event) {
   renderResumenDia();
   renderListaGuardias();
   alert("Guardia ".concat(guardia.type, " registrada. Inicio: ").concat(guardia.inicio));
+  if (typeof onGuardiaIniciada === 'function') onGuardiaIniciada();
   showScreen("mainScreen");
 }
 

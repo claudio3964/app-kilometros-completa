@@ -163,6 +163,17 @@ self.addEventListener('message', async (event) => {
       await escribirEstadoBG(null);
       detenerBackgroundRunner();
       break;
+      //aviso de 5 min de fin de guardia
+      case 'NOTIF_GUARDIA':
+      self.registration.showNotification('⏰ Aviso de Guardia', {
+        body: `Faltan 5 min para ${payload.horasSiguiente}h | Inicio: ${payload.inicio}`,
+        icon: './icons/icon-192.png',
+        tag: 'guardia-aviso',
+        requireInteraction: true,
+        android: { channelId: 'guardias_driver' },
+        data: { tipo: 'guardia' }
+      });
+      break;
   }
 });
 
@@ -208,11 +219,13 @@ self.addEventListener('push', (event) => {
 
   // Notificación genérica
   const titulo = payload.title || 'COT Driver';
-  const opciones = {
+   const opciones = {
     body: payload.body || '',
     icon: './icons/icon-192.png',
     badge: './icons/icon-72.png',
-    data: payload
+    data: payload,
+    // ── canal alta prioridad ──
+    android: { channelId: 'mensajes_driver' }
   };
   event.waitUntil(self.registration.showNotification(titulo, opciones));
 });
