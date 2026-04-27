@@ -1652,8 +1652,10 @@ async function enviarMensaje() {
     if (!regexHora.test(horaSalida)) { showToast('⚠️ Hora de salida inválida (HH:MM)'); return; }
     if (isNaN(coche) || coche.trim() === '') { showToast('⚠️ El número de coche debe ser numérico'); return; }
 
-    dataViaje = {
-      viaje: { origen, destino, horaSalida, horaLlegada, tipoServicio, coche },
+    const hoyAdmin = new Date();
+const fechaHoy = `${hoyAdmin.getFullYear()}-${String(hoyAdmin.getMonth()+1).padStart(2,'0')}-${String(hoyAdmin.getDate()).padStart(2,'0')}`;
+dataViaje = {
+  viaje: { origen, destino, horaSalida, horaLlegada, tipoServicio, coche, fechaViaje: fechaHoy },
       respuesta: null,
       respondidoAt: null
     };
