@@ -86,8 +86,23 @@ function renderBotonCerrarJornada() {
     cont.innerHTML = ""; return;
   }
 
-  const tieneActividad = (order.travels?.length > 0) || (order.guards?.length > 0);
-  if (!tieneActividad) { cont.innerHTML = ""; return; }
+  const tieneViajes   = order.travels?.length > 0;
+  const tieneGuardias = order.guards?.length > 0;
+
+  if (!tieneViajes && !tieneGuardias) { cont.innerHTML = ""; return; }
+
+  // ── Calcular horas transcurridas desde inicio de jornada ──
+  const ahora        = Date.now();
+  const createdAt    = order.createdAt || ahora;
+  const horasJornada = (ahora - createdAt) / 3600000;
+
+  const limiteHoras  = (tieneGuardias && tieneViajes) ? 9
+                     : tieneGuardias                  ? 8
+                     :                                  9;
+
+  if (horasJornada < limiteHoras) {
+    cont.innerHTML = ""; return;
+  }
 
   cont.innerHTML = `
     <button id="btnCerrarJornadaManual" style="
