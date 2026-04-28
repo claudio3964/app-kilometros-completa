@@ -281,6 +281,10 @@ function iniciarBootstrap() {
 
   // ── Sync inicial al SW (esperar a que el SW esté listo) ───────────────
   setTimeout(() => syncEstadoAlSW(), 3000);
+   // ── Geo monitoreo origen (auto-inicio viaje) ───────────────────────────
+  setTimeout(() => {
+    if (typeof iniciarMonitoreoOrigen === "function") iniciarMonitoreoOrigen();
+  }, 4000)
 
   // ── Visibilitychange — foreground/background ───────────────────────────
   if (!window.__visibilityHandler) {
@@ -300,6 +304,7 @@ function iniciarBootstrap() {
         if (typeof activarViajesProgramados === "function") activarViajesProgramados();
         if (typeof mostrarViajeEnCursoUI === "function") mostrarViajeEnCursoUI();
         if (typeof renderResumenDia === "function") renderResumenDia();
+        if (typeof iniciarMonitoreoOrigen === "function") iniciarMonitoreoOrigen(); 
         syncEstadoAlSW();
       }
     });

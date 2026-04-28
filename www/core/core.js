@@ -555,6 +555,13 @@ function verificarViajesProgramados() {
     setActiveOrder(order);
     if (typeof renderOrdenActivaUI === 'function') renderOrdenActivaUI();
   }
+ if (cambio) {
+    saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
+    setActiveOrder(order);
+    if (typeof renderOrdenActivaUI === 'function') renderOrdenActivaUI();
+    if (typeof detenerMonitoreoOrigen === 'function') detenerMonitoreoOrigen();
+    if (typeof onViajeIniciado === 'function') onViajeIniciado();
+}
 }
 function calcularHorasJornada(o) {
   if (!o) return 0;

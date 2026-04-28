@@ -12,18 +12,20 @@ console.log("geo_terminal cargado");
 // CATÁLOGO DE TERMINALES — coordenadas fijas
 // =====================================================
 const TERMINALES_GPS = {
-  "Montevideo":         { lat: -34.9058, lng: -56.1882, nombre: "Terminal Tres Cruces" },
-  "MVDEO":              { lat: -34.9058, lng: -56.1882, nombre: "Terminal Tres Cruces" },
-  "Maldonado":          { lat: -34.9024, lng: -54.9576, nombre: "Terminal Maldonado" },
-  "Punta del Este":     { lat: -34.9665, lng: -54.9516, nombre: "Terminal Punta del Este" },
-  "San Carlos":         { lat: -34.7977, lng: -54.9154, nombre: "Terminal San Carlos" },
-  "Rocha":              { lat: -34.4833, lng: -54.3333, nombre: "Terminal Rocha" },
-  "Chuy":               { lat: -33.6947, lng: -53.4617, nombre: "Terminal Chuy" },
-  "La Paloma":          { lat: -34.6561, lng: -54.1697, nombre: "Terminal La Paloma" },
-  "La Pedrera":         { lat: -34.5878, lng: -54.1219, nombre: "Terminal La Pedrera" },
-  "Laguna Garzón":      { lat: -34.7200, lng: -54.6500, nombre: "Parada Laguna Garzón" },
-  "Aguas Dulces":       { lat: -33.9667, lng: -53.5500, nombre: "Parada Aguas Dulces" },
-  "Punta del Diablo":   { lat: -33.9167, lng: -53.5500, nombre: "Parada Punta del Diablo" },
+  "Montevideo":     { lat: -34.894149,  lng: -56.167112,  nombre: "Terminal Tres Cruces" },
+  "MVDEO":          { lat: -34.894149,  lng: -56.167112,  nombre: "Terminal Tres Cruces" },
+  "Punta del Este": { lat: -34.95738,   lng: -54.938867,  nombre: "Terminal Punta del Este" },
+  "Colonia":        { lat: -34.4726414, lng: -57.8425142, nombre: "Terminal Colonia" },
+  "Piriápolis":     { lat: -34.8613073, lng: -55.2746958, nombre: "Terminal Piriápolis" },
+  "La Paloma":      { lat: -34.6565574, lng: -54.159223,  nombre: "Terminal La Paloma" },
+  "La Pedrera":     { lat: -34.5920808, lng: -54.1326961, nombre: "Terminal La Pedrera" },
+  "Chuy":           { lat: -33.7012,    lng: -53.453986,  nombre: "Terminal Chuy" },
+  "Rocha":          { lat: -34.4833,    lng: -54.3333,    nombre: "Terminal Rocha" },
+  "Maldonado":      { lat: -34.9024,    lng: -54.9576,    nombre: "Terminal Maldonado" },
+  "San Carlos":     { lat: -34.7977,    lng: -54.9154,    nombre: "Terminal San Carlos" },
+  "Laguna Garzón":  { lat: -34.7200,    lng: -54.6500,    nombre: "Parada Laguna Garzón" },
+  "Aguas Dulces":   { lat: -33.9667,    lng: -53.5500,    nombre: "Parada Aguas Dulces" },
+  "Punta del Diablo": { lat: -33.9167,  lng: -53.5500,    nombre: "Parada Punta del Diablo" },
 };
 
 // =====================================================
@@ -322,6 +324,160 @@ function _mostrarConfirmacionGeo(texto, color = "#10b981") {
   document.body.appendChild(conf);
   setTimeout(() => conf.remove(), 3000);
 }
+// =====================================================
+// AUTO-INICIO DE VIAJE — detección en terminal origen
+// =====================================================
+
+let _watchIdOrigen   = null;
+let _monitoreoOrigen = false;
+
+function iniciarMonitoreoOrigen() {
+  if (_monitoreoOrigen) return;
+  if (!navigator.geolocation) return;
+
+  const order = getActiveOrder ? getActiveOrder() : null;
+  const viajeProgramado = order?.travels?.find(t => t.status === "programado");
+  if (!viajeProgramado) return;
+
+  const terminalOrigen = _resolverTerminal(viajeProgramado.origen);
+  if (!terminalOrigen) {
+    console.warn("[GEO] Terminal origen sin coordenadas:", viajeProgramado.origen);
+    _mostrarBotonesManuales(viajeProgramado);
+    return;
+  }
+
+  _monitoreoOrigen = true;
+  console.log(`[GEO] Monitoreando origen → ${terminalOrigen.nombre}`);
+
+  _watchIdOrigen = navigator.geolocation.watchPosition(
+    (pos) => _onPosicionOrigen(pos, terminalOrigen, viajeProgramado),
+    (err) => console.warn("[GEO] Error GPS origen:", err.message),
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+  );
+}
+
+function detenerMonitoreoOrigen() {
+  if (_watchIdOrigen !== null) {
+    navigator.geolocation.clearWatch(_watchIdOrigen);
+    _watchIdOrigen = null;
+  }
+  _monitoreoOrigen = false;
+}
+
+function _onPosicionOrigen(pos, terminal, viaje) {
+  const { latitude: lat, longitude: lng } = pos.coords;
+  const ahora = Date.now();
+
+  // Verificar que el viaje siga programado
+  const order = getActiveOrder ? getActiveOrder() : null;
+  const viajeActual = order?.travels?.find(t => t.id === viaje.id && t.status === "programado");
+  if (!viajeActual) {
+    detenerMonitoreoOrigen();
+    return;
+  }
+
+  // Verificar hora — debe ser >= hora de salida programada
+  const horaSalida = viaje.departureTime; // "18:39"
+  if (horaSalida) {
+    const [h, m]     = horaSalida.split(":").map(Number);
+    const ahora_d    = new Date();
+    const salidaMs   = new Date(ahora_d.getFullYear(), ahora_d.getMonth(), ahora_d.getDate(), h, m, 0).getTime();
+    if (ahora < salidaMs) {
+      const minFaltan = Math.ceil((salidaMs - ahora) / 60000);
+      console.log(`[GEO] Faltan ${minFaltan}min para hora de salida`);
+      return;
+    }
+  }
+
+  const distancia = _distanciaMetros(lat, lng, terminal.lat, terminal.lng);
+  console.log(`[GEO] Origen: ${Math.round(distancia)}m de ${terminal.nombre}`);
+
+  if (distancia <= GEO_CONFIG.RADIO_METROS) {
+    detenerMonitoreoOrigen();
+    _mostrarToastInicio(terminal.nombre, viajeActual);
+  }
+}
+
+function _mostrarToastInicio(nombreTerminal, viaje) {
+  if (document.getElementById("geoToastInicio")) return;
+  let seg = GEO_CONFIG.COUNTDOWN_SEGUNDOS;
+
+  const toast = document.createElement("div");
+  toast.id = "geoToastInicio";
+  toast.style.cssText = `
+    position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+    width:92%;max-width:400px;background:#111827;
+    border:2px solid #f59e0b;border-radius:14px;padding:16px 18px;
+    z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.6);
+    animation:slideUpGeo .3s ease;
+  `;
+  toast.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <span style="font-size:22px;">🚌</span>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#f59e0b;">SALIDA DETECTADA</div>
+        <div style="font-size:12px;color:#94a3b8;">${nombreTerminal}</div>
+      </div>
+    </div>
+    <div style="font-size:13px;color:#e2e8f0;margin-bottom:10px;">
+      ${viaje.origen} → ${viaje.destino}<br>
+      <span style="color:#475569;font-size:11px;">Hora programada: ${viaje.departureTime || "—"}</span>
+    </div>
+    <div id="geoCountdownBarInicio" style="height:4px;background:#f59e0b;border-radius:2px;width:100%;margin-bottom:10px;transition:width 1s linear;"></div>
+    <div style="font-size:12px;color:#64748b;text-align:center;margin-bottom:12px;">
+      Iniciando en <span id="geoCountdownNumInicio" style="color:#f59e0b;font-weight:700;">${seg}s</span>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button id="geoBtnIniciar" style="flex:1;background:#f59e0b;color:#111;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;">▶ Iniciar ahora</button>
+      <button id="geoBtnCancelarInicio" style="flex:1;background:transparent;color:#ef4444;border:2px solid #ef4444;border-radius:8px;padding:11px;font-size:14px;cursor:pointer;">✕ Cancelar</button>
+    </div>
+  `;
+  document.body.appendChild(toast);
+
+  let timer = null;
+
+  document.getElementById("geoBtnIniciar").addEventListener("click", () => {
+    clearInterval(timer);
+    toast.remove();
+    _ejecutarInicioViaje(viaje);
+  });
+
+  document.getElementById("geoBtnCancelarInicio").addEventListener("click", () => {
+    clearInterval(timer);
+    toast.remove();
+    _mostrarBotonesManuales(viaje);
+  });
+
+  const barEl = document.getElementById("geoCountdownBarInicio");
+  const numEl = document.getElementById("geoCountdownNumInicio");
+  timer = setInterval(() => {
+    seg--;
+    if (numEl) numEl.textContent = seg + "s";
+    if (barEl) barEl.style.width = ((seg / GEO_CONFIG.COUNTDOWN_SEGUNDOS) * 100) + "%";
+    if (seg <= 0) { clearInterval(timer); toast.remove(); _ejecutarInicioViaje(viaje); }
+  }, 1000);
+}
+
+function _ejecutarInicioViaje(viaje) {
+  console.log("[GEO] Iniciando viaje automáticamente:", viaje.id);
+  if (typeof iniciarViajeDesdeGeo === "function") {
+    iniciarViajeDesdeGeo(viaje.id);
+  } else if (typeof iniciarViaje === "function") {
+    iniciarViaje(viaje.id);
+  }
+}
+
+function _mostrarBotonesManuales(viaje) {
+  console.log("[GEO] Sin coordenadas origen — mostrando botón manual");
+  // El botón manual ya existe en la UI del viaje programado
+  // Esta función es placeholder para futura lógica
+}
+
+// Llamar cuando se agrega un viaje programado
+function onViajeProgramadoAgregado() {
+  detenerMonitoreoOrigen();
+  setTimeout(() => iniciarMonitoreoOrigen(), 1000);
+}
 
 // =====================================================
 // INTEGRACIÓN — llamar desde ui_travels.js
@@ -345,3 +501,6 @@ window.onViajeIniciado     = onViajeIniciado;
 window.onViajeFinalizado   = onViajeFinalizado;
 window.TERMINALES_GPS      = TERMINALES_GPS;
 window.GEO_CONFIG          = GEO_CONFIG;
+window.iniciarMonitoreoOrigen      = iniciarMonitoreoOrigen;
+window.detenerMonitoreoOrigen      = detenerMonitoreoOrigen;
+window.onViajeProgramadoAgregado   = onViajeProgramadoAgregado;
