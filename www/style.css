@@ -458,7 +458,7 @@ input, select {
 .reg-bus-interior {
   position: absolute;
   inset: 0;
-  background-image: url('./interior_bus.webp');
+  background-image: url('./interior bus.webp');
   background-size: cover;
   background-position: center top;
   opacity: 0;

@@ -32,6 +32,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const driver = getDriver();
     if (!driver) {
       showScreen('registroScreen');
+      setTimeout(() => {
+        if (typeof iniciarAnimacionRegistro === 'function') iniciarAnimacionRegistro();
+      }, 100);
     } else {
       document.getElementById('baseChoferBadge').innerText = "Base: " + (driver.base || "Montevideo");
       cargarSelectorOrigen(driver.base || "Montevideo");
@@ -152,10 +155,46 @@ initDriverProfile({
 
 document.getElementById('baseChoferBadge').innerText = "Base: " + base;
 cargarSelectorOrigen(base);
-showScreen('mainScreen');
 
-if (typeof iniciarBootstrap === "function") {
-  iniciarBootstrap();
+// Animación: frenar luces → revelar bus → ir a main
+const btn = document.getElementById('regBtn');
+if (btn) { btn.disabled = true; btn.textContent = 'Registrando...'; }
+
+if (typeof window._frenarAnimacionRegistro === 'function') {
+  window._frenarAnimacionRegistro(function() {
+    // Revelar interior del bus
+    const busInt  = document.getElementById('regBusInterior');
+    const busOvl  = document.getElementById('regBusOverlay');
+    const formLay = document.getElementById('regFormLayer');
+    const success = document.getElementById('regSuccess');
+    const speedBg = document.getElementById('regSpeedBg');
+
+    if (speedBg) speedBg.classList.add('fading');
+    if (formLay) formLay.classList.add('hiding');
+
+    if (busInt) {
+      busInt.style.transition = 'opacity 0s';
+      busInt.style.opacity = '1';
+      busInt.animate([
+        { filter: 'blur(20px) brightness(2.5)', transform: 'scale(1.08)', opacity: 0.2 },
+        { filter: 'blur(8px)  brightness(1.6)', transform: 'scale(1.04)', opacity: 0.7, offset: 0.4 },
+        { filter: 'blur(2px)  brightness(1.2)', transform: 'scale(1.01)', opacity: 0.95, offset: 0.75 },
+        { filter: 'blur(0px)  brightness(1)',   transform: 'scale(1)',    opacity: 1 }
+      ], { duration: 1600, easing: 'cubic-bezier(0.25,0.1,0.25,1)', fill: 'forwards' });
+    }
+    if (busOvl) busOvl.style.opacity = '1';
+    if (success) success.classList.add('show');
+
+    // Ir a main después de que el chofer vea el bus
+    setTimeout(() => {
+      showScreen('mainScreen');
+      if (typeof iniciarBootstrap === 'function') iniciarBootstrap();
+    }, 3200);
+  });
+} else {
+  // Fallback sin animación
+  showScreen('mainScreen');
+  if (typeof iniciarBootstrap === 'function') iniciarBootstrap();
 }
 
 } catch (e) {
@@ -164,3 +203,91 @@ if (typeof iniciarBootstrap === "function") {
 }
 window.registrarChofer = registrarChofer;
 window.cargarSelectorOrigen = cargarSelectorOrigen;
+
+// =====================================================
+// MOTOR ANIMACIÓN REGISTRO — luces velocidad → bus
+// =====================================================
+
+function iniciarAnimacionRegistro() {
+  const bg = document.getElementById('regSpeedBg');
+  if (!bg || bg._iniciado) return;
+  bg._iniciado = true;
+
+  const W = bg.offsetWidth || window.innerWidth || 390;
+  const H = bg.offsetHeight || window.innerHeight || 844;
+  const cx = W / 2;
+  const cy = H / 2;
+  const N = 32;
+  const streaks = [];
+
+  // Crear rayos desde el centro hacia afuera
+  for (let i = 0; i < N; i++) {
+    const el = document.createElement('div');
+    el.className = 'reg-streak';
+
+    const angle = (i / N) * 2 * Math.PI;
+    // Posición: desde el centro, a lo largo del ángulo
+    const distMin = 30 + Math.random() * 80;
+    const distMax = distMin + 80 + Math.random() * 180;
+    const sx = cx + Math.cos(angle) * distMin;
+    const sy = cy + Math.sin(angle) * distMin;
+    const len = distMax - distMin;
+
+    // Rotar el streak según el ángulo de su dirección
+    const deg = (angle * 180 / Math.PI) + 90;
+
+    const baseDur = 0.35 + Math.random() * 0.4;
+    const delay   = Math.random() * baseDur;
+
+    el.style.cssText = `
+      left: ${sx}px;
+      top: ${sy}px;
+      height: ${len}px;
+      transform: rotate(${deg}deg);
+      transform-origin: top center;
+    `;
+
+    // Animación con keyframes via Web Animations API
+    const anim = el.animate([
+      { opacity: 0, transform: `rotate(${deg}deg) scaleY(0.3)` },
+      { opacity: 0.9, transform: `rotate(${deg}deg) scaleY(1)`, offset: 0.15 },
+      { opacity: 0.9, transform: `rotate(${deg}deg) scaleY(1)`, offset: 0.85 },
+      { opacity: 0, transform: `rotate(${deg}deg) scaleY(1.4)` }
+    ], {
+      duration: baseDur * 1000,
+      delay: delay * 1000,
+      iterations: Infinity,
+      easing: 'ease-in-out'
+    });
+
+    bg.appendChild(el);
+    streaks.push({ el, anim, baseDur });
+  }
+
+  // Exponer función de freno para registrarChofer()
+  window._frenarAnimacionRegistro = function(onComplete) {
+    const SLOW_MS = 2000;
+    const start = performance.now();
+
+    function tick(now) {
+      const progress = Math.min((now - start) / SLOW_MS, 1);
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+
+      streaks.forEach(s => {
+        // Estirar duración = frenar
+        const newDur = s.baseDur * 1000 * (1 + eased * 7);
+        s.anim.updatePlaybackRate(s.baseDur * 1000 / newDur);
+      });
+
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        // Parar todo y revelar bus
+        streaks.forEach(s => s.anim.pause());
+        if (typeof onComplete === 'function') onComplete();
+      }
+    }
+    requestAnimationFrame(tick);
+  };
+}
+window.iniciarAnimacionRegistro = iniciarAnimacionRegistro;
