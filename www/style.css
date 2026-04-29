@@ -1,4 +1,3 @@
-
 /* ==============================
    BASE GENERAL
 ================================ */
@@ -417,4 +416,219 @@ input, select {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+/* ==============================
+   REGISTRO — ANIMACIÓN BUS COT
+================================ */
+
+.reg-scene {
+  background: #050d1f;
+  overflow: hidden;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+}
+
+/* Luces de velocidad */
+.reg-speed-bg {
+  position: absolute;
+  inset: 0;
+  background: #050d1f;
+  overflow: hidden;
+  transition: opacity 1s ease;
+  z-index: 0;
+}
+.reg-speed-bg.fading { opacity: 0; }
+
+.reg-streak {
+  position: absolute;
+  width: 1.5px;
+  border-radius: 2px;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(74,179,232,0.6) 25%,
+    rgba(255,255,255,0.95) 50%,
+    rgba(74,179,232,0.6) 75%,
+    transparent 100%
+  );
+  transform-origin: center center;
+}
+
+/* Interior del bus */
+.reg-bus-interior {
+  position: absolute;
+  inset: 0;
+  background-image: url('./interior_bus.webp');
+  background-size: cover;
+  background-position: center top;
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.reg-bus-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    rgba(5,13,31,0.05) 0%,
+    rgba(5,13,31,0.6) 100%
+  );
+  opacity: 0;
+  z-index: 2;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+
+/* Form layer */
+.reg-form-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 18px max(28px, env(safe-area-inset-bottom));
+  z-index: 10;
+  transition: opacity 0.7s ease;
+}
+.reg-form-layer.hiding {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.reg-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.reg-cot-badge {
+  background: #E8820A;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 6px;
+  letter-spacing: 1px;
+}
+.reg-cot-sub {
+  color: rgba(255,255,255,0.4);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.reg-glass-card {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 20px;
+  padding: 20px 18px 16px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  margin-bottom: 8px;
+}
+
+.reg-title {
+  color: #fff;
+  font-size: 19px;
+  font-weight: 700;
+  margin: 0 0 3px;
+}
+.reg-subtitle {
+  color: rgba(255,255,255,0.38);
+  font-size: 11px;
+  margin: 0 0 16px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.reg-label {
+  display: block;
+  color: rgba(255,255,255,0.52);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.reg-input,
+.reg-select {
+  width: 100%;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 11px 13px;
+  color: #fff;
+  font-size: 15px;
+  margin-bottom: 13px;
+  box-sizing: border-box;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  font-family: inherit;
+}
+.reg-input::placeholder { color: rgba(255,255,255,0.22); }
+.reg-input:focus,
+.reg-select:focus {
+  border-color: rgba(232,130,10,0.6);
+}
+.reg-select option { background: #142E5E; color: #fff; }
+
+.reg-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.reg-btn {
+  width: 100%;
+  background: #E8820A;
+  border: none;
+  border-radius: 13px;
+  padding: 14px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 4px;
+  letter-spacing: 0.3px;
+  transition: background 0.15s, transform 0.1s, opacity 0.2s;
+  font-family: inherit;
+  text-align: center;
+}
+.reg-btn:active { background: #c46d08; transform: scale(0.98); }
+.reg-btn:disabled { background: #4a3010; opacity: 0.6; cursor: default; }
+
+/* Mensaje de éxito */
+.reg-success {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: max(48px, env(safe-area-inset-bottom));
+  z-index: 20;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease 1.2s;
+}
+.reg-success.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.reg-success-card {
+  background: rgba(232,130,10,0.92);
+  border-radius: 16px;
+  padding: 18px 28px;
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+.reg-success-card strong {
+  display: block;
+  color: #fff;
+  font-size: 17px;
+  margin-bottom: 4px;
+}
+.reg-success-card p {
+  color: rgba(255,255,255,0.85);
+  font-size: 13px;
+  margin: 0;
 }

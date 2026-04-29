@@ -25,36 +25,71 @@
 </div>
 
 <!-- ================= REGISTRO ================= -->
-<div id="registroScreen" class="screen">
-  <div class="screen-container">
-    <h2>Registro del Chofer</h2>
+<div id="registroScreen" class="screen reg-scene">
 
-    <label>Legajo</label>
-    <input id="regLegajo">
+  <!-- Fondo: luces de velocidad -->
+  <div class="reg-speed-bg" id="regSpeedBg"></div>
 
-    <label>Nombre</label>
-    <input id="regNombre">
+  <!-- Fondo: interior del bus (se revela al registrar) -->
+  <div class="reg-bus-interior" id="regBusInterior"></div>
+  <div class="reg-bus-overlay" id="regBusOverlay"></div>
 
-    <label>Base / Punta de inicio</label>
-   <select id="regBase">
-  <option value="Montevideo" selected>Montevideo</option>
-  <option value="Colonia">Colonia</option>
-  <option value="Maldonado">Maldonado</option>
-  <option value="Punta del Este">Punta del Este</option>
-  <option value="Rocha">Rocha</option>
-  <option value="Chuy">Chuy</option>
-  <option value="Otro">Otro</option>
-</select>
+  <!-- Formulario glass -->
+  <div class="reg-form-layer" id="regFormLayer">
+    <div class="reg-top">
+      <span class="reg-cot-badge">COT</span>
+      <span class="reg-cot-sub">DRIVER APP · v1.7</span>
+    </div>
+    <div class="reg-glass-card">
+      <div class="reg-title">Registro del chofer</div>
+      <div class="reg-subtitle">Ingresá tus datos para comenzar</div>
 
-    <label>Tipo de chofer</label>
-    <select id="regTipo">
-      <option value="">Elegí tipo...</option>
-       <option value="contratado" selected>Contratado</option>
-  <option value="efectivo">Efectivo</option>
-    </select>
+      <label class="reg-label">Legajo</label>
+      <input class="reg-input" id="regLegajo" placeholder="Ej: 1234" type="number" inputmode="numeric">
 
-    <button onclick="registrarChofer()">Guardar y continuar</button>
+      <label class="reg-label">Nombre completo</label>
+      <input class="reg-input" id="regNombre" placeholder="Tu nombre">
+
+      <div class="reg-row">
+        <div>
+          <label class="reg-label">Base</label>
+          <select class="reg-select" id="regBase">
+            <option value="Montevideo">Montevideo</option>
+            <option value="Colonia">Colonia</option>
+            <option value="Maldonado">Maldonado</option>
+            <option value="Punta del Este">Punta del Este</option>
+            <option value="Piriápolis">Piriápolis</option>
+            <option value="Rocha">Rocha</option>
+            <option value="Chuy">Chuy</option>
+            <option value="La Paloma">La Paloma</option>
+            <option value="La Pedrera">La Pedrera</option>
+            <option value="Aguas Dulces">Aguas Dulces</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div>
+          <label class="reg-label">Tipo</label>
+          <select class="reg-select" id="regTipo">
+            <option value="contratado">Contratado</option>
+            <option value="efectivo">Efectivo</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="reg-btn" id="regBtn" onclick="registrarChofer()">
+        Guardar y continuar
+      </button>
+    </div>
   </div>
+
+  <!-- Mensaje final -->
+  <div class="reg-success" id="regSuccess">
+    <div class="reg-success-card">
+      <strong>Bienvenido a bordo</strong>
+      <p>Registro completado. Iniciando jornada...</p>
+    </div>
+  </div>
+
 </div>
 
 <!-- ================= MAIN SCREEN ================= -->
