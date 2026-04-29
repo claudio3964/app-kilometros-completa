@@ -129,8 +129,53 @@ function renderTarjetasGuardiasPorDia() {
         const hTrans = Math.floor(transcurridoMin / 60);
         const mTrans = transcurridoMin % 60;
         const kmAcum = (transcurridoMin / 60 * kmHora).toFixed(1);
-        guardiasHTML += "\n          <div style=\"\n            background:#fff3e0;\n            border:1px solid #ffb300;\n            border-radius:8px;\n            padding:10px;\n            margin:6px 0;\n            font-size:14px;\n            line-height:1.8;\n          \">\n            \uD83D\uDFE1 <b>EN CURSO</b><br>\n            \uD83D\uDD50 Inicio: <b>".concat(g.inicio, "</b><br>\n            \u23F1 Transcurrido: <b>").concat(hTrans, "h ").concat(mTrans, "m</b><br>\n            \uD83D\uDCCF KM acumulados: <b>").concat(kmAcum, " km</b><br>\n            \uD83D\uDD16 Tipo: <b>").concat(g.type, "</b>\n            <br><br>\n            <button onclick=\"finalizarGuardiaUI('").concat(g.createdAt, "')\"\n              style=\"\n                background:#c62828;\n                color:white;\n                border:none;\n                border-radius:6px;\n                padding:8px 16px;\n                font-size:14px;\n                cursor:pointer;\n              \">\n              Finalizar Guardia\n            </button>\n          </div>\n        ");
-
+guardiasHTML += `
+  <div style="
+    background:#fff3e0;
+    border:1px solid #ffb300;
+    border-radius:8px;
+    padding:10px;
+    margin:6px 0;
+    font-size:14px;
+    line-height:1.8;
+  ">
+    🟡 <b>EN CURSO</b><br>
+    🕐 Inicio: <b>${g.inicio}</b><br>
+    ⏱ Transcurrido: <b>${hTrans}h ${mTrans}m</b><br>
+    📏 KM acumulados: <b>${kmAcum} km</b><br>
+    🔖 Tipo: <b>${g.type}</b>
+    <br><br>
+    <div style="display:flex;gap:8px;">
+      <button onclick="cambiarTipoGuardiaUI()"
+        style="
+          flex:1;
+          background:${g.type === 'comun' ? '#7c3aed' : '#0369a1'};
+          color:white;
+          border:none;
+          border-radius:6px;
+          padding:8px 10px;
+          font-size:13px;
+          font-weight:600;
+          cursor:pointer;
+        ">
+        ⇄ → ${g.type === 'comun' ? 'Especial' : 'Común'}
+      </button>
+      <button onclick="finalizarGuardiaUI('${g.createdAt}')"
+        style="
+          flex:1;
+          background:#c62828;
+          color:white;
+          border:none;
+          border-radius:6px;
+          padding:8px 10px;
+          font-size:14px;
+          cursor:pointer;
+        ">
+        Finalizar Guardia
+      </button>
+    </div>
+  </div>
+`;
         // ── GUARDIA FINALIZADA ──
       } else {
         // Recalcular horas y km desde inicio/fin para garantizar consistencia

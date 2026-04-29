@@ -1048,6 +1048,165 @@ if (ordenActual && ordenActual.travels) {
 window.addGuard = addGuard;
 
 // =====================================================
+// CAMBIAR TIPO DE GUARDIA (tramos)
+// Cierra el tramo activo y abre uno nuevo del tipo opuesto
+// Agrega campo `tramo_origen` para tracking en historial
+// =====================================================
+
+function cambiarTipoGuardia(descripcionEspecial) {
+  const order = getActiveOrder();
+  if (!order || !order.guards) throw new Error("ORDEN_NO_ACTIVA");
+
+  const guardiaActiva = order.guards.find(g => g.status === "en_curso");
+  if (!guardiaActiva) throw new Error("GUARDIA_NO_ACTIVA");
+
+  const ahora = ahoraSistema();
+  const horaActual = new Date().toTimeString().slice(0, 5); // HH:mm
+
+  // --- Cerrar tramo actual ---
+  const [hI, mI] = guardiaActiva.inicio.split(":").map(Number);
+  const [hF, mF] = horaActual.split(":").map(Number);
+  let diffMin = (hF * 60 + mF) - (hI * 60 + mI);
+  if (diffMin < 0) diffMin += 1440; // cruce medianoche
+
+  guardiaActiva.fin    = horaActual;
+  guardiaActiva.hours  = parseFloat((diffMin / 60).toFixed(4));
+  guardiaActiva.status = "finalizado";
+
+  // --- Nuevo tipo ---
+  const nuevoTipo = guardiaActiva.type === "comun" ? "especial" : "comun";
+
+  if (nuevoTipo === "especial" && !(descripcionEspecial || "").trim()) {
+    throw new Error("GUARDIA_DESCRIPCION_REQUERIDA: la guardia especial requiere descripción");
+  }
+
+  // --- Crear nuevo tramo ---
+  const nuevoTramo = {
+    id:            "GRD-" + ahora,
+    type:          nuevoTipo,
+    inicio:        horaActual,
+    dia:           guardiaActiva.dia,
+    descripcion:   nuevoTipo === "especial" ? descripcionEspecial.trim() : null,
+    // referencia al tramo anterior para poder unir en historial
+    tramo_de:      guardiaActiva.id,
+    fin:           null,
+    hours:         0,
+    kmGuardia:     0,
+    viatico:       false,
+    status:        "en_curso",
+    createdAt:     ahora,
+    syncStatus:    "local"
+  };
+
+  order.guards.push(nuevoTramo);
+
+  const orders = getOrders();
+  saveOrders(orders.map(o => o.orderNumber === order.orderNumber ? order : o));
+  setActiveOrder(order);
+
+  console.log(`[CORE] Tipo de guardia cambiado: ${guardiaActiva.type} → ${nuevoTipo}`, {
+    tramoCerrado: guardiaActiva,
+    tramoNuevo: nuevoTramo
+  });
+
+  return { tramoCerrado: guardiaActiva, tramoNuevo: nuevoTramo };
+}
+
+window.cambiarTipoGuardia = cambiarTipoGuardia;
+
+// =====================================================
+// UI — botón cambiar tipo
+// Llamar desde donde se renderizan los botones de guardia activa
+// =====================================================
+
+function cambiarTipoGuardiaUI() {
+  const order = getActiveOrder();
+  if (!order || !order.guards) return;
+
+  const guardiaActiva = order.guards.find(g => g.status === "en_curso");
+  if (!guardiaActiva) return;
+
+  const tipoActual  = guardiaActiva.type;
+  const nuevoTipo   = tipoActual === "comun" ? "especial" : "comun";
+  const labelNuevo  = nuevoTipo === "especial" ? "Especial" : "Común";
+  const labelActual = tipoActual === "comun"   ? "Común"   : "Especial";
+
+  // Si vamos a especial, pedir descripción
+  let descripcion = null;
+  if (nuevoTipo === "especial") {
+    descripcion = prompt(`Cambiando a guardia Especial.\nIngresá una descripción:`);
+    if (descripcion === null) return; // canceló
+    if (!descripcion.trim()) {
+      alert("La guardia especial requiere una descripción.");
+      return;
+    }
+  }
+
+  const confirmar = confirm(
+    `¿Cambiar de ${labelActual} → ${labelNuevo}?\n` +
+    `Se cerrará el tramo actual y comenzará uno nuevo.`
+  );
+  if (!confirmar) return;
+
+  let result;
+  try {
+    result = cambiarTipoGuardia(descripcion);
+  } catch (e) {
+    alert("Error al cambiar tipo: " + e.message);
+    console.error(e);
+    return;
+  }
+
+  // Refrescar pantalla
+  if (typeof renderListaGuardias     === "function") renderListaGuardias();
+  if (typeof renderResumenDia        === "function") renderResumenDia();
+  if (typeof renderBotonCerrarJornada === "function") renderBotonCerrarJornada();
+
+  // Reiniciar monitor con el nuevo tramo
+  if (typeof onGuardiaIniciada === "function") onGuardiaIniciada();
+
+  const h = result.tramoCerrado.hours.toFixed(2);
+  alert(
+    `✓ Tramo ${labelActual} cerrado: ${result.tramoCerrado.inicio} – ${result.tramoCerrado.fin} (${h}h)\n` +
+    `▶ Nuevo tramo ${labelNuevo} iniciado a las ${result.tramoNuevo.inicio}`
+  );
+}
+
+window.cambiarTipoGuardiaUI = cambiarTipoGuardiaUI;
+
+// =====================================================
+// RENDER — botón a insertar en la card de guardia activa
+// Llamar desde renderListaGuardias() o equivalente
+// =====================================================
+
+function renderBotonCambiarTipo(guardiaActiva) {
+  if (!guardiaActiva || guardiaActiva.status !== "en_curso") return "";
+
+  const tipoActual = guardiaActiva.type;
+  const labelDestino = tipoActual === "comun" ? "→ Especial" : "→ Común";
+  const colorBtn = tipoActual === "comun"
+    ? "background:#7c3aed;color:#fff;"   // violeta para especial
+    : "background:#0369a1;color:#fff;";  // azul para común
+
+  return `
+    <button
+      onclick="cambiarTipoGuardiaUI()"
+      style="
+        ${colorBtn}
+        border:none;border-radius:8px;
+        padding:9px 14px;font-size:13px;
+        font-weight:600;cursor:pointer;
+        margin-top:6px;width:100%;
+      "
+    >
+      ⇄ Cambiar tipo ${labelDestino}
+    </button>
+  `;
+}
+
+window.renderBotonCambiarTipo = renderBotonCambiarTipo;
+
+// =====================================================
 // FINALIZAR GUARDIA POR createdAt
 // =====================================================
 function finalizarGuardia(createdAt) {
