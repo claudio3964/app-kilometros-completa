@@ -1,7 +1,5 @@
 "use strict";
-
-console.log("CORE v2 - CONSISTENCIA + VALIDACIONES( ESTE ES EL CORE COMPLETO )");
-"use strict";
+// COT Driver CORE — v2.1 (idempotencia + validaciones integradas)
 // =====================================================
 // 🔍 VALIDACIÓN DE CONSISTENCIA (NO BLOQUEANTE)
 // =====================================================
@@ -350,8 +348,8 @@ async function closeActiveOrder() {
   // limpiar activeOrder
   clearActiveOrder();
   console.log("Jornada finalizada:", order.orderNumber);
-  console.log("🔥 DISPARO SYNC DESDE CORE");
-  console.log("DISPARO SYNC DESDE CORE");
+  validarConsistenciaOrder(order); // 🔍 validación al cierre de jornada
+  console.log("[CORE] Jornada cerrada y validada:", order.orderNumber);
   if (typeof syncPendientes === "function") {
     setTimeout(() => syncPendientes(), 300);
   }
@@ -502,15 +500,24 @@ function addTravelProgramado(origen, destino, turno, departureTime, arrivalTime,
 // MOTOR DE VIAJES PROGRAMADOS
 // =====================================================
 
+let _verificandoViajesProgramados = false; // 🔒 guard de idempotencia
+
 function verificarViajesProgramados() {
-  const order = getActiveOrder();
-  if (!order || !order.travels) return;
-  const ahora = ahoraSistema();
-  let cambio = false;
-  order.travels.forEach((travel, index) => {
-    if (travel.status === "programado" && travel.inicioProgramado && travel.inicioProgramado <= ahora) {
-      travel.status = "en_curso";
-      travel.inicioReal = ahora;
+  if (_verificandoViajesProgramados) {
+    console.log("[CORE] verificarViajesProgramados: ya en ejecución, skip");
+    return;
+  }
+  _verificandoViajesProgramados = true;
+
+  try {
+    const order = getActiveOrder();
+    if (!order || !order.travels) return;
+    const ahora = ahoraSistema();
+    let cambio = false;
+    order.travels.forEach((travel) => {
+      if (travel.status === "programado" && travel.inicioProgramado && travel.inicioProgramado <= ahora) {
+        travel.status = "en_curso";
+        travel.inicioReal = ahora;
 
       // ✂️ CORTE AUTOMÁTICO DE GUARDIA
       if (order.guards) {
@@ -547,21 +554,21 @@ function verificarViajesProgramados() {
       // =====================================================
       _asignarTomeCeseSiCorresponde(order, travel);
       cambio = true;
-      console.log("Viaje iniciado automáticamente:", travel.id);
+      console.log("[CORE] Viaje iniciado automáticamente:", travel.id);
     }
   });
+
   if (cambio) {
     saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
     setActiveOrder(order);
-    if (typeof renderOrdenActivaUI === 'function') renderOrdenActivaUI();
-  }
- if (cambio) {
-    saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
-    setActiveOrder(order);
+    validarConsistenciaOrder(order); // 🔍 validación post-activación (no bloqueante)
     if (typeof renderOrdenActivaUI === 'function') renderOrdenActivaUI();
     if (typeof detenerMonitoreoOrigen === 'function') detenerMonitoreoOrigen();
     if (typeof onViajeIniciado === 'function') onViajeIniciado();
-}
+  }
+  } finally {
+    _verificandoViajesProgramados = false;
+  }
 }
 function calcularHorasJornada(o) {
   if (!o) return 0;
@@ -871,6 +878,7 @@ function finalizarViajeActual() {
   if (typeof registrarEstadisticaViaje === "function") {
     registrarEstadisticaViaje(travel);
   }
+  validarConsistenciaOrder(getActiveOrder()); // 🔍 validación post-viaje
   return travel;
 }
 // =====================================================
@@ -1033,7 +1041,8 @@ if (ordenActual && ordenActual.travels) {
   order.guards.push(guardia);
   saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
   setActiveOrder(order);
-  console.log("Guardia iniciada:", guardia);
+  validarConsistenciaOrder(order); // 🔍 validación post-guardia
+  console.log("[CORE] Guardia iniciada:", guardia);
   return guardia;
 }
 window.addGuard = addGuard;

@@ -208,19 +208,25 @@ function iniciarListenerSW() {
 
       // SW detectó que un viaje programado debe activarse
       case 'ACTIVAR_VIAJES_PROGRAMADOS':
-        console.log('📬 SW: activar viajes programados');
-        if (typeof verificarViajesProgramados === 'function') {
-          verificarViajesProgramados();
-        }
+        console.log('[APP] SW: activar viajes programados');
+        if (typeof verificarViajesProgramados === 'function') verificarViajesProgramados();
         if (typeof renderListaViajes === 'function') renderListaViajes();
         if (typeof mostrarViajeEnCursoUI === 'function') mostrarViajeEnCursoUI();
         if (typeof renderBotonCerrarJornada === 'function') renderBotonCerrarJornada();
         if (typeof renderResumenDia === 'function') renderResumenDia();
-         // ── NUEVO: toast visual + vibración ──
-       _mostrarToastViajeIniciado();
+        _mostrarToastViajeIniciado();
         if (navigator.vibrate) navigator.vibrate([500, 200, 500, 200, 500]);
         syncEstadoAlSW();
         break;
+
+      // FIX 2.2 — SW manda estado con viajes activados en background
+      // La app reconcilia: cualquier viaje "activado_bg" pasa a "en_curso" en localStorage
+      case 'ESTADO_BG':
+        if (event.data.payload?.viajes) {
+          reconciliarEstadoBG(event.data.payload.viajes);
+        }
+        break;
+
       // Usuario clickeó la notificación push
       case 'NOTIF_CLICK':
         console.log('🔔 Notificación clickeada:', data);
@@ -235,6 +241,42 @@ function iniciarListenerSW() {
 // =====================================================
 // BOOTSTRAP PRINCIPAL
 // =====================================================
+
+// =====================================================
+// FIX 2.2 — RECONCILIACIÓN DE ESTADO BG
+// Cuando la app abre, pide al SW si activó viajes
+// mientras la app estaba muerta y los aplica al localStorage
+// =====================================================
+
+function reconciliarEstadoBG(viajesBG) {
+  if (!viajesBG || !viajesBG.length) return;
+  const order = getActiveOrder ? getActiveOrder() : null;
+  if (!order || !order.travels) return;
+
+  let cambio = false;
+  viajesBG.forEach(vBG => {
+    if (vBG.status !== 'activado_bg') return;
+    const vLocal = order.travels.find(t => t.id === vBG.id);
+    if (!vLocal || vLocal.status !== 'programado') return;
+
+    // Aplicar activación que el SW registró en background
+    vLocal.status = 'en_curso';
+    vLocal.inicioReal = vBG.activadoBgAt || Date.now();
+    cambio = true;
+    console.log('[APP] Reconciliado viaje activado en background:', vLocal.id);
+  });
+
+  if (cambio) {
+    saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
+    setActiveOrder(order);
+    if (typeof renderListaViajes === 'function') renderListaViajes();
+    if (typeof mostrarViajeEnCursoUI === 'function') mostrarViajeEnCursoUI();
+    if (typeof renderBotonCerrarJornada === 'function') renderBotonCerrarJornada();
+    if (typeof renderResumenDia === 'function') renderResumenDia();
+    console.log('[APP] Reconciliación completada');
+  }
+}
+window.reconciliarEstadoBG = reconciliarEstadoBG;
 
 function iniciarBootstrap() {
   syncActiveOrderBootstrap();
@@ -281,6 +323,11 @@ function iniciarBootstrap() {
 
   // ── Sync inicial al SW (esperar a que el SW esté listo) ───────────────
   setTimeout(() => syncEstadoAlSW(), 3000);
+
+  // FIX 2.2 — pedir estado del SW para reconciliar viajes activados en background
+  setTimeout(() => {
+    enviarMensajeSW({ tipo: 'PEDIR_ESTADO_BG' });
+  }, 3500);
    // ── Geo monitoreo origen (auto-inicio viaje) ───────────────────────────
   setTimeout(() => {
     if (typeof iniciarMonitoreoOrigen === "function") iniciarMonitoreoOrigen();

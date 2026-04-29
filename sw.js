@@ -1,9 +1,12 @@
 // =====================================================
-// COT Driver — Service Worker v3
-// Cache + Background Runner para viajes programados
+// COT Driver — Service Worker v4
+// Fix 2.2: SW actualiza estado propio en background
+// Fix 2.6: flag notificado evita spam de notificaciones
 // =====================================================
 
 const CACHE_NAME = 'cot-app-v2';
+const STATE_CACHE = 'cot-bg-state-v1';
+
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -15,14 +18,9 @@ const ASSETS_TO_CACHE = [
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
 
-// =====================================================
-// INSTALL / ACTIVATE — sin cambios
-// =====================================================
-
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(ASSETS_TO_CACHE))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS_TO_CACHE))
   );
   self.skipWaiting();
 });
@@ -31,7 +29,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys.filter(key => key !== CACHE_NAME)
+        keys.filter(key => key !== CACHE_NAME && key !== STATE_CACHE)
           .map(key => caches.delete(key))
       )
     )
@@ -41,38 +39,13 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
+    caches.match(event.request).then(response => response || fetch(event.request))
   );
 });
 
 // =====================================================
-// BACKGROUND RUNNER — motor de viajes programados
+// ESTADO BG
 // =====================================================
-
-let _bgInterval = null;
-let _bgActivo = false;
-
-function iniciarBackgroundRunner() {
-  if (_bgActivo) return;
-  _bgActivo = true;
-  console.log('[SW] Background runner iniciado');
-
-  // Verificar cada 30s desde el SW
-  _bgInterval = setInterval(() => {
-    verificarYNotificarViajesProgramados();
-  }, 30000);
-}
-
-function detenerBackgroundRunner() {
-  if (_bgInterval) { clearInterval(_bgInterval); _bgInterval = null; }
-  _bgActivo = false;
-  console.log('[SW] Background runner detenido');
-}
-
-// ── Leer viajes programados desde IndexedDB / SW cache ────────────────────
-// El SW no tiene acceso a localStorage — usamos un cache dedicado para estado
-const STATE_CACHE = 'cot-bg-state-v1';
 
 async function leerEstadoBG() {
   try {
@@ -92,7 +65,35 @@ async function escribirEstadoBG(estado) {
   } catch(e) {}
 }
 
-async function verificarYNotificarViajesProgramados() {
+// =====================================================
+// BACKGROUND RUNNER
+// =====================================================
+
+let _bgInterval = null;
+let _bgActivo = false;
+
+function iniciarBackgroundRunner() {
+  if (_bgActivo) return;
+  _bgActivo = true;
+  console.log('[SW] Background runner v4 iniciado');
+  _bgInterval = setInterval(() => {
+    verificarYActivarViajesProgramados();
+  }, 30000);
+}
+
+function detenerBackgroundRunner() {
+  if (_bgInterval) { clearInterval(_bgInterval); _bgInterval = null; }
+  _bgActivo = false;
+}
+
+// =====================================================
+// FIX 2.2 + 2.6
+// El SW ahora actualiza su propio estado en background.
+// Status "activado_bg" = app lo reconcilia al abrir.
+// Flag notificado = no spam de notificaciones.
+// =====================================================
+
+async function verificarYActivarViajesProgramados() {
   const estado = await leerEstadoBG();
   if (!estado || !estado.viajes) return;
 
@@ -100,25 +101,37 @@ async function verificarYNotificarViajesProgramados() {
   let huboActivacion = false;
 
   estado.viajes.forEach(v => {
-    if (v.status === 'programado' && v.inicioProgramado && v.inicioProgramado <= ahora) {
-      console.log('[SW] Viaje programado listo para activar:', v.id);
-      huboActivacion = true;
+    if (v.status !== 'programado') return;
+    if (!v.inicioProgramado || v.inicioProgramado > ahora) return;
 
-      // Mandar notificación push al usuario
-      self.registration.showNotification('🚍 Viaje programado', {
-        body: `${v.origen} → ${v.destino} | Salida: ${v.departureTime}`,
+    console.log('[SW] Activando viaje en background:', v.id);
+    v.status = 'activado_bg';
+    v.activadoBgAt = ahora;
+    huboActivacion = true;
+
+    // Notificar solo una vez por viaje
+    if (!v.notificado) {
+      v.notificado = true;
+      self.registration.showNotification('Viaje iniciado', {
+        body: `${v.origen} -> ${v.destino} | Salida: ${v.departureTime}`,
         icon: './icons/icon-192.png',
         badge: './icons/icon-72.png',
         tag: 'viaje-' + v.id,
-        requireInteraction: true,        // no desaparece sola
+        requireInteraction: true,
         data: { viajeId: v.id, tipo: 'viaje_programado' }
       });
     }
   });
 
-  if (huboActivacion) {
-    // Avisar a todos los clientes (tabs abiertas) para que actualicen la UI
-    const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  if (!huboActivacion) return;
+
+  // Persistir estado actualizado en cache del SW
+  await escribirEstadoBG(estado);
+  console.log('[SW] Estado persistido con viajes activados en background');
+
+  // Avisar a clientes activos si los hay
+  const allClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  if (allClients.length > 0) {
     allClients.forEach(client => {
       client.postMessage({ tipo: 'ACTIVAR_VIAJES_PROGRAMADOS', ts: ahora });
     });
@@ -126,7 +139,7 @@ async function verificarYNotificarViajesProgramados() {
 }
 
 // =====================================================
-// MENSAJES DESDE LA APP → SW
+// MENSAJES DESDE LA APP
 // =====================================================
 
 self.addEventListener('message', async (event) => {
@@ -134,38 +147,38 @@ self.addEventListener('message', async (event) => {
 
   switch (tipo) {
 
-    // La app manda el estado actual de viajes programados al SW
     case 'SYNC_ESTADO_BG':
       await escribirEstadoBG(payload);
       if (!_bgActivo) iniciarBackgroundRunner();
       event.source?.postMessage({ tipo: 'SYNC_OK' });
       break;
 
-    // La app pide que el SW verifique ahora mismo
     case 'VERIFICAR_AHORA':
-      await verificarYNotificarViajesProgramados();
+      await verificarYActivarViajesProgramados();
       break;
 
-    // La app está activa — el SW puede pausar (la app maneja su propio motor)
+    // La app pide el estado del SW al abrir — para reconciliar viajes activados en bg
+    case 'PEDIR_ESTADO_BG':
+      const estadoActual = await leerEstadoBG();
+      event.source?.postMessage({ tipo: 'ESTADO_BG', payload: estadoActual });
+      break;
+
     case 'APP_FOREGROUND':
-      console.log('[SW] App en foreground — background runner en modo pasivo');
-      // No detener — seguir corriendo por si la app va a background
+      console.log('[SW] App en foreground');
       break;
 
-    // La app va a background — asegurarse de que el runner esté activo
     case 'APP_BACKGROUND':
-      console.log('[SW] App en background — activando runner agresivo');
+      console.log('[SW] App en background — runner activo');
       if (!_bgActivo) iniciarBackgroundRunner();
       break;
 
-    // Limpiar estado
     case 'LIMPIAR_ESTADO_BG':
       await escribirEstadoBG(null);
       detenerBackgroundRunner();
       break;
-      //aviso de 5 min de fin de guardia
-      case 'NOTIF_GUARDIA':
-      self.registration.showNotification('⏰ Aviso de Guardia', {
+
+    case 'NOTIF_GUARDIA':
+      self.registration.showNotification('Aviso de Guardia', {
         body: `Faltan 5 min para ${payload.horasSiguiente}h | Inicio: ${payload.inicio}`,
         icon: './icons/icon-192.png',
         tag: 'guardia-aviso',
@@ -178,7 +191,7 @@ self.addEventListener('message', async (event) => {
 });
 
 // =====================================================
-// CLICK EN NOTIFICACIÓN → abrir app
+// CLICK EN NOTIFICACION
 // =====================================================
 
 self.addEventListener('notificationclick', (event) => {
@@ -187,7 +200,6 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-      // Si la app ya está abierta, enfocarla y mandarle el evento
       for (const client of clientList) {
         if ('focus' in client) {
           client.focus();
@@ -195,40 +207,33 @@ self.addEventListener('notificationclick', (event) => {
           return;
         }
       }
-      // Si no está abierta, abrirla
-      if (self.clients.openWindow) {
-        return self.clients.openWindow('./');
-      }
+      if (self.clients.openWindow) return self.clients.openWindow('./');
     })
   );
 });
 
 // =====================================================
-// PUSH FCM — recibir notificación del servidor
+// PUSH FCM
 // =====================================================
 
 self.addEventListener('push', (event) => {
   let payload = {};
   try { payload = event.data?.json() || {}; } catch(e) {}
 
-  // Si el servidor manda un viaje programado via FCM, activar verificación
   if (payload.tipo === 'viaje_programado' || payload.tipo === 'activar_viaje') {
-    event.waitUntil(verificarYNotificarViajesProgramados());
+    event.waitUntil(verificarYActivarViajesProgramados());
     return;
   }
 
-  // Notificación genérica
   const titulo = payload.title || 'COT Driver';
-   const opciones = {
+  const opciones = {
     body: payload.body || '',
     icon: './icons/icon-192.png',
     badge: './icons/icon-72.png',
     data: payload,
-    // ── canal alta prioridad ──
     android: { channelId: 'mensajes_driver' }
   };
   event.waitUntil(self.registration.showNotification(titulo, opciones));
 });
 
-// Iniciar runner al cargar el SW
 iniciarBackgroundRunner();
