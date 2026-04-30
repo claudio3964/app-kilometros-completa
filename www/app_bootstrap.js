@@ -269,6 +269,7 @@ function reconciliarEstadoBG(viajesBG) {
   if (cambio) {
     saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
     setActiveOrder(order);
+    if (typeof onViajeIniciado === 'function') onViajeIniciado();
     if (typeof renderListaViajes === 'function') renderListaViajes();
     if (typeof mostrarViajeEnCursoUI === 'function') mostrarViajeEnCursoUI();
     if (typeof renderBotonCerrarJornada === 'function') renderBotonCerrarJornada();

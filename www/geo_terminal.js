@@ -32,7 +32,7 @@ const TERMINALES_GPS = {
 // CONFIGURACIÓN — todos los valores en un lugar
 // =====================================================
 const GEO_CONFIG = {
-  RADIO_METROS:              50,              // radio alrededor de la terminal destino
+  RADIO_METROS:              150,             // radio alrededor de la terminal destino
   TIEMPO_QUIETO_MS:          5 * 60 * 1000,  // 5 min quieto dentro del radio
   MOVIMIENTO_MINIMO_M:       15,             // menos de 15m entre lecturas = "quieto"
   COUNTDOWN_SEGUNDOS:        30,             // tiempo para cancelar el cierre
@@ -95,7 +95,7 @@ function iniciarGeoTerminal() {
   _watchId = navigator.geolocation.watchPosition(
     (pos) => _onPosicion(pos, terminalDestino),
     (err) => console.warn("[GEO] Error GPS:", err.message),
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: GEO_CONFIG.INTERVALO_GPS_MS }
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
   );
 }
 
@@ -352,7 +352,7 @@ function iniciarMonitoreoOrigen() {
   _watchIdOrigen = navigator.geolocation.watchPosition(
     (pos) => _onPosicionOrigen(pos, terminalOrigen, viajeProgramado),
     (err) => console.warn("[GEO] Error GPS origen:", err.message),
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
   );
 }
 

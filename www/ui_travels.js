@@ -299,7 +299,11 @@ function addTravelUI(event) {
   window._kmSeleccionado = null;
   window._destinoSeleccionado = false;
   // Iniciar monitoreo GPS terminal
-  if (typeof onViajeIniciado === 'function') onViajeIniciado();
+  if (salidaDate > ahora) {
+    if (typeof onViajeProgramadoAgregado === 'function') onViajeProgramadoAgregado();
+  } else {
+    if (typeof onViajeIniciado === 'function') onViajeIniciado();
+  }
   renderResumenDia();
   renderListaViajes();
   showScreen("mainScreen");
