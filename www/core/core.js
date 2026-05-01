@@ -1285,6 +1285,7 @@ function agregarViajeAsignado(viajeData) {
     if (!order.travels) order.travels = [];
     _asignarTomeCeseSiCorresponde(order, travel);
     order.travels.push(travel);
+    order.syncStatus = "pending";
     saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
     setActiveOrder(order);
     console.log("✅ Viaje asignado agregado a jornada activa:", travel.id);
@@ -1298,6 +1299,7 @@ function agregarViajeAsignado(viajeData) {
     if (!jornadaExistente.travels) jornadaExistente.travels = [];
     _asignarTomeCeseSiCorresponde(jornadaExistente, travel);
     jornadaExistente.travels.push(travel);
+    jornadaExistente.syncStatus = "pending";
     saveOrders(orders.map(o => o.orderNumber === jornadaExistente.orderNumber ? jornadaExistente : o));
     setActiveOrder(jornadaExistente);
     console.log("✅ Viaje asignado agregado a jornada existente:", jornadaExistente.orderNumber);
@@ -1331,7 +1333,7 @@ function agregarViajeAsignado(viajeData) {
     closed: false,
     tomeCeseGenerado: false,
     createdAt: ahora,
-    syncStatus: "local"
+    syncStatus: "pending"
   };
 
   _asignarTomeCeseSiCorresponde(nuevaJornada, travel);
