@@ -7,7 +7,7 @@ async function syncPendientes() {
   const orders = getOrders();
   let algoCambio = false;
   for (let order of orders) {
-    if (order.syncStatus !== "pending") continue;
+    if (order.syncStatus === "synced" && order.closed) continue;
     try {
       var _getDriver;
       console.log("🔄 Sync jornada:", order.orderNumber);

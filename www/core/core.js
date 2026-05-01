@@ -281,7 +281,7 @@ function createOrder() {
     closed: false,
     tomeCeseGenerado: false,
     createdAt: ahoraSistema(),
-    syncStatus: "local"
+    syncStatus: "pending"
   };
   const all = getOrders();
   all.push(o);
@@ -447,6 +447,8 @@ function addTravel(origen, destino, turno, departureTime, arrivalTime, hoursWork
   order.travels.push(travel);
   saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
   setActiveOrder(order);
+  order.syncStatus = "pending";
+  saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
   console.log("Viaje iniciado:", travel);
   return true;
 }
@@ -494,6 +496,8 @@ function addTravelProgramado(origen, destino, turno, departureTime, arrivalTime,
   order.travels.push(travel);
   saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
   setActiveOrder(order);
+  order.syncStatus = "pending";
+  saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
   return true;
 }
 // =====================================================
@@ -870,6 +874,8 @@ function finalizarViajeActual() {
 
   saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
   setActiveOrder(order);
+  order.syncStatus = "pending";
+  saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
 
   // ====================================
   // REGISTRAR ESTADÍSTICA CONTABLE
@@ -1041,6 +1047,8 @@ if (ordenActual && ordenActual.travels) {
   order.guards.push(guardia);
   saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
   setActiveOrder(order);
+  order.syncStatus = "pending";
+  saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
   validarConsistenciaOrder(order); // 🔍 validación post-guardia
   console.log("[CORE] Guardia iniciada:", guardia);
   return guardia;
@@ -1228,6 +1236,8 @@ function finalizarGuardia(createdAt) {
   g.viatico = horas >= 9;
   saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
   setActiveOrder(order);
+  order.syncStatus = "pending";
+  saveOrders(getOrders().map(o => o.orderNumber === order.orderNumber ? order : o));
   console.log("Guardia finalizada:", g);
   return g;
 }
