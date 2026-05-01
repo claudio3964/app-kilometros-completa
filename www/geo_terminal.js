@@ -493,6 +493,141 @@ function onViajeFinalizado() {
 }
 
 // =====================================================
+// MODO PRUEBA — coordenadas GPS actuales como terminal
+// =====================================================
+
+let _modoPrueba = false;
+let _coordsOriginales = null;
+
+function activarModoPrueba() {
+  if (!navigator.geolocation) {
+    alert("GPS no disponible");
+    return;
+  }
+
+  const btn = document.getElementById("geoPruebaBtn");
+  if (btn) { btn.textContent = "📡 Obteniendo GPS..."; btn.disabled = true; }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+
+      // Guardar coords originales si es la primera vez
+      if (!_coordsOriginales) {
+        _coordsOriginales = {};
+        for (const k of Object.keys(TERMINALES_GPS)) {
+          _coordsOriginales[k] = { ...TERMINALES_GPS[k] };
+        }
+      }
+
+      // Pisar TODAS las terminales con la posición actual
+      for (const k of Object.keys(TERMINALES_GPS)) {
+        TERMINALES_GPS[k].lat = lat;
+        TERMINALES_GPS[k].lng = lng;
+      }
+
+      // Configuración relajada para pruebas
+      GEO_CONFIG.RADIO_METROS              = 50;
+      GEO_CONFIG.TIEMPO_QUIETO_MS          = 15 * 1000;   // 15 segundos
+      GEO_CONFIG.TIEMPO_MINIMO_VIAJE_MS    = 0;            // sin mínimo
+      GEO_CONFIG.DISTANCIA_MINIMA_ORIGEN_M = 0;            // sin alejamiento mínimo
+      GEO_CONFIG.MOVIMIENTO_MINIMO_M       = 2;
+      GEO_CONFIG.INTERVALO_GPS_MS          = 5000;
+
+      _modoPrueba = true;
+
+      console.log(`[GEO TEST] ✅ Modo prueba activo — todas las terminales → (${lat.toFixed(6)}, ${lng.toFixed(6)})`);
+      console.log(`[GEO TEST] Radio: ${GEO_CONFIG.RADIO_METROS}m | Quieto: ${GEO_CONFIG.TIEMPO_QUIETO_MS/1000}s`);
+
+      _actualizarPanelPrueba(lat, lng);
+
+      if (btn) { btn.textContent = "✅ Prueba activa"; btn.disabled = false; }
+    },
+    (err) => {
+      console.warn("[GEO TEST] Error GPS:", err.message);
+      if (btn) { btn.textContent = "⚠️ Error GPS — reintentar"; btn.disabled = false; }
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
+function desactivarModoPrueba() {
+  if (_coordsOriginales) {
+    for (const k of Object.keys(TERMINALES_GPS)) {
+      if (_coordsOriginales[k]) {
+        TERMINALES_GPS[k].lat = _coordsOriginales[k].lat;
+        TERMINALES_GPS[k].lng = _coordsOriginales[k].lng;
+      }
+    }
+  }
+
+  // Restaurar config original
+  GEO_CONFIG.RADIO_METROS              = 150;
+  GEO_CONFIG.TIEMPO_QUIETO_MS          = 5 * 60 * 1000;
+  GEO_CONFIG.TIEMPO_MINIMO_VIAJE_MS    = 90 * 60 * 1000;
+  GEO_CONFIG.DISTANCIA_MINIMA_ORIGEN_M = 500;
+  GEO_CONFIG.MOVIMIENTO_MINIMO_M       = 15;
+  GEO_CONFIG.INTERVALO_GPS_MS          = 30000;
+
+  _modoPrueba = false;
+  _coordsOriginales = null;
+
+  console.log("[GEO TEST] 🔴 Modo prueba desactivado — coords reales restauradas");
+
+  const panel = document.getElementById("geoPruebaPanel");
+  if (panel) panel.remove();
+}
+
+function _actualizarPanelPrueba(lat, lng) {
+  let panel = document.getElementById("geoPruebaPanel");
+  if (!panel) return;
+
+  const coordEl = document.getElementById("geoPruebaCoordsActivas");
+  if (coordEl) coordEl.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+}
+
+function mostrarPanelPrueba() {
+  if (document.getElementById("geoPruebaPanel")) return;
+
+  const panel = document.createElement("div");
+  panel.id = "geoPruebaPanel";
+  panel.style.cssText = `
+    position:fixed;bottom:80px;right:12px;
+    width:220px;background:#0f172a;
+    border:2px solid #f59e0b;border-radius:12px;
+    padding:12px;z-index:9998;
+    box-shadow:0 4px 20px rgba(0,0,0,.7);
+    font-family:monospace;
+  `;
+  panel.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <span style="font-size:11px;font-weight:700;color:#f59e0b;">🧪 MODO PRUEBA GEO</span>
+      <button onclick="document.getElementById('geoPruebaPanel').remove()" 
+              style="background:none;border:none;color:#64748b;cursor:pointer;font-size:14px;line-height:1;">✕</button>
+    </div>
+    <div style="font-size:10px;color:#64748b;margin-bottom:6px;">Coords activas:</div>
+    <div id="geoPruebaCoordsActivas" style="font-size:10px;color:#94a3b8;margin-bottom:10px;word-break:break-all;">
+      ${_modoPrueba ? `${TERMINALES_GPS["Montevideo"].lat.toFixed(5)}, ${TERMINALES_GPS["Montevideo"].lng.toFixed(5)}` : "—"}
+    </div>
+    <div style="font-size:10px;color:#64748b;margin-bottom:8px;">
+      Radio: <span style="color:#f59e0b;">50m</span> &nbsp;·&nbsp;
+      Quieto: <span style="color:#f59e0b;">15s</span><br>
+      Sin mín. tiempo ni alejamiento
+    </div>
+    <button id="geoPruebaBtn"
+      onclick="activarModoPrueba()"
+      style="width:100%;padding:8px;background:#f59e0b;color:#111;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:6px;">
+      📍 Usar mi posición como terminal
+    </button>
+    <button onclick="desactivarModoPrueba()"
+      style="width:100%;padding:7px;background:transparent;color:#ef4444;border:1.5px solid #ef4444;border-radius:7px;font-size:11px;cursor:pointer;">
+      🔴 Desactivar modo prueba
+    </button>
+  `;
+  document.body.appendChild(panel);
+}
+
+// =====================================================
 // EXPORTS
 // =====================================================
 window.iniciarGeoTerminal  = iniciarGeoTerminal;
@@ -504,3 +639,6 @@ window.GEO_CONFIG          = GEO_CONFIG;
 window.iniciarMonitoreoOrigen      = iniciarMonitoreoOrigen;
 window.detenerMonitoreoOrigen      = detenerMonitoreoOrigen;
 window.onViajeProgramadoAgregado   = onViajeProgramadoAgregado;
+window.mostrarPanelPrueba          = mostrarPanelPrueba;
+window.activarModoPrueba           = activarModoPrueba;
+window.desactivarModoPrueba        = desactivarModoPrueba;
