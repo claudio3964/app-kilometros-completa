@@ -494,6 +494,7 @@
           <button onclick="filtrarMsgs('no-leido')" id="mfbtn-no-leido" class="fbtn">No leídos</button>
           <button onclick="filtrarMsgs('leido')" id="mfbtn-leido" class="fbtn">Leídos</button>
           <button onclick="filtrarMsgs('asignacion')" id="mfbtn-asignacion" class="fbtn">Asignaciones</button>
+          <button onclick="filtrarMsgs('archivados')" id="mfbtn-archivados" class="fbtn" id="btnArchivedFilter" style="display:none">🗂 Archivados</button>
         </div>
       </div>
       <div id="mensajesContainer"><div class="loading">Cargando mensajes...</div></div>
@@ -647,6 +648,10 @@ tabAdmins.style.display = 'none';
 if (rol === 'superadmin') {
   tabAdmins.style.display = 'flex';
   cargarAdmins();
+}
+if (rol === 'superadmin') {
+  const btnArchivados = document.getElementById('btnArchivedFilter');
+  if (btnArchivados) btnArchivados.style.display = 'inline';
 }
 
 // Rotacion, Flota y Mensajes — ocultar solo para supervisor
@@ -1514,6 +1519,8 @@ function renderMensajes() {
   if (msgFiltro === 'no-leido') lista = lista.filter(m => !m.leido);
   if (msgFiltro === 'leido') lista = lista.filter(m => m.leido);
   if (msgFiltro === 'asignacion') lista = lista.filter(m => m.tipo === 'asignacion');
+  if (msgFiltro === 'archivados') lista = lista.filter(m => m.cerrado);
+  else lista = lista.filter(m => !m.cerrado);
   if (!lista.length) { c.innerHTML = '<div class="empty-state"><div class="icon">💬</div><p>No hay mensajes</p></div>'; return; }
 
   c.innerHTML = lista.map(m => {
@@ -1569,6 +1576,12 @@ function renderMensajes() {
       ${m.texto ? `<div class="msg-texto">${m.texto}</div>` : ''}
       ${viajeHTML}
       ${anularHTML}
+         ${sessionStorage.getItem('admin_rol') === 'superadmin' && !m.cerrado ? 
+        `<button onclick="cerrarMensaje(${m.id})" style="
+          margin-top:10px;background:transparent;color:var(--text3);
+          border:1px solid var(--border);border-radius:6px;padding:4px 12px;
+          font-size:11px;cursor:pointer;font-family:var(--sans);
+        ">🗂 Cerrar mensaje</button>` : ''}
     </div>`;
   }).join('');
 }
@@ -1730,7 +1743,31 @@ dataViaje = {
     showToast('❌ Error al enviar');
   }
 }
- 
+ async function cerrarMensaje(id) {
+  const rol = sessionStorage.getItem('admin_rol');
+  if (rol !== 'superadmin') return;
+  if (!confirm('¿Cerrar este mensaje? Quedará en el archivo para auditoría.')) return;
+  try {
+    await fetch(`${SB_URL}/rest/v1/mensajes?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SB_KEY,
+        'Authorization': `Bearer ${sessionStorage.getItem('admin_token')}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        cerrado: true,
+        cerrado_por: sessionStorage.getItem('admin_email'),
+        cerrado_at: new Date().toISOString()
+      })
+    });
+    showToast('🗂 Mensaje archivado');
+    cargarMensajes();
+  } catch(e) {
+    showToast('❌ Error al cerrar mensaje');
+  }
+}
 function showError(msg) { const e=document.getElementById('loginError'); e.textContent=msg; e.style.display='block'; }
 // ══════════════════════════════════════════
 // REALTIME

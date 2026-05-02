@@ -8,7 +8,11 @@
       "Bash(npm install:*)",
       "Bash($ADB install *)",
       "Bash(./gradlew assembleDebug)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git add *)",
+      "Bash(dir C:\\\\cot_dev\\\\app_kilometros\\\\app-kilometros-completa *)",
+      "Bash(git push *)",
+      "Bash(npm uninstall *)"
     ]
   }
 }

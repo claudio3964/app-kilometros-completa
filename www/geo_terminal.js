@@ -1,6 +1,6 @@
 "use strict";
 
-const { Geolocation } = Capacitor.Plugins;
+const BackgroundGeolocation = Capacitor.Plugins.BackgroundGeolocation;
 
 // =====================================================
 // GEO TERMINAL — COT Driver
@@ -64,8 +64,8 @@ let _geoActivo             = false;
 
 function iniciarGeoTerminal() {
   if (_geoActivo) return;
-  if (!Geolocation) {
-    console.warn("[GEO] Geolocalización no disponible");
+  if (!BackgroundGeolocation) {
+    console.warn("[GEO] BackgroundGeolocation no disponible");
     return;
   }
 
@@ -94,18 +94,24 @@ function iniciarGeoTerminal() {
   console.log(`[GEO] Monitoreando → ${terminalDestino.nombre}`);
   console.log(`[GEO] Reglas: radio ${GEO_CONFIG.RADIO_METROS}m | quieto ${GEO_CONFIG.TIEMPO_QUIETO_MS/60000}min | viaje mín ${GEO_CONFIG.TIEMPO_MINIMO_VIAJE_MS/60000}min | alejamiento mín ${GEO_CONFIG.DISTANCIA_MINIMA_ORIGEN_M}m`);
 
-  Geolocation.watchPosition(
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
-    (pos, err) => {
+  BackgroundGeolocation.addWatcher(
+    {
+      backgroundMessage: "COT Driver — Viaje en curso",
+      backgroundTitle: "Monitoreo GPS activo",
+      requestPermissions: true,
+      stale: false,
+      distanceFilter: 15,
+    },
+    (location, err) => {
       if (err) { console.warn("[GEO] Error GPS:", err.message); return; }
-      _onPosicion(pos, terminalDestino);
+      _onPosicion({ coords: location }, terminalDestino);
     }
   ).then(id => { _watchId = id; });
 }
 
 function detenerGeoTerminal() {
   if (_watchId !== null) {
-    Geolocation.clearWatch({ id: _watchId });
+    BackgroundGeolocation.removeWatcher({ id: _watchId });
     _watchId = null;
   }
   _geoActivo = false; _ultimaPosicion = null; _tiempoQuieto = null;
@@ -337,7 +343,7 @@ let _monitoreoOrigen = false;
 
 function iniciarMonitoreoOrigen() {
   if (_monitoreoOrigen) return;
-  if (!Geolocation) return;
+  if (!BackgroundGeolocation) return;
 
   const order = getActiveOrder ? getActiveOrder() : null;
   const viajeProgramado = order?.travels?.find(t => t.status === "programado");
@@ -353,18 +359,24 @@ function iniciarMonitoreoOrigen() {
   _monitoreoOrigen = true;
   console.log(`[GEO] Monitoreando origen → ${terminalOrigen.nombre}`);
 
-  Geolocation.watchPosition(
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
-    (pos, err) => {
+  BackgroundGeolocation.addWatcher(
+    {
+      backgroundMessage: "COT Driver — Esperando en terminal",
+      backgroundTitle: "Monitoreo GPS activo",
+      requestPermissions: true,
+      stale: false,
+      distanceFilter: 10,
+    },
+    (location, err) => {
       if (err) { console.warn("[GEO] Error GPS origen:", err.message); return; }
-      _onPosicionOrigen(pos, terminalOrigen, viajeProgramado);
+      _onPosicionOrigen({ coords: location }, terminalOrigen, viajeProgramado);
     }
   ).then(id => { _watchIdOrigen = id; });
 }
 
 function detenerMonitoreoOrigen() {
   if (_watchIdOrigen !== null) {
-    Geolocation.clearWatch({ id: _watchIdOrigen });
+    BackgroundGeolocation.removeWatcher({ id: _watchIdOrigen });
     _watchIdOrigen = null;
   }
   _monitoreoOrigen = false;
@@ -506,7 +518,7 @@ let _modoPrueba = false;
 let _coordsOriginales = null;
 
 async function activarModoPrueba() {
-  if (!Geolocation) {
+  if (!navigator.geolocation) {
     alert("GPS no disponible");
     return;
   }
@@ -515,7 +527,9 @@ async function activarModoPrueba() {
   if (btn) { btn.textContent = "📡 Obteniendo GPS..."; btn.disabled = true; }
 
   try {
-    const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+    const pos = await new Promise((resolve, reject) =>
+      navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 })
+    );
     const { latitude: lat, longitude: lng } = pos.coords;
 
     // Guardar coords originales si es la primera vez

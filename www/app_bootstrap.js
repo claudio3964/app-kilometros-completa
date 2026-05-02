@@ -1,5 +1,6 @@
 "use strict";
 
+
 // =====================================================
 // 🚀 APP BOOTSTRAP — COT Driver
 // =====================================================
@@ -279,7 +280,88 @@ function reconciliarEstadoBG(viajesBG) {
 }
 window.reconciliarEstadoBG = reconciliarEstadoBG;
 
+// =====================================================
+// 🔄 OTA UPDATE CHECK
+// =====================================================
+
+const APP_VERSION = '2.1.2';
+const OTA_URL = 'https://frjeivfpldcigklwepqt.supabase.co/storage/v1/object/public/app-updates/version.json';
+
+async function checkOTA() {
+  try {
+    const res = await fetch(OTA_URL + '?t=' + Date.now());
+    if (!res.ok) return;
+    const data = await res.json();
+
+    if (data.version && data.version !== APP_VERSION) {
+      mostrarModalOTA(data);
+    }
+  } catch (e) {
+    console.warn('OTA check fallido:', e);
+  }
+}
+
+function mostrarModalOTA(data) {
+  if (document.getElementById('modalOTA')) return;
+
+  const modal = document.createElement('div');
+  modal.id = 'modalOTA';
+  modal.style.cssText = `
+    position:fixed; top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.7);
+    display:flex; align-items:center;
+    justify-content:center; z-index:99999;
+  `;
+  modal.innerHTML = `
+    <div style="background:#1e293b; padding:24px; border-radius:12px;
+                max-width:320px; width:90%; text-align:center;
+                border:1px solid #3b82f6; color:white;">
+      <div style="font-size:36px; margin-bottom:12px;">🚀</div>
+      <h3 style="margin:0 0 8px; color:#3b82f6;">Nueva versión disponible</h3>
+      <p style="font-size:13px; color:#94a3b8; margin:0 0 6px;">
+        v${APP_VERSION} → v${data.version}
+      </p>
+      <p style="font-size:13px; color:#e2e8f0; margin:0 0 20px;">
+        ${data.changelog || ''}
+      </p>
+      <button id="btnOTAActualizar" style="
+        background:#3b82f6; color:white;
+        padding:12px 24px; border:none;
+        border-radius:8px; font-weight:bold;
+        font-size:15px; cursor:pointer; width:100%;
+        margin-bottom:8px;">
+        Actualizar ahora
+      </button>
+      ${!data.mandatory ? `<button id="btnOTALuego" style="
+        background:transparent; color:#64748b;
+        padding:8px; border:none;
+        font-size:13px; cursor:pointer; width:100%;">
+        Más tarde
+      </button>` : ''}
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  document.getElementById('btnOTAActualizar').addEventListener('click', () => {
+    if ('caches' in window) {
+      caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+        .finally(() => location.reload(true));
+    } else {
+      location.reload(true);
+    }
+  });
+
+  const btnLuego = document.getElementById('btnOTALuego');
+  if (btnLuego) {
+    btnLuego.addEventListener('click', () => modal.remove());
+  }
+}
+
+window.checkOTA = checkOTA;
+
 function iniciarBootstrap() {
+  checkOTA();
   syncActiveOrderBootstrap();
   refreshMainUI();
   verificarCambioDeDia();
@@ -413,3 +495,4 @@ window.verificarCambioDeDia    = verificarCambioDeDia;
 window.mostrarModalCierrePendiente = mostrarModalCierrePendiente;
 window.syncEstadoAlSW          = syncEstadoAlSW;
 window.enviarMensajeSW         = enviarMensajeSW;
+

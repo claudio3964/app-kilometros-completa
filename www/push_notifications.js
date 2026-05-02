@@ -11,8 +11,6 @@ async function registrarTokenFCM() {
     if (!PushNotifications) return;
 
     // Pedir permisos
-    const { Geolocation } = window.Capacitor.Plugins;
-    await Geolocation.requestPermissions();
     const perm = await PushNotifications.requestPermissions();
     if (perm.receive !== 'granted') {
       console.warn('Push notifications no autorizadas');
