@@ -417,12 +417,13 @@
               <option value="mensaje">💬 Mensaje</option>
               <option value="asignacion">✅ Asignación de viaje</option>
               <option value="urgente">🔴 Urgente</option>
+              <option value="guardia">🛡️ Asignación de guardia</option>
             </select>
           </div>
         </div>
  
         <!-- CAMPOS EXTRA PARA ASIGNACIÓN -->
-        <div id="camposAsignacion">
+        <div id="camposAsignacion" style="display:none">
           <div style="font-size:12px;color:var(--ok);font-weight:600;margin-bottom:12px">🚍 Datos del viaje a asignar</div>
           <div class="asig-grid">
             <div class="asig-field">
@@ -481,6 +482,23 @@
             </div>
           </div>
         </div>
+        <!-- CAMPOS GUARDIA -->
+<div id="camposGuardia" style="display:none;background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:16px;margin-bottom:12px;">
+  <div style="font-size:12px;color:#f59e0b;font-weight:600;margin-bottom:12px">🛡️ Datos de la guardia</div>
+  <div class="asig-grid">
+    <div class="asig-field">
+      <label>Hora inicio</label>
+      <input type="time" id="guardiaHoraInicio">
+    </div>
+    <div class="asig-field">
+      <label>Tipo de guardia</label>
+      <select id="guardiaTipo">
+        <option value="comun">🛡️ Común</option>
+        <option value="especial">⚡ Especial</option>
+      </select>
+    </div>
+  </div>
+</div>
  
         <textarea id="msgTexto" rows="2" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-family:var(--sans);font-size:13px;resize:vertical;outline:none;margin-bottom:12px;" placeholder="Mensaje adicional (opcional para asignaciones)..."></textarea>
         <button onclick="enviarMensaje()" style="background:var(--accent);color:white;border:none;border-radius:8px;padding:10px 24px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;">Enviar mensaje</button>
@@ -743,7 +761,7 @@ function detenerSessionTimer() {
   const eventos = ['mousemove','mousedown','keydown','touchstart','scroll','click'];
   eventos.forEach(e => document.removeEventListener(e, resetSessionTimer));
 }
- 
+ window.toggleCamposAsignacion = toggleCamposAsignacion;
 window.addEventListener('DOMContentLoaded', () => {
   const token = sessionStorage.getItem('admin_token');
 if (token) {
@@ -817,12 +835,19 @@ function switchTab(tab) {
 function toggleCamposAsignacion() {
   const tipo = document.getElementById('msgTipo').value;
   const campos = document.getElementById('camposAsignacion');
+  const camposGuardia = document.getElementById('camposGuardia');
   const textarea = document.getElementById('msgTexto');
+  
+  campos.classList.remove('visible');
+  if (camposGuardia) camposGuardia.style.display = 'none';
+  
   if (tipo === 'asignacion') {
     campos.classList.add('visible');
     textarea.placeholder = 'Instrucciones adicionales (opcional)...';
+  } else if (tipo === 'guardia') {
+    if (camposGuardia) camposGuardia.style.display = 'block';
+    textarea.placeholder = 'Instrucciones adicionales (opcional)...';
   } else {
-    campos.classList.remove('visible');
     textarea.placeholder = 'Escribí el mensaje para el chofer...';
   }
 }
@@ -1526,9 +1551,8 @@ function renderMensajes() {
   c.innerHTML = lista.map(m => {
     const fecha = m.creado_at ? new Date(m.creado_at).toLocaleString('es-UY') : '—';
     const para = m.para === 'todos' ? '📢 Todos' : `👤 Legajo ${m.para}`;
-    const tipoClass = m.tipo === 'asignacion' ? 'asignacion' : m.tipo === 'urgente' ? 'urgente' : 'mensaje';
-    const tipoLabel = m.tipo === 'asignacion' ? '✅ Asignación' : m.tipo === 'urgente' ? '🔴 Urgente' : '💬 Mensaje';
-
+    const tipoClass = m.tipo === 'asignacion' ? 'asignacion' : m.tipo === 'urgente' ? 'urgente' : m.tipo === 'guardia' ? 'asignacion' : 'mensaje';
+    const tipoLabel = m.tipo === 'asignacion' ? '✅ Asignación' : m.tipo === 'urgente' ? '🔴 Urgente' : m.tipo === 'guardia' ? '🛡️ Guardia' : '💬 Mensaje';
     // Datos de viaje si es asignación
     let viajeHTML = '';
     if (m.tipo === 'asignacion' && m.data) {
@@ -1641,7 +1665,7 @@ async function enviarMensaje() {
     return;
   }
 
-  if (tipo !== 'asignacion' && !texto) {
+  if (tipo !== 'asignacion' && tipo !== 'guardia' && !texto) {
     showToast('⚠️ Escribí un mensaje');
     return;
   }
@@ -1674,8 +1698,10 @@ dataViaje = {
     };
   }
 
-  const textoFinal = texto || (tipo === 'asignacion'
+ const textoFinal = texto || (tipo === 'asignacion'
     ? `Asignación de viaje: ${document.getElementById('asigOrigen').value} → ${document.getElementById('asigDestino').value} a las ${document.getElementById('asigHoraSalida').value}`
+    : tipo === 'guardia'
+    ? `Asignación de guardia ${document.getElementById('guardiaTipo').value === 'especial' ? 'especial' : 'común'} a las ${document.getElementById('guardiaHoraInicio')?.value || ''}`
     : '');
 
   if (para !== 'todos') {
@@ -1689,6 +1715,13 @@ dataViaje = {
     }
   }
 
+let dataGuardia = null;
+if (tipo === 'guardia') {
+  const horaInicio = document.getElementById('guardiaHoraInicio').value;
+  const tipoGuardia = document.getElementById('guardiaTipo').value;
+  if (!horaInicio) { showToast('⚠️ Ingresá la hora de inicio'); return; }
+  dataGuardia = { guardia: { horaInicio, tipo: tipoGuardia } };
+}
   try {
     const body = {
       empresa_id: 'cot',
@@ -1699,7 +1732,7 @@ dataViaje = {
       leido: false
     };
     if (dataViaje) body.data = dataViaje;
-
+    if (dataGuardia) body.data = dataGuardia;
     await sbFetch('mensajes', {
       method: 'POST',
       headers: { 'Prefer': 'return=minimal' },
@@ -1774,15 +1807,19 @@ function showError(msg) { const e=document.getElementById('loginError'); e.textC
 // ══════════════════════════════════════════
 function iniciarRealtime() {
   // Polling cada 10 segundos para jornadas y dashboard
-  setInterval(() => {
+ setInterval(() => {
+  const tipo = document.getElementById('msgTipo')?.value;
+  if (tipo !== 'guardia' && tipo !== 'asignacion') {
     cargarJornadas();
     cargarDashboard();
-  }, 10000);
+  }
+}, 10000);
 
   // Polling cada 5 segundos para mensajes — feedback rápido de asignaciones
   setInterval(() => {
-    cargarMensajes();
-  }, 5000);
+  const tipo = document.getElementById('msgTipo')?.value;
+  if (tipo !== 'guardia' && tipo !== 'asignacion') cargarMensajes();
+}, 5000);
 
   // Realtime Supabase — suscripción a cambios en mensajes
   const REALTIME_URL = `${SB_URL}/realtime/v1/websocket?apikey=${SB_KEY}&vsn=1.0.0`;

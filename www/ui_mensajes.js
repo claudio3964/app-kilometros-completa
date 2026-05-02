@@ -53,9 +53,9 @@ function mostrarNotificacionMensaje(msg) {
   const anterior = document.getElementById('notifMensaje');
   if (anterior) anterior.remove();
  
-  const tipoColor = msg.tipo === 'urgente' ? '#ef4444' : msg.tipo === 'asignacion' ? '#10b981' : '#3b82f6';
-  const tipoIcon  = msg.tipo === 'urgente' ? '🔴' : msg.tipo === 'asignacion' ? '✅' : '💬';
-  const tipoLabel = msg.tipo === 'urgente' ? 'URGENTE' : msg.tipo === 'asignacion' ? 'ASIGNACIÓN DE VIAJE' : 'MENSAJE';
+ const tipoColor = msg.tipo === 'urgente' ? '#ef4444' : msg.tipo === 'asignacion' ? '#10b981' : msg.tipo === 'guardia' ? '#f59e0b' : '#3b82f6';
+const tipoIcon  = msg.tipo === 'urgente' ? '🔴' : msg.tipo === 'asignacion' ? '✅' : msg.tipo === 'guardia' ? '🛡️' : '💬';
+  const tipoLabel = msg.tipo === 'urgente' ? 'URGENTE' : msg.tipo === 'asignacion' ? 'ASIGNACIÓN DE VIAJE' : msg.tipo === 'guardia' ? 'ASIGNACIÓN DE GUARDIA' : 'MENSAJE';
  
   let viajeData = null;
   if (msg.tipo === 'asignacion' && msg.data) {
@@ -67,6 +67,15 @@ function mostrarNotificacionMensaje(msg) {
  
   if (msg.tipo === 'asignacion' && viajeData) {
     _asignacionPendiente = { id: msg.id, viaje: viajeData };
+  }
+
+  let guardiaData = null;
+  if (msg.tipo === 'guardia' && msg.data) {
+    try {
+      const d = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
+      guardiaData = d.guardia || null;
+      if (guardiaData) _asignacionPendiente = { id: msg.id, guardia: guardiaData };
+    } catch(e) {}
   }
  
   let viajeHTML = '';
@@ -87,6 +96,17 @@ function mostrarNotificacionMensaje(msg) {
       <div style="display:flex;gap:10px;margin-top:14px">
         <button onclick="aceptarAsignacion(${parseInt(msg.id, 10)})" style="flex:1;background:#10b981;color:white;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;">✓ Aceptar</button>
         <button onclick="rechazarAsignacion(${parseInt(msg.id, 10)})" style="flex:1;background:transparent;color:#ef4444;border:2px solid #ef4444;border-radius:8px;padding:11px;font-size:14px;cursor:pointer;">✕ Rechazar</button>
+      </div>`;
+      } else if (msg.tipo === 'guardia' && guardiaData) {
+    const tipoGuardia = guardiaData.tipo === 'especial' ? '⚡ Especial' : '🛡️ Común';
+    botonesHTML = `
+      <div style="background:#1c2537;border-radius:8px;padding:10px 12px;margin:10px 0;font-size:13px;line-height:1.9;color:#94a3b8;">
+        🛡️ Guardia <b style="color:#f59e0b">${tipoGuardia}</b><br>
+        🕒 Inicio: <b style="color:#f59e0b">${guardiaData.horaInicio || '—'}</b>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button onclick="aceptarGuardia(${parseInt(msg.id, 10)})" style="flex:1;background:#f59e0b;color:#111;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;">✓ Aceptar</button>
+        <button onclick="rechazarGuardia(${parseInt(msg.id, 10)})" style="flex:1;background:transparent;color:#ef4444;border:2px solid #ef4444;border-radius:8px;padding:11px;font-size:14px;cursor:pointer;">✕ Rechazar</button>
       </div>`;
   } else {
     botonesHTML = `<button onclick="cerrarNotifMensaje()" style="width:100%;background:transparent;color:${tipoColor};border:1px solid ${tipoColor};border-radius:8px;padding:10px;font-size:14px;cursor:pointer;margin-top:12px;">Entendido</button>`;
@@ -117,7 +137,7 @@ function mostrarNotificacionMensaje(msg) {
   `;
   document.body.appendChild(notif);
  
-  if (msg.tipo !== 'asignacion') setTimeout(() => cerrarNotifMensaje(), 15000);
+  if (msg.tipo !== 'asignacion' && msg.tipo !== 'guardia') setTimeout(() => cerrarNotifMensaje(), 15000);
 }
  
 function cerrarNotifMensaje() {
@@ -229,3 +249,128 @@ window.detenerPollingMensajes = detenerPollingMensajes;
 window.cerrarNotifMensaje     = cerrarNotifMensaje;
 window.aceptarAsignacion      = aceptarAsignacion;
 window.rechazarAsignacion     = rechazarAsignacion;
+
+// ══════════════════════════════════════════
+// ASIGNACIÓN DE GUARDIA
+// ══════════════════════════════════════════
+
+async function aceptarGuardia(id) {
+  let guardiaData = null;
+  if (_asignacionPendiente && _asignacionPendiente.id === id) {
+    guardiaData = _asignacionPendiente.guardia;
+    _asignacionPendiente = null;
+  }
+
+  try {
+    await fetch(`${SUPABASE_URL_MSG}/rest/v1/mensajes?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: { "apikey": SUPABASE_KEY_MSG, "Authorization": `Bearer ${SUPABASE_KEY_MSG}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ leido: true, data: { guardia: guardiaData, respuesta: 'aceptado', respondidoAt: new Date().toISOString() } })
+    });
+  } catch(e) { console.warn("Error guardando respuesta guardia:", e); }
+
+  cerrarNotifMensaje();
+
+  if (!guardiaData) {
+    _mostrarConfirmacion('⚠️ Sin datos de guardia', '#f59e0b');
+    return;
+  }
+
+  // Auto-apertura de jornada si no hay una activa
+  let ordenActual = getActiveOrder ? getActiveOrder() : null;
+  if (!ordenActual) {
+    try {
+      ordenActual = createOrder();
+      _mostrarConfirmacion('📋 Jornada abierta automáticamente', '#3b82f6');
+      if (typeof renderResumenDia === 'function') renderResumenDia();
+      await new Promise(r => setTimeout(r, 1200));
+    } catch(e) {
+      _mostrarConfirmacion('⚠️ No se pudo abrir la jornada: ' + e.message, '#ef4444');
+      return;
+    }
+  }
+
+  // Crear guardia en la jornada
+  try {
+    const orders = getOrders ? getOrders() : [];
+    const order = orders.find(o => o.orderNumber === ordenActual.orderNumber);
+    if (!order) throw new Error('Jornada no encontrada');
+
+    if (!order.guards) order.guards = [];
+
+    // Si hay guardia en curso, cerrarla primero
+    const guardiaEnCurso = order.guards.find(g => g.inicio && !g.fin);
+    if (guardiaEnCurso) {
+      guardiaEnCurso.fin = guardiaData.horaInicio;
+      const [hI, mI] = guardiaEnCurso.inicio.split(':').map(Number);
+      const [hF, mF] = guardiaData.horaInicio.split(':').map(Number);
+      let horas = (hF + mF / 60) - (hI + mI / 60);
+      if (horas < 0) horas += 24;
+      guardiaEnCurso.hours = Math.round(horas * 100) / 100;
+      guardiaEnCurso.kmGuardia = Math.round(horas * (guardiaEnCurso.type === 'especial' ? 40 : 30));
+      guardiaEnCurso.status = 'finalizada';
+    }
+
+    // Agregar nueva guardia solo si es diferente tipo o no hay una igual
+    const yaExiste = order.guards.find(g => 
+      g.inicio === guardiaData.horaInicio && 
+      g.type === (guardiaData.tipo || 'comun') && 
+      !g.fin
+    );
+
+    if (!yaExiste) {
+      const nuevaGuardia = {
+        id: 'GRD-' + Date.now(),
+        inicio: guardiaData.horaInicio,
+        fin: null,
+        status: 'en_curso',
+        type: guardiaData.tipo || 'comun',
+        asignadoPorAdmin: true,
+        createdAt: Date.now()
+      };
+      order.guards.push(nuevaGuardia);
+    }
+
+    // Guardar
+    if (typeof saveOrders === 'function') {
+      saveOrders(orders.map(o => o.orderNumber === order.orderNumber ? order : o));
+    }
+    if (typeof setActiveOrder === 'function') setActiveOrder(order);
+
+    // Marcar sync pendiente
+    order.syncStatus = 'pending';
+    if (typeof saveOrders === 'function') {
+      saveOrders(orders.map(o => o.orderNumber === order.orderNumber ? order : o));
+    }
+
+    if (typeof renderResumenDia === 'function') renderResumenDia();
+    if (typeof renderListaGuardias === 'function') renderListaGuardias();
+    if (typeof renderBotonCerrarJornada === 'function') renderBotonCerrarJornada();
+
+    _mostrarConfirmacion(`✅ Guardia ${guardiaData.tipo === 'especial' ? 'especial' : 'común'} iniciada a las ${guardiaData.horaInicio}`, '#10b981');
+
+  } catch(e) {
+    console.error('Error agregando guardia:', e);
+    _mostrarConfirmacion('⚠️ Error al agregar guardia: ' + e.message, '#ef4444');
+  }
+}
+
+async function rechazarGuardia(id) {
+  let guardiaData = null;
+  if (_asignacionPendiente && _asignacionPendiente.id === id) {
+    guardiaData = _asignacionPendiente.guardia;
+    _asignacionPendiente = null;
+  }
+  try {
+    await fetch(`${SUPABASE_URL_MSG}/rest/v1/mensajes?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: { "apikey": SUPABASE_KEY_MSG, "Authorization": `Bearer ${SUPABASE_KEY_MSG}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ leido: true, data: { guardia: guardiaData, respuesta: 'rechazado', respondidoAt: new Date().toISOString() } })
+    });
+  } catch(e) {}
+  cerrarNotifMensaje();
+  _mostrarConfirmacion('✕ Guardia rechazada', '#ef4444');
+}
+
+window.aceptarGuardia  = aceptarGuardia;
+window.rechazarGuardia = rechazarGuardia;
