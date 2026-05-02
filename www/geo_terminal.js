@@ -1,5 +1,7 @@
 "use strict";
 
+const { Geolocation } = Capacitor.Plugins;
+
 // =====================================================
 // GEO TERMINAL — COT Driver
 // Cierre automático de viaje al detectar llegada
@@ -62,7 +64,7 @@ let _geoActivo             = false;
 
 function iniciarGeoTerminal() {
   if (_geoActivo) return;
-  if (!navigator.geolocation) {
+  if (!Geolocation) {
     console.warn("[GEO] Geolocalización no disponible");
     return;
   }
@@ -92,16 +94,18 @@ function iniciarGeoTerminal() {
   console.log(`[GEO] Monitoreando → ${terminalDestino.nombre}`);
   console.log(`[GEO] Reglas: radio ${GEO_CONFIG.RADIO_METROS}m | quieto ${GEO_CONFIG.TIEMPO_QUIETO_MS/60000}min | viaje mín ${GEO_CONFIG.TIEMPO_MINIMO_VIAJE_MS/60000}min | alejamiento mín ${GEO_CONFIG.DISTANCIA_MINIMA_ORIGEN_M}m`);
 
-  _watchId = navigator.geolocation.watchPosition(
-    (pos) => _onPosicion(pos, terminalDestino),
-    (err) => console.warn("[GEO] Error GPS:", err.message),
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-  );
+  Geolocation.watchPosition(
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
+    (pos, err) => {
+      if (err) { console.warn("[GEO] Error GPS:", err.message); return; }
+      _onPosicion(pos, terminalDestino);
+    }
+  ).then(id => { _watchId = id; });
 }
 
 function detenerGeoTerminal() {
   if (_watchId !== null) {
-    navigator.geolocation.clearWatch(_watchId);
+    Geolocation.clearWatch({ id: _watchId });
     _watchId = null;
   }
   _geoActivo = false; _ultimaPosicion = null; _tiempoQuieto = null;
@@ -333,7 +337,7 @@ let _monitoreoOrigen = false;
 
 function iniciarMonitoreoOrigen() {
   if (_monitoreoOrigen) return;
-  if (!navigator.geolocation) return;
+  if (!Geolocation) return;
 
   const order = getActiveOrder ? getActiveOrder() : null;
   const viajeProgramado = order?.travels?.find(t => t.status === "programado");
@@ -349,16 +353,18 @@ function iniciarMonitoreoOrigen() {
   _monitoreoOrigen = true;
   console.log(`[GEO] Monitoreando origen → ${terminalOrigen.nombre}`);
 
-  _watchIdOrigen = navigator.geolocation.watchPosition(
-    (pos) => _onPosicionOrigen(pos, terminalOrigen, viajeProgramado),
-    (err) => console.warn("[GEO] Error GPS origen:", err.message),
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-  );
+  Geolocation.watchPosition(
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
+    (pos, err) => {
+      if (err) { console.warn("[GEO] Error GPS origen:", err.message); return; }
+      _onPosicionOrigen(pos, terminalOrigen, viajeProgramado);
+    }
+  ).then(id => { _watchIdOrigen = id; });
 }
 
 function detenerMonitoreoOrigen() {
   if (_watchIdOrigen !== null) {
-    navigator.geolocation.clearWatch(_watchIdOrigen);
+    Geolocation.clearWatch({ id: _watchIdOrigen });
     _watchIdOrigen = null;
   }
   _monitoreoOrigen = false;
@@ -499,8 +505,8 @@ function onViajeFinalizado() {
 let _modoPrueba = false;
 let _coordsOriginales = null;
 
-function activarModoPrueba() {
-  if (!navigator.geolocation) {
+async function activarModoPrueba() {
+  if (!Geolocation) {
     alert("GPS no disponible");
     return;
   }
@@ -508,47 +514,44 @@ function activarModoPrueba() {
   const btn = document.getElementById("geoPruebaBtn");
   if (btn) { btn.textContent = "📡 Obteniendo GPS..."; btn.disabled = true; }
 
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const { latitude: lat, longitude: lng } = pos.coords;
+  try {
+    const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+    const { latitude: lat, longitude: lng } = pos.coords;
 
-      // Guardar coords originales si es la primera vez
-      if (!_coordsOriginales) {
-        _coordsOriginales = {};
-        for (const k of Object.keys(TERMINALES_GPS)) {
-          _coordsOriginales[k] = { ...TERMINALES_GPS[k] };
-        }
-      }
-
-      // Pisar TODAS las terminales con la posición actual
+    // Guardar coords originales si es la primera vez
+    if (!_coordsOriginales) {
+      _coordsOriginales = {};
       for (const k of Object.keys(TERMINALES_GPS)) {
-        TERMINALES_GPS[k].lat = lat;
-        TERMINALES_GPS[k].lng = lng;
+        _coordsOriginales[k] = { ...TERMINALES_GPS[k] };
       }
+    }
 
-      // Configuración relajada para pruebas
-      GEO_CONFIG.RADIO_METROS              = 50;
-      GEO_CONFIG.TIEMPO_QUIETO_MS          = 15 * 1000;   // 15 segundos
-      GEO_CONFIG.TIEMPO_MINIMO_VIAJE_MS    = 0;            // sin mínimo
-      GEO_CONFIG.DISTANCIA_MINIMA_ORIGEN_M = 0;            // sin alejamiento mínimo
-      GEO_CONFIG.MOVIMIENTO_MINIMO_M       = 2;
-      GEO_CONFIG.INTERVALO_GPS_MS          = 5000;
+    // Pisar TODAS las terminales con la posición actual
+    for (const k of Object.keys(TERMINALES_GPS)) {
+      TERMINALES_GPS[k].lat = lat;
+      TERMINALES_GPS[k].lng = lng;
+    }
 
-      _modoPrueba = true;
+    // Configuración relajada para pruebas
+    GEO_CONFIG.RADIO_METROS              = 50;
+    GEO_CONFIG.TIEMPO_QUIETO_MS          = 15 * 1000;   // 15 segundos
+    GEO_CONFIG.TIEMPO_MINIMO_VIAJE_MS    = 0;            // sin mínimo
+    GEO_CONFIG.DISTANCIA_MINIMA_ORIGEN_M = 0;            // sin alejamiento mínimo
+    GEO_CONFIG.MOVIMIENTO_MINIMO_M       = 2;
+    GEO_CONFIG.INTERVALO_GPS_MS          = 5000;
 
-      console.log(`[GEO TEST] ✅ Modo prueba activo — todas las terminales → (${lat.toFixed(6)}, ${lng.toFixed(6)})`);
-      console.log(`[GEO TEST] Radio: ${GEO_CONFIG.RADIO_METROS}m | Quieto: ${GEO_CONFIG.TIEMPO_QUIETO_MS/1000}s`);
+    _modoPrueba = true;
 
-      _actualizarPanelPrueba(lat, lng);
+    console.log(`[GEO TEST] ✅ Modo prueba activo — todas las terminales → (${lat.toFixed(6)}, ${lng.toFixed(6)})`);
+    console.log(`[GEO TEST] Radio: ${GEO_CONFIG.RADIO_METROS}m | Quieto: ${GEO_CONFIG.TIEMPO_QUIETO_MS/1000}s`);
 
-      if (btn) { btn.textContent = "✅ Prueba activa"; btn.disabled = false; }
-    },
-    (err) => {
-      console.warn("[GEO TEST] Error GPS:", err.message);
-      if (btn) { btn.textContent = "⚠️ Error GPS — reintentar"; btn.disabled = false; }
-    },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-  );
+    _actualizarPanelPrueba(lat, lng);
+
+    if (btn) { btn.textContent = "✅ Prueba activa"; btn.disabled = false; }
+  } catch (err) {
+    console.warn("[GEO TEST] Error GPS:", err.message);
+    if (btn) { btn.textContent = "⚠️ Error GPS — reintentar"; btn.disabled = false; }
+  }
 }
 
 function desactivarModoPrueba() {
