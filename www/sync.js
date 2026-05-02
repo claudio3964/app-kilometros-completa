@@ -101,6 +101,7 @@ async function checkComandosPendientes() {
   }
 }
 
+setInterval(() => syncPendientes(), 60000);
 setInterval(checkComandosPendientes, 30000);
 checkComandosPendientes();
 
