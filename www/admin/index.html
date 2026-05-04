@@ -843,6 +843,7 @@ function toggleCamposAsignacion() {
   
   if (tipo === 'asignacion') {
     campos.classList.add('visible');
+    campos.style.display = 'block';
     textarea.placeholder = 'Instrucciones adicionales (opcional)...';
   } else if (tipo === 'guardia') {
     if (camposGuardia) camposGuardia.style.display = 'block';
