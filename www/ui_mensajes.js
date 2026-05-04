@@ -276,9 +276,22 @@ async function aceptarGuardia(id) {
     return;
   }
 
-  // Auto-apertura de jornada si no hay una activa
+    // Auto-apertura de jornada solo si la guardia ya empezó
   let ordenActual = getActiveOrder ? getActiveOrder() : null;
   if (!ordenActual) {
+    if (esFutura) {
+      // Guardia futura — no abrir jornada todavía, programar apertura
+      _mostrarConfirmacion(`📋 Guardia programada para las ${guardiaData.horaInicio}`, '#3b82f6');
+      // Guardar guardia en localStorage para activar a la hora indicada
+      const guardiasProgramadas = JSON.parse(localStorage.getItem('guardias_programadas') || '[]');
+      guardiasProgramadas.push({
+        ...nuevaGuardia,
+        horaInicio: guardiaData.horaInicio,
+        programadaAt: Date.now()
+      });
+      localStorage.setItem('guardias_programadas', JSON.stringify(guardiasProgramadas));
+      return;
+    }
     try {
       ordenActual = createOrder();
       _mostrarConfirmacion('📋 Jornada abierta automáticamente', '#3b82f6');
@@ -319,15 +332,20 @@ async function aceptarGuardia(id) {
     );
 
     if (!yaExiste) {
-      const nuevaGuardia = {
-        id: 'GRD-' + Date.now(),
-        inicio: guardiaData.horaInicio,
-        fin: null,
-        status: 'en_curso',
-        type: guardiaData.tipo || 'comun',
-        asignadoPorAdmin: true,
-        createdAt: Date.now()
-      };
+      // Determinar si la guardia es futura o ya pasó
+const ahora = new Date();
+const horaActual = `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
+const esFutura = guardiaData.horaInicio > horaActual;
+
+const nuevaGuardia = {
+  id: 'GRD-' + Date.now(),
+  inicio: guardiaData.horaInicio,
+  fin: null,
+  status: esFutura ? 'programada' : 'en_curso',
+  type: guardiaData.tipo || 'comun',
+  asignadoPorAdmin: true,
+  createdAt: Date.now()
+};
       order.guards.push(nuevaGuardia);
     }
 
@@ -354,7 +372,7 @@ async function aceptarGuardia(id) {
     _mostrarConfirmacion('⚠️ Error al agregar guardia: ' + e.message, '#ef4444');
   }
 }
-
+// verificar guardias programadas
 async function rechazarGuardia(id) {
   let guardiaData = null;
   if (_asignacionPendiente && _asignacionPendiente.id === id) {
@@ -371,6 +389,51 @@ async function rechazarGuardia(id) {
   cerrarNotifMensaje();
   _mostrarConfirmacion('✕ Guardia rechazada', '#ef4444');
 }
+
+function verificarGuardiasProgramadas() {
+  const guardiasProgramadas = JSON.parse(localStorage.getItem('guardias_programadas') || '[]');
+  if (!guardiasProgramadas.length) return;
+
+  const ahora = new Date();
+  const horaActual = `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
+
+  const pendientes = [];
+  for (const guardia of guardiasProgramadas) {
+    if (guardia.horaInicio <= horaActual) {
+      // Hora llegó — abrir jornada y activar guardia
+      let ordenActual = getActiveOrder ? getActiveOrder() : null;
+      if (!ordenActual) {
+        try {
+          ordenActual = createOrder();
+          if (typeof renderResumenDia === 'function') renderResumenDia();
+        } catch(e) {
+          console.error('Error abriendo jornada para guardia programada:', e);
+          pendientes.push(guardia);
+          continue;
+        }
+      }
+      // Agregar guardia a la jornada
+      const orders = getOrders ? getOrders() : [];
+      const order = orders.find(o => o.orderNumber === ordenActual.orderNumber);
+      if (order) {
+        if (!order.guards) order.guards = [];
+        order.guards.push({ ...guardia, status: 'en_curso' });
+        if (typeof saveOrders === 'function') saveOrders(orders.map(o => o.orderNumber === order.orderNumber ? order : o));
+        if (typeof setActiveOrder === 'function') setActiveOrder(order);
+        order.syncStatus = 'pending';
+        if (typeof saveOrders === 'function') saveOrders(orders.map(o => o.orderNumber === order.orderNumber ? order : o));
+        if (typeof renderListaGuardias === 'function') renderListaGuardias();
+        if (typeof renderBotonCerrarJornada === 'function') renderBotonCerrarJornada();
+        _mostrarConfirmacion(`✅ Guardia ${guardia.type} iniciada a las ${guardia.horaInicio}`, '#10b981');
+      }
+    } else {
+      pendientes.push(guardia);
+    }
+  }
+  localStorage.setItem('guardias_programadas', JSON.stringify(pendientes));
+}
+
+window.verificarGuardiasProgramadas = verificarGuardiasProgramadas;
 
 window.aceptarGuardia  = aceptarGuardia;
 window.rechazarGuardia = rechazarGuardia;

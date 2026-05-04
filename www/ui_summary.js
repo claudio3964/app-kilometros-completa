@@ -363,9 +363,11 @@ async function generarPDFJornada(order) {
 
   if (order.guards?.length) {
     add("=== GUARDIAS ===");
-    order.guards.forEach(g => {
-      add(`${g.type} | ${g.inicio} - ${g.fin || '--'} | ${(g.hours || 0).toFixed(2)}h | ${(g.kmGuardia || 0).toFixed(1)} km`);
-    });
+   order.guards.forEach(g => {
+  const kmHora = g.type === 'especial' ? 40 : 30;
+  const km = g.kmGuardia != null ? g.kmGuardia : (g.hours || 0) * kmHora;
+  add(`${g.type} | ${g.inicio} - ${g.fin || '--'} | ${(g.hours || 0).toFixed(2)}h | ${km.toFixed(1)} km`);
+});
     y += 3;
   }
 

@@ -394,6 +394,13 @@ function iniciarBootstrap() {
     }, 60000);
   }
 
+  // ── Motor de guardias programadas (cada 60s) ──────────────────────────
+  if (!window.__motorGuardiasProgramadas) {
+    window.__motorGuardiasProgramadas = setInterval(() => {
+      if (typeof verificarGuardiasProgramadas === 'function') verificarGuardiasProgramadas();
+    }, 60000);
+  }
+
   // ── Sync al SW cada 60s para mantener estado fresco ───────────────────
   if (!window.__motorSyncSW) {
     window.__motorSyncSW = setInterval(() => {
