@@ -276,13 +276,26 @@ async function aceptarGuardia(id) {
     return;
   }
 
-    // Auto-apertura de jornada solo si la guardia ya empezó
+  // Determinar si la guardia es futura o ya pasó
+  const ahora = new Date();
+  const horaActual = `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
+  const esFutura = guardiaData.horaInicio > horaActual;
+
+  const nuevaGuardia = {
+    id: 'GRD-' + Date.now(),
+    inicio: guardiaData.horaInicio,
+    fin: null,
+    status: esFutura ? 'programada' : 'en_curso',
+    type: guardiaData.tipo || 'comun',
+    asignadoPorAdmin: true,
+    createdAt: Date.now()
+  };
+
+  // Auto-apertura de jornada solo si la guardia ya empezó
   let ordenActual = getActiveOrder ? getActiveOrder() : null;
   if (!ordenActual) {
     if (esFutura) {
-      // Guardia futura — no abrir jornada todavía, programar apertura
       _mostrarConfirmacion(`📋 Guardia programada para las ${guardiaData.horaInicio}`, '#3b82f6');
-      // Guardar guardia en localStorage para activar a la hora indicada
       const guardiasProgramadas = JSON.parse(localStorage.getItem('guardias_programadas') || '[]');
       guardiasProgramadas.push({
         ...nuevaGuardia,
@@ -324,38 +337,22 @@ async function aceptarGuardia(id) {
       guardiaEnCurso.status = 'finalizada';
     }
 
-    // Agregar nueva guardia solo si es diferente tipo o no hay una igual
-    const yaExiste = order.guards.find(g => 
-      g.inicio === guardiaData.horaInicio && 
-      g.type === (guardiaData.tipo || 'comun') && 
+    // Agregar nueva guardia solo si no hay una igual
+    const yaExiste = order.guards.find(g =>
+      g.inicio === guardiaData.horaInicio &&
+      g.type === (guardiaData.tipo || 'comun') &&
       !g.fin
     );
 
     if (!yaExiste) {
-      // Determinar si la guardia es futura o ya pasó
-const ahora = new Date();
-const horaActual = `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
-const esFutura = guardiaData.horaInicio > horaActual;
-
-const nuevaGuardia = {
-  id: 'GRD-' + Date.now(),
-  inicio: guardiaData.horaInicio,
-  fin: null,
-  status: esFutura ? 'programada' : 'en_curso',
-  type: guardiaData.tipo || 'comun',
-  asignadoPorAdmin: true,
-  createdAt: Date.now()
-};
       order.guards.push(nuevaGuardia);
     }
 
-    // Guardar
     if (typeof saveOrders === 'function') {
       saveOrders(orders.map(o => o.orderNumber === order.orderNumber ? order : o));
     }
     if (typeof setActiveOrder === 'function') setActiveOrder(order);
 
-    // Marcar sync pendiente
     order.syncStatus = 'pending';
     if (typeof saveOrders === 'function') {
       saveOrders(orders.map(o => o.orderNumber === order.orderNumber ? order : o));
@@ -365,7 +362,12 @@ const nuevaGuardia = {
     if (typeof renderListaGuardias === 'function') renderListaGuardias();
     if (typeof renderBotonCerrarJornada === 'function') renderBotonCerrarJornada();
 
-    _mostrarConfirmacion(`✅ Guardia ${guardiaData.tipo === 'especial' ? 'especial' : 'común'} iniciada a las ${guardiaData.horaInicio}`, '#10b981');
+    _mostrarConfirmacion(
+      esFutura 
+        ? `📋 Guardia programada para las ${guardiaData.horaInicio}`
+        : `✅ Guardia ${guardiaData.tipo === 'especial' ? 'especial' : 'común'} iniciada a las ${guardiaData.horaInicio}`,
+      esFutura ? '#3b82f6' : '#10b981'
+    );
 
   } catch(e) {
     console.error('Error agregando guardia:', e);
