@@ -1,12 +1,12 @@
 
 const SUPABASE_URL_MSG = "https://frjeivfpldcigklwepqt.supabase.co";
 const SUPABASE_KEY_MSG = "sb_publishable_6A7tufjD-rTAUAPfxyziyw_3kXMumzJ";
- 
+
 let _mensajesVistos = new Set(JSON.parse(localStorage.getItem('mensajes_vistos') || '[]'));
 let _pollerMensajes = null;
 let _consultandoMensajes = false;
 let _asignacionPendiente = null;
- 
+
 function _escHtml(s) {
   if (s == null) return '';
   return String(s)
@@ -16,7 +16,7 @@ function _escHtml(s) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
- 
+
 async function consultarMensajes() {
   if (_consultandoMensajes) return;
   const driver = getDriver ? getDriver() : null;
@@ -35,10 +35,10 @@ async function consultarMensajes() {
     nuevos.forEach(m => _mensajesVistos.add(m.id));
     localStorage.setItem('mensajes_vistos', JSON.stringify([..._mensajesVistos]));
     nuevos.forEach(m => { if (m.tipo !== 'asignacion') marcarLeido(m.id); });
-  } catch(e) { console.warn("Error mensajes:", e.message); }
+  } catch (e) { console.warn("Error mensajes:", e.message); }
   finally { _consultandoMensajes = false; }
 }
- 
+
 async function marcarLeido(id) {
   try {
     await fetch(`${SUPABASE_URL_MSG}/rest/v1/mensajes?id=eq.${id}`, {
@@ -46,25 +46,25 @@ async function marcarLeido(id) {
       headers: { "apikey": SUPABASE_KEY_MSG, "Authorization": `Bearer ${SUPABASE_KEY_MSG}`, "Content-Type": "application/json" },
       body: JSON.stringify({ leido: true })
     });
-  } catch(e) {}
+  } catch (e) { }
 }
- 
+
 function mostrarNotificacionMensaje(msg) {
   const anterior = document.getElementById('notifMensaje');
   if (anterior) anterior.remove();
- 
- const tipoColor = msg.tipo === 'urgente' ? '#ef4444' : msg.tipo === 'asignacion' ? '#10b981' : msg.tipo === 'guardia' ? '#f59e0b' : '#3b82f6';
-const tipoIcon  = msg.tipo === 'urgente' ? '🔴' : msg.tipo === 'asignacion' ? '✅' : msg.tipo === 'guardia' ? '🛡️' : '💬';
+
+  const tipoColor = msg.tipo === 'urgente' ? '#ef4444' : msg.tipo === 'asignacion' ? '#10b981' : msg.tipo === 'guardia' ? '#f59e0b' : '#3b82f6';
+  const tipoIcon = msg.tipo === 'urgente' ? '🔴' : msg.tipo === 'asignacion' ? '✅' : msg.tipo === 'guardia' ? '🛡️' : '💬';
   const tipoLabel = msg.tipo === 'urgente' ? 'URGENTE' : msg.tipo === 'asignacion' ? 'ASIGNACIÓN DE VIAJE' : msg.tipo === 'guardia' ? 'ASIGNACIÓN DE GUARDIA' : 'MENSAJE';
- 
+
   let viajeData = null;
   if (msg.tipo === 'asignacion' && msg.data) {
     try {
       const d = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
       viajeData = d.viaje || null;
-    } catch(e) {}
+    } catch (e) { }
   }
- 
+
   if (msg.tipo === 'asignacion' && viajeData) {
     _asignacionPendiente = { id: msg.id, viaje: viajeData };
   }
@@ -75,9 +75,9 @@ const tipoIcon  = msg.tipo === 'urgente' ? '🔴' : msg.tipo === 'asignacion' ? 
       const d = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
       guardiaData = d.guardia || null;
       if (guardiaData) _asignacionPendiente = { id: msg.id, guardia: guardiaData };
-    } catch(e) {}
+    } catch (e) { }
   }
- 
+
   let viajeHTML = '';
   if (viajeData) {
     viajeHTML = `
@@ -89,7 +89,7 @@ const tipoIcon  = msg.tipo === 'urgente' ? '🔴' : msg.tipo === 'asignacion' ? 
         &nbsp;|&nbsp; 🎫 <b style="color:#e2e8f0">${_escHtml(viajeData.tipoServicio) || '—'}</b>
       </div>`;
   }
- 
+
   let botonesHTML = '';
   if (msg.tipo === 'asignacion' && viajeData) {
     botonesHTML = `
@@ -97,7 +97,7 @@ const tipoIcon  = msg.tipo === 'urgente' ? '🔴' : msg.tipo === 'asignacion' ? 
         <button onclick="aceptarAsignacion(${parseInt(msg.id, 10)})" style="flex:1;background:#10b981;color:white;border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;">✓ Aceptar</button>
         <button onclick="rechazarAsignacion(${parseInt(msg.id, 10)})" style="flex:1;background:transparent;color:#ef4444;border:2px solid #ef4444;border-radius:8px;padding:11px;font-size:14px;cursor:pointer;">✕ Rechazar</button>
       </div>`;
-      } else if (msg.tipo === 'guardia' && guardiaData) {
+  } else if (msg.tipo === 'guardia' && guardiaData) {
     const tipoGuardia = guardiaData.tipo === 'especial' ? '⚡ Especial' : '🛡️ Común';
     botonesHTML = `
       <div style="background:#1c2537;border-radius:8px;padding:10px 12px;margin:10px 0;font-size:13px;line-height:1.9;color:#94a3b8;">
@@ -111,7 +111,7 @@ const tipoIcon  = msg.tipo === 'urgente' ? '🔴' : msg.tipo === 'asignacion' ? 
   } else {
     botonesHTML = `<button onclick="cerrarNotifMensaje()" style="width:100%;background:transparent;color:${tipoColor};border:1px solid ${tipoColor};border-radius:8px;padding:10px;font-size:14px;cursor:pointer;margin-top:12px;">Entendido</button>`;
   }
- 
+
   const notif = document.createElement('div');
   notif.id = 'notifMensaje';
   notif.style.cssText = `
@@ -136,22 +136,22 @@ const tipoIcon  = msg.tipo === 'urgente' ? '🔴' : msg.tipo === 'asignacion' ? 
     ${botonesHTML}
   `;
   document.body.appendChild(notif);
- 
+
   if (msg.tipo !== 'asignacion' && msg.tipo !== 'guardia') setTimeout(() => cerrarNotifMensaje(), 15000);
 }
- 
+
 function cerrarNotifMensaje() {
   const n = document.getElementById('notifMensaje');
   if (n) n.remove();
 }
- 
+
 async function aceptarAsignacion(id) {
   let viajeData = null;
   if (_asignacionPendiente && _asignacionPendiente.id === id) {
     viajeData = _asignacionPendiente.viaje;
     _asignacionPendiente = null;
   }
- 
+
   // Guardar respuesta en Supabase
   try {
     await fetch(`${SUPABASE_URL_MSG}/rest/v1/mensajes?id=eq.${id}`, {
@@ -159,12 +159,12 @@ async function aceptarAsignacion(id) {
       headers: { "apikey": SUPABASE_KEY_MSG, "Authorization": `Bearer ${SUPABASE_KEY_MSG}`, "Content-Type": "application/json" },
       body: JSON.stringify({ leido: true, data: { viaje: viajeData, respuesta: 'aceptado', respondidoAt: new Date().toISOString() } })
     });
-  } catch(e) { console.warn("Error guardando respuesta:", e); }
- 
+  } catch (e) { console.warn("Error guardando respuesta:", e); }
+
   cerrarNotifMensaje();
- 
+
   if (viajeData && typeof agregarViajeAsignado === 'function') {
- 
+
     // ── AUTO-APERTURA DE JORNADA ──────────────────────────────────────────
     let ordenActual = getActiveOrder ? getActiveOrder() : null;
     if (!ordenActual) {
@@ -175,13 +175,13 @@ async function aceptarAsignacion(id) {
         if (typeof renderResumenDia === 'function') renderResumenDia();
         // Esperar que se vea el mensaje antes de continuar
         await new Promise(r => setTimeout(r, 1200));
-      } catch(e) {
+      } catch (e) {
         _mostrarConfirmacion('⚠️ No se pudo abrir la jornada: ' + e.message, '#ef4444');
         return;
       }
     }
     // ─────────────────────────────────────────────────────────────────────
- 
+
     const travels = ordenActual.travels || [];
     const yaExiste = travels.some(t =>
       t.origen === viajeData.origen &&
@@ -193,7 +193,7 @@ async function aceptarAsignacion(id) {
       _mostrarConfirmacion('⚠️ Este viaje ya está en tu jornada', '#f59e0b');
       return;
     }
- 
+
     const ok = agregarViajeAsignado(viajeData);
     if (ok) {
       if (typeof renderResumenDia === 'function') renderResumenDia();
@@ -204,10 +204,10 @@ async function aceptarAsignacion(id) {
       return;
     }
   }
- 
+
   _mostrarConfirmacion('⚠️ No se pudo agregar el viaje a la jornada', '#f59e0b');
 }
- 
+
 async function rechazarAsignacion(id) {
   let viajeData = null;
   if (_asignacionPendiente && _asignacionPendiente.id === id) {
@@ -220,11 +220,11 @@ async function rechazarAsignacion(id) {
       headers: { "apikey": SUPABASE_KEY_MSG, "Authorization": `Bearer ${SUPABASE_KEY_MSG}`, "Content-Type": "application/json" },
       body: JSON.stringify({ leido: true, data: { viaje: viajeData, respuesta: 'rechazado', respondidoAt: new Date().toISOString() } })
     });
-  } catch(e) {}
+  } catch (e) { }
   cerrarNotifMensaje();
   _mostrarConfirmacion('✕ Asignación rechazada', '#ef4444');
 }
- 
+
 function _mostrarConfirmacion(texto, color) {
   const conf = document.createElement('div');
   conf.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#111827;border:2px solid ${color};border-radius:12px;padding:20px 32px;z-index:9999;font-size:16px;color:${color};font-weight:600;text-align:center;`;
@@ -232,23 +232,23 @@ function _mostrarConfirmacion(texto, color) {
   document.body.appendChild(conf);
   setTimeout(() => conf.remove(), 2500);
 }
- 
+
 function iniciarPollingMensajes() {
   if (_pollerMensajes) return;
   console.log("📬 Polling mensajes iniciado");
   consultarMensajes();
   _pollerMensajes = setInterval(consultarMensajes, 30000);
 }
- 
+
 function detenerPollingMensajes() {
   if (_pollerMensajes) { clearInterval(_pollerMensajes); _pollerMensajes = null; }
 }
- 
+
 window.iniciarPollingMensajes = iniciarPollingMensajes;
 window.detenerPollingMensajes = detenerPollingMensajes;
-window.cerrarNotifMensaje     = cerrarNotifMensaje;
-window.aceptarAsignacion      = aceptarAsignacion;
-window.rechazarAsignacion     = rechazarAsignacion;
+window.cerrarNotifMensaje = cerrarNotifMensaje;
+window.aceptarAsignacion = aceptarAsignacion;
+window.rechazarAsignacion = rechazarAsignacion;
 
 // ══════════════════════════════════════════
 // ASIGNACIÓN DE GUARDIA
@@ -267,7 +267,7 @@ async function aceptarGuardia(id) {
       headers: { "apikey": SUPABASE_KEY_MSG, "Authorization": `Bearer ${SUPABASE_KEY_MSG}`, "Content-Type": "application/json" },
       body: JSON.stringify({ leido: true, data: { guardia: guardiaData, respuesta: 'aceptado', respondidoAt: new Date().toISOString() } })
     });
-  } catch(e) { console.warn("Error guardando respuesta guardia:", e); }
+  } catch (e) { console.warn("Error guardando respuesta guardia:", e); }
 
   cerrarNotifMensaje();
 
@@ -278,8 +278,14 @@ async function aceptarGuardia(id) {
 
   // Determinar si la guardia es futura o ya pasó
   const ahora = new Date();
-  const horaActual = `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
-  const esFutura = guardiaData.horaInicio > horaActual;
+  const horaActual = `${String(ahora.getHours()).padStart(2, '0')}:${String(ahora.getMinutes()).padStart(2, '0')}`;
+  const [hG, mG] = guardiaData.horaInicio.split(':').map(Number);
+  const minutosGuardia = hG * 60 + mG;
+  const minutosActual = ahora.getHours() * 60 + ahora.getMinutes();
+
+  const esFutura = minutosGuardia > (minutosActual + 2);
+
+  console.log(`[GUARDIA] horaInicio: ${guardiaData.horaInicio} | ahora: ${ahora.getHours()}:${ahora.getMinutes()} | minutosGuardia: ${minutosGuardia} | minutosActual: ${minutosActual} | esFutura: ${esFutura}`);
 
   const nuevaGuardia = {
     id: 'GRD-' + Date.now(),
@@ -310,7 +316,7 @@ async function aceptarGuardia(id) {
       _mostrarConfirmacion('📋 Jornada abierta automáticamente', '#3b82f6');
       if (typeof renderResumenDia === 'function') renderResumenDia();
       await new Promise(r => setTimeout(r, 1200));
-    } catch(e) {
+    } catch (e) {
       _mostrarConfirmacion('⚠️ No se pudo abrir la jornada: ' + e.message, '#ef4444');
       return;
     }
@@ -363,13 +369,13 @@ async function aceptarGuardia(id) {
     if (typeof renderBotonCerrarJornada === 'function') renderBotonCerrarJornada();
 
     _mostrarConfirmacion(
-      esFutura 
+      esFutura
         ? `📋 Guardia programada para las ${guardiaData.horaInicio}`
         : `✅ Guardia ${guardiaData.tipo === 'especial' ? 'especial' : 'común'} iniciada a las ${guardiaData.horaInicio}`,
       esFutura ? '#3b82f6' : '#10b981'
     );
 
-  } catch(e) {
+  } catch (e) {
     console.error('Error agregando guardia:', e);
     _mostrarConfirmacion('⚠️ Error al agregar guardia: ' + e.message, '#ef4444');
   }
@@ -387,7 +393,7 @@ async function rechazarGuardia(id) {
       headers: { "apikey": SUPABASE_KEY_MSG, "Authorization": `Bearer ${SUPABASE_KEY_MSG}`, "Content-Type": "application/json" },
       body: JSON.stringify({ leido: true, data: { guardia: guardiaData, respuesta: 'rechazado', respondidoAt: new Date().toISOString() } })
     });
-  } catch(e) {}
+  } catch (e) { }
   cerrarNotifMensaje();
   _mostrarConfirmacion('✕ Guardia rechazada', '#ef4444');
 }
@@ -397,7 +403,7 @@ function verificarGuardiasProgramadas() {
   if (!guardiasProgramadas.length) return;
 
   const ahora = new Date();
-  const horaActual = `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
+  const horaActual = `${String(ahora.getHours()).padStart(2, '0')}:${String(ahora.getMinutes()).padStart(2, '0')}`;
 
   const pendientes = [];
   for (const guardia of guardiasProgramadas) {
@@ -408,7 +414,7 @@ function verificarGuardiasProgramadas() {
         try {
           ordenActual = createOrder();
           if (typeof renderResumenDia === 'function') renderResumenDia();
-        } catch(e) {
+        } catch (e) {
           console.error('Error abriendo jornada para guardia programada:', e);
           pendientes.push(guardia);
           continue;
@@ -437,5 +443,5 @@ function verificarGuardiasProgramadas() {
 
 window.verificarGuardiasProgramadas = verificarGuardiasProgramadas;
 
-window.aceptarGuardia  = aceptarGuardia;
+window.aceptarGuardia = aceptarGuardia;
 window.rechazarGuardia = rechazarGuardia;
