@@ -7,7 +7,11 @@ async function syncPendientes() {
   const orders = getOrders();
   let algoCambio = false;
   for (let order of orders) {
-    if (order.syncStatus === "synced" && order.closed) continue;
+    // Saltar jornadas ya sincronizadas y cerradas
+// EXCEPTO si tienen viajes programados pendientes de push
+const tieneViajesProgramados = (order.travels || []).some(t => t.status === 'programado');
+if (order.syncStatus === "synced" && order.closed && !tieneViajesProgramados) continue;
+if (order.syncStatus === "synced" && !order.closed && !tieneViajesProgramados) continue;
     try {
       var _getDriver;
       console.log("🔄 Sync jornada:", order.orderNumber);
