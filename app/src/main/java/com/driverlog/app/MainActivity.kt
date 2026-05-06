@@ -6,8 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
 import com.driverlog.app.data.ViajeRepository
-import com.driverlog.app.ui.LoginScreen
+import com.driverlog.app.ui.theme.LoginScreen
 import com.driverlog.app.ui.theme.COTDriverTheme
+import com.driverlog.app.ui.theme.HomeScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -31,11 +32,12 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 } else {
-                    // Pantalla principal — próximo paso
-                    LoginScreen(
-                        onLoginSuccess = { legajo ->
-                            repository.guardarLegajo(legajo)
-                            legajoActual = legajo
+                    HomeScreen(
+                        legajo = legajoActual,
+                        repository = repository,
+                        onCerrarSesion = {
+                            repository.guardarLegajo("")
+                            legajoActual = ""
                         }
                     )
                 }
