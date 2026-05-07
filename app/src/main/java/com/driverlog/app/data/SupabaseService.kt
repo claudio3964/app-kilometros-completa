@@ -21,7 +21,7 @@ class SupabaseService(private val context: Context) {
         try {
             Log.d("COT", "Sincronizando legajo: $legajo")
             val request = Request.Builder()
-                .url("$SUPABASE_URL/rest/v1/viajes?legajo=eq.$legajo&order=fecha.desc")
+                .url("$SUPABASE_URL/rest/v1/jornadas?legajo=eq.$legajo&order=fecha.desc&limit=5")
                 .addHeader("apikey", SUPABASE_KEY)
                 .addHeader("Authorization", "Bearer $SUPABASE_KEY")
                 .addHeader("Content-Type", "application/json")
@@ -30,7 +30,7 @@ class SupabaseService(private val context: Context) {
 
             val response = client.newCall(request).execute()
             val body = response.body?.string() ?: ""
-            Log.d("COT", "Respuesta Supabase: $body")
+            Log.d("COT", "Respuesta Supabase: ${body.take(200)}")
             parsearViajes(body)
         } catch (e: Exception) {
             Log.e("COT", "Error sync: ${e.message}")
@@ -80,26 +80,37 @@ class SupabaseService(private val context: Context) {
     private fun parsearViajes(json: String): List<Viaje> {
         val viajes = mutableListOf<Viaje>()
         try {
-            val array = JSONArray(json)
-            for (i in 0 until array.length()) {
-                val v = array.getJSONObject(i)
-                viajes.add(
-                    Viaje(
-                        id = v.optString("id", ""),
-                        orderNumber = v.optString("id", ""),
-                        origen = v.optString("origen", ""),
-                        destino = v.optString("destino", ""),
-                        departureTime = v.optString("hora_salida", ""),
-                        arrivalTime = v.optString("hora_llegada", ""),
-                        status = v.optString("status", "programado"),
-                        inicioProgramado = 0L,
-                        kmEmpresa = 0,
-                        turno = "",
-                        tipoServicio = "",
-                        acoplado = false,
-                        acopladoKm = 0,
+            val jornadas = JSONArray(json)
+            for (i in 0 until jornadas.length()) {
+                val jornada = jornadas.getJSONObject(i)
+                val orderNumber = jornada.optString("order_number", "")
+                val data = jornada.optJSONObject("data") ?: continue
+                val travels = data.optJSONArray("travels") ?: continue
+
+                for (j in 0 until travels.length()) {
+                    val t = travels.getJSONObject(j)
+                    val status = t.optString("status", "programado")
+                    // Solo traer viajes activos — no cancelados
+                    if (status == "cancelado") continue
+
+                    viajes.add(
+                        Viaje(
+                            id = t.optString("id", ""),
+                            orderNumber = jornada.optString("order_number", t.optString("id", "")),
+                            origen = t.optString("origen", ""),
+                            destino = t.optString("destino", ""),
+                            departureTime = t.optString("departureTime", ""),
+                            arrivalTime = t.optString("arrivalTime", ""),
+                            status = status,
+                            inicioProgramado = t.optLong("inicioProgramado", 0L),
+                            kmEmpresa = t.optInt("kmEmpresa", 0),
+                            turno = t.optString("turno", ""),
+                            tipoServicio = t.optString("tipoServicio", ""),
+                            acoplado = t.optBoolean("acoplado", false),
+                            acopladoKm = t.optInt("acopladoKm", 0),
+                        )
                     )
-                )
+                }
             }
         } catch (e: Exception) {
             Log.e("COT", "Error parsear: ${e.message}")

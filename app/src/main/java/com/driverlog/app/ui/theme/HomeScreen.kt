@@ -170,7 +170,7 @@ fun ViajeCard(viaje: Viaje, onActivar: () -> Unit) {
             }
             Spacer(modifier = Modifier.height(4.dp))
             Text("Salida: ${viaje.departureTime}  |  Llegada: ${viaje.arrivalTime}", fontSize = 13.sp)
-            Text("Orden: ${viaje.orderNumber.take(8)}", fontSize = 12.sp, color = Color.Gray)
+            Text("Orden: ${viaje.orderNumber}", fontSize = 12.sp, color = Color.Gray)
             if (viaje.status == "programado") {
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedButton(onClick = onActivar, modifier = Modifier.fillMaxWidth()) {
