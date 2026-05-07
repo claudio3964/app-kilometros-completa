@@ -106,4 +106,29 @@ class SupabaseService(private val context: Context) {
         }
         return viajes
     }
+
+suspend fun finalizarViajeEnSupabase(viajeId: String, finReal: Long): Boolean =
+    withContext(Dispatchers.IO) {
+        try {
+            val json = JSONObject().apply {
+                put("status", "finalizado")
+                put("fin_real", finReal)
+            }
+            val body = json.toString().toRequestBody("application/json".toMediaType())
+            val request = Request.Builder()
+                .url("$SUPABASE_URL/rest/v1/viajes?id=eq.$viajeId")
+                .addHeader("apikey", SUPABASE_KEY)
+                .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Prefer", "return=minimal")
+                .patch(body)
+                .build()
+            val response = client.newCall(request).execute()
+            Log.d("COT", "Finalizando viaje en Supabase: ${response.code}")
+            response.isSuccessful
+        } catch (e: Exception) {
+            Log.e("COT", "Error finalizando viaje: ${e.message}")
+            false
+        }
+    }
 }

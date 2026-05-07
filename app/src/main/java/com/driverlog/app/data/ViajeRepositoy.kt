@@ -49,6 +49,8 @@ class ViajeRepository(private val context: Context) {
     suspend fun finalizarViaje(viajeId: String) {
         val ahora = System.currentTimeMillis()
         dao.finalizarViaje(viajeId, "finalizado", ahora)
+        // Sync a Supabase
+        supabase.finalizarViajeEnSupabase(viajeId, ahora)
     }
 
     // ── Programar WorkManager ──
