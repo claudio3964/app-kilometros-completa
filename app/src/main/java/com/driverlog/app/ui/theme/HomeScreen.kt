@@ -28,6 +28,23 @@ fun HomeScreen(
     val viajes by repository.getTodosLosViajes().collectAsState(initial = emptyList())
     var viajeEnCurso by remember { mutableStateOf<Viaje?>(null) }
     var isSyncing by remember { mutableStateOf(false) }
+    var mensajeGeo by remember { mutableStateOf<String?>(null) }
+
+    // Broadcast receiver — escucha cierre automático por GPS
+    DisposableEffect(Unit) {
+        val receiver = object : android.content.BroadcastReceiver() {
+            override fun onReceive(ctx: android.content.Context?, intent: android.content.Intent?) {
+                val destino = intent?.getStringExtra("destino") ?: ""
+                mensajeGeo = "✅ Llegaste a $destino — viaje cerrado automáticamente"
+                scope.launch {
+                    viajeEnCurso = repository.getViajeEnCurso()
+                }
+            }
+        }
+        val filter = android.content.IntentFilter("com.driverlog.VIAJE_FINALIZADO")
+        context.registerReceiver(receiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+        onDispose { context.unregisterReceiver(receiver) }
+    }
 
     LaunchedEffect(legajo) {
         viajeEnCurso = repository.getViajeEnCurso()
@@ -61,6 +78,25 @@ fun HomeScreen(
         }
 
         HorizontalDivider()
+
+        // Mensaje geo automático
+        mensajeGeo?.let { msg ->
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF1B5E20))
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(msg, color = Color.White, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                    TextButton(onClick = { mensajeGeo = null }) {
+                        Text("✕", color = Color.White)
+                    }
+                }
+            }
+        }
 
         // Viaje en curso
         viajeEnCurso?.let { viaje ->
@@ -113,7 +149,6 @@ fun HomeScreen(
         }
     }
 }
-
 @Composable
 fun ViajeCard(viaje: Viaje, onActivar: () -> Unit) {
     val colorStatus = when (viaje.status) {
