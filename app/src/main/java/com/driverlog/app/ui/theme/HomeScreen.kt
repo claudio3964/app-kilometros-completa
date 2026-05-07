@@ -97,7 +97,7 @@ fun HomeScreen(
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(viajes) { viaje ->
+                items(viajes.filter { it.status != "en_curso" }) { viaje ->
                     ViajeCard(
                         viaje = viaje,
                         onActivar = {
