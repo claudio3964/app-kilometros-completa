@@ -64,6 +64,8 @@ class GeoTerminalService : Service() {
         super.onCreate()
         fusedClient = LocationServices.getFusedLocationProviderClient(this)
         crearCanalNotificacion()
+        // Notificación inmediata en onCreate — antes de que Honor pueda matar el servicio
+        startForeground(NOTIF_ID, crearNotificacion("COT Driver — GPS activo"))
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -72,7 +74,7 @@ class GeoTerminalService : Service() {
         inicioReal = intent?.getLongExtra(EXTRA_INICIO_REAL, 0L) ?: 0L
         modoPrueba = intent?.getBooleanExtra(EXTRA_MODO_PRUEBA, false) ?: false
 
-        radioActivo       = if (modoPrueba) GeoConfig.RADIO_PRUEBA else GeoConfig.RADIO_METROS
+        radioActivo        = if (modoPrueba) GeoConfig.RADIO_PRUEBA else GeoConfig.RADIO_METROS
         tiempoQuietoActivo = if (modoPrueba) GeoConfig.TIEMPO_QUIETO_PRUEBA_MS else GeoConfig.TIEMPO_QUIETO_MS
 
         terminal = TerminalesGPS.resolver(destino)
@@ -83,11 +85,14 @@ class GeoTerminalService : Service() {
         }
 
         Log.d(TAG, "Iniciando geo → ${terminal!!.nombre} | prueba=$modoPrueba")
-        startForeground(NOTIF_ID, crearNotificacion("Monitoreando llegada a ${terminal!!.nombre}"))
+
+        // Actualizar notificación con destino real
+        val notifManager = getSystemService(NotificationManager::class.java)
+        notifManager.notify(NOTIF_ID, crearNotificacion("Monitoreando llegada a ${terminal!!.nombre}"))
+
         iniciarGPS()
         return START_STICKY
     }
-
     @SuppressLint("MissingPermission")
     private fun iniciarGPS() {
         val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 30_000L)
