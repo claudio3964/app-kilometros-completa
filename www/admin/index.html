@@ -173,6 +173,7 @@
     💬 Mensajes<span class="tab-badge" id="msgBadge" style="display:none">0</span>
   </div>
   <div class="nav-tab" id="tabAdmins" onclick="switchTab('admins')" style="display:none">👤 Admins</div>
+  <div class="nav-tab" id="tabConfiguracion" onclick="switchTab('configuracion')">⚙️ Configuración</div>
 </div>
 
   </div>
@@ -307,6 +308,19 @@
         <tr><td colspan="6" class="loading">Cargando...</td></tr>
       </tbody>
     </table>
+  </div>
+</div>
+<!-- CONFIGURACIÓN -->
+<div class="tab-panel" id="tab-configuracion">
+  <div class="section-header">
+    <div class="section-title">Configuración del sistema</div>
+    <button class="btn-refresh" onclick="cargarConfiguracion()">↺ Actualizar</button>
+  </div>
+  <div style="max-width:600px">
+    <div style="font-size:13px;color:var(--text3);margin-bottom:20px;font-family:var(--mono)">
+      Valores del laudo vigente — Subgrupo 02 Grupo 13
+    </div>
+    <div id="configContainer"><div class="loading">Cargando...</div></div>
   </div>
 </div>
  
@@ -637,6 +651,7 @@ if (!Array.isArray(rolData) || rolData.length === 0) {
   return;
 
 }
+
     const adminRol = rolData[0].rol;
     const adminNombre = rolData[0].nombre;
     sessionStorage.setItem('admin_rol', adminRol);
@@ -666,6 +681,7 @@ tabAdmins.style.display = 'none';
 if (rol === 'superadmin') {
   tabAdmins.style.display = 'flex';
   cargarAdmins();
+  cargarConfiguracion();
 }
 if (rol === 'superadmin') {
   const btnArchivados = document.getElementById('btnArchivedFilter');
@@ -1847,6 +1863,88 @@ function iniciarRealtime() {
   socket.onclose = () => console.warn('Realtime cerrado');
 
   console.log('Auto-refresh activo ✅ (cada 10s)');
+}
+// ══════════════════════════════════════════
+// CONFIGURACIÓN — LAUDO
+// ══════════════════════════════════════════
+let allConfig = [];
+
+async function cargarConfiguracion() {
+  try {
+    const data = await sbFetch('configuracion?select=*&order=clave.asc');
+    allConfig = Array.isArray(data) ? data : [];
+    renderConfiguracion();
+  } catch(e) {
+    document.getElementById('configContainer').innerHTML = '<div class="loading">Error al cargar</div>';
+  }
+}
+
+function renderConfiguracion() {
+  const c = document.getElementById('configContainer');
+  if (!allConfig.length) {
+    c.innerHTML = '<div class="empty-state"><div class="icon">⚙️</div><p>Sin configuración cargada</p></div>';
+    return;
+  }
+
+  const labels = {
+    precio_km_conductor: 'Precio KM Conductor ($)',
+    precio_km_guarda:    'Precio KM Guarda ($)',
+    viatico_comida:      'Viático Comida ($)',
+    viatico_alojamiento: 'Viático Alojamiento ($)'
+  };
+
+  c.innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Concepto</th><th>Valor actual</th><th>Vigencia</th><th>Acción</th></tr></thead>
+        <tbody>
+          ${allConfig.map(cfg => `
+            <tr>
+              <td><strong style="color:var(--text)">${labels[cfg.clave] || cfg.clave}</strong><br>
+                <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${cfg.descripcion || ''}</span>
+              </td>
+              <td>
+                <input id="val_${cfg.clave}" type="number" step="0.0001"
+                  value="${cfg.valor}"
+                  style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;
+                    padding:6px 10px;color:var(--text);font-family:var(--mono);
+                    font-size:13px;width:130px;outline:none;">
+              </td>
+              <td><span class="mono" style="font-size:11px;color:var(--text3)">${cfg.vigencia || '—'}</span></td>
+              <td>
+                <button onclick="guardarConfig('${cfg.clave}')"
+                  style="background:rgba(59,130,246,.15);border:1px solid var(--accent);
+                    color:var(--accent);border-radius:6px;padding:5px 14px;
+                    font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);">
+                  Guardar
+                </button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:12px;font-size:11px;color:var(--text3);font-family:var(--mono)">
+      ⚠️ Los cambios se aplican inmediatamente en la app al reiniciar.
+    </div>`;
+}
+
+async function guardarConfig(clave) {
+  const input = document.getElementById('val_' + clave);
+  if (!input) return;
+  const valor = input.value.trim();
+  if (!valor || isNaN(valor)) { showToast('⚠️ Valor inválido'); return; }
+
+  try {
+    await sbFetch(`configuracion?clave=eq.${clave}`, {
+      method: 'PATCH',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ valor, updated_at: new Date().toISOString() })
+    });
+    showToast(`✅ ${clave} actualizado a ${valor}`);
+    cargarConfiguracion();
+  } catch(e) {
+    showToast('❌ Error al guardar');
+  }
 }
 </script>
 
