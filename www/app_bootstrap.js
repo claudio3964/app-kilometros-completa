@@ -7,6 +7,7 @@
 
 console.log("app_bootstrap cargado");
 
+
 // =====================================================
 // DETECCIÓN DE CAMBIO DE DÍA
 // =====================================================
@@ -360,7 +361,37 @@ function mostrarModalOTA(data) {
 
 window.checkOTA = checkOTA;
 
-function iniciarBootstrap() {
+// =====================================================
+// CONFIGURACIÓN DESDE SUPABASE (LAUDO)
+// =====================================================
+async function cargarConfiguracion() {
+  try {
+    const { data, error } = await supabase
+      .from('configuracion')
+      .select('clave, valor');
+
+    if (error || !data) return;
+
+    data.forEach(item => {
+      if (item.clave === 'precio_km_conductor') {
+        window.LAUDO_KM = parseFloat(item.valor);
+      }
+      if (item.clave === 'viatico_comida') {
+        window.VIATICO_COMIDA = parseFloat(item.valor);
+      }
+      if (item.clave === 'viatico_alojamiento') {
+        window.VIATICO_ALOJAMIENTO = parseFloat(item.valor);
+      }
+    });
+
+    console.log('[CONFIG] Laudo cargado desde Supabase:', window.LAUDO_KM);
+  } catch(e) {
+    console.warn('[CONFIG] Error cargando config, usando valores locales:', e.message);
+  }
+}
+
+  async function iniciarBootstrap() {
+  await cargarConfiguracion(); // ← agregar acá
   checkOTA();
   syncActiveOrderBootstrap();
   refreshMainUI();

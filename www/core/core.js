@@ -75,7 +75,7 @@ function ahoraSistema() {
 ================================ */
 
 // ===== CONFIG =====
-const LAUDO_KM = 7.6370;
+const LAUDO_KM = 8.0122; // actualizado laudo 01/01/2026
 window.LAUDO_KM = LAUDO_KM;
 const GUARDIA_COMUN_KM_HORA = 30;
 const GUARDIA_ESPECIAL_KM_HORA = 40;
