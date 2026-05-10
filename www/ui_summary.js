@@ -33,11 +33,10 @@ function renderOrdenActivaUI() {
   const box = document.getElementById("ordenActivaInfo");
   if (!box) return;
   const order = getActiveOrder();
-  if (!order) {
-    box.innerHTML = "🔴 Sin jornada activa";
-    return;
-  }
-  box.innerHTML = `🟢 Orden activa: <b>${order.orderNumber}</b><br>Base: ${order.baseInicio}`;
+  box.innerHTML = order ? order.orderNumber : "";
+  
+  const dot = document.getElementById('mainJornadaDot');
+  if (dot) dot.classList.toggle('activa', !!order);
 }
 
 // =====================================================
