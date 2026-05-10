@@ -1,6 +1,6 @@
 {
-  "version": "2.1.4",
-  "changelog": "test service role key",
+  "version": "2.1.5",
+  "changelog": "fix formulario nuevo viaje + overlay pantalla principal",
   "mandatory": false,
   "fecha": "2026-05-10"
 }
