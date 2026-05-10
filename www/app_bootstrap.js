@@ -106,9 +106,15 @@ function syncActiveOrderBootstrap() {
 
 function refreshMainUI() {
   const o = getActiveOrder();
+  const driver = window.getDriver?.() || {};
+  // ── Datos del chofer en el header ──
+  const nombreEl = document.getElementById('mainNombreChofer');
+  const legajoEl = document.getElementById('mainLegajoChofer');
+  if (nombreEl) nombreEl.textContent = driver.nombre || '—';
+  if (legajoEl) legajoEl.textContent = `Legajo ${driver.legajo || '—'} · ${driver.base || 'Montevideo'}`;
   const info = document.getElementById("ordenActivaInfo");
   if (info) {
-    info.innerText = o ? "🟢 Jornada activa: " + o.orderNumber : "🔴 Sin jornada activa";
+   info.innerText = o ? o.orderNumber : "";
   }
   const diaInput = document.getElementById("diaGuardia");
   if (diaInput) {
@@ -474,6 +480,17 @@ async function cargarConfiguracion() {
         if (typeof renderResumenDia === "function") renderResumenDia();
         if (typeof iniciarMonitoreoOrigen === "function") iniciarMonitoreoOrigen(); 
         syncEstadoAlSW();
+        // Long press en logo → modo prueba
+const logoTrigger = document.getElementById('mainLogoTrigger');
+if (logoTrigger) {
+  let pressTimer;
+  logoTrigger.addEventListener('touchstart', () => {
+    pressTimer = setTimeout(() => {
+      document.getElementById('modoPruebaContainer').style.display = 'block';
+    }, 1500);
+  });
+  logoTrigger.addEventListener('touchend', () => clearTimeout(pressTimer));
+}
       }
     });
   }

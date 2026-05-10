@@ -23,6 +23,9 @@ html, body {
 .screen.active {
   display: block;
 }
+.screen.main-screen-bg {
+  background: #050a1a;
+}
 
 /* ==============================
    CONTENEDOR CENTRADO RESPONSIVE
@@ -325,40 +328,6 @@ button[onclick^="showScreen('mainScreen')"] {
   color: #777;
 }
 
-/* ========== HEADER AZUL ========== */
-.header-bar {
-  background: #6b5cff;
-  color: white;
-  padding: 18px 16px;
-  padding-top: calc(18px + env(safe-area-inset-top));
-}
-
-.header-bar h1 {
-  margin: 0;
-  font-size: 20px;
-}
-
-.header-bar p {
-  margin: 4px 0 0 0;
-  font-size: 14px;
-}
-
-/* ========== TARJETAS DEL MENÚ ========== */
-.menu-tarjetas {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 0 16px;
-}
-
-.card-btn {
-  background: #f5f5f5;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  padding: 16px;
-  text-align: left;
-  font-size: 16px;
-}
 
 /* ========== HEADER CON BOTÓN REDONDO ========== */
 .screen-header {
@@ -385,9 +354,7 @@ button[onclick^="showScreen('mainScreen')"] {
 }
 
 /* ========== FORMULARIO ========== */
-.screen-container {
-  padding: 16px;
-}
+
 
 .card {
   border: 1px solid #eee;
@@ -631,4 +598,262 @@ input, select {
   color: rgba(255,255,255,0.85);
   font-size: 13px;
   margin: 0;
+}
+/* ========================================
+   MAIN SCREEN — RutaUY Glass Design
+   Reemplaza: .header-bar, .menu-tarjetas, .card-btn
+   ======================================== */
+
+/* Fondo de pantalla */
+.main-screen-bg {
+  position: relative;
+background: #050a1a url('icons/main-bg.png') center 20% / cover no-repeat !important;
+  min-height: 100vh;
+  overflow-y: auto;
+}
+/* Overlay oscuro sobre la imagen */
+.main-bg-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.52);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Todo el contenido por encima del overlay */
+.main-header,
+.main-section,
+.main-version,
+#modoPruebaContainer {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── HEADER ── */
+.main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px 20px 16px;
+  padding-top: calc(24px + env(safe-area-inset-top));
+}
+
+.main-welcome {
+  color: #c29432;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.main-nombre {
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.main-legajo {
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 12px;
+}
+
+/* Logo box — long press activa modo prueba */
+.main-logo-box {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: rgba(194, 148, 50, 0.18);
+  border: 1px solid rgba(194, 148, 50, 0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.main-logo-r {
+  color: #c29432;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.main-logo-uy {
+  color: #c29432;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  margin-top: 2px;
+}
+
+/* ── SECCIONES ── */
+.main-section {
+  padding: 0 16px 14px;
+}
+
+/* ── GLASS CARD base ── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+}
+
+/* ── JORNADA CARD ── */
+.main-jornada-card {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.main-jornada-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.main-jornada-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6b7280;
+  flex-shrink: 0;
+}
+
+.main-jornada-dot.activa {
+  background: #10b981;
+}
+
+.main-jornada-label {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.main-jornada-orden {
+  color: #c29432;
+  font-size: 11px;
+  font-family: monospace;
+}
+
+/* ── LABEL OPERACIONES ── */
+.main-ops-label {
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+/* ── GRID DE BOTONES ── */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ── GLASS BUTTON ── */
+.glass-btn {
+  background: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.glass-btn:active {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.glass-btn-icon {
+  font-size: 26px;
+  margin-bottom: 8px;
+  line-height: 1;
+}
+
+.glass-btn-title {
+  color: white;
+  font-size: 13px;
+  font-weight: 500;
+  display: block;
+}
+
+.glass-btn-sub {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+  margin-top: 3px;
+  display: block;
+}
+
+/* Botón ancho completo (historial) */
+.glass-btn-full {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.glass-btn-full .glass-btn-icon {
+  margin-bottom: 0;
+  font-size: 22px;
+}
+
+.glass-btn-full .glass-btn-title {
+  font-size: 14px;
+}
+
+/* ── BOTÓN FINALIZAR ── */
+.glass-btn-danger {
+  background: rgba(198, 40, 40, 0.60);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 100, 100, 0.25);
+  border-radius: 14px;
+  padding: 15px;
+  text-align: center;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.glass-btn-danger:active {
+  background: rgba(198, 40, 40, 0.80);
+}
+
+/* ── VERSIÓN ── */
+.main-version {
+  color: rgba(255, 255, 255, 0.18);
+  font-size: 11px;
+  padding: 4px 20px 20px;
+}
+
+/* ── MODO PRUEBA (oculto) ── */
+.glass-btn-prueba {
+  width: 100%;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 10px;
+  padding: 12px;
+  color: #f59e0b;
+  font-size: 13px;
+  cursor: pointer;
 }

@@ -93,48 +93,87 @@
 </div>
 
 <!-- ================= MAIN SCREEN ================= -->
-<div id="mainScreen" class="screen">
+<div id="mainScreen" class="screen main-screen-bg">
 
-  <div class="header-bar">
-    <h1>Gestión de Viajes</h1>
-    <p>Sistema de control de flota</p>
-    <p id="baseChoferBadge">Base: —</p>
+  <!-- OVERLAY oscuro sobre la imagen de fondo -->
+  <div class="main-bg-overlay"></div>
+
+  <!-- HEADER -->
+  <div class="main-header">
+    <div class="main-header-left">
+      <div class="main-welcome">Bienvenido</div>
+      <div class="main-nombre" id="mainNombreChofer">—</div>
+      <div class="main-legajo" id="mainLegajoChofer">Legajo — · —</div>
+    </div>
+    <div class="main-logo-box" id="mainLogoTrigger">
+      <span class="main-logo-r">R</span>
+      <span class="main-logo-uy">UY</span>
+    </div>
   </div>
 
-  <div class="screen-container">
-
-    <h3>Estado de la jornada</h3>
-
-    <div style="
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      margin-bottom:10px;
-      padding:8px;
-      background:#eef2ff;
-      border-radius:8px;
-      font-size:14px;
-    ">
-      <div id="ordenActivaInfo"></div>
+  <!-- CARD JORNADA ACTIVA -->
+  <div class="main-section">
+    <div class="glass-card main-jornada-card">
+      <div class="main-jornada-left">
+        <div class="main-jornada-dot" id="mainJornadaDot"></div>
+        <div class="main-jornada-label">Jornada activa</div>
+      </div>
+      <div id="ordenActivaInfo" class="main-jornada-orden"></div>
       <div id="bloqueCerrarJornada"></div>
     </div>
-
-    <div id="viajeEnCursoContainer"></div>
-
-    <h3>Operaciones del día</h3>
-
-    <div class="menu-tarjetas">
-      <button class="card-btn" onclick="abrirViajeSimple()">🚗 Nuevo Viaje</button>
-      <button class="card-btn" onclick="showScreen('listaViajesScreen')">📄 Ver Viajes</button>
-      <button class="card-btn" onclick="showScreen('nuevaGuardiaScreen')">➕ Registrar Guardia</button>
-      <button class="card-btn" onclick="showScreen('listaGuardiasScreen')">🕒 Ver Guardias</button>
-      <button class="card-btn" onclick="abrirHistorial()">📊 Historial</button>
-      <button class="card-btn" onclick="mostrarPanelPrueba()" style="border-color:#f59e0b;color:#f59e0b;">🧪 Modo Prueba</button>
-    </div>
-
   </div>
-</div>
 
+  <!-- VIAJE EN CURSO -->
+  <div id="viajeEnCursoContainer" class="main-section"></div>
+
+  <!-- OPERACIONES -->
+  <div class="main-section">
+    <div class="main-ops-label">Operaciones</div>
+    <div class="main-grid">
+      <button class="glass-btn" onclick="abrirViajeSimple()">
+        <span class="glass-btn-icon">🚌</span>
+        <span class="glass-btn-title">Nuevo viaje</span>
+        <span class="glass-btn-sub">Registrar</span>
+      </button>
+      <button class="glass-btn" onclick="showScreen('listaViajesScreen')">
+        <span class="glass-btn-icon">📋</span>
+        <span class="glass-btn-title">Ver viajes</span>
+        <span class="glass-btn-sub">Historial del día</span>
+      </button>
+      <button class="glass-btn" onclick="showScreen('nuevaGuardiaScreen')">
+        <span class="glass-btn-icon">🛡️</span>
+        <span class="glass-btn-title">Registrar guardia</span>
+        <span class="glass-btn-sub">Nueva</span>
+      </button>
+      <button class="glass-btn" onclick="showScreen('listaGuardiasScreen')">
+        <span class="glass-btn-icon">🕐</span>
+        <span class="glass-btn-title">Ver guardias</span>
+        <span class="glass-btn-sub">Del día</span>
+      </button>
+      <button class="glass-btn glass-btn-full" onclick="abrirHistorial()">
+        <span class="glass-btn-icon">📊</span>
+        <span class="glass-btn-title">Historial</span>
+        <span class="glass-btn-sub">Jornadas pasadas</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- FINALIZAR JORNADA -->
+  <div class="main-section">
+    <div class="glass-btn-danger" id="btnFinalizarJornadaMain" style="display:none">
+      Finalizar jornada
+    </div>
+  </div>
+
+  <!-- VERSION -->
+  <div class="main-version">v1.7.5</div>
+
+  <!-- MODO PRUEBA — oculto, se activa con long press en el logo -->
+  <div id="modoPruebaContainer" style="display:none; padding:0 16px 12px;">
+    <button class="glass-btn-prueba" onclick="mostrarPanelPrueba()">🧪 Modo Prueba</button>
+  </div>
+
+</div>
 <!-- ================= NUEVO VIAJE ================= -->
 <div id="travelScreen" class="screen">
 

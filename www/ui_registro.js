@@ -36,7 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof iniciarAnimacionRegistro === 'function') iniciarAnimacionRegistro();
       }, 100);
     } else {
-      document.getElementById('baseChoferBadge').innerText = "Base: " + (driver.base || "Montevideo");
+      const badge = document.getElementById('baseCHoferBadge');
+      if (badge) badge.innerText = "Base: " + (driver.base || "Montevideo");
       cargarSelectorOrigen(driver.base || "Montevideo");
       showScreen('mainScreen');
       // Arrancar bootstrap (verifica cambio de dia, motores, sync)
