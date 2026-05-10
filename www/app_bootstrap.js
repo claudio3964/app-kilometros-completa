@@ -457,8 +457,12 @@ async function cargarConfiguracion() {
   }, 3500);
    // ── Geo monitoreo origen (auto-inicio viaje) ───────────────────────────
   setTimeout(() => {
+  try {
     if (typeof iniciarMonitoreoOrigen === "function") iniciarMonitoreoOrigen();
-  }, 4000)
+  } catch(e) {
+    console.warn('[GEO] iniciarMonitoreoOrigen no disponible aún:', e.message);
+  }
+}, 4000);
 
   // ── Visibilitychange — foreground/background ───────────────────────────
   if (!window.__visibilityHandler) {
