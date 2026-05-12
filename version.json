@@ -1,6 +1,6 @@
 {
-  "version": "2.1.6",
-  "changelog": "feat: card viaje en curso glass design",
+  "version": "2.1.7",
+  "changelog": "fix: eliminar baseChoferBadge inexistente en registro",
   "mandatory": false,
   "fecha": "2026-05-12"
 }
