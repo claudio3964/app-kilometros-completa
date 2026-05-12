@@ -1,6 +1,6 @@
 {
-  "version": "2.1.5",
-  "changelog": "fix formulario nuevo viaje + overlay pantalla principal",
+  "version": "2.1.6",
+  "changelog": "feat: card viaje en curso glass design",
   "mandatory": false,
-  "fecha": "2026-05-10"
+  "fecha": "2026-05-12"
 }
