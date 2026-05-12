@@ -1,6 +1,6 @@
 {
-  "version": "2.1.7",
-  "changelog": "fix: emparejar numero de version supabase y app",
+  "version": "2.1.8",
+  "changelog": "fix: boton actualizar reparado, desregistrar en sw",
   "mandatory": false,
   "fecha": "2026-05-12"
 }

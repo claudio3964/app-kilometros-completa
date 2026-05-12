@@ -291,7 +291,7 @@ window.reconciliarEstadoBG = reconciliarEstadoBG;
 // 🔄 OTA UPDATE CHECK
 // =====================================================
 
-const APP_VERSION = '2.1.7';
+const APP_VERSION = '2.1.8';
 const OTA_URL = 'https://frjeivfpldcigklwepqt.supabase.co/storage/v1/object/public/app-updates/version.json';
 
 async function checkOTA() {
@@ -350,14 +350,17 @@ function mostrarModalOTA(data) {
   `;
   document.body.appendChild(modal);
 
-  document.getElementById('btnOTAActualizar').addEventListener('click', () => {
-    if ('caches' in window) {
-      caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
-        .finally(() => location.reload(true));
-    } else {
-      location.reload(true);
-    }
-  });
+ document.getElementById('btnOTAActualizar').addEventListener('click', async () => {
+  if ('caches' in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => caches.delete(k)));
+  }
+  if ('serviceWorker' in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map(r => r.unregister()));
+  }
+  location.reload(true);
+});
 
   const btnLuego = document.getElementById('btnOTALuego');
   if (btnLuego) {
