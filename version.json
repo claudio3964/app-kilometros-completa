@@ -1,6 +1,6 @@
 {
-  "version": "2.1.8",
-  "changelog": "fix: boton actualizar reparado, desregistrar en sw",
+  "version": "2.1.9",
+  "changelog": "reparacion loop infinito actualizar ahora",
   "mandatory": false,
   "fecha": "2026-05-12"
 }
