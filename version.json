@@ -1,6 +1,6 @@
 {
-  "version": "2.1.11",
-  "changelog": "fix repracion de botones y loop actualizar ahora",
+  "version": "2.1.12",
+  "changelog": "fix: cache sw v4 forzar recarga",
   "mandatory": false,
   "fecha": "2026-05-12"
 }
