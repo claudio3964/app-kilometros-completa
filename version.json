@@ -1,6 +1,6 @@
 {
-  "version": "2.1.9",
-  "changelog": "reparacion loop infinito actualizar ahora",
+  "version": "2.1.10",
+  "changelog": "reparacion loop infinito actualizar ahora, error travels ui",
   "mandatory": false,
   "fecha": "2026-05-12"
 }
