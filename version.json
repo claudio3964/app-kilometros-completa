@@ -1,6 +1,6 @@
 {
   "version": "2.1.7",
-  "changelog": "fix: eliminar baseChoferBadge inexistente en registro",
+  "changelog": "fix: emparejar numero de version supabase y app",
   "mandatory": false,
   "fecha": "2026-05-12"
 }
