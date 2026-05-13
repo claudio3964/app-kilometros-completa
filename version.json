@@ -1,6 +1,6 @@
 {
-  "version": "2.1.13",
-  "changelog": "fix: forzar update SW en bootstrap",
+  "version": "2.1.14",
+  "changelog": "fix: eliminar baseChoferBadge bloque mismo dispositivo",
   "mandatory": false,
   "fecha": "2026-05-13"
 }

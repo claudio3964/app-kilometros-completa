@@ -291,7 +291,7 @@ window.reconciliarEstadoBG = reconciliarEstadoBG;
 // 🔄 OTA UPDATE CHECK
 // =====================================================
 
-const APP_VERSION = '2.1.13';
+const APP_VERSION = '2.1.14';
 const OTA_URL = 'https://frjeivfpldcigklwepqt.supabase.co/storage/v1/object/public/app-updates/version.json';
 
 async function checkOTA() {
