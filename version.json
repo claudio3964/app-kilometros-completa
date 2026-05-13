@@ -1,6 +1,6 @@
 {
-  "version": "2.1.12",
-  "changelog": "fix: cache sw v4 forzar recarga",
+  "version": "2.1.13",
+  "changelog": "fix: forzar update SW en bootstrap",
   "mandatory": false,
-  "fecha": "2026-05-12"
+  "fecha": "2026-05-13"
 }

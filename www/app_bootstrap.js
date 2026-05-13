@@ -291,7 +291,7 @@ window.reconciliarEstadoBG = reconciliarEstadoBG;
 // 🔄 OTA UPDATE CHECK
 // =====================================================
 
-const APP_VERSION = '2.1.12';
+const APP_VERSION = '2.1.13';
 const OTA_URL = 'https://frjeivfpldcigklwepqt.supabase.co/storage/v1/object/public/app-updates/version.json';
 
 async function checkOTA() {
@@ -400,6 +400,18 @@ async function cargarConfiguracion() {
 }
 
   async function iniciarBootstrap() {
+   // Limpiar SW viejo si hay versión nueva
+  if ('serviceWorker' in navigator) {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    for (const reg of regs) {
+      const sw = reg.active;
+      if (sw) {
+        // Forzar update
+        reg.update();
+      }
+    }
+  }
+   
   await cargarConfiguracion(); // ← agregar acá
   checkOTA();
   syncActiveOrderBootstrap();
