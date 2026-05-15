@@ -4,7 +4,7 @@
 // Fix 2.6: flag notificado evita spam de notificaciones
 // =====================================================
 
-const CACHE_NAME = 'cot-app-v2';
+const CACHE_NAME = 'cot-app-v4';
 const STATE_CACHE = 'cot-bg-state-v1';
 
 const ASSETS_TO_CACHE = [
@@ -38,6 +38,20 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // JS y HTML siempre desde red primero
+  if (event.request.url.match(/\.(js|html)$/)) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+  // Resto (iconos, css) desde cache
   event.respondWith(
     caches.match(event.request).then(response => response || fetch(event.request))
   );

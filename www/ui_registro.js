@@ -87,7 +87,6 @@ async function registrarChofer() {
       // ── Mismo dispositivo — ya registrado ──
       if (choferExistente.device_id === deviceId) {
   initDriverProfile({ legajo, nombre, base, tipo, deviceId });
-  document.getElementById('baseChoferBadge').innerText = "Base: " + base;
   cargarSelectorOrigen(base);
   showScreen('mainScreen');
   return;

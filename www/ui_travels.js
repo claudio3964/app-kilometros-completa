@@ -448,24 +448,41 @@ function mostrarViajeEnCursoUI() {
   const container = document.getElementById("viajeEnCursoContainer");
   if (!container) return;
 
-  // SIEMPRE limpiar
   container.innerHTML = "";
   const order = getActiveOrder();
-  if (!order || !order.travels || order.travels.length === 0) {
-    return;
-  }
+  if (!order || !order.travels || order.travels.length === 0) return;
 
-  // Buscar en curso o programado
-  const travelEnCurso = order.travels.find(t => t.status === "en_curso");
+  const travelEnCurso   = order.travels.find(t => t.status === "en_curso");
   const travelProgramado = order.travels.find(t => t.status === "programado");
-  if (!travelEnCurso && !travelProgramado) {
-    return;
-  }
+  if (!travelEnCurso && !travelProgramado) return;
+
   const travel = travelEnCurso || travelProgramado;
   const esProgramado = travel.status === "programado";
-  const card = document.createElement("div");
-  card.style.cssText = "\n    background:".concat(esProgramado ? "#fff3cd" : "#e8f5e9", ";\n    border:1px solid ").concat(esProgramado ? "#ffc107" : "#4caf50", ";\n    border-radius:12px;\n    padding:12px;\n    margin-bottom:12px;\n  ");
 
+  const card = document.createElement("div");
+
+  // ── NUEVO: glass oscuro igual que .glass-btn ──
+   if (esProgramado) {
+    card.style.cssText = `
+      background: rgba(194,148,50,0.15);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(194,148,50,0.35);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    `;  
+  } else {
+    card.style.cssText = `
+      background: rgba(255,255,255,0.10);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+    `;
+  }
   // ============================
   // TIEMPO
   // ============================
@@ -532,8 +549,8 @@ function mostrarViajeEnCursoUI() {
   card.innerHTML += estadoDuracionHTML;
   card.innerHTML += '<div style="margin-top:10px">' + botonesHTML + '</div>';
   container.appendChild(card);
-}
 
+}
 // =====================================================
 // FINALIZAR VIAJE DESDE UI (CON CÁLCULO REAL)
 // FIX PROFESIONAL — SOPORTA CRUCE DE MEDIANOCHE
