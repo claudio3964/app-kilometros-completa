@@ -1,6 +1,6 @@
 {
-  "version": "2.1.14",
-  "changelog": "fix: eliminar baseChoferBadge bloque mismo dispositivo",
+  "version": "2.1.15",
+  "changelog": "fix: guardia monitor push FCM y limpieza",
   "mandatory": false,
-  "fecha": "2026-05-13"
+  "fecha": "2026-05-15"
 }
