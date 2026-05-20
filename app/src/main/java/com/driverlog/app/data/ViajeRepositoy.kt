@@ -5,12 +5,13 @@ import androidx.work.*
 import com.driverlog.app.worker.ActivarViajeWorker
 import kotlinx.coroutines.flow.Flow
 import java.util.concurrent.TimeUnit
-
+import android.util.Log
 class ViajeRepository(private val context: Context) {
 
     private val db = CotDatabase.getInstance(context)
     private val dao = db.viajeDao()
     private val guardiaDao = db.guardiaDao()
+    private val jornadaDao = db.jornadaDao()
     private val supabase = SupabaseService(context)
 
     // ── Observar viajes desde Room (reactivo) ──
@@ -125,4 +126,36 @@ class ViajeRepository(private val context: Context) {
         val hours = (ahora - guardia.createdAt) / 3600000.0
         guardiaDao.finalizarGuardia(guardiaId, "finalizada", fin, hours)
     }
+    // ── Jornadas ──
+    suspend fun getOCrearJornada(legajo: String): Jornada {
+        val cal = java.util.Calendar.getInstance()
+        val fecha = "${cal.get(java.util.Calendar.YEAR)}-${(cal.get(java.util.Calendar.MONTH)+1).toString().padStart(2,'0')}-${cal.get(java.util.Calendar.DAY_OF_MONTH).toString().padStart(2,'0')}"
+
+        // Buscar jornada activa de hoy
+        val existente = jornadaDao.getJornadaPorFecha(fecha, legajo)
+        if (existente != null) return existente
+
+        // Crear nueva jornada
+        val orderNumber = "$legajo-${fecha.replace("-","")}"
+        val jornada = Jornada(
+            orderNumber = orderNumber,
+            legajo = legajo,
+            fecha = fecha,
+            status = "activa",
+            syncStatus = "pending"
+        )
+        jornadaDao.insertarJornada(jornada)
+
+        // Intentar sync a Supabase en background
+        try {
+            supabase.crearJornadaEnSupabase(jornada)
+            jornadaDao.marcarSynced(orderNumber)
+        } catch (e: Exception) {
+            Log.d("COT", "Jornada guardada local, sync pendiente")
+        }
+
+        return jornada
+    }
+
+    suspend fun getJornadaActiva(): Jornada? = jornadaDao.getJornadaActiva()
 }

@@ -20,9 +20,10 @@ class SupabaseService(private val context: Context) {
     suspend fun sincronizarJornada(legajo: String): List<Viaje> = withContext(Dispatchers.IO) {
         try {
             Log.d("COT", "Sincronizando legajo: $legajo")
+            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+            val hoy = sdf.format(java.util.Date())
             val request = Request.Builder()
-                .url("$SUPABASE_URL/rest/v1/jornadas?legajo=eq.$legajo&fecha=gte.${java.time.LocalDate.now()}&order=fecha.desc&limit=5")
-                .addHeader("apikey", SUPABASE_KEY)
+                .url("$SUPABASE_URL/rest/v1/jornadas?legajo=eq.$legajo&fecha=gte.$hoy&order=fecha.desc&limit=5")                .addHeader("apikey", SUPABASE_KEY)
                 .addHeader("Authorization", "Bearer $SUPABASE_KEY")
                 .addHeader("Content-Type", "application/json")
                 .get()
@@ -82,7 +83,44 @@ class SupabaseService(private val context: Context) {
                 false
             }
         }
-
+    suspend fun crearJornadaEnSupabase(jornada: Jornada): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val data = JSONObject().apply {
+                    put("date", jornada.fecha)
+                    put("closed", false)
+                    put("guards", org.json.JSONArray())
+                    put("legajo", jornada.legajo)
+                    put("status", "activa")
+                    put("travels", org.json.JSONArray())
+                    put("syncStatus", "synced")
+                    put("orderNumber", jornada.orderNumber)
+                }
+                val json = JSONObject().apply {
+                    put("legajo", jornada.legajo)
+                    put("empresa_id", "cot")
+                    put("chofer_id", jornada.legajo)
+                    put("order_number", jornada.orderNumber)
+                    put("fecha", jornada.fecha)
+                    put("data", data)
+                }
+                val body = json.toString().toRequestBody("application/json".toMediaType())
+                val request = Request.Builder()
+                    .url("$SUPABASE_URL/rest/v1/jornadas")
+                    .addHeader("apikey", SUPABASE_KEY)
+                    .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                    .addHeader("Content-Type", "application/json")
+                    .addHeader("Prefer", "return=minimal")
+                    .post(body)
+                    .build()
+                val response = client.newCall(request).execute()
+                Log.d("COT", "Crear jornada en Supabase: ${response.code}")
+                response.isSuccessful
+            } catch (e: Exception) {
+                Log.e("COT", "Error crear jornada: ${e.message}")
+                false
+            }
+        }
     private fun parsearViajes(json: String): List<Viaje> {
         val viajes = mutableListOf<Viaje>()
         try {
