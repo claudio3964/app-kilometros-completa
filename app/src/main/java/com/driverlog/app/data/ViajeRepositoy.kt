@@ -135,7 +135,16 @@ class ViajeRepository(private val context: Context) {
         val fin = String.format("%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
         val hours = (ahora - guardia.createdAt) / 3600000.0
         guardiaDao.finalizarGuardia(guardiaId, "finalizada", fin, hours)
+
+        // Sync a Supabase
+        try {
+            supabase.finalizarGuardiaEnSupabase(guardiaId, guardia.orderNumber, fin, hours)
+            Log.d("COT", "Guardia finalizada en Supabase")
+        } catch (e: Exception) {
+            Log.e("COT", "Error finalizar guardia Supabase: ${e.message}")
+        }
     }
+
     // ── Jornadas ──
     suspend fun getOCrearJornada(legajo: String): Jornada {
         val cal = java.util.Calendar.getInstance()

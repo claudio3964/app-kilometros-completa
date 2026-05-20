@@ -225,4 +225,30 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
             false
         }
     }
+    suspend fun finalizarGuardiaEnSupabase(guardiaId: String, orderNumber: String, fin: String, hours: Double): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val json = JSONObject().apply {
+                    put("p_guardia_id", guardiaId)
+                    put("p_order_number", orderNumber)
+                    put("p_fin", fin)
+                    put("p_hours", hours)
+                    put("p_status", "finalizada")
+                }
+                val body = json.toString().toRequestBody("application/json".toMediaType())
+                val request = Request.Builder()
+                    .url("$SUPABASE_URL/rest/v1/rpc/finalizar_guardia_en_jornada")
+                    .addHeader("apikey", SUPABASE_KEY)
+                    .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                    .addHeader("Content-Type", "application/json")
+                    .post(body)
+                    .build()
+                val response = client.newCall(request).execute()
+                Log.d("COT", "Finalizar guardia en Supabase: ${response.code}")
+                response.isSuccessful
+            } catch (e: Exception) {
+                Log.e("COT", "Error finalizar guardia: ${e.message}")
+                false
+            }
+        }
 }
