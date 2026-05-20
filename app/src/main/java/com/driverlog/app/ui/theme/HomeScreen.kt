@@ -16,7 +16,7 @@ import com.driverlog.app.data.GeoTerminalService
 import com.driverlog.app.data.Viaje
 import com.driverlog.app.data.ViajeRepository
 import kotlinx.coroutines.launch
-
+import com.driverlog.app.data.Guardia
 @Composable
 fun HomeScreen(
     legajo: String,
@@ -29,7 +29,12 @@ fun HomeScreen(
     var viajeEnCurso by remember { mutableStateOf<Viaje?>(null) }
     var isSyncing by remember { mutableStateOf(false) }
     var mensajeGeo by remember { mutableStateOf<String?>(null) }
+    val guardias by repository.getTodasLasGuardias().collectAsState(initial = emptyList())
+    var guardiaEnCurso by remember { mutableStateOf<Guardia?>(null) }
 
+    LaunchedEffect(Unit) {
+        guardiaEnCurso = repository.getGuardiaEnCurso()
+    }
     // Broadcast receiver — escucha cierre automático por GPS
     DisposableEffect(Unit) {
         val receiver = object : android.content.BroadcastReceiver() {
@@ -42,7 +47,12 @@ fun HomeScreen(
             }
         }
         val filter = android.content.IntentFilter("com.driverlog.VIAJE_FINALIZADO")
-        context.registerReceiver(receiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(receiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            context.registerReceiver(receiver, filter)
+        }
         onDispose { context.unregisterReceiver(receiver) }
     }
 
@@ -78,7 +88,52 @@ fun HomeScreen(
         }
 
         HorizontalDivider()
-
+// Guardia
+        Card(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if (guardiaEnCurso != null) Color(0xFF1A237E) else MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Row(
+                modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        if (guardiaEnCurso != null) "🛡 GUARDIA EN CURSO" else "Sin guardia activa",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 13.sp,
+                        color = if (guardiaEnCurso != null) Color.White else Color.Gray
+                    )
+                    if (guardiaEnCurso != null) {
+                        Text("Inicio: ${guardiaEnCurso!!.inicio}", fontSize = 12.sp, color = Color(0xFFBBBBBB))
+                    }
+                }
+                if (guardiaEnCurso == null) {
+                    Button(onClick = {
+                        scope.launch {
+                            guardiaEnCurso = repository.iniciarGuardia()
+                        }
+                    }) {
+                        Text("Iniciar guardia")
+                    }
+                } else {
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                repository.finalizarGuardia(guardiaEnCurso!!.id)
+                                guardiaEnCurso = null
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF5350))
+                    ) {
+                        Text("Finalizar")
+                    }
+                }
+            }
+        }
         // Mensaje geo automático
         mensajeGeo?.let { msg ->
             Card(

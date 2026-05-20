@@ -6,13 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [Viaje::class],
-    version = 1,
+    entities = [Viaje::class, Guardia::class],
+    version = 2,
     exportSchema = false
 )
 abstract class CotDatabase : RoomDatabase() {
 
     abstract fun viajeDao(): ViajeDao
+    abstract fun guardiaDao(): GuardiaDao
 
     companion object {
         @Volatile
