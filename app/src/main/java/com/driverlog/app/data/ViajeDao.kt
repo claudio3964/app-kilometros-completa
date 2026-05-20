@@ -6,7 +6,11 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ViajeDao {
 
-    @Query("SELECT * FROM viajes ORDER BY inicioProgramado ASC")
+    @Query("""
+    SELECT * FROM viajes 
+    WHERE date(inicioProgramado / 1000, 'unixepoch') >= date('now')
+    ORDER BY inicioProgramado ASC
+""")
     fun getTodosLosViajes(): Flow<List<Viaje>>
 
     @Query("SELECT * FROM viajes WHERE status = 'programado' ORDER BY inicioProgramado ASC")

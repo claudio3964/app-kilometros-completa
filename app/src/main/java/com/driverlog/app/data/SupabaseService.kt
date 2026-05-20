@@ -21,7 +21,7 @@ class SupabaseService(private val context: Context) {
         try {
             Log.d("COT", "Sincronizando legajo: $legajo")
             val request = Request.Builder()
-                .url("$SUPABASE_URL/rest/v1/jornadas?legajo=eq.$legajo&order=fecha.desc&limit=5")
+                .url("$SUPABASE_URL/rest/v1/jornadas?legajo=eq.$legajo&fecha=gte.${java.time.LocalDate.now()}&order=fecha.desc&limit=5")
                 .addHeader("apikey", SUPABASE_KEY)
                 .addHeader("Authorization", "Bearer $SUPABASE_KEY")
                 .addHeader("Content-Type", "application/json")
