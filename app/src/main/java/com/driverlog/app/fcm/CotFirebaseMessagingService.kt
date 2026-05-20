@@ -12,6 +12,7 @@ import com.driverlog.app.worker.ActivarViajeWorker
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import java.util.concurrent.TimeUnit
+import android.util.Log
 
 class CotFirebaseMessagingService : FirebaseMessagingService() {
 
@@ -75,6 +76,7 @@ class CotFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
+        Log.d("COT", "FCM Token nuevo: $token")
         // Guardar el nuevo token en Supabase
         val prefs = getSharedPreferences("cot_prefs", Context.MODE_PRIVATE)
         prefs.edit().putString("fcm_token", token).apply()
@@ -120,12 +122,14 @@ class CotFirebaseMessagingService : FirebaseMessagingService() {
         val notificationManager =
             getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        val channel = NotificationChannel(
-            channelId,
-            "Viajes COT",
-            NotificationManager.IMPORTANCE_HIGH
-        )
-        notificationManager.createNotificationChannel(channel)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                channelId,
+                "Viajes COT",
+                NotificationManager.IMPORTANCE_HIGH
+            )
+            notificationManager.createNotificationChannel(channel)
+        }
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
