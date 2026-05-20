@@ -95,6 +95,7 @@ class SupabaseService(private val context: Context) {
                     put("travels", org.json.JSONArray())
                     put("syncStatus", "synced")
                     put("orderNumber", jornada.orderNumber)
+                    put("horaInicio", jornada.horaInicio)
                 }
                 val json = JSONObject().apply {
                     put("legajo", jornada.legajo)
@@ -102,6 +103,7 @@ class SupabaseService(private val context: Context) {
                     put("chofer_id", jornada.legajo)
                     put("order_number", jornada.orderNumber)
                     put("fecha", jornada.fecha)
+                    put("hora_inicio", jornada.horaInicio)
                     put("data", data)
                 }
                 val body = json.toString().toRequestBody("application/json".toMediaType())
@@ -186,4 +188,41 @@ class SupabaseService(private val context: Context) {
                 false
             }
         }
+
+suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boolean =
+    withContext(Dispatchers.IO) {
+        try {
+            val guardiaJson = JSONObject().apply {
+                put("id", guardia.id)
+                put("dia", guardia.dia)
+                put("inicio", guardia.inicio)
+                put("fin", guardia.fin)
+                put("type", guardia.type)
+                put("hours", guardia.hours)
+                put("status", guardia.status)
+                put("viatico", guardia.viatico)
+                put("kmGuardia", guardia.kmGuardia)
+                put("createdAt", guardia.createdAt)
+                put("asignadoPorAdmin", guardia.asignadoPorAdmin)
+            }
+            val json = JSONObject().apply {
+                put("p_order_number", orderNumber)
+                put("p_guardia", guardiaJson)
+            }
+            val body = json.toString().toRequestBody("application/json".toMediaType())
+            val request = Request.Builder()
+                .url("$SUPABASE_URL/rest/v1/rpc/agregar_guardia_a_jornada")
+                .addHeader("apikey", SUPABASE_KEY)
+                .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                .addHeader("Content-Type", "application/json")
+                .post(body)
+                .build()
+            val response = client.newCall(request).execute()
+            Log.d("COT", "Agregar guardia a jornada: ${response.code}")
+            response.isSuccessful
+        } catch (e: Exception) {
+            Log.e("COT", "Error agregar guardia: ${e.message}")
+            false
+        }
     }
+}

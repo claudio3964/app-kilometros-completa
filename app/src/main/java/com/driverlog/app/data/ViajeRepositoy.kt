@@ -100,7 +100,7 @@ class ViajeRepository(private val context: Context) {
     fun getTodasLasGuardias() = guardiaDao.getTodasLasGuardias()
     suspend fun getGuardiaEnCurso(): Guardia? = guardiaDao.getGuardiaEnCurso()
 
-    suspend fun iniciarGuardia(type: String = "comun"): Guardia {
+    suspend fun iniciarGuardia(orderNumber: String, type: String = "comun"): Guardia {
         val ahora = System.currentTimeMillis()
         val cal = java.util.Calendar.getInstance()
         val hora = String.format("%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
@@ -112,9 +112,19 @@ class ViajeRepository(private val context: Context) {
             inicio = hora,
             type = type,
             status = "en_curso",
-            createdAt = ahora
+            createdAt = ahora,
+            orderNumber = orderNumber
         )
         guardiaDao.insertarGuardia(guardia)
+
+        // Sync a Supabase
+        try {
+            supabase.agregarGuardiaAJornada(orderNumber, guardia)
+            Log.d("COT", "Guardia sincronizada a Supabase")
+        } catch (e: Exception) {
+            Log.e("COT", "Error sync guardia: ${e.message}")
+        }
+
         return guardia
     }
 
@@ -129,6 +139,7 @@ class ViajeRepository(private val context: Context) {
     // ── Jornadas ──
     suspend fun getOCrearJornada(legajo: String): Jornada {
         val cal = java.util.Calendar.getInstance()
+        val hora = String.format("%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
         val fecha = "${cal.get(java.util.Calendar.YEAR)}-${(cal.get(java.util.Calendar.MONTH)+1).toString().padStart(2,'0')}-${cal.get(java.util.Calendar.DAY_OF_MONTH).toString().padStart(2,'0')}"
 
         // Buscar jornada activa de hoy
@@ -141,6 +152,7 @@ class ViajeRepository(private val context: Context) {
             orderNumber = orderNumber,
             legajo = legajo,
             fecha = fecha,
+            horaInicio = hora,
             status = "activa",
             syncStatus = "pending"
         )

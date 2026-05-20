@@ -114,7 +114,8 @@ fun HomeScreen(
                 if (guardiaEnCurso == null) {
                     Button(onClick = {
                         scope.launch {
-                            guardiaEnCurso = repository.iniciarGuardia()
+                            val jornada = repository.getOCrearJornada(legajo)
+                            guardiaEnCurso = repository.iniciarGuardia(jornada.orderNumber)
                         }
                     }) {
                         Text("Iniciar guardia")

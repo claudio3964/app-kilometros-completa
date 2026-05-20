@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [Viaje::class, Guardia::class, Jornada::class],
-    version = 3,
+    version = 7,
     exportSchema = false
 )
 abstract class CotDatabase : RoomDatabase() {

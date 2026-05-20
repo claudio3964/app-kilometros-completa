@@ -11,5 +11,6 @@ data class Jornada(
     val status: String = "activa",
     val syncStatus: String = "pending",
     val createdAt: Long = System.currentTimeMillis(),
-    val closedAt: Long? = null
+    val closedAt: Long? = null,
+    val horaInicio: String = ""
 )

@@ -15,5 +15,6 @@ data class Guardia(
     val viatico: Boolean = false,
     val kmGuardia: Double = 0.0,
     val asignadoPorAdmin: Boolean = false,
+    val orderNumber: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )
