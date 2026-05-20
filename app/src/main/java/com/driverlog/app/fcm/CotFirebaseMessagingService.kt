@@ -27,14 +27,47 @@ class CotFirebaseMessagingService : FirebaseMessagingService() {
                 val inicioProgramado = data["inicioProgramado"]?.toLongOrNull() ?: return
                 val origen = data["origen"] ?: ""
                 val destino = data["destino"] ?: ""
+                val orderNumber = data["orderNumber"] ?: ""
 
                 programarActivacionViaje(viajeId, inicioProgramado, origen, destino)
+
+                // Notificar a la UI para que sincronice
+                val intent = Intent("com.driverlog.NUEVO_VIAJE_ASIGNADO").apply {
+                    putExtra("viajeId", viajeId)
+                    putExtra("origen", origen)
+                    putExtra("destino", destino)
+                    putExtra("orderNumber", orderNumber)
+                }
+                sendBroadcast(intent)
+            }
+            "guardia_asignada" -> {
+                val orderNumber = data["orderNumber"] ?: ""
+                val tipo_guardia = data["tipo_guardia"] ?: "comun"
+
+                mostrarNotificacion(
+                    titulo = "🛡 Guardia asignada",
+                    cuerpo = "Tenés una guardia asignada — abrí la app para iniciarla"
+                )
+                val intent = Intent("com.driverlog.GUARDIA_ASIGNADA").apply {
+                    putExtra("orderNumber", orderNumber)
+                    putExtra("tipo_guardia", tipo_guardia)
+                }
+                sendBroadcast(intent)
             }
             "sync_jornada" -> {
-                // Notificar a la app que sincronice
                 mostrarNotificacion(
                     titulo = "Nueva jornada disponible",
                     cuerpo = "Abrí la app para ver tus viajes programados"
+                )
+                val intent = Intent("com.driverlog.SYNC_JORNADA")
+                sendBroadcast(intent)
+            }
+            "mensaje_despacho" -> {
+                val mensaje = data["mensaje"] ?: ""
+                val remitente = data["remitente"] ?: "Despacho"
+                mostrarNotificacion(
+                    titulo = "💬 Mensaje de $remitente",
+                    cuerpo = mensaje
                 )
             }
         }

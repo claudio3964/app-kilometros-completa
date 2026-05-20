@@ -56,6 +56,30 @@ fun HomeScreen(
                 scope.launch { guardiaEnCurso = repository.getGuardiaEnCurso() }
             }
         }
+        val receiverNuevoViaje = object : android.content.BroadcastReceiver() {
+            override fun onReceive(ctx: android.content.Context?, intent: android.content.Intent?) {
+                val origen = intent?.getStringExtra("origen") ?: ""
+                val destino = intent?.getStringExtra("destino") ?: ""
+                mensajeGeo = "🚌 Nuevo viaje asignado: $origen → $destino"
+                scope.launch {
+                    isSyncing = true
+                    repository.sincronizarDesdeSupabase(legajo)
+                    isSyncing = false
+                }
+            }
+        }
+        val receiverSyncJornada = object : android.content.BroadcastReceiver() {
+            override fun onReceive(ctx: android.content.Context?, intent: android.content.Intent?) {
+                scope.launch {
+                    isSyncing = true
+                    repository.sincronizarDesdeSupabase(legajo)
+                    isSyncing = false
+                }
+            }
+        }
+
+        val filterNuevoViaje = android.content.IntentFilter("com.driverlog.NUEVO_VIAJE_ASIGNADO")
+        val filterSyncJornada = android.content.IntentFilter("com.driverlog.SYNC_JORNADA")
 
         val filterViaje = android.content.IntentFilter("com.driverlog.VIAJE_FINALIZADO")
         val filterGuardia = android.content.IntentFilter("com.driverlog.GUARDIA_8_HORAS")
@@ -65,6 +89,8 @@ fun HomeScreen(
             context.registerReceiver(receiverViaje, filterViaje, android.content.Context.RECEIVER_NOT_EXPORTED)
             context.registerReceiver(receiverGuardia, filterGuardia, android.content.Context.RECEIVER_NOT_EXPORTED)
             context.registerReceiver(receiverCortada, filterCortada, android.content.Context.RECEIVER_NOT_EXPORTED)
+            context.registerReceiver(receiverNuevoViaje, filterNuevoViaje, android.content.Context.RECEIVER_NOT_EXPORTED)
+            context.registerReceiver(receiverSyncJornada, filterSyncJornada, android.content.Context.RECEIVER_NOT_EXPORTED)
         } else {
             @Suppress("UnspecifiedRegisterReceiverFlag")
             context.registerReceiver(receiverViaje, filterViaje)
@@ -72,14 +98,19 @@ fun HomeScreen(
             context.registerReceiver(receiverGuardia, filterGuardia)
             @Suppress("UnspecifiedRegisterReceiverFlag")
             context.registerReceiver(receiverCortada, filterCortada)
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            context.registerReceiver(receiverNuevoViaje, filterNuevoViaje)
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            context.registerReceiver(receiverSyncJornada, filterSyncJornada)
         }
 
         onDispose {
             context.unregisterReceiver(receiverViaje)
             context.unregisterReceiver(receiverGuardia)
             context.unregisterReceiver(receiverCortada)
-        }
-    }
+            context.unregisterReceiver(receiverNuevoViaje)
+            context.unregisterReceiver(receiverSyncJornada)
+    }}
     LaunchedEffect(legajo) {
         viajeEnCurso = repository.getViajeEnCurso()
         scope.launch {
