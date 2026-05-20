@@ -25,11 +25,45 @@ class ViajeRepository(private val context: Context) {
         val viajes = supabase.sincronizarJornada(legajo)
         if (viajes.isNotEmpty()) {
             dao.insertarViajes(viajes)
-            // Programar WorkManager para cada viaje programado
             val ahora = System.currentTimeMillis()
             viajes.forEach { viaje ->
                 if (viaje.status == "programado" && viaje.inicioProgramado > ahora) {
                     programarActivacion(viaje)
+                    // Corte automático de guardia 15 min antes del viaje
+                    val minutosParaViaje = (viaje.inicioProgramado - ahora) / 60000
+                    if (minutosParaViaje <= 15) {
+                        val guardiaActiva = guardiaDao.getGuardiaEnCurso()
+                        if (guardiaActiva != null) {
+                            Log.d("COT", "Cortando guardia automáticamente - viaje en $minutosParaViaje min")
+                            finalizarGuardia(guardiaActiva.id)
+                            // Notificar a la UI
+                            val intent = android.content.Intent("com.driverlog.GUARDIA_CORTADA").apply {
+                                putExtra("motivo", "Viaje programado en $minutosParaViaje minutos")
+                            }
+                            context.sendBroadcast(intent)
+                        }
+                    } else {
+                        // Programar corte automático
+                        val demoraCorte = viaje.inicioProgramado - (15 * 60 * 1000L) - ahora
+                        if (demoraCorte > 0) {
+                            val inputData = androidx.work.workDataOf(
+                                "viajeId" to viaje.id,
+                                "legajo" to legajo
+                            )
+                            val workRequest = androidx.work.OneTimeWorkRequestBuilder<com.driverlog.app.worker.CortarGuardiaWorker>()
+                                .setInitialDelay(demoraCorte, java.util.concurrent.TimeUnit.MILLISECONDS)
+                                .setInputData(inputData)
+                                .addTag("cortar_guardia_${viaje.id}")
+                                .build()
+                            androidx.work.WorkManager.getInstance(context)
+                                .enqueueUniqueWork(
+                                    "cortar_guardia_${viaje.id}",
+                                    androidx.work.ExistingWorkPolicy.REPLACE,
+                                    workRequest
+                                )
+                            Log.d("COT", "Corte de guardia programado para ${demoraCorte/60000} min")
+                        }
+                    }
                 }
             }
         }

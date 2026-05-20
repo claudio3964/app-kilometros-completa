@@ -35,47 +35,51 @@ fun HomeScreen(
     LaunchedEffect(Unit) {
         guardiaEnCurso = repository.getGuardiaEnCurso()
     }
-    // Broadcast receiver — escucha cierre automático por GPS
     DisposableEffect(Unit) {
-        // Receiver viaje finalizado por GPS
         val receiverViaje = object : android.content.BroadcastReceiver() {
             override fun onReceive(ctx: android.content.Context?, intent: android.content.Intent?) {
                 val destino = intent?.getStringExtra("destino") ?: ""
                 mensajeGeo = "✅ Llegaste a $destino — viaje cerrado automáticamente"
-                scope.launch {
-                    viajeEnCurso = repository.getViajeEnCurso()
-                }
+                scope.launch { viajeEnCurso = repository.getViajeEnCurso() }
             }
         }
-
-        // Receiver guardia 8 horas
         val receiverGuardia = object : android.content.BroadcastReceiver() {
             override fun onReceive(ctx: android.content.Context?, intent: android.content.Intent?) {
-                val guardiaId = intent?.getStringExtra("guardiaId") ?: ""
                 val inicio = intent?.getStringExtra("inicio") ?: ""
                 mensajeGeo = "⏰ Llevás 8 horas de guardia desde las $inicio — ¿finalizás?"
+            }
+        }
+        val receiverCortada = object : android.content.BroadcastReceiver() {
+            override fun onReceive(ctx: android.content.Context?, intent: android.content.Intent?) {
+                val motivo = intent?.getStringExtra("motivo") ?: ""
+                mensajeGeo = "✂️ Guardia cortada automáticamente — $motivo"
+                scope.launch { guardiaEnCurso = repository.getGuardiaEnCurso() }
             }
         }
 
         val filterViaje = android.content.IntentFilter("com.driverlog.VIAJE_FINALIZADO")
         val filterGuardia = android.content.IntentFilter("com.driverlog.GUARDIA_8_HORAS")
+        val filterCortada = android.content.IntentFilter("com.driverlog.GUARDIA_CORTADA")
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             context.registerReceiver(receiverViaje, filterViaje, android.content.Context.RECEIVER_NOT_EXPORTED)
             context.registerReceiver(receiverGuardia, filterGuardia, android.content.Context.RECEIVER_NOT_EXPORTED)
+            context.registerReceiver(receiverCortada, filterCortada, android.content.Context.RECEIVER_NOT_EXPORTED)
         } else {
             @Suppress("UnspecifiedRegisterReceiverFlag")
             context.registerReceiver(receiverViaje, filterViaje)
             @Suppress("UnspecifiedRegisterReceiverFlag")
             context.registerReceiver(receiverGuardia, filterGuardia)
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            context.registerReceiver(receiverCortada, filterCortada)
         }
 
         onDispose {
             context.unregisterReceiver(receiverViaje)
             context.unregisterReceiver(receiverGuardia)
+            context.unregisterReceiver(receiverCortada)
         }
     }
-
     LaunchedEffect(legajo) {
         viajeEnCurso = repository.getViajeEnCurso()
         scope.launch {
