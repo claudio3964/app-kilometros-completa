@@ -163,9 +163,15 @@ fun ViajeCard(viaje: Viaje, onActivar: () -> Unit) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
-                Text("${viaje.origen} → ${viaje.destino}", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(
+                    "${viaje.origen} → ${viaje.destino}",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    modifier = Modifier.weight(1f).padding(end = 8.dp)
+                )
                 StatusBadge(viaje.status)
             }
             Spacer(modifier = Modifier.height(4.dp))

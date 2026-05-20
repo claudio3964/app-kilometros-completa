@@ -42,22 +42,28 @@ class SupabaseService(private val context: Context) {
         withContext(Dispatchers.IO) {
             try {
                 val json = JSONObject().apply {
-                    put("status", "en_curso")
-                    put("inicio_real", inicioReal)
+                    put("p_viaje_id", viajeId)
+                    put("p_status", "en_curso")
+                    put("p_inicio_real", inicioReal)
                 }
                 val body = json.toString().toRequestBody("application/json".toMediaType())
                 val request = Request.Builder()
-                    .url("$SUPABASE_URL/rest/v1/viajes?id=eq.$viajeId")
+                    .url("$SUPABASE_URL/rest/v1/rpc/actualizar_viaje_en_jornada")
                     .addHeader("apikey", SUPABASE_KEY)
                     .addHeader("Authorization", "Bearer $SUPABASE_KEY")
                     .addHeader("Content-Type", "application/json")
-                    .patch(body)
+                    .post(body)
                     .build()
-                client.newCall(request).execute().isSuccessful
+                val response = client.newCall(request).execute()
+                Log.d("COT", "Activar viaje en jornada: ${response.code}")
+                response.isSuccessful
             } catch (e: Exception) {
+                Log.e("COT", "Error activar viaje: ${e.message}")
                 false
             }
         }
+
+
 
     suspend fun guardarFcmToken(legajo: String, token: String): Boolean =
         withContext(Dispatchers.IO) {
@@ -118,28 +124,28 @@ class SupabaseService(private val context: Context) {
         return viajes
     }
 
-suspend fun finalizarViajeEnSupabase(viajeId: String, finReal: Long): Boolean =
-    withContext(Dispatchers.IO) {
-        try {
-            val json = JSONObject().apply {
-                put("status", "finalizado")
-                put("fin_real", finReal)
+    suspend fun finalizarViajeEnSupabase(viajeId: String, finReal: Long): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val json = JSONObject().apply {
+                    put("p_viaje_id", viajeId)
+                    put("p_status", "finalizado")
+                    put("p_fin_real", finReal)
+                }
+                val body = json.toString().toRequestBody("application/json".toMediaType())
+                val request = Request.Builder()
+                    .url("$SUPABASE_URL/rest/v1/rpc/actualizar_viaje_en_jornada")
+                    .addHeader("apikey", SUPABASE_KEY)
+                    .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                    .addHeader("Content-Type", "application/json")
+                    .post(body)
+                    .build()
+                val response = client.newCall(request).execute()
+                Log.d("COT", "Finalizar viaje en jornada: ${response.code}")
+                response.isSuccessful
+            } catch (e: Exception) {
+                Log.e("COT", "Error finalizar viaje: ${e.message}")
+                false
             }
-            val body = json.toString().toRequestBody("application/json".toMediaType())
-            val request = Request.Builder()
-                .url("$SUPABASE_URL/rest/v1/viajes?id=eq.$viajeId")
-                .addHeader("apikey", SUPABASE_KEY)
-                .addHeader("Authorization", "Bearer $SUPABASE_KEY")
-                .addHeader("Content-Type", "application/json")
-                .addHeader("Prefer", "return=minimal")
-                .patch(body)
-                .build()
-            val response = client.newCall(request).execute()
-            Log.d("COT", "Finalizando viaje en Supabase: ${response.code}")
-            response.isSuccessful
-        } catch (e: Exception) {
-            Log.e("COT", "Error finalizando viaje: ${e.message}")
-            false
         }
     }
-}
