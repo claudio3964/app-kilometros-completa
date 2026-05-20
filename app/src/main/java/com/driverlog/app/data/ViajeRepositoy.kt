@@ -124,7 +124,25 @@ class ViajeRepository(private val context: Context) {
         } catch (e: Exception) {
             Log.e("COT", "Error sync guardia: ${e.message}")
         }
+// Programar timer de 8 horas
+        val demora = 8 * 60 * 60 * 1000L // 8 horas en ms
+        val inputData = androidx.work.workDataOf(
+            "guardiaId" to guardia.id,
+            "inicio" to guardia.inicio
+        )
+        val workRequest = androidx.work.OneTimeWorkRequestBuilder<com.driverlog.app.worker.GuardiaTimerWorker>()
+            .setInitialDelay(demora, java.util.concurrent.TimeUnit.MILLISECONDS)
+            .setInputData(inputData)
+            .addTag("guardia_timer_${guardia.id}")
+            .build()
 
+        androidx.work.WorkManager.getInstance(context)
+            .enqueueUniqueWork(
+                "guardia_timer_${guardia.id}",
+                androidx.work.ExistingWorkPolicy.REPLACE,
+                workRequest
+            )
+        Log.d("COT", "Timer 8h programado para guardia ${guardia.id}")
         return guardia
     }
 

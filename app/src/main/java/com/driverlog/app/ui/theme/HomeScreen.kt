@@ -37,7 +37,8 @@ fun HomeScreen(
     }
     // Broadcast receiver — escucha cierre automático por GPS
     DisposableEffect(Unit) {
-        val receiver = object : android.content.BroadcastReceiver() {
+        // Receiver viaje finalizado por GPS
+        val receiverViaje = object : android.content.BroadcastReceiver() {
             override fun onReceive(ctx: android.content.Context?, intent: android.content.Intent?) {
                 val destino = intent?.getStringExtra("destino") ?: ""
                 mensajeGeo = "✅ Llegaste a $destino — viaje cerrado automáticamente"
@@ -46,14 +47,33 @@ fun HomeScreen(
                 }
             }
         }
-        val filter = android.content.IntentFilter("com.driverlog.VIAJE_FINALIZADO")
+
+        // Receiver guardia 8 horas
+        val receiverGuardia = object : android.content.BroadcastReceiver() {
+            override fun onReceive(ctx: android.content.Context?, intent: android.content.Intent?) {
+                val guardiaId = intent?.getStringExtra("guardiaId") ?: ""
+                val inicio = intent?.getStringExtra("inicio") ?: ""
+                mensajeGeo = "⏰ Llevás 8 horas de guardia desde las $inicio — ¿finalizás?"
+            }
+        }
+
+        val filterViaje = android.content.IntentFilter("com.driverlog.VIAJE_FINALIZADO")
+        val filterGuardia = android.content.IntentFilter("com.driverlog.GUARDIA_8_HORAS")
+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            context.registerReceiver(receiver, filter, android.content.Context.RECEIVER_NOT_EXPORTED)
+            context.registerReceiver(receiverViaje, filterViaje, android.content.Context.RECEIVER_NOT_EXPORTED)
+            context.registerReceiver(receiverGuardia, filterGuardia, android.content.Context.RECEIVER_NOT_EXPORTED)
         } else {
             @Suppress("UnspecifiedRegisterReceiverFlag")
-            context.registerReceiver(receiver, filter)
+            context.registerReceiver(receiverViaje, filterViaje)
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            context.registerReceiver(receiverGuardia, filterGuardia)
         }
-        onDispose { context.unregisterReceiver(receiver) }
+
+        onDispose {
+            context.unregisterReceiver(receiverViaje)
+            context.unregisterReceiver(receiverGuardia)
+        }
     }
 
     LaunchedEffect(legajo) {
