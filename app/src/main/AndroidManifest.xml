@@ -19,6 +19,7 @@
         android:label="COT Driver"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:name=".CotApplication"
         android:theme="@style/Theme.COTDriver">
 
         <activity
@@ -35,6 +36,13 @@
             android:name=".data.GeoTerminalService"
             android:foregroundServiceType="location"
             android:exported="false" />
+        <service
+            android:name=".fcm.CotFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
     </application>
 
