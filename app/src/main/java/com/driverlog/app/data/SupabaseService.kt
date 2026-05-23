@@ -338,7 +338,7 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
 
                 // 2. Obtener registro del chofer para este legajo
                 val reqChofer = Request.Builder()
-                    .url("$SUPABASE_URL/rest/v1/choferes?legajo=eq.$legajo&select=legajo,device_id&limit=1")
+                    .url("$SUPABASE_URL/rest/v1/choferes?legajo=eq.$legajo&select=legajo,nombre,device_id&limit=1")
                     .addHeader("apikey", SUPABASE_KEY)
                     .addHeader("Authorization", "Bearer $SUPABASE_KEY")
                     .get().build()
@@ -352,19 +352,61 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
                     )
                 }
 
-                val savedDeviceId = arrChofer.getJSONObject(0).optString("device_id", "")
+                val choferObj = arrChofer.getJSONObject(0)
+                val savedDeviceId = choferObj.optString("device_id", "")
+                val nombre = choferObj.optString("nombre", "")
                 when {
                     savedDeviceId.isEmpty() -> DeviceCheckResult.RegistrarYPermitir
                     savedDeviceId == deviceId -> DeviceCheckResult.Permitido
-                    else -> DeviceCheckResult.Bloqueado(
-                        "Este legajo ya está registrado en otro dispositivo. Contactá a administración."
-                    )
+                    else -> {
+                        insertarAlertaAcceso(legajo, nombre, deviceId, savedDeviceId)
+                        DeviceCheckResult.Bloqueado(
+                            "Este legajo ya está registrado en otro dispositivo. Contactá a administración."
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 Log.e("COT", "Error verificar dispositivo: ${e.message}")
                 DeviceCheckResult.ErrorRed
             }
         }
+
+    private suspend fun insertarAlertaAcceso(
+        legajo: String,
+        nombre: String,
+        deviceIdNuevo: String,
+        deviceIdActual: String
+    ) = withContext(Dispatchers.IO) {
+        try {
+            val sdf = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.getDefault())
+            sdf.timeZone = java.util.TimeZone.getTimeZone("UTC")
+            val timestamp = sdf.format(java.util.Date())
+
+            val json = JSONObject().apply {
+                put("empresa_id", "cot")
+                put("legajo", legajo)
+                put("nombre", nombre)
+                put("device_id_nuevo", deviceIdNuevo)
+                put("device_id_actual", deviceIdActual)
+                put("intentado_at", timestamp)
+                put("revisado", false)
+                put("resuelto", false)
+            }
+            val body = json.toString().toRequestBody("application/json".toMediaType())
+            val request = Request.Builder()
+                .url("$SUPABASE_URL/rest/v1/registro_alertas")
+                .addHeader("apikey", SUPABASE_KEY)
+                .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Prefer", "return=minimal")
+                .post(body)
+                .build()
+            val resp = client.newCall(request).execute()
+            Log.d("COT", "Alerta acceso no autorizado insertada: ${resp.code} — legajo=$legajo device=$deviceIdNuevo")
+        } catch (e: Exception) {
+            Log.e("COT", "Error insertar alerta acceso: ${e.message}")
+        }
+    }
 
     suspend fun registrarDeviceId(legajo: String, deviceId: String): Boolean =
         withContext(Dispatchers.IO) {
