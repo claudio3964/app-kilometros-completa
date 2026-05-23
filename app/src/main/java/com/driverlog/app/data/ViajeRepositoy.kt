@@ -264,6 +264,38 @@ class ViajeRepository(private val context: Context) {
 
     suspend fun getJornadaActiva(): Jornada? = jornadaDao.getJornadaActiva()
 
+    // ── Device ID ──
+    fun getCurrentDeviceId(): String =
+        android.provider.Settings.Secure.getString(
+            context.contentResolver,
+            android.provider.Settings.Secure.ANDROID_ID
+        ) ?: ""
+
+    fun getSavedDeviceId(): String =
+        context.getSharedPreferences("cot_prefs", android.content.Context.MODE_PRIVATE)
+            .getString("device_id", "") ?: ""
+
+    fun saveDeviceId(deviceId: String) {
+        context.getSharedPreferences("cot_prefs", android.content.Context.MODE_PRIVATE)
+            .edit().putString("device_id", deviceId).apply()
+    }
+
+    suspend fun verificarDispositivo(legajo: String): DeviceCheckResult {
+        val deviceId = getCurrentDeviceId()
+        val result = supabase.verificarDispositivo(legajo, deviceId)
+        when (result) {
+            is DeviceCheckResult.Permitido,
+            is DeviceCheckResult.RegistrarYPermitir -> {
+                if (result is DeviceCheckResult.RegistrarYPermitir) {
+                    supabase.registrarDeviceId(legajo, deviceId)
+                }
+                saveDeviceId(deviceId)
+            }
+            else -> { /* no guardar */ }
+        }
+        return result
+    }
+
     fun getNombre(): String =
         context.getSharedPreferences("cot_prefs", android.content.Context.MODE_PRIVATE)
             .getString("nombre", "") ?: ""

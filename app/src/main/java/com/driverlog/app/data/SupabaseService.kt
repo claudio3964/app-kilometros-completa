@@ -11,6 +11,13 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 
+sealed class DeviceCheckResult {
+    object Permitido : DeviceCheckResult()
+    object RegistrarYPermitir : DeviceCheckResult()
+    data class Bloqueado(val mensaje: String) : DeviceCheckResult()
+    object ErrorRed : DeviceCheckResult()
+}
+
 class SupabaseService(private val context: Context) {
 
     private val client = OkHttpClient()
@@ -308,6 +315,74 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
                 response.isSuccessful
             } catch (e: Exception) {
                 Log.e("COT", "Error cancelar viaje: ${e.message}")
+                false
+            }
+        }
+
+    suspend fun verificarDispositivo(legajo: String, deviceId: String): DeviceCheckResult =
+        withContext(Dispatchers.IO) {
+            try {
+                // 1. Verificar que este device_id no esté registrado con otro legajo
+                val reqDevice = Request.Builder()
+                    .url("$SUPABASE_URL/rest/v1/choferes?device_id=eq.$deviceId&legajo=neq.$legajo&select=legajo&limit=1")
+                    .addHeader("apikey", SUPABASE_KEY)
+                    .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                    .get().build()
+                val respDevice = client.newCall(reqDevice).execute()
+                val bodyDevice = respDevice.body?.string() ?: "[]"
+                if (JSONArray(bodyDevice).length() > 0) {
+                    return@withContext DeviceCheckResult.Bloqueado(
+                        "Este dispositivo ya tiene un legajo registrado."
+                    )
+                }
+
+                // 2. Obtener registro del chofer para este legajo
+                val reqChofer = Request.Builder()
+                    .url("$SUPABASE_URL/rest/v1/choferes?legajo=eq.$legajo&select=legajo,device_id&limit=1")
+                    .addHeader("apikey", SUPABASE_KEY)
+                    .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                    .get().build()
+                val respChofer = client.newCall(reqChofer).execute()
+                val bodyChofer = respChofer.body?.string() ?: "[]"
+                val arrChofer = JSONArray(bodyChofer)
+
+                if (arrChofer.length() == 0) {
+                    return@withContext DeviceCheckResult.Bloqueado(
+                        "Legajo no encontrado. Verificá el número ingresado."
+                    )
+                }
+
+                val savedDeviceId = arrChofer.getJSONObject(0).optString("device_id", "")
+                when {
+                    savedDeviceId.isEmpty() -> DeviceCheckResult.RegistrarYPermitir
+                    savedDeviceId == deviceId -> DeviceCheckResult.Permitido
+                    else -> DeviceCheckResult.Bloqueado(
+                        "Este legajo ya está registrado en otro dispositivo. Contactá a administración."
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e("COT", "Error verificar dispositivo: ${e.message}")
+                DeviceCheckResult.ErrorRed
+            }
+        }
+
+    suspend fun registrarDeviceId(legajo: String, deviceId: String): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val json = JSONObject().apply { put("device_id", deviceId) }
+                val body = json.toString().toRequestBody("application/json".toMediaType())
+                val request = Request.Builder()
+                    .url("$SUPABASE_URL/rest/v1/choferes?legajo=eq.$legajo")
+                    .addHeader("apikey", SUPABASE_KEY)
+                    .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                    .addHeader("Content-Type", "application/json")
+                    .patch(body)
+                    .build()
+                val ok = client.newCall(request).execute().isSuccessful
+                Log.d("COT", "Registrar device_id para $legajo: $ok")
+                ok
+            } catch (e: Exception) {
+                Log.e("COT", "Error registrar device_id: ${e.message}")
                 false
             }
         }
