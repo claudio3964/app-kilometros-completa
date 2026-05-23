@@ -132,6 +132,7 @@ class SupabaseService(private val context: Context) {
                 val orderNumber = jornada.optString("order_number", "")
                 val data = jornada.optJSONObject("data") ?: continue
                 val travels = data.optJSONArray("travels") ?: continue
+                Log.d("COT", "Travels en jornada ${jornada.optString("order_number")}: ${travels.length()}")
 
                 for (j in 0 until travels.length()) {
                     val t = travels.getJSONObject(j)
@@ -225,6 +226,92 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
             false
         }
     }
+    suspend fun sincronizarPerfil(legajo: String, nombre: String, base: String, tipo: String): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val json = JSONObject().apply {
+                    put("nombre", nombre)
+                    put("base", base)
+                    put("tipo", tipo)
+                }
+                val body = json.toString().toRequestBody("application/json".toMediaType())
+                val request = Request.Builder()
+                    .url("$SUPABASE_URL/rest/v1/choferes?legajo=eq.$legajo")
+                    .addHeader("apikey", SUPABASE_KEY)
+                    .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                    .addHeader("Content-Type", "application/json")
+                    .patch(body)
+                    .build()
+                client.newCall(request).execute().isSuccessful
+            } catch (e: Exception) {
+                Log.e("COT", "Error sync perfil: ${e.message}")
+                false
+            }
+        }
+
+    suspend fun agregarViajeAJornada(orderNumber: String, viaje: Viaje): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val viajeJson = JSONObject().apply {
+                    put("id", viaje.id)
+                    put("origen", viaje.origen)
+                    put("destino", viaje.destino)
+                    put("departureTime", viaje.departureTime)
+                    put("arrivalTime", viaje.arrivalTime)
+                    put("status", viaje.status)
+                    put("inicioProgramado", viaje.inicioProgramado)
+                    put("kmEmpresa", viaje.kmEmpresa)
+                    put("tipoServicio", viaje.tipoServicio)
+                    put("coche", viaje.coche ?: "")
+                    put("acoplado", viaje.acoplado)
+                    put("acopladoKm", viaje.acopladoKm)
+                }
+                val json = JSONObject().apply {
+                    put("p_order_number", orderNumber)
+                    put("p_viaje", viajeJson)
+                }
+                val body = json.toString().toRequestBody("application/json".toMediaType())
+                val request = Request.Builder()
+                    .url("$SUPABASE_URL/rest/v1/rpc/agregar_viaje_a_jornada")
+                    .addHeader("apikey", SUPABASE_KEY)
+                    .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                    .addHeader("Content-Type", "application/json")
+                    .post(body)
+                    .build()
+                val response = client.newCall(request).execute()
+                Log.d("COT", "Agregar viaje a jornada: ${response.code}")
+                response.isSuccessful
+            } catch (e: Exception) {
+                Log.e("COT", "Error agregar viaje: ${e.message}")
+                false
+            }
+        }
+
+    suspend fun cancelarViajeEnSupabase(viajeId: String): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val json = JSONObject().apply {
+                    put("p_viaje_id", viajeId)
+                    put("p_status", "cancelado")
+                    put("p_inicio_real", 0L)
+                }
+                val body = json.toString().toRequestBody("application/json".toMediaType())
+                val request = Request.Builder()
+                    .url("$SUPABASE_URL/rest/v1/rpc/actualizar_viaje_en_jornada")
+                    .addHeader("apikey", SUPABASE_KEY)
+                    .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                    .addHeader("Content-Type", "application/json")
+                    .post(body)
+                    .build()
+                val response = client.newCall(request).execute()
+                Log.d("COT", "Cancelar viaje: ${response.code}")
+                response.isSuccessful
+            } catch (e: Exception) {
+                Log.e("COT", "Error cancelar viaje: ${e.message}")
+                false
+            }
+        }
+
     suspend fun finalizarGuardiaEnSupabase(guardiaId: String, orderNumber: String, fin: String, hours: Double): Boolean =
         withContext(Dispatchers.IO) {
             try {

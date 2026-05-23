@@ -6,21 +6,22 @@ import com.driverlog.app.worker.ActivarViajeWorker
 import kotlinx.coroutines.flow.Flow
 import java.util.concurrent.TimeUnit
 import android.util.Log
+
 class ViajeRepository(private val context: Context) {
 
     private val db = CotDatabase.getInstance(context)
     private val dao = db.viajeDao()
     private val guardiaDao = db.guardiaDao()
     private val jornadaDao = db.jornadaDao()
+    private val travelStatDao = db.travelStatDao()
     private val supabase = SupabaseService(context)
 
-    // ── Observar viajes desde Room (reactivo) ──
     fun getTodosLosViajes(): Flow<List<Viaje>> = dao.getTodosLosViajes()
     fun getViajesProgramados(): Flow<List<Viaje>> = dao.getViajesProgramados()
+    fun getTodasLasJornadas(): Flow<List<Jornada>> = jornadaDao.getTodasLasJornadas()
 
     suspend fun getViajeEnCurso(): Viaje? = dao.getViajeEnCurso()
 
-    // ── Sync desde Supabase ──
     suspend fun sincronizarDesdeSupabase(legajo: String) {
         val viajes = supabase.sincronizarJornada(legajo)
         if (viajes.isNotEmpty()) {
@@ -29,39 +30,36 @@ class ViajeRepository(private val context: Context) {
             viajes.forEach { viaje ->
                 if (viaje.status == "programado" && viaje.inicioProgramado > ahora) {
                     programarActivacion(viaje)
-                    // Corte automático de guardia 15 min antes del viaje
                     val minutosParaViaje = (viaje.inicioProgramado - ahora) / 60000
                     if (minutosParaViaje <= 15) {
                         val guardiaActiva = guardiaDao.getGuardiaEnCurso()
                         if (guardiaActiva != null) {
                             Log.d("COT", "Cortando guardia automáticamente - viaje en $minutosParaViaje min")
                             finalizarGuardia(guardiaActiva.id)
-                            // Notificar a la UI
                             val intent = android.content.Intent("com.driverlog.GUARDIA_CORTADA").apply {
                                 putExtra("motivo", "Viaje programado en $minutosParaViaje minutos")
                             }
                             context.sendBroadcast(intent)
                         }
                     } else {
-                        // Programar corte automático
                         val demoraCorte = viaje.inicioProgramado - (15 * 60 * 1000L) - ahora
                         if (demoraCorte > 0) {
-                            val inputData = androidx.work.workDataOf(
+                            val inputData = workDataOf(
                                 "viajeId" to viaje.id,
                                 "legajo" to legajo
                             )
-                            val workRequest = androidx.work.OneTimeWorkRequestBuilder<com.driverlog.app.worker.CortarGuardiaWorker>()
-                                .setInitialDelay(demoraCorte, java.util.concurrent.TimeUnit.MILLISECONDS)
+                            val workRequest = OneTimeWorkRequestBuilder<com.driverlog.app.worker.CortarGuardiaWorker>()
+                                .setInitialDelay(demoraCorte, TimeUnit.MILLISECONDS)
                                 .setInputData(inputData)
                                 .addTag("cortar_guardia_${viaje.id}")
                                 .build()
-                            androidx.work.WorkManager.getInstance(context)
+                            WorkManager.getInstance(context)
                                 .enqueueUniqueWork(
                                     "cortar_guardia_${viaje.id}",
-                                    androidx.work.ExistingWorkPolicy.REPLACE,
+                                    ExistingWorkPolicy.REPLACE,
                                     workRequest
                                 )
-                            Log.d("COT", "Corte de guardia programado para ${demoraCorte/60000} min")
+                            Log.d("COT", "Corte de guardia programado para ${demoraCorte / 60000} min")
                         }
                     }
                 }
@@ -69,7 +67,6 @@ class ViajeRepository(private val context: Context) {
         }
     }
 
-    // ── Activar viaje ──
     suspend fun activarViaje(viaje: Viaje) {
         val ahora = System.currentTimeMillis()
         val inicioReal = if (ahora - viaje.inicioProgramado < 2 * 60 * 60 * 1000) {
@@ -77,35 +74,97 @@ class ViajeRepository(private val context: Context) {
         } else {
             ahora
         }
-
         dao.activarViaje(viaje.id, "en_curso", inicioReal)
         supabase.activarViajeEnSupabase(viaje.id, inicioReal)
     }
 
     suspend fun finalizarViaje(viajeId: String) {
         val ahora = System.currentTimeMillis()
+        val viaje = dao.getViajeById(viajeId)
         dao.finalizarViaje(viajeId, "finalizado", ahora)
-        // Sync a Supabase
         supabase.finalizarViajeEnSupabase(viajeId, ahora)
+        if (viaje?.inicioReal != null && viaje.inicioReal > 0) {
+            val duracion = (ahora - viaje.inicioReal) / 60000
+            if (duracion > 0) registrarDuracion("${viaje.origen}→${viaje.destino}", duracion)
+        }
     }
 
-    // ── Programar WorkManager ──
+    suspend fun cancelarViaje(viajeId: String) {
+        dao.cancelarViaje(viajeId)
+        supabase.cancelarViajeEnSupabase(viajeId)
+    }
+
+    suspend fun crearViaje(
+        legajo: String,
+        origen: String,
+        destino: String,
+        km: Int,
+        tipoServicio: String,
+        coche: String,
+        horaSalida: String,
+        horaLlegada: String,
+        inicioProgramadoMs: Long
+    ): Viaje {
+        val jornada = getOCrearJornada(legajo)
+        val ahora = System.currentTimeMillis()
+        val status = if (inicioProgramadoMs <= ahora) "en_curso" else "programado"
+        val viaje = Viaje(
+            id = "VJL-${ahora}-${origen.take(3).uppercase()}",
+            orderNumber = jornada.orderNumber,
+            origen = origen,
+            destino = destino,
+            departureTime = horaSalida,
+            arrivalTime = horaLlegada,
+            status = status,
+            inicioProgramado = inicioProgramadoMs,
+            inicioReal = if (status == "en_curso") inicioProgramadoMs else null,
+            kmEmpresa = km,
+            tipoServicio = tipoServicio,
+            coche = coche,
+            syncStatus = "local"
+        )
+        dao.insertarViaje(viaje)
+        if (status == "programado") programarActivacion(viaje)
+        try {
+            supabase.agregarViajeAJornada(jornada.orderNumber, viaje)
+        } catch (e: Exception) {
+            Log.e("COT", "Error sync nuevo viaje: ${e.message}")
+        }
+        return viaje
+    }
+
+    private suspend fun registrarDuracion(ruta: String, duracionMinutos: Long) {
+        val stat = travelStatDao.getStat(ruta)
+        val nuevo = if (stat == null) {
+            TravelStat(ruta = ruta, totalViajes = 1, totalMinutos = duracionMinutos)
+        } else {
+            stat.copy(
+                totalViajes = stat.totalViajes + 1,
+                totalMinutos = stat.totalMinutos + duracionMinutos
+            )
+        }
+        travelStatDao.insertarStat(nuevo)
+    }
+
+    suspend fun getDuracionPromedio(ruta: String): Long? {
+        val stat = travelStatDao.getStat(ruta) ?: return null
+        if (stat.totalViajes == 0) return null
+        return stat.totalMinutos / stat.totalViajes
+    }
+
     private fun programarActivacion(viaje: Viaje) {
         val demora = (viaje.inicioProgramado - System.currentTimeMillis()).coerceAtLeast(0L)
-
         val inputData = workDataOf(
             "viajeId" to viaje.id,
             "inicioProgramado" to viaje.inicioProgramado,
             "origen" to viaje.origen,
             "destino" to viaje.destino
         )
-
         val workRequest = OneTimeWorkRequestBuilder<ActivarViajeWorker>()
             .setInitialDelay(demora, TimeUnit.MILLISECONDS)
             .setInputData(inputData)
             .addTag("viaje_${viaje.id}")
             .build()
-
         WorkManager.getInstance(context)
             .enqueueUniqueWork(
                 "activar_viaje_${viaje.id}",
@@ -114,23 +173,21 @@ class ViajeRepository(private val context: Context) {
             )
     }
 
-    // ── FCM Token ──
     suspend fun guardarFcmToken(legajo: String, token: String) {
         supabase.guardarFcmToken(legajo, token)
         val prefs = context.getSharedPreferences("cot_prefs", android.content.Context.MODE_PRIVATE)
         prefs.edit().putString("fcm_token", token).apply()
     }
 
-    fun getLegajo(): String {
-        val prefs = context.getSharedPreferences("cot_prefs", android.content.Context.MODE_PRIVATE)
-        return prefs.getString("legajo", "") ?: ""
-    }
+    fun getLegajo(): String =
+        context.getSharedPreferences("cot_prefs", android.content.Context.MODE_PRIVATE)
+            .getString("legajo", "") ?: ""
 
     fun guardarLegajo(legajo: String) {
-        val prefs = context.getSharedPreferences("cot_prefs", android.content.Context.MODE_PRIVATE)
-        prefs.edit().putString("legajo", legajo).apply()
+        context.getSharedPreferences("cot_prefs", android.content.Context.MODE_PRIVATE)
+            .edit().putString("legajo", legajo).apply()
     }
-    // ── Guardias ──
+
     fun getTodasLasGuardias() = guardiaDao.getTodasLasGuardias()
     suspend fun getGuardiaEnCurso(): Guardia? = guardiaDao.getGuardiaEnCurso()
 
@@ -138,8 +195,7 @@ class ViajeRepository(private val context: Context) {
         val ahora = System.currentTimeMillis()
         val cal = java.util.Calendar.getInstance()
         val hora = String.format("%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
-        val dia = "${cal.get(java.util.Calendar.DAY_OF_MONTH).toString().padStart(2,'0')}/${(cal.get(java.util.Calendar.MONTH)+1).toString().padStart(2,'0')}/${cal.get(java.util.Calendar.YEAR)}"
-
+        val dia = "${cal.get(java.util.Calendar.DAY_OF_MONTH).toString().padStart(2, '0')}/${(cal.get(java.util.Calendar.MONTH) + 1).toString().padStart(2, '0')}/${cal.get(java.util.Calendar.YEAR)}"
         val guardia = Guardia(
             id = "GRD-$ahora",
             dia = dia,
@@ -150,33 +206,20 @@ class ViajeRepository(private val context: Context) {
             orderNumber = orderNumber
         )
         guardiaDao.insertarGuardia(guardia)
-
-        // Sync a Supabase
         try {
             supabase.agregarGuardiaAJornada(orderNumber, guardia)
-            Log.d("COT", "Guardia sincronizada a Supabase")
         } catch (e: Exception) {
             Log.e("COT", "Error sync guardia: ${e.message}")
         }
-// Programar timer de 8 horas
-        val demora = 8 * 60 * 60 * 1000L // 8 horas en ms
-        val inputData = androidx.work.workDataOf(
-            "guardiaId" to guardia.id,
-            "inicio" to guardia.inicio
-        )
-        val workRequest = androidx.work.OneTimeWorkRequestBuilder<com.driverlog.app.worker.GuardiaTimerWorker>()
-            .setInitialDelay(demora, java.util.concurrent.TimeUnit.MILLISECONDS)
+        val demora = 8 * 60 * 60 * 1000L
+        val inputData = workDataOf("guardiaId" to guardia.id, "inicio" to guardia.inicio)
+        val workRequest = OneTimeWorkRequestBuilder<com.driverlog.app.worker.GuardiaTimerWorker>()
+            .setInitialDelay(demora, TimeUnit.MILLISECONDS)
             .setInputData(inputData)
             .addTag("guardia_timer_${guardia.id}")
             .build()
-
-        androidx.work.WorkManager.getInstance(context)
-            .enqueueUniqueWork(
-                "guardia_timer_${guardia.id}",
-                androidx.work.ExistingWorkPolicy.REPLACE,
-                workRequest
-            )
-        Log.d("COT", "Timer 8h programado para guardia ${guardia.id}")
+        WorkManager.getInstance(context)
+            .enqueueUniqueWork("guardia_timer_${guardia.id}", ExistingWorkPolicy.REPLACE, workRequest)
         return guardia
     }
 
@@ -187,28 +230,20 @@ class ViajeRepository(private val context: Context) {
         val fin = String.format("%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
         val hours = (ahora - guardia.createdAt) / 3600000.0
         guardiaDao.finalizarGuardia(guardiaId, "finalizada", fin, hours)
-
-        // Sync a Supabase
         try {
             supabase.finalizarGuardiaEnSupabase(guardiaId, guardia.orderNumber, fin, hours)
-            Log.d("COT", "Guardia finalizada en Supabase")
         } catch (e: Exception) {
             Log.e("COT", "Error finalizar guardia Supabase: ${e.message}")
         }
     }
 
-    // ── Jornadas ──
     suspend fun getOCrearJornada(legajo: String): Jornada {
         val cal = java.util.Calendar.getInstance()
         val hora = String.format("%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
-        val fecha = "${cal.get(java.util.Calendar.YEAR)}-${(cal.get(java.util.Calendar.MONTH)+1).toString().padStart(2,'0')}-${cal.get(java.util.Calendar.DAY_OF_MONTH).toString().padStart(2,'0')}"
-
-        // Buscar jornada activa de hoy
+        val fecha = "${cal.get(java.util.Calendar.YEAR)}-${(cal.get(java.util.Calendar.MONTH) + 1).toString().padStart(2, '0')}-${cal.get(java.util.Calendar.DAY_OF_MONTH).toString().padStart(2, '0')}"
         val existente = jornadaDao.getJornadaPorFecha(fecha, legajo)
         if (existente != null) return existente
-
-        // Crear nueva jornada
-        val orderNumber = "$legajo-${fecha.replace("-","")}"
+        val orderNumber = "$legajo-${fecha.replace("-", "")}"
         val jornada = Jornada(
             orderNumber = orderNumber,
             legajo = legajo,
@@ -218,17 +253,79 @@ class ViajeRepository(private val context: Context) {
             syncStatus = "pending"
         )
         jornadaDao.insertarJornada(jornada)
-
-        // Intentar sync a Supabase en background
         try {
             supabase.crearJornadaEnSupabase(jornada)
             jornadaDao.marcarSynced(orderNumber)
         } catch (e: Exception) {
             Log.d("COT", "Jornada guardada local, sync pendiente")
         }
-
         return jornada
     }
 
     suspend fun getJornadaActiva(): Jornada? = jornadaDao.getJornadaActiva()
+
+    fun getNombre(): String =
+        context.getSharedPreferences("cot_prefs", android.content.Context.MODE_PRIVATE)
+            .getString("nombre", "") ?: ""
+
+    fun getBase(): String =
+        context.getSharedPreferences("cot_prefs", android.content.Context.MODE_PRIVATE)
+            .getString("base", "") ?: ""
+
+    fun getTipo(): String =
+        context.getSharedPreferences("cot_prefs", android.content.Context.MODE_PRIVATE)
+            .getString("tipo", "efectivo") ?: "efectivo"
+
+    fun perfilCompleto(): Boolean = getNombre().isNotEmpty() && getBase().isNotEmpty()
+
+    fun guardarPerfil(nombre: String, base: String, tipo: String) {
+        context.getSharedPreferences("cot_prefs", android.content.Context.MODE_PRIVATE)
+            .edit()
+            .putString("nombre", nombre)
+            .putString("base", base)
+            .putString("tipo", tipo)
+            .apply()
+    }
+
+    suspend fun sincronizarPerfil(legajo: String) {
+        try {
+            supabase.sincronizarPerfil(legajo, getNombre(), getBase(), getTipo())
+        } catch (e: Exception) {
+            Log.e("COT", "Error sync perfil: ${e.message}")
+        }
+    }
+
+    suspend fun calcularTotalesJornada(orderNumber: String): LaudoCalculator.Totales {
+        val viajes = dao.getViajesPorJornada(orderNumber)
+        val guardias = guardiaDao.getGuardiasPorJornada(orderNumber)
+        val jornada = jornadaDao.getJornada(orderNumber)
+        val jornadaCompleta = JornadaCompleta(
+            orderNumber = orderNumber,
+            fecha = jornada?.fecha ?: "",
+            travels = viajes,
+            guards = guardias
+        )
+        return LaudoCalculator.calcular(jornadaCompleta)
+    }
+
+    suspend fun calcularTotalesHoy(): LaudoCalculator.Totales {
+        val cal = java.util.Calendar.getInstance()
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        cal.set(java.util.Calendar.MINUTE, 0)
+        cal.set(java.util.Calendar.SECOND, 0)
+        cal.set(java.util.Calendar.MILLISECOND, 0)
+        val inicioHoy = cal.timeInMillis
+        val viajes = dao.getViajesDesde(inicioHoy)
+        val dia = "${cal.get(java.util.Calendar.DAY_OF_MONTH).toString().padStart(2, '0')}/" +
+                "${(cal.get(java.util.Calendar.MONTH) + 1).toString().padStart(2, '0')}/" +
+                "${cal.get(java.util.Calendar.YEAR)}"
+        val guardias = guardiaDao.getGuardiasPorDia(dia)
+        val jornadaCompleta = JornadaCompleta(
+            orderNumber = "",
+            fecha = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date()),
+            travels = viajes,
+            guards = guardias
+        )
+        return LaudoCalculator.calcular(jornadaCompleta)
+    }
 }

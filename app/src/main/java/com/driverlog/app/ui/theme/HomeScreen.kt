@@ -17,6 +17,7 @@ import com.driverlog.app.data.Viaje
 import com.driverlog.app.data.ViajeRepository
 import kotlinx.coroutines.launch
 import com.driverlog.app.data.Guardia
+import com.driverlog.app.data.LaudoCalculator
 @Composable
 fun HomeScreen(
     legajo: String,
@@ -31,9 +32,18 @@ fun HomeScreen(
     var mensajeGeo by remember { mutableStateOf<String?>(null) }
     val guardias by repository.getTodasLasGuardias().collectAsState(initial = emptyList())
     var guardiaEnCurso by remember { mutableStateOf<Guardia?>(null) }
+    var totales by remember { mutableStateOf<LaudoCalculator.Totales?>(null) }
 
     LaunchedEffect(Unit) {
         guardiaEnCurso = repository.getGuardiaEnCurso()
+    }
+    LaunchedEffect(legajo) {
+        viajeEnCurso = repository.getViajeEnCurso()
+        isSyncing = true
+        repository.sincronizarDesdeSupabase(legajo)
+        viajeEnCurso = repository.getViajeEnCurso()
+        isSyncing = false
+        totales = repository.calcularTotalesHoy()
     }
     DisposableEffect(Unit) {
         val receiverViaje = object : android.content.BroadcastReceiver() {
@@ -143,6 +153,43 @@ fun HomeScreen(
         }
 
         HorizontalDivider()
+        // Resumen de jornada
+        totales?.let { t ->
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFF0D1B2A))
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text("Resumen jornada", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = Color.White)
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column {
+                            Text("Km viajes", fontSize = 11.sp, color = Color.Gray)
+                            Text("%.1f km".format(t.kmViajes), fontSize = 14.sp, color = Color.White)
+                        }
+                        Column {
+                            Text("Km guardias", fontSize = 11.sp, color = Color.Gray)
+                            Text("%.1f km".format(t.kmGuardias), fontSize = 14.sp, color = Color.White)
+                        }
+                        Column {
+                            Text("Tome/Cese", fontSize = 11.sp, color = Color.Gray)
+                            Text("%.1f km".format(t.kmTomeCese), fontSize = 14.sp, color = Color.White)
+                        }
+                        Column {
+                            Text("Viáticos", fontSize = 11.sp, color = Color.Gray)
+                            Text("${t.viaticos}", fontSize = 14.sp, color = Color.White)
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    HorizontalDivider(color = Color.DarkGray)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Total km: %.1f".format(t.kmTotal), fontWeight = FontWeight.Bold, color = Color.White)
+                        Text("$ %.2f".format(t.monto), fontWeight = FontWeight.Bold, fontSize = 16.sp, color = Color(0xFF4CAF50))
+                    }
+                }
+            }
+        }
 // Guardia
         Card(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
@@ -286,7 +333,19 @@ fun ViajeCard(viaje: Viaje, onActivar: () -> Unit) {
                 StatusBadge(viaje.status)
             }
             Spacer(modifier = Modifier.height(4.dp))
-            Text("Salida: ${viaje.departureTime}  |  Llegada: ${viaje.arrivalTime}", fontSize = 13.sp)
+            val llegadaTexto = if (viaje.status == "finalizado" && viaje.finReal != null) {
+                val cal = java.util.Calendar.getInstance().apply { timeInMillis = viaje.finReal }
+                "Llegada real: %02d:%02d".format(
+                    cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE)
+                )
+            } else if (viaje.arrivalTime.isNotEmpty()) {
+                "Llegada est.: ${viaje.arrivalTime}"
+            } else ""
+            Text(
+                "Salida: ${viaje.departureTime}" + if (llegadaTexto.isNotEmpty()) "  |  $llegadaTexto" else "",
+                fontSize = 13.sp,
+                color = if (viaje.status == "finalizado" && viaje.finReal != null) Color(0xFF4CAF50) else Color.Unspecified
+            )
             Text("Orden: ${viaje.orderNumber}", fontSize = 12.sp, color = Color.Gray)
             if (viaje.status == "programado") {
                 Spacer(modifier = Modifier.height(8.dp))

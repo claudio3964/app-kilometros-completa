@@ -48,4 +48,14 @@ interface ViajeDao {
 
     @Query("DELETE FROM viajes")
     suspend fun eliminarTodos()
+
+    @Query("UPDATE viajes SET status = 'cancelado' WHERE id = :id")
+    suspend fun cancelarViaje(id: String)
+
+    @Query("SELECT * FROM viajes WHERE orderNumber = :orderNumber ORDER BY inicioProgramado ASC")
+    suspend fun getViajesPorJornada(orderNumber: String): List<Viaje>
+
+    @Query("SELECT * FROM viajes WHERE inicioProgramado >= :desdeMs ORDER BY inicioProgramado ASC")
+    suspend fun getViajesDesde(desdeMs: Long): List<Viaje>
+
 }
