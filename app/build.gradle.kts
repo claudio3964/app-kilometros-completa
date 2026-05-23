@@ -77,6 +77,12 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.7.0")
 
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:2.8.4")
+
+    // Extended Material Icons
+    implementation("androidx.compose.material:material-icons-extended")
+
     // Tests (los que ya tenías)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

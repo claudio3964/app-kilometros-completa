@@ -13,6 +13,9 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import java.util.concurrent.TimeUnit
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class CotFirebaseMessagingService : FirebaseMessagingService() {
 
@@ -71,15 +74,67 @@ class CotFirebaseMessagingService : FirebaseMessagingService() {
                     cuerpo = mensaje
                 )
             }
+            "activar_viaje" -> {
+                val viajeId = data["viajeId"] ?: return
+                val origen = data["origen"] ?: ""
+                val destino = data["destino"] ?: ""
+
+                mostrarNotificacion(
+                    titulo = "Iniciando viaje",
+                    cuerpo = "$origen → $destino"
+                )
+                val intent = Intent("com.driverlog.ACTIVAR_VIAJE").apply {
+                    putExtra("viajeId", viajeId)
+                    putExtra("origen", origen)
+                    putExtra("destino", destino)
+                }
+                sendBroadcast(intent)
+            }
+
+            "finalizar_viaje" -> {
+                val viajeId = data["viajeId"] ?: return
+                val destino = data["destino"] ?: ""
+
+                mostrarNotificacion(
+                    titulo = "Llegando a destino",
+                    cuerpo = "Verificá llegada a $destino"
+                )
+                val intent = Intent("com.driverlog.FINALIZAR_VIAJE").apply {
+                    putExtra("viajeId", viajeId)
+                }
+                sendBroadcast(intent)
+            }
+
+            "aviso_guardia" -> {
+                val guardiaId = data["guardiaId"] ?: return
+                val umbralHoras = data["umbralHoras"] ?: ""
+                val horaCorte = data["horaCorte"] ?: ""
+
+                mostrarNotificacion(
+                    titulo = "Guardia por cumplir $umbralHoras horas",
+                    cuerpo = "Faltan 5 min. Auto-cierre a las $horaCorte"
+                )
+                val intent = Intent("com.driverlog.AVISO_GUARDIA").apply {
+                    putExtra("guardiaId", guardiaId)
+                    putExtra("umbralHoras", umbralHoras)
+                    putExtra("horaCorte", horaCorte)
+                }
+                sendBroadcast(intent)
+            }
         }
     }
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Log.d("COT", "FCM Token nuevo: $token")
-        // Guardar el nuevo token en Supabase
         val prefs = getSharedPreferences("cot_prefs", Context.MODE_PRIVATE)
         prefs.edit().putString("fcm_token", token).apply()
+
+        val legajo = prefs.getString("legajo", null) ?: return
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+            com.driverlog.app.data.SupabaseService(applicationContext)
+                .guardarFcmToken(legajo, token)
+        }
     }
 
     private fun programarActivacionViaje(

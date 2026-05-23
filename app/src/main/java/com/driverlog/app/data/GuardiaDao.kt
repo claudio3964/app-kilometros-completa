@@ -20,4 +20,9 @@ interface GuardiaDao {
 
     @Query("UPDATE guardias SET status = :status, fin = :fin, hours = :hours WHERE id = :id")
     suspend fun finalizarGuardia(id: String, status: String, fin: String, hours: Double)
+
+    @Query("SELECT * FROM guardias WHERE orderNumber = :orderNumber ORDER BY createdAt ASC")
+    suspend fun getGuardiasPorJornada(orderNumber: String): List<Guardia>
+
+
 }

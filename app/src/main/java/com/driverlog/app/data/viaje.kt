@@ -26,5 +26,7 @@ data class Viaje(
     val tomeCese: Boolean = false,
     val syncStatus: String = "local",  // local | synced | error
     val asignadoPorAdmin: Boolean = false,
-    val notificado: Boolean = false
+    val notificado: Boolean = false,
+    val duracionMinutos: Long? = null,
+    val llegadaReal: Long? = null,
 )

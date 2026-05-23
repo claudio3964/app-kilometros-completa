@@ -26,4 +26,7 @@ interface JornadaDao {
 
     @Query("SELECT * FROM jornadas_local WHERE syncStatus = 'pending'")
     suspend fun getJornadasPendientes(): List<Jornada>
+
+    @Query("SELECT * FROM jornadas_local WHERE orderNumber = :orderNumber LIMIT 1")
+    suspend fun getJornada(orderNumber: String): Jornada?
 }
