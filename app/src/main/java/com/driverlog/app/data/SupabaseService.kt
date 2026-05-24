@@ -105,25 +105,24 @@ class SupabaseService(private val context: Context) {
                     put("horaInicio", jornada.horaInicio)
                 }
                 val json = JSONObject().apply {
-                    put("legajo", jornada.legajo)
-                    put("empresa_id", "cot")
-                    put("chofer_id", jornada.legajo)
-                    put("order_number", jornada.orderNumber)
-                    put("fecha", jornada.fecha)
-                    put("hora_inicio", jornada.horaInicio)
-                    put("data", data)
+                    put("p_empresa_id", "cot")
+                    put("p_chofer_id", jornada.legajo)
+                    put("p_order_number", jornada.orderNumber)
+                    put("p_fecha", jornada.fecha)
+                    put("p_legajo", jornada.legajo)
+                    put("p_data", data)
                 }
                 val body = json.toString().toRequestBody("application/json".toMediaType())
                 val request = Request.Builder()
-                    .url("$SUPABASE_URL/rest/v1/jornadas")
+                    .url("$SUPABASE_URL/rest/v1/rpc/crear_jornada")
                     .addHeader("apikey", SUPABASE_KEY)
                     .addHeader("Authorization", "Bearer $SUPABASE_KEY")
                     .addHeader("Content-Type", "application/json")
-                    .addHeader("Prefer", "resolution=ignore-duplicates,return=minimal")
                     .post(body)
                     .build()
                 val response = client.newCall(request).execute()
-                Log.d("COT", "Crear jornada en Supabase: ${response.code}")
+                val responseBody = response.body?.string() ?: ""
+                Log.d("COT", "Crear jornada en Supabase: ${response.code} — $responseBody")
                 response.isSuccessful
             } catch (e: Exception) {
                 Log.e("COT", "Error crear jornada: ${e.message}")
@@ -456,4 +455,41 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
                 false
             }
         }
+      suspend fun cerrarJornadaEnSupabase(
+    orderNumber: String,
+    totales: LaudoCalculator.Totales,
+    closedAt: Long
+): Boolean = withContext(Dispatchers.IO) {
+    try {
+        val snapshot = JSONObject().apply {
+            put("kmViajes", totales.kmViajes)
+            put("kmGuardias", totales.kmGuardias)
+            put("kmTomeCese", totales.kmTomeCese)
+            put("kmAcoplados", totales.kmAcoplados)
+            put("kmTotal", totales.kmTotal)
+            put("viaticos", totales.viaticos)
+            put("monto", totales.monto)
+            put("cerradoAt", closedAt)
+        }
+        val json = JSONObject().apply {
+            put("p_order_number", orderNumber)
+            put("p_totals_snapshot", snapshot)
+            put("p_closed_at", closedAt)
+        }
+        val body = json.toString().toRequestBody("application/json".toMediaType())
+        val request = Request.Builder()
+            .url("$SUPABASE_URL/rest/v1/rpc/cerrar_jornada")
+            .addHeader("apikey", SUPABASE_KEY)
+            .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+            .addHeader("Content-Type", "application/json")
+            .post(body)
+            .build()
+        val response = client.newCall(request).execute()
+        Log.d("COT", "Cerrar jornada Supabase: ${response.code}")
+        response.isSuccessful
+    } catch (e: Exception) {
+        Log.e("COT", "Error cerrar jornada: ${e.message}")
+        false
+    }
+}
 }

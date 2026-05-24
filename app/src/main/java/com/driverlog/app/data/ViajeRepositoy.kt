@@ -267,11 +267,13 @@ class ViajeRepository(private val context: Context) {
             syncStatus = "pending"
         )
         jornadaDao.insertarJornada(jornada)
+        Log.d("COT", "Intentando crear jornada en Supabase: $orderNumber")
         try {
-            supabase.crearJornadaEnSupabase(jornada)
-            jornadaDao.marcarSynced(orderNumber)
+            val ok = supabase.crearJornadaEnSupabase(jornada)
+            Log.d("COT", "Resultado crear jornada: $ok")
+            if (ok) jornadaDao.marcarSynced(orderNumber)
         } catch (e: Exception) {
-            Log.d("COT", "Jornada guardada local, sync pendiente")
+            Log.e("COT", "Error crear jornada Supabase: ${e.message}")
         }
         return jornada
     }
@@ -358,7 +360,35 @@ class ViajeRepository(private val context: Context) {
         return dao.getViajesFinalizado().lastOrNull()
     }
 
+suspend fun cerrarJornada(legajo: String): Boolean {
+    val jornada = jornadaDao.getJornadaActiva() ?: return false
+    
+    // Verificar que no haya viaje en curso
+    val viajeEnCurso = dao.getViajeEnCurso()
+    if (viajeEnCurso != null) return false
 
+    // Cerrar guardias en curso automáticamente
+    val guardiaEnCurso = guardiaDao.getGuardiaEnCurso()
+    if (guardiaEnCurso != null) {
+        finalizarGuardia(guardiaEnCurso.id)
+    }
+
+    // Calcular totales finales
+    val totales = calcularTotalesJornada(jornada.orderNumber)
+
+    // Cerrar en Room
+    val ahora = System.currentTimeMillis()
+    jornadaDao.cerrarJornada(jornada.orderNumber, ahora)
+
+    // Sincronizar cierre a Supabase
+    try {
+        supabase.cerrarJornadaEnSupabase(jornada.orderNumber, totales, ahora)
+    } catch (e: Exception) {
+        Log.e("COT", "Error cerrar jornada Supabase: ${e.message}")
+    }
+
+    return true
+}
 
     suspend fun calcularTotalesHoy(): LaudoCalculator.Totales {
         val cal = java.util.Calendar.getInstance()

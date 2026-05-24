@@ -290,7 +290,7 @@ Sprint 2 (UI faltante):
   → NuevaGuardiaScreen.kt (2h)
   → Completar stubs ActivarViajeReceiver + ViajeFinalizadoReceiver (30min)
   → Mejorar validaciones en iniciarGuardia() (1h)
-
+ 
 Sprint 3 (cierre de jornada):
   → Lógica cerrarJornada() en Repository (2h)
   → Diálogo de confirmación en MainScreen (1h)
@@ -336,3 +336,13 @@ Sprint 5 (historial + mensajes):
 
 ### Próximos pasos
 Ver PLAN_DESARROLLO_KOTLIN.md — Sprint 1
+
+Sprint 1 , 2 completos
+
+Sprint 3 completo ✅
+Mirá el JSON en Supabase — todo perfecto:
+
+closed: true ✅
+status: "finalizada" ✅
+totalsSnapshot con todos los valores ✅
+kmTotal: 220.5, monto: 1766.69 ✅
