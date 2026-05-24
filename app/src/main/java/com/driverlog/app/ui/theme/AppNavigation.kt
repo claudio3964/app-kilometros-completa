@@ -31,6 +31,7 @@ private val allTabs = listOf(AppTab.Home, AppTab.Viajes, AppTab.Guardias, AppTab
 
 private const val ROUTE_NUEVO_VIAJE =
     "nuevo_viaje?origen={origen}&destino={destino}&km={km}&tipo={tipo}"
+private const val ROUTE_NUEVA_GUARDIA = "nueva_guardia"
 
 @Composable
 fun AppNavigation(
@@ -51,6 +52,10 @@ fun AppNavigation(
             launchSingleTop = true
             restoreState = true
         }
+    }
+
+    fun navigateNuevaGuardia() {
+        navController.navigate(ROUTE_NUEVA_GUARDIA)
     }
 
     fun navigateNuevoViaje(
@@ -97,7 +102,7 @@ fun AppNavigation(
                     repository = repository,
                     onNuevoViaje = { navigateNuevoViaje() },
                     onVerViajes = { navigateTab(AppTab.Viajes.route) },
-                    onNuevaGuardia = { navigateTab(AppTab.Guardias.route) },
+                    onNuevaGuardia = { navigateNuevaGuardia() },
                     onVerGuardias = { navigateTab(AppTab.Guardias.route) },
                     onHistorial = { navigateTab(AppTab.Historial.route) },
                     onCerrarSesion = onCerrarSesion
@@ -112,6 +117,18 @@ fun AppNavigation(
             composable(AppTab.Historial.route) {
                 HistorialScreen(legajo = legajo, repository = repository)
             }
+            composable(ROUTE_NUEVA_GUARDIA) {
+                NuevaGuardiaScreen(
+                    legajo = legajo,
+                    repository = repository,
+                    onGuardada = {
+                        navController.navigate(AppTab.Guardias.route) {
+                            popUpTo(AppTab.Home.route) { saveState = true }
+                        }
+                    },
+                    onCancel = { navController.popBackStack() }
+                )
+            }
             composable(
                 route = ROUTE_NUEVO_VIAJE,
                 arguments = listOf(
@@ -120,6 +137,7 @@ fun AppNavigation(
                     navArgument("km") { type = NavType.IntType; defaultValue = 0 },
                     navArgument("tipo") { type = NavType.StringType; defaultValue = "" }
                 )
+
             ) { backStack ->
                 val args = backStack.arguments
                 val preOrigen = args?.getString("origen")

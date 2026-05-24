@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [Viaje::class, Guardia::class, Jornada::class, TravelStat::class],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 

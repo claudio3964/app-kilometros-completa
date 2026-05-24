@@ -1,8 +1,6 @@
 package com.driverlog.app.data
-
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-
 @Entity(tableName = "guardias")
 data class Guardia(
     @PrimaryKey val id: String,
@@ -16,5 +14,6 @@ data class Guardia(
     val kmGuardia: Double = 0.0,
     val asignadoPorAdmin: Boolean = false,
     val orderNumber: String = "",
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val descripcion: String? = null
 )

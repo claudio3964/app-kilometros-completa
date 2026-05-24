@@ -6,6 +6,8 @@ import com.driverlog.app.worker.ActivarViajeWorker
 import kotlinx.coroutines.flow.Flow
 import java.util.concurrent.TimeUnit
 import android.util.Log
+import android.content.Intent
+import java.util.Calendar
 
 class ViajeRepository(private val context: Context) {
 
@@ -191,19 +193,30 @@ class ViajeRepository(private val context: Context) {
     fun getTodasLasGuardias() = guardiaDao.getTodasLasGuardias()
     suspend fun getGuardiaEnCurso(): Guardia? = guardiaDao.getGuardiaEnCurso()
 
-    suspend fun iniciarGuardia(orderNumber: String, type: String = "comun"): Guardia {
+    suspend fun iniciarGuardia(
+        orderNumber: String,
+        type: String = "comun",
+        inicio: String? = null,
+        dia: String? = null,
+        descripcion: String? = null
+    ): Guardia {
         val ahora = System.currentTimeMillis()
         val cal = java.util.Calendar.getInstance()
-        val hora = String.format("%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
-        val dia = "${cal.get(java.util.Calendar.DAY_OF_MONTH).toString().padStart(2, '0')}/${(cal.get(java.util.Calendar.MONTH) + 1).toString().padStart(2, '0')}/${cal.get(java.util.Calendar.YEAR)}"
+        val horaFinal = inicio ?: String.format(
+            "%02d:%02d",
+            cal.get(java.util.Calendar.HOUR_OF_DAY),
+            cal.get(java.util.Calendar.MINUTE)
+        )
+        val diaFinal = dia ?: "${cal.get(java.util.Calendar.DAY_OF_MONTH).toString().padStart(2, '0')}/${(cal.get(java.util.Calendar.MONTH) + 1).toString().padStart(2, '0')}/${cal.get(java.util.Calendar.YEAR)}"
         val guardia = Guardia(
             id = "GRD-$ahora",
-            dia = dia,
-            inicio = hora,
+            dia = diaFinal,
+            inicio = horaFinal,
             type = type,
             status = "en_curso",
             createdAt = ahora,
-            orderNumber = orderNumber
+            orderNumber = orderNumber,
+            descripcion = descripcion
         )
         guardiaDao.insertarGuardia(guardia)
         try {
@@ -211,6 +224,7 @@ class ViajeRepository(private val context: Context) {
         } catch (e: Exception) {
             Log.e("COT", "Error sync guardia: ${e.message}")
         }
+        // Timer 8h
         val demora = 8 * 60 * 60 * 1000L
         val inputData = workDataOf("guardiaId" to guardia.id, "inicio" to guardia.inicio)
         val workRequest = OneTimeWorkRequestBuilder<com.driverlog.app.worker.GuardiaTimerWorker>()
@@ -339,6 +353,12 @@ class ViajeRepository(private val context: Context) {
         )
         return LaudoCalculator.calcular(jornadaCompleta)
     }
+
+    suspend fun getUltimoViajeFinalizado(): Viaje? {
+        return dao.getViajesFinalizado().lastOrNull()
+    }
+
+
 
     suspend fun calcularTotalesHoy(): LaudoCalculator.Totales {
         val cal = java.util.Calendar.getInstance()

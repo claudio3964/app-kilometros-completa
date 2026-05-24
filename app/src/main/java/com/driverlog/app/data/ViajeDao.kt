@@ -57,5 +57,7 @@ interface ViajeDao {
 
     @Query("SELECT * FROM viajes WHERE inicioProgramado >= :desdeMs ORDER BY inicioProgramado ASC")
     suspend fun getViajesDesde(desdeMs: Long): List<Viaje>
+    @Query("SELECT * FROM viajes WHERE status = 'finalizado' ORDER BY finReal ASC")
+    suspend fun getViajesFinalizado(): List<Viaje>
 
 }
