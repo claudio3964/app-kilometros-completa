@@ -95,8 +95,10 @@ class GeoTerminalService : Service() {
     }
     @SuppressLint("MissingPermission")
     private fun iniciarGPS() {
-        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 30_000L)
-            .setMinUpdateDistanceMeters(10f)
+        val intervalo = if (modoPrueba) 5_000L else 30_000L
+        val minDistancia = if (modoPrueba) 0f else 10f
+        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, intervalo)
+            .setMinUpdateDistanceMeters(minDistancia)
             .build()
 
         locationCallback = object : LocationCallback() {
@@ -105,7 +107,7 @@ class GeoTerminalService : Service() {
             }
         }
 
-        fusedClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper())
+        fusedClient.requestLocationUpdates(request, locationCallback, Looper.myLooper() ?: Looper.getMainLooper())
     }
 
     private fun procesarPosicion(loc: Location) {
@@ -162,7 +164,8 @@ class GeoTerminalService : Service() {
         val movimiento = ultimaPosicion!!.distanceTo(loc).toDouble()
         ultimaPosicion = loc
 
-        if (movimiento > GeoConfig.MOVIMIENTO_MINIMO_M) {
+        val umbralMovimiento = if (modoPrueba) GeoConfig.MOVIMIENTO_MINIMO_PRUEBA_M else GeoConfig.MOVIMIENTO_MINIMO_M
+        if (movimiento > umbralMovimiento) {
             tiempoQuieto = ahora
             Log.d(TAG, "Movimiento ${movimiento.toInt()}m — timer reseteado")
             return
@@ -190,6 +193,7 @@ class GeoTerminalService : Service() {
             val intent = Intent("com.driverlog.VIAJE_FINALIZADO").apply {
                 putExtra("viaje_id", viajeId)
                 putExtra("destino", destino)
+                setPackage(packageName)
             }
             sendBroadcast(intent)
             stopSelf()

@@ -3,15 +3,18 @@ package com.driverlog.app.data
 
 object GeoConfig {
     const val RADIO_METROS = 150.0
-    const val TIEMPO_QUIETO_MS = 5 * 60 * 1000L      // 5 minutos
+    const val TIEMPO_QUIETO_MS = 5 * 60 * 1000L
     const val MOVIMIENTO_MINIMO_M = 15.0
     const val COUNTDOWN_SEGUNDOS = 30
-    const val TIEMPO_MINIMO_VIAJE_MS = 90 * 60 * 1000L // 90 minutos
+    const val TIEMPO_MINIMO_VIAJE_MS = 90 * 60 * 1000L
     const val DISTANCIA_MINIMA_ORIGEN_M = 500.0
 
     // Modo prueba
     const val RADIO_PRUEBA = 50.0
-    const val TIEMPO_QUIETO_PRUEBA_MS = 15 * 1000L    // 15 segundos
+    const val TIEMPO_QUIETO_PRUEBA_MS = 15 * 1000L
+    const val MOVIMIENTO_MINIMO_PRUEBA_M = 60.0
+    const val PRUEBA_LAT = -34.8089
+    const val PRUEBA_LNG = -56.1331
 }
 
 object TerminalesGPS {
@@ -32,6 +35,7 @@ object TerminalesGPS {
         "Laguna Garzón"     to Terminal(-34.7200,    -54.6500,   "Parada Laguna Garzón"),
         "Aguas Dulces"      to Terminal(-33.9667,    -53.5500,   "Parada Aguas Dulces"),
         "Punta del Diablo"  to Terminal(-33.9167,    -53.5500,   "Parada Punta del Diablo"),
+        "Prueba" to Terminal(-34.8089, -56.1331, "Terminal Prueba"),
     )
 
     fun resolver(destino: String): Terminal? {

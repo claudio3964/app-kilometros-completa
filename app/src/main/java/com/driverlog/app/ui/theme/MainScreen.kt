@@ -26,7 +26,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import com.driverlog.app.data.LaudoCalculator
-
+import android.util.Log
 @Composable
 fun MainScreen(
     legajo: String,
@@ -97,8 +97,10 @@ fun MainScreen(
             override fun onReceive(ctx: android.content.Context?, intent: android.content.Intent?) {
                 val destino = intent?.getStringExtra("destino") ?: ""
                 mensajeGeo = "Llegaste a $destino — viaje cerrado automáticamente"
+                Log.d("COT", "Broadcast VIAJE_FINALIZADO recibido")
                 scope.launch {
                     viajeEnCurso = repository.getViajeEnCurso()
+                    jornadaActiva = repository.getJornadaActiva()
                 }
             }
         }
@@ -468,81 +470,114 @@ fun MainScreen(
                 }
             }
         }
-
-      if (jornadaActiva != null && viajeEnCurso == null) {
-    item {
-        var showConfirm by remember { mutableStateOf(false) }
-        var totalesPreview by remember { mutableStateOf<LaudoCalculator.Totales?>(null) }
-        var cerrando by remember { mutableStateOf(false) }
-
-        if (showConfirm && totalesPreview != null) {
-            AlertDialog(
-                onDismissRequest = { showConfirm = false },
-                title = { Text("Finalizar jornada") },
-                text = {
-                    val t = totalesPreview!!
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Km viajes: %.1f".format(t.kmViajes))
-                        Text("Km guardias: %.1f".format(t.kmGuardias))
-                        Text("Tome/cese: %.1f".format(t.kmTomeCese))
-                        Text("Acoplados: %.1f".format(t.kmAcoplados))
-                        HorizontalDivider()
-                        Text("Total km: %.1f".format(t.kmTotal), fontWeight = FontWeight.Bold)
-                        Text("Viáticos: ${t.viaticos}")
-                        Text(
-                            "Monto: $ %.2f".format(t.monto),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            color = Color(0xFF4CAF50)
-                        )
-                    }
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            cerrando = true
-                            scope.launch {
-                                repository.cerrarJornada(legajo)
-                                jornadaActiva = repository.getJornadaActiva()
-                                showConfirm = false
-                                cerrando = false
-                            }
-                        },
-                        enabled = !cerrando,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6A1B9A))
-                    ) {
-                        Text("Confirmar cierre")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showConfirm = false }) {
-                        Text("Cancelar")
-                    }
+        // ── Modo prueba GPS ──
+        if (viajeEnCurso == null && proximoViaje == null) {
+            item {
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            val ahora = System.currentTimeMillis()
+                            val viaje = repository.crearViaje(
+                                legajo = legajo,
+                                origen = "Prueba",
+                                destino = "Prueba",
+                                km = 1,
+                                tipoServicio = "TURNO",
+                                coche = "TEST",
+                                horaSalida = "%02d:%02d".format(
+                                    java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY),
+                                    java.util.Calendar.getInstance().get(java.util.Calendar.MINUTE)
+                                ),
+                                horaLlegada = "",
+                                inicioProgramadoMs = ahora
+                            )
+                            viajeEnCurso = repository.getViajeEnCurso()
+                            GeoTerminalService.iniciar(context, viaje, modoPrueba = true)
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                ) {
+                    Text("[ modo prueba GPS ]", fontSize = 11.sp, color = Color.Gray)
                 }
-            )
+            }
         }
 
-        OutlinedButton(
-            onClick = {
-                scope.launch {
-                    totalesPreview = jornadaActiva?.orderNumber?.let {
-                        repository.calcularTotalesJornada(it)
-                    }
-                    showConfirm = true
+        if (jornadaActiva != null && viajeEnCurso == null) {
+            item {
+                var showConfirm by remember { mutableStateOf(false) }
+                var totalesPreview by remember { mutableStateOf<LaudoCalculator.Totales?>(null) }
+                var cerrando by remember { mutableStateOf(false) }
+
+                if (showConfirm && totalesPreview != null) {
+                    AlertDialog(
+                        onDismissRequest = { showConfirm = false },
+                        title = { Text("Finalizar jornada") },
+                        text = {
+                            val t = totalesPreview!!
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text("Km viajes: %.1f".format(t.kmViajes))
+                                Text("Km guardias: %.1f".format(t.kmGuardias))
+                                Text("Tome/cese: %.1f".format(t.kmTomeCese))
+                                Text("Acoplados: %.1f".format(t.kmAcoplados))
+                                HorizontalDivider()
+                                Text("Total km: %.1f".format(t.kmTotal), fontWeight = FontWeight.Bold)
+                                Text("Viáticos: ${t.viaticos}")
+                                Text(
+                                    "Monto: $ %.2f".format(t.monto),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp,
+                                    color = Color(0xFF4CAF50)
+                                )
+                            }
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    cerrando = true
+                                    scope.launch {
+                                        repository.cerrarJornada(legajo)
+                                        jornadaActiva = repository.getJornadaActiva()
+                                        showConfirm = false
+                                        cerrando = false
+                                    }
+                                },
+                                enabled = !cerrando,
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6A1B9A))
+                            ) {
+                                Text("Confirmar cierre")
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showConfirm = false }) {
+                                Text("Cancelar")
+                            }
+                        }
+                    )
                 }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF6A1B9A))
-        ) {
-            Text("Finalizar jornada")
-              }
+
+                OutlinedButton(
+                    onClick = {
+                        scope.launch {
+                            totalesPreview = jornadaActiva?.orderNumber?.let {
+                                repository.calcularTotalesJornada(it)
+                            }
+                            showConfirm = true
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF6A1B9A))
+                ) {
+                    Text("Finalizar jornada")
+                }
             }
         }
 
     }  // cierre LazyColumn
-} // cierre MainScreen
+}      // cierre MainScreen
 @Composable
 private fun OperacionCard(
     texto: String,
