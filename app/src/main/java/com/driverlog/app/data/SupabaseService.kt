@@ -267,6 +267,7 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
                     put("arrivalTime", viaje.arrivalTime)
                     put("status", viaje.status)
                     put("inicioProgramado", viaje.inicioProgramado)
+                    put("inicioReal", viaje.inicioReal ?: 0L)
                     put("kmEmpresa", viaje.kmEmpresa)
                     put("tipoServicio", viaje.tipoServicio)
                     put("coche", viaje.coche ?: "")

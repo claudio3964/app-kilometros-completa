@@ -199,7 +199,6 @@ class GeoTerminalService : Service() {
             stopSelf()
         }
     }
-
     private fun crearCanalNotificacion() {
         val channel = NotificationChannel(
             CHANNEL_ID, "GPS Monitoreo", NotificationManager.IMPORTANCE_LOW

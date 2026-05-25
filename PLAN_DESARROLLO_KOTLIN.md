@@ -346,3 +346,12 @@ closed: true ✅
 status: "finalizada" ✅
 totalsSnapshot con todos los valores ✅
 kmTotal: 220.5, monto: 1766.69 ✅
+
+---
+
+## Fixes del 24/05/2026
+
+- **Coordenadas Punta del Este corregidas** — `TerminalesGPS.catalogo` actualizado a `-34.956996, -54.939091` (antes `-34.95738, -54.938867`). Archivo: `GeoConfig.kt`.
+- **Radio GPS aumentado a 300 m** — `GeoConfig.RADIO_METROS` pasó de `150.0` a `300.0` para reducir falsos negativos de llegada en terminales con variación de señal.
+- **Tiempo de quietud reducido a 2 minutos** — `GeoConfig.TIEMPO_QUIETO_MS` pasó de `5 * 60 * 1000` a `2 * 60 * 1000` para detectar parada más rápido.
+- **`inicioReal` incluido en JSON a Supabase** — `SupabaseService.agregarViajeAJornada()` ahora envía el campo `inicioReal` (`viaje.inicioReal ?: 0L`). Para viajes creados `en_curso`, `ViajeRepository.crearViaje()` ya asignaba `inicioReal = inicioProgramadoMs` correctamente; el dato ahora llega completo a Supabase.

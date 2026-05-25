@@ -2,8 +2,8 @@
 package com.driverlog.app.data
 
 object GeoConfig {
-    const val RADIO_METROS = 150.0
-    const val TIEMPO_QUIETO_MS = 5 * 60 * 1000L
+    const val RADIO_METROS = 300.0
+    const val TIEMPO_QUIETO_MS = 2 * 60 * 1000L
     const val MOVIMIENTO_MINIMO_M = 15.0
     const val COUNTDOWN_SEGUNDOS = 30
     const val TIEMPO_MINIMO_VIAJE_MS = 90 * 60 * 1000L
@@ -23,7 +23,7 @@ object TerminalesGPS {
     val catalogo = mapOf(
         "Montevideo"        to Terminal(-34.894149,  -56.167112, "Terminal Tres Cruces"),
         "MVDEO"             to Terminal(-34.894149,  -56.167112, "Terminal Tres Cruces"),
-        "Punta del Este"    to Terminal(-34.95738,   -54.938867, "Terminal Punta del Este"),
+        "Punta del Este"    to Terminal(-34.956996,  -54.939091, "Terminal Punta del Este"),
         "Colonia"           to Terminal(-34.4726414, -57.8425142,"Terminal Colonia"),
         "Piriápolis"        to Terminal(-34.8613073, -55.2746958,"Terminal Piriápolis"),
         "La Paloma"         to Terminal(-34.6565574, -54.159223, "Terminal La Paloma"),
