@@ -4,7 +4,9 @@
       "Bash(./gradlew assembleDebug)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(git push *)",
+      "Bash(gradlew.bat compileDebugKotlin)"
     ]
   }
 }

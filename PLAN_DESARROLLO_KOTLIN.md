@@ -234,6 +234,63 @@ Al tocar una jornada en el historial → abrir pantalla de detalle con:
 - Totales calculados o snapshot si está cerrada
 - Botón compartir PDF
 
+### 5.3 Gestión de viajes asignados desde panel admin — flujo de cancelación y reasignación de guardia
+
+#### Contexto
+Cuando el admin cancela un viaje programado (que el chofer aún no inició), necesita asignarle una guardia de compensación que arranque desde `horaSalida - 45 min` (tome de guardia). El flujo debe ser coherente end-to-end: panel admin → Supabase mensajes → app Kotlin.
+
+#### Panel admin — tab Mensajes
+
+- Mostrar sección "Asignaciones activas": viajes con `status = "programado"` y `inicioReal = null` de la jornada activa de cada chofer.
+- Por cada asignación activa, agregar botón **"Cancelar y asignar guardia"**.
+- Al tocar ese botón:
+  1. Insertar mensaje tipo `"cancelar_viaje"` en tabla `mensajes` con `data: { viajeId, legajo }`.
+  2. Calcular `horaGuardia = horaSalida - 45 min` (usando `departureTime` del viaje).
+  3. Insertar mensaje tipo `"guardia"` en tabla `mensajes` con `data: { tipo: "comun", inicio: horaGuardia, motivo: "Viaje cancelado - tome de guardia" }`.
+  - Ambos mensajes se insertan en secuencia; el segundo depende del primero para no crear la guardia con un viaje aún activo.
+
+#### App Kotlin — handler FCM / polling
+
+**Mensaje tipo `"cancelar_viaje"`** (nuevo, en `CotFirebaseMessagingService` o worker de polling):
+1. Leer `viajeId` del campo `data` del mensaje.
+2. Llamar `ViajeRepository.cancelarViaje(viajeId)` → actualiza Room (`status = "cancelado"`) y llama `SupabaseService.cancelarViajeEnSupabase(viajeId)`.
+3. Marcar mensaje como `leido = true` en Supabase.
+4. Emitir broadcast `"com.driverlog.SYNC_JORNADA"` para refrescar la UI.
+
+**Mensaje tipo `"guardia"` con motivo `"tome de guardia"`** (ampliar handler existente):
+1. Leer `inicio` y `motivo` del campo `data`.
+2. Llamar `ViajeRepository.iniciarGuardia(orderNumber, type, inicio, dia, descripcion = motivo)`.
+3. El timer de 8h (`GuardiaTimerWorker`) debe arrancar calculando el delay desde `inicio` (hora pre-calculada), no desde `System.currentTimeMillis()`.
+   - Fix en `iniciarGuardia()`: calcular `demoraTimer = horaInicioMs - ahora + 8h`. Si `horaInicioMs < ahora` (guardia retroactiva), usar `delay = 8h - (ahora - horaInicioMs)`.
+4. Marcar mensaje como `leido = true` en Supabase.
+
+#### PDF e Historial
+
+- En `PdfGenerator`, en la sección Guardias, si `guardia.descripcion` contiene `"tome de guardia"`: mostrar la hora de inicio con una nota `(*)` y agregar al pie: `(*) Tome de guardia por viaje cancelado`.
+- En `HistorialScreen` / `JornadaDetalleScreen`, en la card de guardia con ese motivo: mostrar badge o texto secundario "Tome de guardia" en color naranja.
+
+#### Modelo de datos — cambios mínimos
+
+No se requieren cambios en Room. El campo `descripcion: String?` de `Guardia` ya existe y es suficiente para transportar el motivo. El campo `inicio: String` ya existe y acepta la hora pre-calculada.
+
+#### Tabla Supabase `mensajes` — nuevos tipos
+
+| Campo | Valor |
+|---|---|
+| `tipo` | `"cancelar_viaje"` |
+| `para` | legajo del chofer |
+| `data.viajeId` | id del viaje a cancelar |
+| `leido` | false → true al procesar |
+
+| Campo | Valor |
+|---|---|
+| `tipo` | `"guardia"` |
+| `para` | legajo del chofer |
+| `data.tipo` | `"comun"` |
+| `data.inicio` | hora calculada (HH:mm) |
+| `data.motivo` | `"Viaje cancelado - tome de guardia"` |
+| `leido` | false → true al procesar |
+
 ---
 
 ## Fase 6 — Mensajes del admin
@@ -301,10 +358,11 @@ Sprint 4 (PDF):
   → Integrar en cerrarJornada() (30min)
   → Botón Ver PDF en HistorialScreen (30min)
 
-Sprint 5 (historial + mensajes):
+Sprint 5 (historial + mensajes + cancelación admin):
   → HistorialScreen con totales reales (1h post-LaudoCalculator)
   → JornadaDetalleScreen (2h)
   → MensajesScreen + ampliar FCM handler (3h)
+  → Flujo cancelación y reasignación de guardia desde panel admin (ver Fase 5.3)
 ```
 
 ---
@@ -345,7 +403,7 @@ Mirá el JSON en Supabase — todo perfecto:
 closed: true ✅
 status: "finalizada" ✅
 totalsSnapshot con todos los valores ✅
-kmTotal: 220.5, monto: 1766.69 ✅
+kmTotal: 220.5, monto: 1766.69 ✅2
 
 ---
 

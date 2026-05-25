@@ -430,6 +430,38 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
             }
         }
 
+    suspend fun obtenerJornadaActiva(legajo: String): Jornada? = withContext(Dispatchers.IO) {
+        try {
+            val hoy = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                .format(java.util.Date())
+            val request = Request.Builder()
+                .url("$SUPABASE_URL/rest/v1/jornadas?legajo=eq.$legajo&fecha=gte.$hoy&select=order_number,fecha,legajo,data&order=fecha.desc&limit=1")
+                .addHeader("apikey", SUPABASE_KEY)
+                .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                .get()
+                .build()
+            val body = client.newCall(request).execute().body?.string() ?: return@withContext null
+            val arr = JSONArray(body)
+            if (arr.length() == 0) return@withContext null
+            val obj = arr.getJSONObject(0)
+            val dataObj = JSONObject(obj.optString("data", "{}"))
+            if (dataObj.optBoolean("closed", false)) return@withContext null
+            val orderNumber = obj.optString("order_number", "")
+            val fecha = obj.optString("fecha", "")
+            if (orderNumber.isEmpty() || fecha.isEmpty()) return@withContext null
+            Jornada(
+                orderNumber = orderNumber,
+                legajo = obj.optString("legajo", legajo),
+                fecha = fecha,
+                status = "activa",
+                syncStatus = "synced"
+            )
+        } catch (e: Exception) {
+            Log.e("COT", "Error obtener jornada activa: ${e.message}")
+            null
+        }
+    }
+
     suspend fun finalizarGuardiaEnSupabase(guardiaId: String, orderNumber: String, fin: String, hours: Double): Boolean =
         withContext(Dispatchers.IO) {
             try {

@@ -26,7 +26,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import com.driverlog.app.data.LaudoCalculator
+import android.content.Intent
 import android.util.Log
+import androidx.core.content.FileProvider
+import java.io.File
 @Composable
 fun MainScreen(
     legajo: String,
@@ -537,10 +540,11 @@ fun MainScreen(
                                 onClick = {
                                     cerrando = true
                                     scope.launch {
-                                        repository.cerrarJornada(legajo)
+                                        val pdf = repository.cerrarJornada(legajo)
                                         jornadaActiva = repository.getJornadaActiva()
                                         showConfirm = false
                                         cerrando = false
+                                        pdf?.let { compartirPdf(context, it) }
                                     }
                                 },
                                 enabled = !cerrando,
@@ -607,6 +611,20 @@ private fun OperacionCard(
             )
         }
     }
+}
+
+private fun compartirPdf(context: android.content.Context, file: File) {
+    val uri = FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        file
+    )
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "application/pdf"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    context.startActivity(Intent.createChooser(intent, "Compartir planilla de jornada"))
 }
 
 private fun formatCountdown(diffMs: Long): String {

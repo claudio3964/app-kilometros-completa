@@ -3,7 +3,10 @@ package com.driverlog.app.data
 import android.content.Context
 import androidx.work.*
 import com.driverlog.app.worker.ActivarViajeWorker
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.concurrent.TimeUnit
 import android.util.Log
 import android.content.Intent
@@ -66,6 +69,17 @@ class ViajeRepository(private val context: Context) {
                     }
                 }
             }
+        }
+
+        // Sincronizar jornada activa de Supabase → Room si no existe localmente.
+        // Se ejecuta siempre, independiente de si llegaron viajes, para que
+        // getJornadaActiva() funcione aunque Room esté vacío.
+        Log.d("COT", "Llamando obtenerJornadaActiva")
+        val jornadaRemota = supabase.obtenerJornadaActiva(legajo)
+        Log.d("COT", "Jornada remota: ${jornadaRemota?.orderNumber ?: "null"}")
+        if (jornadaRemota != null) {
+            jornadaDao.insertarJornada(jornadaRemota)
+            Log.d("COT", "Jornada sincronizada desde Supabase: ${jornadaRemota.orderNumber}")
         }
     }
 
@@ -360,34 +374,54 @@ class ViajeRepository(private val context: Context) {
         return dao.getViajesFinalizado().lastOrNull()
     }
 
-suspend fun cerrarJornada(legajo: String): Boolean {
-    val jornada = jornadaDao.getJornadaActiva() ?: return false
-    
-    // Verificar que no haya viaje en curso
+suspend fun cerrarJornada(legajo: String): File? {
+    val jornada = jornadaDao.getJornadaActiva() ?: return null
+
     val viajeEnCurso = dao.getViajeEnCurso()
-    if (viajeEnCurso != null) return false
+    if (viajeEnCurso != null) return null
 
-    // Cerrar guardias en curso automáticamente
     val guardiaEnCurso = guardiaDao.getGuardiaEnCurso()
-    if (guardiaEnCurso != null) {
-        finalizarGuardia(guardiaEnCurso.id)
-    }
+    if (guardiaEnCurso != null) finalizarGuardia(guardiaEnCurso.id)
 
-    // Calcular totales finales
     val totales = calcularTotalesJornada(jornada.orderNumber)
-
-    // Cerrar en Room
     val ahora = System.currentTimeMillis()
     jornadaDao.cerrarJornada(jornada.orderNumber, ahora)
 
-    // Sincronizar cierre a Supabase
     try {
         supabase.cerrarJornadaEnSupabase(jornada.orderNumber, totales, ahora)
     } catch (e: Exception) {
         Log.e("COT", "Error cerrar jornada Supabase: ${e.message}")
     }
 
-    return true
+    return try {
+        val viajes = dao.getViajesPorJornada(jornada.orderNumber)
+        val guardias = guardiaDao.getGuardiasPorJornada(jornada.orderNumber)
+        val jornadaCompleta = JornadaCompleta(
+            orderNumber = jornada.orderNumber,
+            fecha = jornada.fecha,
+            legajo = jornada.legajo,
+            travels = viajes,
+            guards = guardias,
+            closed = true,
+            closedAt = ahora,
+            totalsSnapshot = TotalsSnapshot(
+                kmViajes = totales.kmViajes,
+                kmGuardias = totales.kmGuardias,
+                kmTomeCese = totales.kmTomeCese,
+                kmAcoplados = totales.kmAcoplados,
+                kmTotal = totales.kmTotal,
+                viaticos = totales.viaticos,
+                monto = totales.monto,
+                cerradoAt = ahora
+            )
+        )
+        withContext(Dispatchers.IO) {
+            PdfGenerator.generarPdf(context, jornadaCompleta)
+        }
+    } catch (e: Exception) {
+        Log.e("COT", "Error generar PDF: ${e.message}")
+        null
+    }
 }
 
     suspend fun calcularTotalesHoy(): LaudoCalculator.Totales {
