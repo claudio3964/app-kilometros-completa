@@ -257,9 +257,10 @@ class ViajeRepository(private val context: Context) {
         val cal = java.util.Calendar.getInstance()
         val fin = String.format("%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
         val hours = (ahora - guardia.createdAt) / 3600000.0
-        guardiaDao.finalizarGuardia(guardiaId, "finalizada", fin, hours)
+        val kmGuardia = hours * if (guardia.type == "especial") 40.0 else 30.0
+        guardiaDao.finalizarGuardia(guardiaId, "finalizada", fin, hours, kmGuardia)
         try {
-            supabase.finalizarGuardiaEnSupabase(guardiaId, guardia.orderNumber, fin, hours)
+            supabase.finalizarGuardiaEnSupabase(guardiaId, guardia.orderNumber, fin, hours, kmGuardia)
         } catch (e: Exception) {
             Log.e("COT", "Error finalizar guardia Supabase: ${e.message}")
         }

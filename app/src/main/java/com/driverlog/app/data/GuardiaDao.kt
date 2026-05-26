@@ -18,8 +18,8 @@ interface GuardiaDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarGuardia(guardia: Guardia)
 
-    @Query("UPDATE guardias SET status = :status, fin = :fin, hours = :hours WHERE id = :id")
-    suspend fun finalizarGuardia(id: String, status: String, fin: String, hours: Double)
+    @Query("UPDATE guardias SET status = :status, fin = :fin, hours = :hours, kmGuardia = :kmGuardia WHERE id = :id")
+    suspend fun finalizarGuardia(id: String, status: String, fin: String, hours: Double, kmGuardia: Double)
 
     @Query("SELECT * FROM guardias WHERE orderNumber = :orderNumber ORDER BY createdAt ASC")
     suspend fun getGuardiasPorJornada(orderNumber: String): List<Guardia>

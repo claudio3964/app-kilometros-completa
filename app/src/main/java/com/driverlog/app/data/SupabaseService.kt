@@ -462,7 +462,7 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
         }
     }
 
-    suspend fun finalizarGuardiaEnSupabase(guardiaId: String, orderNumber: String, fin: String, hours: Double): Boolean =
+    suspend fun finalizarGuardiaEnSupabase(guardiaId: String, orderNumber: String, fin: String, hours: Double, kmGuardia: Double): Boolean =
         withContext(Dispatchers.IO) {
             try {
                 val json = JSONObject().apply {
@@ -470,6 +470,7 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
                     put("p_order_number", orderNumber)
                     put("p_fin", fin)
                     put("p_hours", hours)
+                    put("p_km_guardia", kmGuardia)
                     put("p_status", "finalizada")
                 }
                 val body = json.toString().toRequestBody("application/json".toMediaType())
