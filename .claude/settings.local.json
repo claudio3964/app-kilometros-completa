@@ -6,7 +6,9 @@
       "Bash(git commit -m ' *)",
       "Bash(curl *)",
       "Bash(git push *)",
-      "Bash(gradlew.bat compileDebugKotlin)"
+      "Bash(gradlew.bat compileDebugKotlin)",
+      "Bash(.\\\\gradlew.bat compileDebugKotlin)",
+      "Bash(Get-ChildItem -Recurse -Name)"
     ]
   }
 }

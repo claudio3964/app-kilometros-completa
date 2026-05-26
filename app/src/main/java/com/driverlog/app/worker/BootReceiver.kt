@@ -15,6 +15,8 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
 
+        MensajesPollingWorker.iniciar(context)
+
         // Reprogramar todos los viajes programados que quedaron pendientes
         CoroutineScope(Dispatchers.IO).launch {
             val db = CotDatabase.getInstance(context)

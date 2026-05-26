@@ -15,7 +15,7 @@ import com.driverlog.app.ui.theme.AppNavigation
 import com.driverlog.app.ui.theme.COTDriverTheme
 import com.driverlog.app.ui.theme.LoginScreen
 import com.driverlog.app.ui.theme.ProfileSetupScreen
-
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 class MainActivity : ComponentActivity() {
 
     private val requestPermissionLauncher = registerForActivityResult(
@@ -23,6 +23,7 @@ class MainActivity : ComponentActivity() {
     ) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 

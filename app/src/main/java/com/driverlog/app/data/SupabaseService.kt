@@ -525,4 +525,40 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
         false
     }
 }
+
+    suspend fun obtenerMensajesPendientes(legajo: String): List<JSONObject> = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder()
+                .url("$SUPABASE_URL/rest/v1/mensajes?para=eq.$legajo&leido=eq.false&select=id,tipo,data&order=creado_at.asc")
+                .addHeader("apikey", SUPABASE_KEY)
+                .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                .get()
+                .build()
+            val body = client.newCall(request).execute().body?.string() ?: return@withContext emptyList()
+            val arr = JSONArray(body)
+            (0 until arr.length()).map { arr.getJSONObject(it) }
+        } catch (e: Exception) {
+            Log.e("COT", "Error obtener mensajes pendientes: ${e.message}")
+            emptyList()
+        }
+    }
+
+    suspend fun marcarMensajeLeido(mensajeId: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val body = JSONObject().apply { put("leido", true) }
+                .toString().toRequestBody("application/json".toMediaType())
+            val request = Request.Builder()
+                .url("$SUPABASE_URL/rest/v1/mensajes?id=eq.$mensajeId")
+                .addHeader("apikey", SUPABASE_KEY)
+                .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Prefer", "return=minimal")
+                .patch(body)
+                .build()
+            client.newCall(request).execute().isSuccessful
+        } catch (e: Exception) {
+            Log.e("COT", "Error marcar mensaje leido: ${e.message}")
+            false
+        }
+    }
 }

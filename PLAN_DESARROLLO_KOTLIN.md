@@ -295,22 +295,29 @@ No se requieren cambios en Room. El campo `descripcion: String?` de `Guardia` ya
 
 ## Fase 6 — Mensajes del admin
 
-### 6.1 `CotFirebaseMessagingService.kt` — ampliar
+### 6.1 `CotFirebaseMessagingService.kt` — rol aclarado
 
-El FCM ya funciona para viajes. El admin también manda mensajes tipo:
-- `mensaje` → mostrar notificación de texto
-- `asignacion` → crear viaje automáticamente (si acepta)
-- `guardia` → crear guardia automáticamente
-- `urgente` → notificación con sonido diferenciado
+El push FCM es **solo notificación visual** (aviso de que llegó algo). La lógica de creación de viajes/guardias **no depende de FCM** — va en el worker de polling.
 
-Hoy la app Kotlin solo maneja push de activación de viaje. Hay que parsear el `data` del push y enrutar según `tipo`.
+El sistema JS nunca dependió del push para crear entidades: usaba polling cada 30 segundos a la tabla `mensajes`. El mismo modelo se replica en Kotlin.
 
-### 6.2 Polling de mensajes
+### 6.2 Polling de mensajes — implementación obligatoria
 
-El JS hace polling cada 30 segundos a la tabla `mensajes`. En Kotlin se puede implementar con un `WorkManager` periódico que:
-1. Consulta `mensajes` donde `para = legajo` y `leido = false`
-2. Si hay mensajes → muestra notificación local
-3. Al tocar → abre la app en una pantalla de mensajes
+El sistema original en JS consultaba la tabla `mensajes` de Supabase cada 30 segundos (sin depender de FCM para la lógica de negocio). En Kotlin se implementa con un `WorkManager` periódico:
+
+**Worker: `MensajesPollingWorker.kt`**
+
+1. Consulta `mensajes` donde `para = legajo` y `leido = false`.
+2. Por cada mensaje encontrado, enrutar según `tipo`:
+   - `asignacion` → llamar `ViajeRepository.crearViaje()` con los datos de `data.viaje`
+   - `guardia` → llamar `iniciarGuardia()` con los datos de `data` (tipo, inicio, descripcion)
+   - `cancelar_viaje` → llamar `ViajeRepository.cancelarViaje(viajeId)` (ver Fase 5.3)
+   - `mensaje` o `urgente` → mostrar notificación local con `NotificationManager`
+3. Marcar cada mensaje procesado como `leido = true` en Supabase.
+
+**Frecuencia:** 30 segundos. Usar `PeriodicWorkRequest` con `repeatInterval = 30, TimeUnit.SECONDS` (mínimo real de WorkManager es 15 minutos en background; para intervalos cortos usar un `Worker` que se re-encola a sí mismo con `OneTimeWorkRequest` + delay, o usar un `Service` con `Handler.postDelayed`).
+
+> **Nota de arquitectura:** FCM puede despertar el worker o mostrar un toast, pero nunca es la única vía para crear viajes o guardias. Si el push no llega (sin conexión, proceso muerto), el polling lo resuelve en el próximo ciclo.
 
 ### 6.3 `MensajesScreen.kt` (nueva)
 
@@ -361,7 +368,8 @@ Sprint 4 (PDF):
 Sprint 5 (historial + mensajes + cancelación admin):
   → HistorialScreen con totales reales (1h post-LaudoCalculator)
   → JornadaDetalleScreen (2h)
-  → MensajesScreen + ampliar FCM handler (3h)
+  → MensajesPollingWorker (polling 30s: asignacion→crearViaje, guardia→iniciarGuardia, mensaje/urgente→notif local, marcar leido) (3h)
+  → MensajesScreen + FCM como notificación visual complementaria (1h)
   → Flujo cancelación y reasignación de guardia desde panel admin (ver Fase 5.3)
 ```
 
@@ -375,8 +383,8 @@ Sprint 5 (historial + mensajes + cancelación admin):
 | Ver totales de km y monto | `LaudoCalculator.calcular()` | ❌ falta |
 | Estado de jornada (activa/cerrada) | `Jornada.status` | ✅ campo existe |
 | Ver guardias con horas y km | `GuardiasScreen` | ⚠️ sin descripción |
-| Enviar asignación de viaje | FCM handler | ⚠️ parcial |
-| Enviar asignación de guardia | FCM handler | ❌ no implementado |
+| Enviar asignación de viaje | `MensajesPollingWorker` → `crearViaje()` (FCM solo avisa) | ❌ falta worker |
+| Enviar asignación de guardia | `MensajesPollingWorker` → `iniciarGuardia()` (FCM solo avisa) | ❌ falta worker |
 | Alertas dispositivo duplicado | `insertarAlertaAcceso()` | ✅ implementado |
 | Ver PDF de jornada cerrada | `PdfGenerator` | ❌ falta |
 | Dashboard km total del día | `calcularTotalesHoy()` | ❌ depende de LaudoCalculator |

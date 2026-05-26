@@ -374,6 +374,12 @@ class ViajeRepository(private val context: Context) {
         return dao.getViajesFinalizado().lastOrNull()
     }
 
+    suspend fun getViajesDeLaJornada(orderNumber: String): List<Viaje> =
+        dao.getViajesPorJornada(orderNumber)
+
+    suspend fun getGuardiasDeLaJornada(orderNumber: String): List<Guardia> =
+        guardiaDao.getGuardiasPorJornada(orderNumber)
+
 suspend fun cerrarJornada(legajo: String): File? {
     val jornada = jornadaDao.getJornadaActiva() ?: return null
 
@@ -423,6 +429,12 @@ suspend fun cerrarJornada(legajo: String): File? {
         null
     }
 }
+
+    suspend fun obtenerMensajesPendientes(legajo: String): List<org.json.JSONObject> =
+        supabase.obtenerMensajesPendientes(legajo)
+
+    suspend fun marcarMensajeLeido(mensajeId: String) =
+        supabase.marcarMensajeLeido(mensajeId)
 
     suspend fun calcularTotalesHoy(): LaudoCalculator.Totales {
         val cal = java.util.Calendar.getInstance()

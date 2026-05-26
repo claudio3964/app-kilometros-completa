@@ -22,7 +22,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:name=".CotApplication"
-        android:theme="@style/Theme.COTDriver">
+        android:theme="@style/Theme.COTDriver.Splash">
 
         <activity
             android:name=".MainActivity"
