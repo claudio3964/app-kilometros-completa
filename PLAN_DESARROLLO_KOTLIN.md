@@ -234,6 +234,152 @@ Al tocar una jornada en el historial → abrir pantalla de detalle con:
 - Totales calculados o snapshot si está cerrada
 - Botón compartir PDF
 
+### 5.4 Notificación 8 horas con botones de acción Android
+
+Cuando `GuardiaTimerWorker` detecta que la guardia cumple 8 horas, en lugar de solo mostrar una notificación informativa, construir la notificación con dos `NotificationCompat.Action`:
+
+**Botones:**
+- **Cerrar guardia** → `PendingIntent` apunta a `GuardiaActionReceiver` con acción `ACTION_CERRAR_GUARDIA`
+- **Extender 1 hora** → `PendingIntent` apunta a `GuardiaActionReceiver` con acción `ACTION_EXTENDER`
+
+**`GuardiaActionReceiver` (nuevo `BroadcastReceiver`):**
+
+```kotlin
+class GuardiaActionReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val guardiaId = intent.getStringExtra("guardia_id") ?: return
+        CoroutineScope(Dispatchers.IO).launch {
+            val repo = ViajeRepository(context)
+            when (intent.action) {
+                ACTION_CERRAR_GUARDIA -> {
+                    repo.finalizarGuardia(guardiaId)
+                    context.sendBroadcast(Intent("com.driverlog.GUARDIA_CERRADA").setPackage(context.packageName))
+                }
+                ACTION_EXTENDER -> {
+                    // Reagenda GuardiaTimerWorker con delay de 1h
+                    val workRequest = OneTimeWorkRequestBuilder<GuardiaTimerWorker>()
+                        .setInitialDelay(60, TimeUnit.MINUTES)
+                        .setInputData(workDataOf("guardiaId" to guardiaId))
+                        .build()
+                    WorkManager.getInstance(context)
+                        .enqueueUniqueWork("guardia_timer_$guardiaId", ExistingWorkPolicy.REPLACE, workRequest)
+                }
+            }
+            NotificationManagerCompat.from(context).cancel(NOTIF_ID_GUARDIA_8H)
+        }
+    }
+    companion object {
+        const val ACTION_CERRAR_GUARDIA = "com.driverlog.ACTION_CERRAR_GUARDIA"
+        const val ACTION_EXTENDER       = "com.driverlog.ACTION_EXTENDER"
+        const val NOTIF_ID_GUARDIA_8H   = 2001
+    }
+}
+```
+
+**Construcción de la notificación en `GuardiaTimerWorker`:**
+
+```kotlin
+val closePi = PendingIntent.getBroadcast(
+    context, 0,
+    Intent(GuardiaActionReceiver.ACTION_CERRAR_GUARDIA, null, context, GuardiaActionReceiver::class.java)
+        .putExtra("guardia_id", guardiaId),
+    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+)
+val extendPi = PendingIntent.getBroadcast(
+    context, 1,
+    Intent(GuardiaActionReceiver.ACTION_EXTENDER, null, context, GuardiaActionReceiver::class.java)
+        .putExtra("guardia_id", guardiaId),
+    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+)
+NotificationCompat.Builder(context, CHANNEL_ID)
+    .setSmallIcon(R.drawable.ic_guardia)
+    .setContentTitle("Guardia — 8 horas cumplidas")
+    .setContentText("¿Cerrás la guardia o seguís?")
+    .addAction(R.drawable.ic_close, "Cerrar guardia", closePi)
+    .addAction(R.drawable.ic_extend, "Extender 1h", extendPi)
+    .setAutoCancel(false)
+    .setOngoing(true)
+    .build()
+```
+
+**Registro en `AndroidManifest.xml`:**
+```xml
+<receiver android:name=".worker.GuardiaActionReceiver" android:exported="false">
+    <intent-filter>
+        <action android:name="com.driverlog.ACTION_CERRAR_GUARDIA"/>
+        <action android:name="com.driverlog.ACTION_EXTENDER"/>
+    </intent-filter>
+</receiver>
+```
+
+---
+
+### 5.5 Botón "Cambiar tipo" en `GuardiaListCard`
+
+Permite al chofer cambiar una guardia en curso de `comun` → `especial` (o viceversa) sin cerrarla y abrir una nueva manualmente. Internamente se crea un segundo tramo, preservando la continuidad de horas para el cálculo de km y viáticos.
+
+**UI — `GuardiaListCard` en `GuardiasScreen.kt`:**
+
+Mostrar el botón solo cuando `guardia.status == "en_curso"`:
+
+```kotlin
+if (guardia.status == "en_curso") {
+    val nuevoTipo = if (guardia.type == "comun") "especial" else "comun"
+    TextButton(onClick = { onCambiarTipo(guardia) }) {
+        Text("Cambiar a $nuevoTipo")
+    }
+}
+```
+
+**Lógica — `cambiarTipoGuardia(guardiaId: String)` en `ViajeRepository`:**
+
+```kotlin
+suspend fun cambiarTipoGuardia(guardiaId: String) {
+    val guardiaActual = guardiaDao.getGuardiaEnCurso() ?: return
+    // 1. Cierra el tramo actual con la hora exacta ahora
+    finalizarGuardia(guardiaId)
+    // 2. Abre un nuevo tramo del tipo opuesto en la misma jornada,
+    //    con inicio = hora actual para mantener continuidad
+    val nuevoTipo = if (guardiaActual.type == "comun") "especial" else "comun"
+    iniciarGuardia(
+        orderNumber = guardiaActual.orderNumber,
+        type = nuevoTipo,
+        descripcion = guardiaActual.descripcion  // hereda descripción si era especial
+    )
+}
+```
+
+**Comportamiento esperado:**
+- El tramo cerrado queda en Room/Supabase con sus horas y `kmGuardia` calculados correctamente.
+- El nuevo tramo arranca desde `System.currentTimeMillis()` con el tipo opuesto.
+- `LaudoCalculator` suma los dos tramos normalmente — ambos son `Guardia` independientes con el mismo `orderNumber`.
+- Si el chofer cambiaba de `comun` a `especial`, la descripción queda vacía y puede agregarse luego (o se la pide en un `AlertDialog` antes de confirmar el cambio).
+- El `GuardiaTimerWorker` **no se reinicia desde cero** al cambiar de tipo. El nuevo tramo hereda el tiempo acumulado del tramo anterior. El delay restante se calcula como:
+  ```
+  delay = createdAt(primer tramo) + 8h - System.currentTimeMillis()
+  ```
+  Si `delay <= 0` (ya pasaron las 8 horas totales de guardia), **no reagendar** el worker — la notificación ya debió haberse disparado o el chofer eligió no extender. En `cambiarTipoGuardia()` pasar el `createdAt` del tramo original al nuevo `iniciarGuardia()` para que calcule el delay correctamente:
+  ```kotlin
+  val tiempoAcumuladoMs = System.currentTimeMillis() - guardiaActual.createdAt
+  val delayRestanteMs = (8 * 3600_000L) - tiempoAcumuladoMs
+  if (delayRestanteMs > 0) {
+      val workRequest = OneTimeWorkRequestBuilder<GuardiaTimerWorker>()
+          .setInitialDelay(delayRestanteMs, TimeUnit.MILLISECONDS)
+          .setInputData(workDataOf("guardiaId" to nuevaGuardia.id, "inicio" to nuevaGuardia.inicio))
+          .addTag("guardia_timer_${nuevaGuardia.id}")
+          .build()
+      WorkManager.getInstance(context)
+          .enqueueUniqueWork("guardia_timer_${nuevaGuardia.id}", ExistingWorkPolicy.REPLACE, workRequest)
+  }
+  // Si delayRestanteMs <= 0 → no reagendar; el viático ya fue o no corresponde
+  ```
+
+**Diálogo de confirmación (opcional pero recomendado):**
+
+Si el nuevo tipo es `especial`, mostrar un `AlertDialog` con un `TextField` para que el chofer ingrese la descripción del contrato antes de confirmar.
+
+---
+
 ### 5.3 Gestión de viajes asignados desde panel admin — flujo de cancelación y reasignación de guardia
 
 #### Contexto
@@ -365,12 +511,14 @@ Sprint 4 (PDF):
   → Integrar en cerrarJornada() (30min)
   → Botón Ver PDF en HistorialScreen (30min)
 
-Sprint 5 (historial + mensajes + cancelación admin):
+Sprint 5 (historial + mensajes + cancelación admin + mejoras guardia):
   → HistorialScreen con totales reales (1h post-LaudoCalculator)
   → JornadaDetalleScreen (2h)
   → MensajesPollingWorker (polling 30s: asignacion→crearViaje, guardia→iniciarGuardia, mensaje/urgente→notif local, marcar leido) (3h)
   → MensajesScreen + FCM como notificación visual complementaria (1h)
   → Flujo cancelación y reasignación de guardia desde panel admin (ver Fase 5.3)
+  → Notificación 8h con botones ACTION_CERRAR_GUARDIA / ACTION_EXTENDER sin abrir app (ver Fase 5.4) (2h)
+  → Botón "Cambiar tipo" en GuardiaListCard + cambiarTipoGuardia() en Repository (ver Fase 5.5) (1.5h)
 ```
 
 ---
