@@ -61,7 +61,13 @@ fun GuardiasScreen(
                                     guardiaEnCurso = repository.getGuardiaEnCurso()
                                 }
                             }
-                        } else null
+                        } else null,
+                        onCambiarTipo = { descripcion ->
+                            scope.launch {
+                                repository.cambiarTipoGuardia(guardia, descripcion)
+                                guardiaEnCurso = repository.getGuardiaEnCurso()
+                            }
+                        }
                     )
                 }
             }
@@ -70,8 +76,54 @@ fun GuardiasScreen(
 }
 
 @Composable
-private fun GuardiaListCard(guardia: Guardia, onFinalizar: (() -> Unit)?) {
+private fun GuardiaListCard(
+    guardia: Guardia,
+    onFinalizar: (() -> Unit)?,
+    onCambiarTipo: (descripcion: String?) -> Unit
+) {
     val enCurso = guardia.status == "en_curso"
+    var mostrarDialogo by remember { mutableStateOf(false) }
+    var descripcionInput by remember { mutableStateOf("") }
+
+    if (mostrarDialogo) {
+        AlertDialog(
+            onDismissRequest = {
+                mostrarDialogo = false
+                descripcionInput = ""
+            },
+            title = { Text("Cambiar a guardia especial") },
+            text = {
+                Column {
+                    Text("La guardia especial requiere una descripción del contrato.", fontSize = 13.sp)
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = descripcionInput,
+                        onValueChange = { descripcionInput = it },
+                        label = { Text("Descripción") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onCambiarTipo(descripcionInput.trim())
+                        mostrarDialogo = false
+                        descripcionInput = ""
+                    },
+                    enabled = descripcionInput.isNotBlank()
+                ) { Text("Confirmar") }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    mostrarDialogo = false
+                    descripcionInput = ""
+                }) { Text("Cancelar") }
+            }
+        )
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -102,6 +154,13 @@ private fun GuardiaListCard(guardia: Guardia, onFinalizar: (() -> Unit)?) {
                         fontSize = 12.sp,
                         color = if (enCurso) Color(0xFFBBBBBB) else Color.Gray
                     )
+                    if (enCurso && guardia.descripcion != null) {
+                        Text(
+                            guardia.descripcion,
+                            fontSize = 12.sp,
+                            color = Color(0xFFBBBBBB)
+                        )
+                    }
                 }
                 Surface(
                     shape = MaterialTheme.shapes.small,
@@ -115,14 +174,28 @@ private fun GuardiaListCard(guardia: Guardia, onFinalizar: (() -> Unit)?) {
                     )
                 }
             }
-            if (onFinalizar != null) {
+            if (enCurso) {
+                val nuevoTipo = if (guardia.type == "comun") "especial" else "comun"
                 Spacer(Modifier.height(8.dp))
-                Button(
-                    onClick = onFinalizar,
+                OutlinedButton(
+                    onClick = {
+                        if (nuevoTipo == "especial") mostrarDialogo = true
+                        else onCambiarTipo(null)
+                    },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF5350))
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF64B5F6))
                 ) {
-                    Text("Finalizar guardia")
+                    Text("Cambiar a ${if (nuevoTipo == "especial") "Especial" else "Común"}")
+                }
+                if (onFinalizar != null) {
+                    Spacer(Modifier.height(4.dp))
+                    Button(
+                        onClick = onFinalizar,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF5350))
+                    ) {
+                        Text("Finalizar guardia")
+                    }
                 }
             }
         }

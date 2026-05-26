@@ -266,6 +266,38 @@ class ViajeRepository(private val context: Context) {
         }
     }
 
+    suspend fun cambiarTipoGuardia(guardia: Guardia, descripcion: String? = null) {
+        val nuevoTipo = if (guardia.type == "comun") "especial" else "comun"
+
+        // Cancela el timer del tramo que se cierra para evitar que dispare sobre una guardia ya finalizada
+        WorkManager.getInstance(context).cancelUniqueWork("guardia_timer_${guardia.id}")
+
+        finalizarGuardia(guardia.id)
+
+        // iniciarGuardia programa internamente un timer de 8h; lo reemplazamos a continuación
+        val nuevaGuardia = iniciarGuardia(
+            orderNumber = guardia.orderNumber,
+            type = nuevoTipo,
+            descripcion = descripcion
+        )
+
+        // El timer hereda el tiempo acumulado del tramo original — no reinicia desde cero
+        val ahora = System.currentTimeMillis()
+        val delayRestanteMs = (guardia.createdAt + 8 * 3600_000L) - ahora
+        if (delayRestanteMs > 0) {
+            val workRequest = OneTimeWorkRequestBuilder<com.driverlog.app.worker.GuardiaTimerWorker>()
+                .setInitialDelay(delayRestanteMs, TimeUnit.MILLISECONDS)
+                .setInputData(workDataOf("guardiaId" to nuevaGuardia.id, "inicio" to nuevaGuardia.inicio))
+                .addTag("guardia_timer_${nuevaGuardia.id}")
+                .build()
+            WorkManager.getInstance(context)
+                .enqueueUniqueWork("guardia_timer_${nuevaGuardia.id}", ExistingWorkPolicy.REPLACE, workRequest)
+        } else {
+            // Las 8h totales ya se cumplieron — cancelar el timer que iniciarGuardia programó
+            WorkManager.getInstance(context).cancelUniqueWork("guardia_timer_${nuevaGuardia.id}")
+        }
+    }
+
     suspend fun getOCrearJornada(legajo: String): Jornada {
         val cal = java.util.Calendar.getInstance()
         val hora = String.format("%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
