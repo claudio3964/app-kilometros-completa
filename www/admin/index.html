@@ -131,7 +131,15 @@
     .msg-respuesta.aceptado{background:rgba(16,185,129,.15);color:var(--ok);}
     .msg-respuesta.rechazado{background:rgba(239,68,68,.15);color:var(--danger);}
     .msg-respuesta.pendiente{background:rgba(245,158,11,.15);color:var(--warn);}
+    /* TYPEAHEAD RUTAS */
+    .ruta-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--accent);border-top:none;border-radius:0 0 8px 8px;max-height:220px;overflow-y:auto;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.4);}
+    .ruta-option{padding:9px 14px;font-size:13px;color:var(--text2);cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s;}
+    .ruta-option:last-child{border-bottom:none;}
+    .ruta-option:hover,.ruta-option.selected{background:rgba(59,130,246,.15);color:var(--text);}
+    .ruta-option .km-badge{float:right;font-family:var(--mono);font-size:11px;color:var(--ok);}
+    .ruta-input-invalid{border-color:var(--danger) !important;}
   </style>
+  <script src="../routes_catalog.js"></script>
 </head>
 <body>
  
@@ -440,37 +448,25 @@
         <div id="camposAsignacion" style="display:none">
           <div style="font-size:12px;color:var(--ok);font-weight:600;margin-bottom:12px">🚍 Datos del viaje a asignar</div>
           <div class="asig-grid">
-            <div class="asig-field">
+            <div class="asig-field" style="position:relative">
               <label>Origen</label>
-              <select id="asigOrigen">
-                <option value="Montevideo">Montevideo</option>
-                <option value="Punta del Este">Punta del Este</option>
-                <option value="Piriápolis">Piriápolis</option>
-                <option value="Punta Negra">Punta Negra</option>
-                <option value="La Paloma">La Paloma</option>
-                <option value="La Pedrera">La Pedrera</option>
-                <option value="Rocha">Rocha</option>
-                <option value="Chuy">Chuy</option>
-                <option value="Colonia">Colonia</option>
-                <option value="Aguas Dulces">Aguas Dulces</option>
-                <option value="Laguna Garzón">Laguna Garzón</option>
-              </select>
+              <input type="text" id="asigOrigenInput"
+                     placeholder="Escribí para buscar..."
+                     autocomplete="off"
+                     oninput="filtrarOrigen(this.value)"
+                     onfocus="filtrarOrigen(this.value)">
+              <input type="hidden" id="asigOrigen">
+              <div id="asigOrigenList" class="ruta-dropdown" style="display:none"></div>
             </div>
-            <div class="asig-field">
+            <div class="asig-field" style="position:relative">
               <label>Destino</label>
-              <select id="asigDestino">
-                <option value="Punta del Este">Punta del Este</option>
-                <option value="Montevideo">Montevideo</option>
-                <option value="Piriápolis">Piriápolis</option>
-                <option value="Punta Negra">Punta Negra</option>
-                <option value="La Paloma">La Paloma</option>
-                <option value="La Pedrera">La Pedrera</option>
-                <option value="Rocha">Rocha</option>
-                <option value="Chuy">Chuy</option>
-                <option value="Colonia">Colonia</option>
-                <option value="Aguas Dulces">Aguas Dulces</option>
-                <option value="Laguna Garzón">Laguna Garzón</option>
-              </select>
+              <input type="text" id="asigDestinoInput"
+                     placeholder="Escribí para buscar..."
+                     autocomplete="off"
+                     oninput="filtrarDestino(this.value)"
+                     onfocus="filtrarDestino(this.value)">
+              <input type="hidden" id="asigDestino">
+              <div id="asigDestinoList" class="ruta-dropdown" style="display:none"></div>
             </div>
             <div class="asig-field">
               <label>Hora salida</label>
@@ -493,6 +489,14 @@
             <div class="asig-field">
               <label>Hora llegada estimada</label>
               <input type="time" id="asigHoraLlegada">
+            </div>
+            <div class="asig-field">
+              <label>Km ruta</label>
+              <div style="display:flex;align-items:center;gap:8px">
+                <input type="hidden" id="asigKm">
+                <span id="asigKmDisplay" style="font-family:var(--mono);font-size:16px;color:var(--text3)">—</span>
+                <span style="font-size:11px;color:var(--text3)">(del catálogo)</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1671,6 +1675,115 @@ async function anularAsignacion(id) {
   }
 }
  
+// ── TYPEAHEAD RUTAS ──
+function getOrigenesUnicos() {
+  if (!window.routes) return [];
+  return [...new Set(window.routes.map(r => r.origen))].sort();
+}
+
+function getDestinosPara(origen) {
+  if (!window.routes) return [];
+  if (origen) {
+    return window.routes
+      .filter(r => r.origen === origen)
+      .map(r => ({ destino: r.destino, km: r.km }));
+  }
+  return [...new Set(window.routes.map(r => r.destino))].sort().map(d => ({ destino: d, km: null }));
+}
+
+function filtrarOrigen(q) {
+  const lista = document.getElementById('asigOrigenList');
+  if (!lista) return;
+  const todos = getOrigenesUnicos();
+  const filtrados = q ? todos.filter(o => o.toLowerCase().includes(q.toLowerCase())) : todos;
+  lista.innerHTML = filtrados.map(o =>
+    `<div class="ruta-option" onclick="seleccionarOrigen('${o}')">${o}</div>`
+  ).join('');
+  lista.style.display = filtrados.length ? 'block' : 'none';
+}
+
+function seleccionarOrigen(valor) {
+  document.getElementById('asigOrigenInput').value = valor;
+  document.getElementById('asigOrigen').value = valor;
+  document.getElementById('asigOrigenList').style.display = 'none';
+  document.getElementById('asigOrigenInput').classList.remove('ruta-input-invalid');
+  document.getElementById('asigDestinoInput').value = '';
+  document.getElementById('asigDestino').value = '';
+  actualizarKmRuta();
+}
+
+function filtrarDestino(q) {
+  const lista = document.getElementById('asigDestinoList');
+  if (!lista) return;
+  const origen = document.getElementById('asigOrigen').value;
+  const opciones = getDestinosPara(origen).filter(d =>
+    d.destino.toLowerCase().includes(q.toLowerCase())
+  );
+  lista.innerHTML = opciones.map(d =>
+    `<div class="ruta-option" onclick="seleccionarDestino('${d.destino}')">
+      ${d.destino}
+      ${d.km ? `<span class="km-badge">${d.km} km</span>` : ''}
+    </div>`
+  ).join('');
+  lista.style.display = opciones.length ? 'block' : 'none';
+}
+
+function seleccionarDestino(valor) {
+  document.getElementById('asigDestinoInput').value = valor;
+  document.getElementById('asigDestino').value = valor;
+  document.getElementById('asigDestinoList').style.display = 'none';
+  document.getElementById('asigDestinoInput').classList.remove('ruta-input-invalid');
+  actualizarKmRuta();
+}
+
+function actualizarKmRuta() {
+  const origen  = document.getElementById('asigOrigen').value;
+  const destino = document.getElementById('asigDestino').value;
+  const ruta    = window.routes?.find(r => r.origen === origen && r.destino === destino);
+  const kmDisplay = document.getElementById('asigKmDisplay');
+  const kmInput   = document.getElementById('asigKm');
+  if (!kmDisplay || !kmInput) return;
+  if (ruta) {
+    kmInput.value = ruta.km;
+    kmDisplay.textContent = `${ruta.km} km`;
+    kmDisplay.style.color = 'var(--ok)';
+  } else {
+    kmInput.value = '';
+    kmDisplay.textContent = origen && destino ? 'Ruta no en catálogo' : '—';
+    kmDisplay.style.color = 'var(--text3)';
+  }
+}
+
+function calcularInicioProgramadoMs(horaSalidaStr) {
+  const [hh, mm] = horaSalidaStr.split(':').map(Number);
+  const ahora     = new Date();
+  const candidato = new Date();
+  candidato.setHours(hh, mm, 0, 0);
+  const diffMs = ahora - candidato;
+  if (candidato > ahora) return candidato.getTime();          // futuro hoy
+  if (diffMs < 12 * 3600000) return candidato.getTime();     // retroactivo del día
+  candidato.setDate(candidato.getDate() + 1);                 // asignación nocturna → mañana
+  return candidato.getTime();
+}
+
+document.addEventListener('click', (e) => {
+  const origenList  = document.getElementById('asigOrigenList');
+  const destinoList = document.getElementById('asigDestinoList');
+  if (!origenList || !destinoList) return;
+  if (!e.target.closest('#asigOrigenInput') && !e.target.closest('#asigOrigenList')) {
+    origenList.style.display = 'none';
+    const val = document.getElementById('asigOrigenInput').value;
+    if (val && val !== document.getElementById('asigOrigen').value)
+      document.getElementById('asigOrigenInput').classList.add('ruta-input-invalid');
+  }
+  if (!e.target.closest('#asigDestinoInput') && !e.target.closest('#asigDestinoList')) {
+    destinoList.style.display = 'none';
+    const val = document.getElementById('asigDestinoInput').value;
+    if (val && val !== document.getElementById('asigDestino').value)
+      document.getElementById('asigDestinoInput').classList.add('ruta-input-invalid');
+  }
+});
+
 // ── ENVIAR MENSAJE (con soporte asignación) ──
 async function enviarMensaje() {
   const para = document.getElementById('msgPara').value;
@@ -1689,27 +1802,30 @@ async function enviarMensaje() {
 
   let dataViaje = null;
   if (tipo === 'asignacion') {
-    const origen = document.getElementById('asigOrigen').value;
-    const destino = document.getElementById('asigDestino').value;
-    const horaSalida = document.getElementById('asigHoraSalida').value;
-    const horaLlegada = document.getElementById('asigHoraLlegada').value;
+    const origen       = document.getElementById('asigOrigen').value;
+    const destino      = document.getElementById('asigDestino').value;
+    const horaSalida   = document.getElementById('asigHoraSalida').value;
+    const horaLlegada  = document.getElementById('asigHoraLlegada').value;
     const tipoServicio = document.getElementById('asigTipoServicio').value;
-    const coche = document.getElementById('asigCoche').value;
+    const coche        = document.getElementById('asigCoche').value;
+    const kmRuta       = parseInt(document.getElementById('asigKm').value) || 0;
 
-    if (!horaSalida) { showToast('⚠️ Ingresá la hora de salida'); return; }
-    if (!coche) { showToast('⚠️ Ingresá el número de coche'); return; }
-    if (!origen) { showToast('⚠️ Ingresá el origen'); return; }
-    if (!destino) { showToast('⚠️ Ingresá el destino'); return; }
+    if (!horaSalida)   { showToast('⚠️ Ingresá la hora de salida'); return; }
+    if (!coche)        { showToast('⚠️ Ingresá el número de coche'); return; }
+    if (!origen)       { showToast('⚠️ Seleccioná el origen del catálogo'); return; }
+    if (!destino)      { showToast('⚠️ Seleccioná el destino del catálogo'); return; }
     if (!tipoServicio) { showToast('⚠️ Seleccioná el tipo de servicio'); return; }
+    if (!kmRuta)       { showToast('⚠️ Seleccioná una combinación origen/destino válida del catálogo'); return; }
 
     const regexHora = /^([01]\d|2[0-3]):([0-5]\d)$/;
     if (!regexHora.test(horaSalida)) { showToast('⚠️ Hora de salida inválida (HH:MM)'); return; }
     if (isNaN(coche) || coche.trim() === '') { showToast('⚠️ El número de coche debe ser numérico'); return; }
 
     const hoyAdmin = new Date();
-const fechaHoy = `${hoyAdmin.getFullYear()}-${String(hoyAdmin.getMonth()+1).padStart(2,'0')}-${String(hoyAdmin.getDate()).padStart(2,'0')}`;
-dataViaje = {
-  viaje: { origen, destino, horaSalida, horaLlegada, tipoServicio, coche, fechaViaje: fechaHoy },
+    const fechaHoy = `${hoyAdmin.getFullYear()}-${String(hoyAdmin.getMonth()+1).padStart(2,'0')}-${String(hoyAdmin.getDate()).padStart(2,'0')}`;
+    const inicioProgramadoMs = calcularInicioProgramadoMs(horaSalida);
+    dataViaje = {
+      viaje: { origen, destino, horaSalida, horaLlegada, tipoServicio, coche, km: kmRuta, inicioProgramadoMs, fechaViaje: fechaHoy },
       respuesta: null,
       respondidoAt: null
     };
@@ -1786,6 +1902,15 @@ if (tipo === 'guardia') {
     }
 
     document.getElementById('msgTexto').value = '';
+    if (tipo === 'asignacion') {
+      document.getElementById('asigOrigenInput').value    = '';
+      document.getElementById('asigOrigen').value         = '';
+      document.getElementById('asigDestinoInput').value   = '';
+      document.getElementById('asigDestino').value        = '';
+      document.getElementById('asigKm').value             = '';
+      document.getElementById('asigKmDisplay').textContent = '—';
+      document.getElementById('asigKmDisplay').style.color = 'var(--text3)';
+    }
     showToast(`✅ ${tipo === 'asignacion' ? 'Asignación enviada' : 'Mensaje enviado'} a ${para === 'todos' ? 'todos' : 'legajo ' + para}`);
     cargarMensajes();
   } catch(e) {
