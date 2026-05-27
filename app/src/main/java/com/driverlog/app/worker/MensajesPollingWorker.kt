@@ -13,6 +13,7 @@ import com.driverlog.app.data.ViajeRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
 class MensajesPollingWorker(
@@ -53,16 +54,24 @@ class MensajesPollingWorker(
             when (tipo) {
                 "asignacion" -> {
                     val viajeData = data.optJSONObject("viaje") ?: data
+                    val origen = viajeData.optString("origen", "")
+                    val destino = viajeData.optString("destino", "")
+                    val horaSalida = viajeData.optString("horaSalida", "")
+                    val inicioProgramadoMs = viajeData.optLong("inicioProgramadoMs", 0L)
+                        .takeIf { it > 0L }
+                        ?: calcularInicioProgramado(horaSalida)
+                    val km = viajeData.optInt("km", 0).takeIf { it > 0 }
+                        ?: repo.getKmDesdeRuta(origen = origen, destino = destino)
                     repo.crearViaje(
                         legajo = legajo,
-                        origen = viajeData.optString("origen", ""),
-                        destino = viajeData.optString("destino", ""),
-                        km = viajeData.optInt("km", 0),
+                        origen = origen,
+                        destino = destino,
+                        km = km,
                         tipoServicio = viajeData.optString("tipoServicio", ""),
                         coche = viajeData.optString("coche", ""),
-                        horaSalida = viajeData.optString("horaSalida", ""),
+                        horaSalida = horaSalida,
                         horaLlegada = viajeData.optString("horaLlegada", ""),
-                        inicioProgramadoMs = viajeData.optLong("inicioProgramadoMs", System.currentTimeMillis())
+                        inicioProgramadoMs = inicioProgramadoMs
                     )
                     Log.d("COT_POLLING", "Viaje creado desde asignacion id=$id")
                 }
@@ -127,6 +136,42 @@ class MensajesPollingWorker(
                 .setAutoCancel(true)
                 .build()
         )
+    }
+
+    // Construye el timestamp de inicio desde "HH:mm".
+    // Si la hora aún no llegó hoy → HOY a esa hora (→ programado).
+    // Si ya pasó hoy Y la diferencia es ≥ 12h (asignación nocturna) → MAÑANA a esa hora (→ programado).
+    // Si ya pasó hoy Y la diferencia es < 12h (asignación retroactiva del día) → HOY a esa hora (→ en_curso).
+    private fun calcularInicioProgramado(horaSalida: String): Long {
+        return try {
+            val parts = horaSalida.split(":")
+            val hora = parts[0].toInt()
+            val min = parts[1].toInt()
+            val cal = Calendar.getInstance()
+            val ahoraMs = cal.timeInMillis
+            cal.set(Calendar.HOUR_OF_DAY, hora)
+            cal.set(Calendar.MINUTE, min)
+            cal.set(Calendar.SECOND, 0)
+            cal.set(Calendar.MILLISECOND, 0)
+            val salidaHoyMs = cal.timeInMillis
+            if (salidaHoyMs > ahoraMs) {
+                // Hora futura hoy → programado hoy
+                salidaHoyMs
+            } else {
+                val diferenciaMs = ahoraMs - salidaHoyMs
+                if (diferenciaMs >= 12 * 3600_000L) {
+                    // Más de 12h en el pasado → asignación nocturna → programado mañana
+                    cal.add(Calendar.DAY_OF_MONTH, 1)
+                    cal.timeInMillis
+                } else {
+                    // Menos de 12h en el pasado → asignación retroactiva del día → en_curso
+                    salidaHoyMs
+                }
+            }
+        } catch (e: Exception) {
+            // horaSalida inválida → programar para 1 min desde ahora para no crear en_curso inmediato
+            System.currentTimeMillis() + 60_000L
+        }
     }
 
     private fun reencolar() {

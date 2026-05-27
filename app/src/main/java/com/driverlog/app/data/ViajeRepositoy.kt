@@ -81,6 +81,13 @@ class ViajeRepository(private val context: Context) {
             jornadaDao.insertarJornada(jornadaRemota)
             Log.d("COT", "Jornada sincronizada desde Supabase: ${jornadaRemota.orderNumber}")
         }
+
+        // Sincronizar las últimas 30 jornadas cerradas para poblar el historial.
+        val jornadasCerradas = supabase.obtenerJornadasCerradas(legajo)
+        jornadasCerradas.forEach { jornadaDao.insertarJornada(it) }
+        if (jornadasCerradas.isNotEmpty()) {
+            Log.d("COT", "Jornadas cerradas guardadas en Room: ${jornadasCerradas.size}")
+        }
     }
 
     suspend fun activarViaje(viaje: Viaje) {
@@ -382,6 +389,9 @@ class ViajeRepository(private val context: Context) {
             .apply()
     }
 
+    suspend fun buscarLegajoPorDeviceId(): PerfilChofer? =
+        supabase.buscarPerfilPorDeviceId(getCurrentDeviceId())
+
     suspend fun sincronizarPerfil(legajo: String) {
         try {
             supabase.sincronizarPerfil(legajo, getNombre(), getBase(), getTipo())
@@ -391,16 +401,35 @@ class ViajeRepository(private val context: Context) {
     }
 
     suspend fun calcularTotalesJornada(orderNumber: String): LaudoCalculator.Totales {
+        val jornada = jornadaDao.getJornada(orderNumber)
+
+        // 1. Snapshot guardado en Room (de sync o cierre local)
+        if (jornada != null && jornada.kmTotal > 0.0) {
+            return LaudoCalculator.Totales(kmTotal = jornada.kmTotal, monto = jornada.monto)
+        }
+
+        // 2. Calcular desde datos en Room
         val viajes = dao.getViajesPorJornada(orderNumber)
         val guardias = guardiaDao.getGuardiasPorJornada(orderNumber)
-        val jornada = jornadaDao.getJornada(orderNumber)
-        val jornadaCompleta = JornadaCompleta(
-            orderNumber = orderNumber,
-            fecha = jornada?.fecha ?: "",
-            travels = viajes,
-            guards = guardias
-        )
-        return LaudoCalculator.calcular(jornadaCompleta)
+        if (viajes.isNotEmpty() || guardias.isNotEmpty()) {
+            val jornadaCompleta = JornadaCompleta(
+                orderNumber = orderNumber,
+                fecha = jornada?.fecha ?: "",
+                travels = viajes,
+                guards = guardias
+            )
+            return LaudoCalculator.calcular(jornadaCompleta)
+        }
+
+        // 3. Fallback: buscar snapshot en Supabase
+        return supabase.obtenerTotalesJornadaSupabase(orderNumber) ?: LaudoCalculator.Totales()
+    }
+
+    suspend fun obtenerTotalesSnapshot(orderNumber: String): LaudoCalculator.Totales? {
+        Log.d("COT", "obtenerTotalesSnapshot: orderNumber=$orderNumber")
+        val resultado = supabase.obtenerTotalesJornadaSupabase(orderNumber)
+        Log.d("COT", "obtenerTotalesSnapshot: resultado=$resultado")
+        return resultado
     }
 
     suspend fun getUltimoViajeFinalizado(): Viaje? {
@@ -424,7 +453,7 @@ suspend fun cerrarJornada(legajo: String): File? {
 
     val totales = calcularTotalesJornada(jornada.orderNumber)
     val ahora = System.currentTimeMillis()
-    jornadaDao.cerrarJornada(jornada.orderNumber, ahora)
+    jornadaDao.cerrarJornada(jornada.orderNumber, ahora, totales.kmTotal, totales.monto)
 
     try {
         supabase.cerrarJornadaEnSupabase(jornada.orderNumber, totales, ahora)
@@ -463,11 +492,85 @@ suspend fun cerrarJornada(legajo: String): File? {
     }
 }
 
+    // Catálogo de km por ruta. Completar/verificar contra routes_catalog.js
+    // (repo claudio3964/app-kilometros-completa branch dev-rebuild-core).
+    fun getKmDesdeRuta(origen: String, destino: String): Int {
+        val key = "${origen.lowercase().trim()}→${destino.lowercase().trim()}"
+        return CATALOGO_KM_RUTAS[key] ?: 0
+    }
+
     suspend fun obtenerMensajesPendientes(legajo: String): List<org.json.JSONObject> =
         supabase.obtenerMensajesPendientes(legajo)
 
     suspend fun marcarMensajeLeido(mensajeId: String) =
         supabase.marcarMensajeLeido(mensajeId)
+
+    companion object {
+        // Verificado contra routes_catalog.js (repo claudio3964/app-kilometros-completa branch dev-rebuild-core)
+        // Ignorar campos carteles — se implementan en una fase posterior
+        private val CATALOGO_KM_RUTAS = mapOf(
+            // Montevideo → destinos
+            "montevideo→colonia"                                      to 178,
+            "montevideo→punta del este"                               to 140,
+            "montevideo→punta del este x piriápolis"                  to 145,
+            "montevideo→punta del este x pan de azúcar y san carlos"  to 155,
+            "montevideo→punta del este x ruta 8 y 9"                  to 165,
+            "montevideo→piriápolis"                                    to 97,
+            "montevideo→punta negra"                                   to 112,
+            "montevideo→laguna garzón"                                 to 183,
+            "montevideo→la paloma"                                     to 220,
+            "montevideo→la pedrera"                                    to 250,
+            "montevideo→rocha"                                         to 220,
+            "montevideo→aguas dulces"                                  to 290,
+            "montevideo→chuy"                                          to 345,
+            // Regresos a Montevideo
+            "colonia→montevideo"                                       to 178,
+            "punta del este→montevideo"                                to 140,
+            "punta del este→montevideo x piriápolis"                  to 145,
+            "punta del este→montevideo x pan de azúcar y san carlos"  to 155,
+            "punta del este→montevideo x ruta 8 y 9"                  to 165,
+            "piriápolis→montevideo"                                    to 97,
+            "punta negra→montevideo"                                   to 112,
+            "laguna garzón→montevideo"                                 to 183,
+            "la paloma→montevideo"                                     to 220,
+            "la pedrera→montevideo"                                    to 250,
+            "rocha→montevideo"                                         to 220,
+            "aguas dulces→montevideo"                                  to 290,
+            "chuy→montevideo"                                          to 345,
+            // Intermedios Punta del Este
+            "punta del este→piriápolis"                                to 40,
+            "punta del este→punta negra"                               to 28,
+            "punta del este→laguna garzón"                             to 50,
+            "punta del este→la pedrera"                                to 150,
+            "punta del este→chuy"                                      to 235,
+            "punta del este→san carlos"                                to 30,
+            // Regresos desde Punta del Este
+            "piriápolis→punta del este"                                to 40,
+            "punta negra→punta del este"                               to 28,
+            "laguna garzón→punta del este"                             to 50,
+            "la pedrera→punta del este"                                to 150,
+            "chuy→punta del este"                                      to 245,
+            "san carlos→punta del este"                                to 30,
+            // Intermedios Piriápolis
+            "piriápolis→punta colorada"                                to 15,
+            "piriápolis→punta negra"                                   to 12,
+            "piriápolis→cuchilla alta"                                 to 30,
+            "punta colorada→piriápolis"                                to 15,
+            "punta negra→piriápolis"                                   to 12,
+            "cuchilla alta→piriápolis"                                 to 30,
+            // Intermedios Rocha
+            "rocha→chuy"                                               to 120,
+            "rocha→la paloma"                                          to 35,
+            "rocha→la pedrera"                                         to 40,
+            "rocha→aguas dulces"                                       to 70,
+            "chuy→rocha"                                               to 120,
+            "la paloma→rocha"                                          to 35,
+            "la pedrera→rocha"                                         to 40,
+            "aguas dulces→rocha"                                       to 70,
+            "la paloma→chuy"                                           to 120,
+            "chuy→la paloma"                                           to 120,
+        )
+    }
 
     suspend fun calcularTotalesHoy(): LaudoCalculator.Totales {
         val cal = java.util.Calendar.getInstance()
