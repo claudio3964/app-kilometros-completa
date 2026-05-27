@@ -14,18 +14,28 @@ class CortarGuardiaWorker(
 
     override suspend fun doWork(): Result {
         val legajo = inputData.getString("legajo") ?: return Result.failure()
+        val guardiaIdEsperada = inputData.getString("guardiaId") ?: ""
         val repo = ViajeRepository(applicationContext)
 
-        val guardiaActiva = repo.getGuardiaEnCurso()
-        if (guardiaActiva != null) {
-            Log.d("COT", "CortarGuardiaWorker — cortando guardia ${guardiaActiva.id}")
-            repo.finalizarGuardia(guardiaActiva.id)
-
-            val intent = Intent("com.driverlog.GUARDIA_CORTADA").apply {
-                putExtra("motivo", "Viaje programado en 15 minutos")
-            }
-            applicationContext.sendBroadcast(intent)
+        if (guardiaIdEsperada.isEmpty()) {
+            Log.d("COT", "CortarGuardiaWorker — sin guardiaId, nada que cortar")
+            return Result.success()
         }
+
+        val guardiaActual = repo.getGuardiaEnCurso()
+        if (guardiaActual == null || guardiaActual.id != guardiaIdEsperada) {
+            Log.d("COT", "CortarGuardiaWorker — guardia $guardiaIdEsperada ya no activa, omitiendo")
+            return Result.success()
+        }
+
+        Log.d("COT", "CortarGuardiaWorker — cortando guardia ${guardiaActual.id}")
+        repo.finalizarGuardia(guardiaActual.id)
+
+        val intent = Intent("com.driverlog.GUARDIA_CORTADA").apply {
+            putExtra("motivo", "Viaje programado en 15 minutos")
+        }
+        applicationContext.sendBroadcast(intent)
+
         return Result.success()
     }
 }

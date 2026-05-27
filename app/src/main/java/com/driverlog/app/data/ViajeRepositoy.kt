@@ -49,9 +49,11 @@ class ViajeRepository(private val context: Context) {
                     } else {
                         val demoraCorte = viaje.inicioProgramado - (15 * 60 * 1000L) - ahora
                         if (demoraCorte > 0) {
+                            val guardiaActivaAhora = guardiaDao.getGuardiaEnCurso()
                             val inputData = workDataOf(
                                 "viajeId" to viaje.id,
-                                "legajo" to legajo
+                                "legajo" to legajo,
+                                "guardiaId" to (guardiaActivaAhora?.id ?: "")
                             )
                             val workRequest = OneTimeWorkRequestBuilder<com.driverlog.app.worker.CortarGuardiaWorker>()
                                 .setInitialDelay(demoraCorte, TimeUnit.MILLISECONDS)
@@ -259,10 +261,12 @@ class ViajeRepository(private val context: Context) {
     }
 
     suspend fun finalizarGuardia(guardiaId: String) {
-        val guardia = guardiaDao.getGuardiaEnCurso() ?: return
+        val guardia = guardiaDao.getGuardiaById(guardiaId) ?: return
+        if (guardia.status != "en_curso") return
         val ahora = System.currentTimeMillis()
         val cal = java.util.Calendar.getInstance()
         val fin = String.format("%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
+        Log.d("COT", "Finalizando guardia $guardiaId tipo=${guardia.type} createdAt=${guardia.createdAt}")
         val hours = (ahora - guardia.createdAt) / 3600000.0
         val kmGuardia = hours * if (guardia.type == "especial") 40.0 else 30.0
         guardiaDao.finalizarGuardia(guardiaId, "finalizada", fin, hours, kmGuardia)
