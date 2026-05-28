@@ -139,7 +139,64 @@
     .ruta-option .km-badge{float:right;font-family:var(--mono);font-size:11px;color:var(--ok);}
     .ruta-input-invalid{border-color:var(--danger) !important;}
   </style>
-  <script src="../routes_catalog.js"></script>
+  <script>
+window.routes = [
+  { origen: "Montevideo", destino: "Colonia", km: 178 },
+  { origen: "Montevideo", destino: "Punta del Este", km: 140 },
+  { origen: "Montevideo", destino: "Punta del Este x Piriápolis", km: 145 },
+  { origen: "Montevideo", destino: "Punta del Este x Pan de Azúcar y San Carlos", km: 155 },
+  { origen: "Montevideo", destino: "Punta del Este x Ruta 8 y 9", km: 165 },
+  { origen: "Montevideo", destino: "Piriápolis", km: 97 },
+  { origen: "Montevideo", destino: "Punta Negra", km: 112 },
+  { origen: "Montevideo", destino: "Laguna Garzón", km: 183 },
+  { origen: "Montevideo", destino: "La Paloma", km: 220 },
+  { origen: "Montevideo", destino: "La Pedrera", km: 250 },
+  { origen: "Montevideo", destino: "Rocha", km: 220 },
+  { origen: "Montevideo", destino: "Aguas Dulces", km: 290 },
+  { origen: "Montevideo", destino: "Chuy", km: 345 },
+  { origen: "Colonia", destino: "Montevideo", km: 178 },
+  { origen: "Punta del Este", destino: "Montevideo", km: 140 },
+  { origen: "Piriápolis", destino: "Montevideo", km: 97 },
+  { origen: "Punta Negra", destino: "Montevideo", km: 112 },
+  { origen: "Laguna Garzón", destino: "Montevideo", km: 183 },
+  { origen: "La Paloma", destino: "Montevideo", km: 220 },
+  { origen: "La Pedrera", destino: "Montevideo", km: 250 },
+  { origen: "Rocha", destino: "Montevideo", km: 220 },
+  { origen: "Aguas Dulces", destino: "Montevideo", km: 290 },
+  { origen: "Chuy", destino: "Montevideo", km: 345 },
+  { origen: "Punta del Este", destino: "Montevideo x Piriápolis", km: 145 },
+  { origen: "Punta del Este", destino: "Montevideo x Pan de Azúcar y San Carlos", km: 155 },
+  { origen: "Punta del Este", destino: "Montevideo x Ruta 8 y 9", km: 165 },
+  { origen: "Punta del Este", destino: "Piriápolis", km: 40 },
+  { origen: "Punta del Este", destino: "Punta Negra", km: 28 },
+  { origen: "Punta del Este", destino: "Laguna Garzón", km: 50 },
+  { origen: "Punta del Este", destino: "La Pedrera", km: 150 },
+  { origen: "Punta del Este", destino: "Chuy", km: 235 },
+  { origen: "Punta del Este", destino: "San Carlos", km: 30 },
+  { origen: "Piriápolis", destino: "Punta del Este", km: 40 },
+  { origen: "Punta Negra", destino: "Punta del Este", km: 28 },
+  { origen: "Laguna Garzón", destino: "Punta del Este", km: 50 },
+  { origen: "La Pedrera", destino: "Punta del Este", km: 150 },
+  { origen: "Chuy", destino: "Punta del Este", km: 245 },
+  { origen: "San Carlos", destino: "Punta del Este", km: 30 },
+  { origen: "Piriápolis", destino: "Punta Colorada", km: 15 },
+  { origen: "Piriápolis", destino: "Punta Negra", km: 12 },
+  { origen: "Piriápolis", destino: "Cuchilla Alta", km: 30 },
+  { origen: "Punta Colorada", destino: "Piriápolis", km: 15 },
+  { origen: "Punta Negra", destino: "Piriápolis", km: 12 },
+  { origen: "Cuchilla Alta", destino: "Piriápolis", km: 30 },
+  { origen: "Rocha", destino: "Chuy", km: 120 },
+  { origen: "Rocha", destino: "La Paloma", km: 35 },
+  { origen: "Rocha", destino: "La Pedrera", km: 40 },
+  { origen: "Rocha", destino: "Aguas Dulces", km: 70 },
+  { origen: "Chuy", destino: "Rocha", km: 120 },
+  { origen: "La Paloma", destino: "Rocha", km: 35 },
+  { origen: "La Pedrera", destino: "Rocha", km: 40 },
+  { origen: "Aguas Dulces", destino: "Rocha", km: 70 },
+  { origen: "La Paloma", destino: "Chuy", km: 120 },
+  { origen: "Chuy", destino: "La Paloma", km: 120 }
+];
+  </script>
 </head>
 <body>
  
