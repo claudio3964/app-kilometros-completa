@@ -850,11 +850,6 @@ if (token) {
     iniciarAdmin();
   }
   document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
-  // Set hora actual por defecto en asignación
-  const ahora = new Date();
-  const hh = String(ahora.getHours()).padStart(2,'0');
-  const mm = String(ahora.getMinutes()).padStart(2,'0');
-  document.getElementById('asigHoraSalida').value = `${hh}:${mm}`;
 });
  
 async function renovarToken() {
