@@ -1,4 +1,4 @@
-package com.driverlog.app.ui.
+package com.driverlog.app.ui
 
 import android.content.Intent
 import android.os.Environment
@@ -216,44 +216,107 @@ fun HistorialScreen(
         // ── Resumen del período ──────────────────────────────────────────────
         item {
             val tp = totalesPeriodo
+            val hayDatos = tp != null && jornadasFiltradas.isNotEmpty()
+            var expandidoPeriodo by remember(mesFiltro) { mutableStateOf(false) }
             Card(
+                onClick = { if (hayDatos) expandidoPeriodo = !expandidoPeriodo },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 4.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Column(modifier = Modifier.padding(14.dp)) {
-                    Text(
-                        "Resumen del período",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    if (tp != null && jornadasFiltradas.isNotEmpty()) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            ResumenColumnaOscura("Jornadas", "${jornadasFiltradas.size}")
-                            ResumenColumnaOscura("Km total", "%.1f".format(tp.kmTotal))
-                            ResumenColumnaOscura("Viáticos", "${tp.viaticos}")
-                        }
-                        Spacer(Modifier.height(8.dp))
-                        HorizontalDivider()
-                        Spacer(Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            Text(
-                                "$ %.2f".format(tp.monto),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp,
-                                color = Color(0xFF4CAF50)
+                    // ── Encabezado siempre visible ───────────────────────────
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Resumen del período",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                        if (hayDatos) {
+                            Icon(
+                                imageVector = if (expandidoPeriodo) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
+                                contentDescription = null,
+                                tint = Color.Gray,
+                                modifier = Modifier.size(18.dp)
                             )
                         }
+                    }
+                    if (hayDatos && tp != null) {
+                        Spacer(Modifier.height(8.dp))
+                        // ── Resumen colapsado ────────────────────────────────
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ResumenColumnaOscura("Jornadas", "${jornadasFiltradas.size}")
+                            ResumenColumnaOscura("Km", "%.1f".format(tp.kmTotal))
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text("Monto", fontSize = 10.sp, color = Color.Gray)
+                                Text(
+                                    "$ %.2f".format(tp.monto),
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF4CAF50)
+                                )
+                            }
+                        }
+                        // ── Desglose expandido ───────────────────────────────
+                        AnimatedVisibility(visible = expandidoPeriodo) {
+                            Column {
+                                Spacer(Modifier.height(12.dp))
+                                HorizontalDivider()
+                                Spacer(Modifier.height(10.dp))
+                                DesgloseFila("Km viajes", "%.1f km".format(tp.kmViajes))
+                                DesgloseFila("Km guardias", "%.1f km".format(tp.kmGuardias))
+                                DesgloseFila("Tome/Cese", "%.1f km".format(tp.kmTomeCese))
+                                DesgloseFila("Acoplados", "%.1f km".format(tp.kmAcoplados))
+                                Spacer(Modifier.height(8.dp))
+                                HorizontalDivider()
+                                Spacer(Modifier.height(8.dp))
+                                val montoViaticos = tp.viaticos * 455.26
+                                val montoKm = tp.monto - montoViaticos
+                                val laudoKm = if (tp.kmTotal > 0.0) montoKm / tp.kmTotal else 0.0
+                                DesgloseFila(
+                                    "Km total",
+                                    "%.1f km × $%.4f = $%.2f".format(tp.kmTotal, laudoKm, montoKm)
+                                )
+                                if (tp.viaticos > 0) {
+                                    DesgloseFila(
+                                        "Viáticos",
+                                        "${tp.viaticos} × $%.2f = $%.2f".format(455.26, montoViaticos)
+                                    )
+                                }
+                                Spacer(Modifier.height(8.dp))
+                                HorizontalDivider(thickness = 2.dp)
+                                Spacer(Modifier.height(8.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        "MONTO TOTAL",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp
+                                    )
+                                    Text(
+                                        "$ %.2f".format(tp.monto),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp,
+                                        color = Color(0xFF4CAF50)
+                                    )
+                                }
+                            }
+                        }
                     } else {
+                        Spacer(Modifier.height(8.dp))
                         Text("Sin jornadas en este período", color = Color.Gray, fontSize = 13.sp)
                     }
                 }
@@ -564,6 +627,19 @@ private fun abrirPdf(context: android.content.Context, file: File) {
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
     context.startActivity(Intent.createChooser(intent, "Abrir planilla"))
+}
+
+@Composable
+private fun DesgloseFila(label: String, valor: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 2.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(label, fontSize = 12.sp, color = Color.Gray)
+        Text(valor, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+    }
 }
 
 @Composable
