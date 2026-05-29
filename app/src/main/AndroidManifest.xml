@@ -66,6 +66,13 @@
                 <action android:name="com.driverlog.SYNC_JORNADA" />
             </intent-filter>
         </receiver>
+        <receiver android:name=".worker.GuardiaActionReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="com.driverlog.ACTION_EXTENDER"/>
+                <action android:name="com.driverlog.ACTION_FINALIZAR_GUARDIA"/>
+                <action android:name="com.driverlog.ACTION_CAMBIAR_COMUN"/>
+            </intent-filter>
+        </receiver>
 
         <provider
             android:name="androidx.core.content.FileProvider"

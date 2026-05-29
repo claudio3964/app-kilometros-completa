@@ -247,11 +247,22 @@ class ViajeRepository(private val context: Context) {
         } catch (e: Exception) {
             Log.e("COT", "Error sync guardia: ${e.message}")
         }
-        // Timer 8h
-        val demora = 8 * 60 * 60 * 1000L
-        val inputData = workDataOf("guardiaId" to guardia.id, "inicio" to guardia.inicio)
+        val esContrato = guardia.descripcion
+            ?.trimStart()
+            ?.startsWith("contrato", ignoreCase = true) ?: false
+        val delayMs = when {
+            guardia.type == "especial" && esContrato -> 4 * 3600_000L
+            guardia.type == "especial"               -> 1 * 3600_000L
+            else                                     -> 8 * 3600_000L
+        }
+        val inputData = workDataOf(
+            "guardiaId"   to guardia.id,
+            "inicio"      to guardia.inicio,
+            "tipoGuardia" to guardia.type,
+            "descripcion" to (guardia.descripcion ?: "")
+        )
         val workRequest = OneTimeWorkRequestBuilder<com.driverlog.app.worker.GuardiaTimerWorker>()
-            .setInitialDelay(demora, TimeUnit.MILLISECONDS)
+            .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
             .setInputData(inputData)
             .addTag("guardia_timer_${guardia.id}")
             .build()
@@ -292,19 +303,29 @@ class ViajeRepository(private val context: Context) {
             descripcion = descripcion
         )
 
-        // El timer hereda el tiempo acumulado del tramo original — no reinicia desde cero
+        // Timer del nuevo tramo: comun hereda el reloj original; especial reinicia con su propio delay
         val ahora = System.currentTimeMillis()
-        val delayRestanteMs = (guardia.createdAt + 8 * 3600_000L) - ahora
-        if (delayRestanteMs > 0) {
+        val esContratoNuevo = nuevaGuardia.descripcion?.trimStart()?.startsWith("contrato", ignoreCase = true) ?: false
+        val delayNuevoMs = when {
+            nuevoTipo == "comun"                               -> (guardia.createdAt + 8 * 3600_000L) - ahora
+            nuevoTipo == "especial" && esContratoNuevo         -> 4 * 3600_000L
+            else                                               -> 1 * 3600_000L
+        }
+        if (delayNuevoMs > 0) {
+            val nuevoInputData = workDataOf(
+                "guardiaId"   to nuevaGuardia.id,
+                "inicio"      to nuevaGuardia.inicio,
+                "tipoGuardia" to nuevaGuardia.type,
+                "descripcion" to (nuevaGuardia.descripcion ?: "")
+            )
             val workRequest = OneTimeWorkRequestBuilder<com.driverlog.app.worker.GuardiaTimerWorker>()
-                .setInitialDelay(delayRestanteMs, TimeUnit.MILLISECONDS)
-                .setInputData(workDataOf("guardiaId" to nuevaGuardia.id, "inicio" to nuevaGuardia.inicio))
+                .setInitialDelay(delayNuevoMs, TimeUnit.MILLISECONDS)
+                .setInputData(nuevoInputData)
                 .addTag("guardia_timer_${nuevaGuardia.id}")
                 .build()
             WorkManager.getInstance(context)
                 .enqueueUniqueWork("guardia_timer_${nuevaGuardia.id}", ExistingWorkPolicy.REPLACE, workRequest)
         } else {
-            // Las 8h totales ya se cumplieron — cancelar el timer que iniciarGuardia programó
             WorkManager.getInstance(context).cancelUniqueWork("guardia_timer_${nuevaGuardia.id}")
         }
     }
