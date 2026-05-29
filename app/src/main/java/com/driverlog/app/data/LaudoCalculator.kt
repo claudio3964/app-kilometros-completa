@@ -57,10 +57,13 @@ object LaudoCalculator {
         // Km acoplados
         var kmAcoplados = 0.0
         viajesValidos.forEach { v ->
-            if (v.acopladoKm > 0) {
+            // Acoplado se calcula por tipo de servicio y destino
+            // independientemente del flag v.acoplado
+            val kmAcop = calcularAcopladoKm(v.tipoServicio, v.destino)
+            if (kmAcop > 0) {
+                kmAcoplados += kmAcop
+            } else if (v.acopladoKm > 0) {
                 kmAcoplados += v.acopladoKm.toDouble()
-            } else if (v.acoplado) {
-                kmAcoplados += calcularAcopladoKm(v.tipoServicio, v.destino)
             }
         }
 
