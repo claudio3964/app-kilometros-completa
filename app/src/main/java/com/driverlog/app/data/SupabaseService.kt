@@ -16,6 +16,7 @@ sealed class DeviceCheckResult {
     object RegistrarYPermitir : DeviceCheckResult()
     data class Bloqueado(val mensaje: String) : DeviceCheckResult()
     object ErrorRed : DeviceCheckResult()
+    data object NoEncontrado : DeviceCheckResult()
 }
 
 data class PerfilChofer(
@@ -355,9 +356,7 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
                 val arrChofer = JSONArray(bodyChofer)
 
                 if (arrChofer.length() == 0) {
-                    return@withContext DeviceCheckResult.Bloqueado(
-                        "Legajo no encontrado. Verificá el número ingresado."
-                    )
+                    return@withContext DeviceCheckResult.NoEncontrado
                 }
 
                 val choferObj = arrChofer.getJSONObject(0)
@@ -669,6 +668,40 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
             client.newCall(request).execute().isSuccessful
         } catch (e: Exception) {
             Log.e("COT", "Error marcar mensaje leido: ${e.message}")
+            false
+        }
+    }
+
+    suspend fun registrarChofer(
+        legajo: String,
+        nombre: String,
+        base: String,
+        tipo: String,
+        deviceId: String
+    ): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val json = JSONObject().apply {
+                put("legajo", legajo)
+                put("nombre", nombre)
+                put("base", base)
+                put("tipo", tipo)
+                put("device_id", deviceId)
+                put("empresa_id", "cot")
+            }
+            val body = json.toString().toRequestBody("application/json".toMediaType())
+            val request = Request.Builder()
+                .url("$SUPABASE_URL/rest/v1/choferes")
+                .addHeader("apikey", SUPABASE_KEY)
+                .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Prefer", "return=minimal")
+                .post(body)
+                .build()
+            val response = client.newCall(request).execute()
+            Log.d("COT", "Registrar chofer: ${response.code}")
+            response.code == 201
+        } catch (e: Exception) {
+            Log.e("COT", "Error registrar chofer: ${e.message}")
             false
         }
     }

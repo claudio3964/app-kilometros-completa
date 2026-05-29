@@ -600,6 +600,9 @@ suspend fun cerrarJornada(legajo: String): File? {
         )
     }
 
+    suspend fun registrarChofer(legajo: String, nombre: String, base: String, tipo: String): Boolean =
+        supabase.registrarChofer(legajo, nombre, base, tipo, getCurrentDeviceId())
+
     suspend fun calcularTotalesHoy(): LaudoCalculator.Totales {
         val cal = java.util.Calendar.getInstance()
         cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
