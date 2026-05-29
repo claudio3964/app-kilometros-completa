@@ -1,4 +1,4 @@
-package com.driverlog.app.ui.theme
+package com.driverlog.app.ui.
 
 import android.content.Intent
 import android.os.Environment
@@ -32,8 +32,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.text.SimpleDateFormat
+import java.time.YearMonth
 import java.util.Date
 import java.util.Locale
+
+private val MESES_NOMBRES = arrayOf(
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+)
 
 @Composable
 fun HistorialScreen(
@@ -48,7 +54,47 @@ fun HistorialScreen(
     }
 
     val hoy = remember { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()) }
-    val jornadasPasadas = remember(jornadas) { jornadas.filter { it.fecha != hoy } }
+    val jornadasPasadas = remember(jornadas) {
+        jornadas.filter { it.fecha != hoy || it.status == "cerrada" || it.status == "finalizada" }
+    }
+
+    var mesFiltro by remember { mutableStateOf(YearMonth.now()) }
+
+    val jornadasFiltradas = remember(jornadasPasadas, mesFiltro) {
+        jornadasPasadas.filter { j ->
+            try {
+                val parts = j.fecha.split("-")
+                parts[0].toInt() == mesFiltro.year && parts[1].toInt() == mesFiltro.monthValue
+            } catch (e: Exception) { false }
+        }
+    }
+
+    var totalesPeriodo by remember { mutableStateOf<LaudoCalculator.Totales?>(null) }
+
+    LaunchedEffect(mesFiltro, jornadasPasadas.size) {
+        if (jornadasFiltradas.isEmpty()) {
+            totalesPeriodo = null
+            return@LaunchedEffect
+        }
+        var kmViajes = 0.0; var kmAcoplados = 0.0; var kmGuardias = 0.0
+        var kmTomeCese = 0.0; var kmTotal = 0.0; var monto = 0.0; var viaticos = 0
+        for (j in jornadasFiltradas) {
+            val t = if (j.status == "cerrada" || j.status == "finalizada") {
+                repository.obtenerTotalesSnapshot(j.orderNumber)
+                    ?: repository.calcularTotalesJornada(j.orderNumber)
+            } else {
+                repository.calcularTotalesJornada(j.orderNumber)
+            }
+            if (t != null) {
+                kmViajes += t.kmViajes; kmAcoplados += t.kmAcoplados
+                kmGuardias += t.kmGuardias; kmTomeCese += t.kmTomeCese
+                kmTotal += t.kmTotal; monto += t.monto; viaticos += t.viaticos
+            }
+        }
+        totalesPeriodo = LaudoCalculator.Totales(
+            kmViajes, kmAcoplados, kmGuardias, kmTomeCese, kmTotal, monto, viaticos
+        )
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -128,29 +174,95 @@ fun HistorialScreen(
             }
         }
 
-        if (jornadasPasadas.isNotEmpty()) {
-            item {
+        // ── Filtro por mes ───────────────────────────────────────────────────
+        item {
+            val mesLabel = "${MESES_NOMBRES[mesFiltro.monthValue - 1]} ${mesFiltro.year}"
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 8.dp, top = 16.dp, bottom = 4.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     "Jornadas anteriores",
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 13.sp,
-                    color = Color.Gray,
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp)
+                    color = Color.Gray
                 )
-            }
-            items(jornadasPasadas) { jornada ->
-                JornadaCard(jornada = jornada, repository = repository)
-            }
-        } else if (jornadasPasadas.isEmpty() && jornadas.isNotEmpty()) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Solo hay jornada de hoy", color = Color.Gray, fontSize = 13.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = { mesFiltro = mesFiltro.minusMonths(1) },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Text("◀", fontSize = 14.sp)
+                    }
+                    Text(
+                        mesLabel,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                    IconButton(
+                        onClick = { mesFiltro = mesFiltro.plusMonths(1) },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Text("▶", fontSize = 14.sp)
+                    }
                 }
+            }
+        }
+
+        // ── Resumen del período ──────────────────────────────────────────────
+        item {
+            val tp = totalesPeriodo
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Text(
+                        "Resumen del período",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        color = Color.Gray
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    if (tp != null && jornadasFiltradas.isNotEmpty()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            ResumenColumnaOscura("Jornadas", "${jornadasFiltradas.size}")
+                            ResumenColumnaOscura("Km total", "%.1f".format(tp.kmTotal))
+                            ResumenColumnaOscura("Viáticos", "${tp.viaticos}")
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        HorizontalDivider()
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            Text(
+                                "$ %.2f".format(tp.monto),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = Color(0xFF4CAF50)
+                            )
+                        }
+                    } else {
+                        Text("Sin jornadas en este período", color = Color.Gray, fontSize = 13.sp)
+                    }
+                }
+            }
+        }
+
+        if (jornadasFiltradas.isNotEmpty()) {
+            items(jornadasFiltradas) { jornada ->
+                JornadaCard(jornada = jornada, repository = repository)
             }
         }
     }
@@ -158,23 +270,33 @@ fun HistorialScreen(
 
 @Composable
 private fun JornadaCard(jornada: Jornada, repository: ViajeRepository) {
-    val cerrada = jornada.status == "cerrada"
+    val cerrada = jornada.status == "cerrada" || jornada.status == "finalizada"
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var expanded     by remember { mutableStateOf(false) }
-    var loaded       by remember { mutableStateOf(false) }
-    var viajes       by remember { mutableStateOf<List<Viaje>>(emptyList()) }
-    var guardias     by remember { mutableStateOf<List<Guardia>>(emptyList()) }
-    var totales      by remember { mutableStateOf<LaudoCalculator.Totales?>(null) }
-    var generandoPdf by remember { mutableStateOf(false) }
+    var expanded       by remember { mutableStateOf(false) }
+    var detailLoaded   by remember { mutableStateOf(false) }
+    var viajes         by remember { mutableStateOf<List<Viaje>>(emptyList()) }
+    var guardias       by remember { mutableStateOf<List<Guardia>>(emptyList()) }
+    var totales        by remember { mutableStateOf<LaudoCalculator.Totales?>(null) }
+    var generandoPdf   by remember { mutableStateOf(false) }
 
+    // Cargar totales al crear la card — aparecen en el encabezado sin expandir
+    LaunchedEffect(jornada.orderNumber) {
+        totales = if (cerrada) {
+            repository.obtenerTotalesSnapshot(jornada.orderNumber)
+                ?: repository.calcularTotalesJornada(jornada.orderNumber)
+        } else {
+            repository.calcularTotalesJornada(jornada.orderNumber)
+        }
+    }
+
+    // Cargar viajes y guardias solo al expandir
     LaunchedEffect(expanded) {
-        if (expanded && !loaded) {
-            viajes   = repository.getViajesDeLaJornada(jornada.orderNumber)
-            guardias = repository.getGuardiasDeLaJornada(jornada.orderNumber)
-            totales  = repository.calcularTotalesJornada(jornada.orderNumber)
-            loaded   = true
+        if (expanded && !detailLoaded) {
+            viajes       = repository.getViajesDeLaJornada(jornada.orderNumber)
+            guardias     = repository.getGuardiasDeLaJornada(jornada.orderNumber)
+            detailLoaded = true
         }
     }
 
@@ -200,6 +322,15 @@ private fun JornadaCard(jornada: Jornada, repository: ViajeRepository) {
                 Column {
                     Text(jornada.fecha, fontWeight = FontWeight.Bold, fontSize = 14.sp)
                     Text(jornada.orderNumber, fontSize = 11.sp, color = Color.Gray)
+                    val t = totales
+                    if (cerrada && t != null && t.kmTotal > 0.0) {
+                        Text(
+                            "%.1f km · $ %.2f".format(t.kmTotal, t.monto),
+                            fontSize = 11.sp,
+                            color = Color(0xFF4CAF50),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
@@ -312,6 +443,9 @@ private fun JornadaCard(jornada: Jornada, repository: ViajeRepository) {
                                     if (g.viatico) {
                                         SmallBadge("Viático", Color(0xFF388E3C))
                                     }
+                                    if (g.descripcion?.contains("tome de guardia", ignoreCase = true) == true) {
+                                        SmallBadge("Tome de guardia", Color(0xFFF59E0B))
+                                    }
                                 }
                             }
                         }
@@ -322,6 +456,32 @@ private fun JornadaCard(jornada: Jornada, repository: ViajeRepository) {
                         Spacer(Modifier.height(6.dp))
                         HorizontalDivider()
                         Spacer(Modifier.height(6.dp))
+                        // Desglose km (solo cuando hay valores parciales)
+                        if (t.kmViajes > 0.0 || t.kmGuardias > 0.0 || t.kmTomeCese > 0.0) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                ResumenColumnaOscura("Viajes", "%.1f".format(t.kmViajes))
+                                ResumenColumnaOscura("Guardias", "%.1f".format(t.kmGuardias))
+                                ResumenColumnaOscura("T/C", "%.1f".format(t.kmTomeCese))
+                                ResumenColumnaOscura("Acoplados", "%.1f".format(t.kmAcoplados))
+                            }
+                            Spacer(Modifier.height(6.dp))
+                        }
+                        // Viáticos
+                        if (t.viaticos > 0) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Viáticos", fontSize = 12.sp, color = Color.Gray)
+                                SmallBadge("${t.viaticos}", Color(0xFF388E3C))
+                            }
+                            Spacer(Modifier.height(4.dp))
+                        }
+                        // Total km y monto
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -427,5 +587,13 @@ private fun ResumenColumna(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(label, fontSize = 10.sp, color = Color.Gray)
         Text(value, fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun ResumenColumnaOscura(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(label, fontSize = 10.sp, color = Color.Gray)
+        Text(value, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
     }
 }
