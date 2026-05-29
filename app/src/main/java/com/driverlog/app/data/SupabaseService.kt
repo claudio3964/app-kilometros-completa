@@ -18,6 +18,13 @@ sealed class DeviceCheckResult {
     object ErrorRed : DeviceCheckResult()
 }
 
+data class PerfilChofer(
+    val legajo: String,
+    val nombre: String,
+    val base: String,
+    val tipo: String
+)
+
 class SupabaseService(private val context: Context) {
 
     private val client = OkHttpClient()
@@ -544,6 +551,109 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
         }
     }
 
+    suspend fun buscarPerfilPorDeviceId(deviceId: String): PerfilChofer? = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder()
+                .url("$SUPABASE_URL/rest/v1/choferes?device_id=eq.$deviceId&select=legajo,nombre,base,tipo&limit=1")
+                .addHeader("apikey", SUPABASE_KEY)
+                .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                .get()
+                .build()
+            val body = client.newCall(request).execute().body?.string() ?: return@withContext null
+            val arr = JSONArray(body)
+            if (arr.length() == 0) return@withContext null
+            val obj = arr.getJSONObject(0)
+            val legajo = obj.optString("legajo", "")
+            if (legajo.isEmpty()) return@withContext null
+            PerfilChofer(
+                legajo = legajo,
+                nombre = obj.optString("nombre", ""),
+                base = obj.optString("base", ""),
+                tipo = obj.optString("tipo", "efectivo")
+            )
+        } catch (e: Exception) {
+            Log.e("COT", "Error buscar perfil por device_id: ${e.message}")
+            null
+        }
+    }
+
+    suspend fun obtenerTotalesJornadaSupabase(orderNumber: String): LaudoCalculator.Totales? = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder()
+                .url("$SUPABASE_URL/rest/v1/jornadas?order_number=eq.$orderNumber&select=data&limit=1")
+                .addHeader("apikey", SUPABASE_KEY)
+                .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                .get()
+                .build()
+            val body = client.newCall(request).execute().body?.string()
+            Log.d("COT", "obtenerTotalesJornada: orderNumber=$orderNumber body=$body")
+            if (body == null) return@withContext null
+            val arr = JSONArray(body)
+            Log.d("COT", "obtenerTotalesJornada: arr.length=${arr.length()}")
+            if (arr.length() == 0) return@withContext null
+            val dataObj = arr.getJSONObject(0).optJSONObject("data")
+            Log.d("COT", "obtenerTotalesJornada: dataObj=$dataObj")
+            if (dataObj == null) return@withContext null
+            val snap = dataObj.optJSONObject("totalsSnapshot")
+            Log.d("COT", "obtenerTotalesJornada: totalsSnapshot=$snap")
+            if (snap == null) return@withContext null
+            LaudoCalculator.Totales(
+                kmViajes = snap.optDouble("kmViajes", 0.0),
+                kmAcoplados = snap.optDouble("kmAcoplados", 0.0),
+                kmGuardias = snap.optDouble("kmGuardias", 0.0),
+                kmTomeCese = snap.optDouble("kmTomeCese", 0.0),
+                kmTotal = snap.optDouble("kmTotal", 0.0),
+                monto = snap.optDouble("monto", 0.0),
+                viaticos = snap.optInt("viaticos", 0)
+            )
+        } catch (e: Exception) {
+            Log.e("COT", "Error obtener totales desde Supabase: ${e.message}")
+            null
+        }
+    }
+
+    suspend fun obtenerJornadasCerradas(legajo: String): List<Jornada> = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder()
+                .url("$SUPABASE_URL/rest/v1/jornadas?legajo=eq.$legajo&order=fecha.desc&limit=30&select=order_number,fecha,legajo,data")
+                .addHeader("apikey", SUPABASE_KEY)
+                .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                .get()
+                .build()
+            val body = client.newCall(request).execute().body?.string() ?: return@withContext emptyList()
+            val arr = JSONArray(body)
+            val result = mutableListOf<Jornada>()
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                val dataObj = obj.optJSONObject("data") ?: continue
+                if (!dataObj.optBoolean("closed", false)) continue
+                val orderNumber = obj.optString("order_number", "")
+                val fecha = obj.optString("fecha", "")
+                if (orderNumber.isEmpty() || fecha.isEmpty()) continue
+                val snapshot = dataObj.optJSONObject("totalsSnapshot")
+                val closedAt = snapshot?.optLong("cerradoAt", 0L) ?: 0L
+                result.add(
+                    Jornada(
+                        orderNumber = orderNumber,
+                        legajo = obj.optString("legajo", legajo),
+                        fecha = fecha,
+                        status = "cerrada",
+                        syncStatus = "synced",
+                        closedAt = if (closedAt > 0L) closedAt else null,
+                        horaInicio = dataObj.optString("horaInicio", ""),
+                        kmTotal = snapshot?.optDouble("kmTotal", 0.0) ?: 0.0,
+                        monto = snapshot?.optDouble("monto", 0.0) ?: 0.0
+                    )
+                )
+            }
+            Log.d("COT", "Jornadas cerradas sincronizadas: ${result.size}")
+            result
+        } catch (e: Exception) {
+            Log.e("COT", "Error obtener jornadas cerradas: ${e.message}")
+            emptyList()
+        }
+    }
+
     suspend fun marcarMensajeLeido(mensajeId: String): Boolean = withContext(Dispatchers.IO) {
         try {
             val body = JSONObject().apply { put("leido", true) }
@@ -560,6 +670,31 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
         } catch (e: Exception) {
             Log.e("COT", "Error marcar mensaje leido: ${e.message}")
             false
+        }
+    }
+
+    suspend fun getConfiguracion(): Map<String, Double> = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder()
+                .url("$SUPABASE_URL/rest/v1/configuracion?select=clave,valor")
+                .addHeader("apikey", SUPABASE_KEY)
+                .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                .get()
+                .build()
+            val body = client.newCall(request).execute().body?.string()
+                ?: return@withContext emptyMap()
+            val arr = JSONArray(body)
+            val map = mutableMapOf<String, Double>()
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                val clave = obj.optString("clave", "")
+                val valor = obj.optDouble("valor", Double.NaN)
+                if (clave.isNotEmpty() && !valor.isNaN()) map[clave] = valor
+            }
+            map
+        } catch (e: Exception) {
+            Log.e("COT", "Error getConfiguracion: ${e.message}")
+            emptyMap()
         }
     }
 }

@@ -422,7 +422,10 @@ class ViajeRepository(private val context: Context) {
                 travels = viajes,
                 guards = guardias
             )
-            return LaudoCalculator.calcular(jornadaCompleta)
+            val config = supabase.getConfiguracion()
+            val laudoKm = config["precio_km_conductor"] ?: 8.0122
+            val montoViatico = config["viatico_comida"] ?: 455.26
+            return LaudoCalculator.calcular(jornadaCompleta, laudoKm, montoViatico)
         }
 
         // 3. Fallback: buscar snapshot en Supabase
@@ -594,6 +597,9 @@ suspend fun cerrarJornada(legajo: String): File? {
             travels = viajes,
             guards = guardias
         )
-        return LaudoCalculator.calcular(jornadaCompleta)
+        val config = supabase.getConfiguracion()
+        val laudoKm = config["precio_km_conductor"] ?: 8.0122
+        val montoViatico = config["viatico_comida"] ?: 455.26
+        return LaudoCalculator.calcular(jornadaCompleta, laudoKm, montoViatico)
     }
 }

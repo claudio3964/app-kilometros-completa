@@ -7,7 +7,7 @@ object LaudoCalculator {
     private const val GUARDIA_ESPECIAL_KM_HORA = 40.0
     private const val TOME_CESE_KM = 42.5
     private const val ACOPLADO_EXTRA_KM = 30.0
-    private const val MONTO_VIATICO = 455.0
+    private const val MONTO_VIATICO = 455.26
 
     private val TIPOS_CON_TOME_CESE = setOf(
         "TURNO", "SEMIDIRECTO", "DIRECTO", "DIRECTISIMO", "EXPRESO", "CONTRATADO"
@@ -24,7 +24,11 @@ object LaudoCalculator {
         val viaticos: Int = 0
     )
 
-    fun calcular(jornada: JornadaCompleta): Totales {
+    fun calcular(
+        jornada: JornadaCompleta,
+        laudoKm: Double = LAUDO_KM,
+        montoViatico: Double = MONTO_VIATICO
+    ): Totales {
         // Si está cerrada y tiene snapshot, devolver snapshot
         val snap = jornada.totalsSnapshot
         if (jornada.closed && snap != null) {
@@ -79,7 +83,7 @@ object LaudoCalculator {
         val cantViaticos = determinarViatico(jornada)
 
         // Monto
-        val monto = kmTotal * LAUDO_KM + cantViaticos * MONTO_VIATICO
+        val monto = kmTotal * laudoKm + cantViaticos * montoViatico
 
         return Totales(
             kmViajes = kmViajes,
