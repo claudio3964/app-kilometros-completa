@@ -164,6 +164,7 @@ class SupabaseService(private val context: Context) {
                             arrivalTime = t.optString("arrivalTime", ""),
                             status = status,
                             inicioProgramado = t.optLong("inicioProgramado", 0L),
+                            inicioReal = t.optLong("inicioReal", 0L).takeIf { it > 0L },
                             kmEmpresa = t.optInt("kmEmpresa", 0),
                             turno = t.optString("turno", ""),
                             tipoServicio = t.optString("tipoServicio", ""),
