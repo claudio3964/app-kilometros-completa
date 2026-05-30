@@ -9,7 +9,7 @@
     :root {
       --bg:#0a0e1a;--bg2:#111827;--bg3:#1c2537;--border:#1e2d45;
       --accent:#3b82f6;--accent2:#06b6d4;--danger:#ef4444;--warn:#f59e0b;
-      --ok:#10b981;--text:#e2e8f0;--text2:#94a3b8;--text3:#475569;
+      --ok:#10b981;--text:#e2e8f0;--text2:#cbd5e1;--text3:#94a3b8;
       --mono:'Space Mono',monospace;--sans:'DM Sans',sans-serif;
     }
     *{box-sizing:border-box;margin:0;padding:0;}
@@ -33,11 +33,11 @@
     .topbar-sep{width:1px;height:20px;background:var(--border);}
     .topbar-page{font-size:14px;font-weight:500;color:var(--text2);}
     .topbar-right{display:flex;align-items:center;gap:12px;}
-    .user-badge{font-size:12px;color:var(--text3);font-family:var(--mono);}
+    .user-badge{font-size:12px;color:var(--text2);font-family:var(--mono);}
     .btn-logout{background:transparent;border:1px solid var(--border);border-radius:6px;padding:6px 14px;color:var(--text2);font-family:var(--sans);font-size:12px;cursor:pointer;transition:all .2s;}
     .btn-logout:hover{border-color:var(--danger);color:var(--danger);}
     .nav-tabs{display:flex;gap:2px;padding:16px 24px 0;border-bottom:1px solid var(--border);background:var(--bg2);overflow-x:auto;flex-wrap:nowrap;}
-    .nav-tab{padding:10px 16px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;border-radius:6px 6px 0 0;display:flex;align-items:center;gap:7px;}
+    .nav-tab{padding:10px 16px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;border-radius:6px 6px 0 0;display:flex;align-items:center;gap:7px;}
     .nav-tab:hover{color:var(--text2);background:var(--bg3);}
     .nav-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
     .tab-badge{background:var(--danger);color:white;font-size:10px;font-weight:700;padding:1px 4px;border-radius:10px;font-family:var(--mono);min-width:16px;text-align:center;}
@@ -45,7 +45,7 @@
     .tab-panel{display:none;}.tab-panel.active{display:block;}
     .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px;}
     .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;}
-    .stat-label{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;}
+    .stat-label{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:10px;}
     .stat-value{font-family:var(--mono);font-size:32px;font-weight:700;color:var(--text);line-height:1;}
     .stat-value.accent{color:var(--accent);}.stat-value.warn{color:var(--warn);}.stat-value.ok{color:var(--ok);}
     .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
@@ -55,7 +55,7 @@
     .table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
     table{width:100%;border-collapse:collapse;font-size:13px;}
     thead tr{background:var(--bg3);border-bottom:1px solid var(--border);}
-    th{padding:12px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);}
+    th{padding:12px 16px;text-align:left;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text2);}
     td{padding:13px 16px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle;}
     tr:last-child td{border-bottom:none;}
     tr:hover td{background:rgba(59,130,246,.04);}
@@ -71,12 +71,12 @@
     .alert-card.resolved{border-left-color:var(--ok);opacity:.6;}
     .alert-info{flex:1;}
     .alert-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;}
-    .alert-detail{font-size:12px;color:var(--text3);font-family:var(--mono);line-height:1.8;}
+    .alert-detail{font-size:12px;color:var(--text2);font-family:var(--mono);line-height:1.8;}
     .alert-actions{display:flex;gap:8px;flex-shrink:0;}
-    .empty-state{text-align:center;padding:60px 20px;color:var(--text3);}
+    .empty-state{text-align:center;padding:60px 20px;color:var(--text2);}
     .empty-state .icon{font-size:40px;margin-bottom:12px;}
     .empty-state p{font-size:14px;}
-    .loading{text-align:center;padding:40px;color:var(--text3);font-size:13px;font-family:var(--mono);}
+    .loading{text-align:center;padding:40px;color:var(--text2);font-size:13px;font-family:var(--mono);}
     .filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
     .filter-input{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;color:var(--text);font-family:var(--sans);font-size:13px;outline:none;transition:border-color .2s;}
     .filter-input:focus{border-color:var(--accent);}
@@ -91,7 +91,7 @@
     .msg-card.leido{opacity:.6;}
     .msg-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
     .msg-para{font-size:12px;font-weight:600;color:var(--accent);}
-    .msg-fecha{font-size:11px;color:var(--text3);font-family:var(--mono);}
+    .msg-fecha{font-size:11px;color:var(--text2);font-family:var(--mono);}
     .msg-texto{font-size:14px;color:var(--text);line-height:1.6;}
     .msg-tipo{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;}
     .msg-tipo.mensaje{background:rgba(59,130,246,.15);color:var(--accent);}
@@ -109,7 +109,7 @@
     }
     #camposAsignacion.visible{display:block;}
     .asig-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-    .asig-field label{display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+    .asig-field label{display:block;font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
     .asig-field input, .asig-field select{
       width:100%;background:var(--bg3);border:1px solid var(--border);
       border-radius:8px;padding:9px 12px;color:var(--text);
@@ -286,9 +286,9 @@ window.routes = [
     <option value="efectivo">Efectivo</option>
     <option value="contratado">Contratado</option>
   </select>
-  <button class="filter-input" onclick="limpiarFiltrosJornadas()" style="cursor:pointer;color:var(--text3);border-color:var(--border)">✕ Limpiar</button>
+  <button class="filter-input" onclick="limpiarFiltrosJornadas()" style="cursor:pointer;color:var(--text2);border-color:var(--border)">✕ Limpiar</button>
 </div>
-<div id="jornadasInfo" style="font-size:12px;color:var(--text3);font-family:var(--mono);margin-bottom:8px"></div>
+<div id="jornadasInfo" style="font-size:12px;color:var(--text2);font-family:var(--mono);margin-bottom:8px"></div>
       <div class="table-wrap"><table>
         <thead><tr><th>Fecha</th><th>Chofer</th><th>Legajo</th><th>Viajes</th><th>Guardias</th><th>Km Total</th><th>Viáticos</th><th>Monto</th><th>Estado</th></tr></thead>
         <tbody id="jornadasBody"><tr><td colspan="9" class="loading">Cargando...</td></tr></tbody>
@@ -314,7 +314,7 @@ window.routes = [
         <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px"><div class="stat-label">Vigencia actual</div><div style="font-family:var(--mono);font-size:16px;color:var(--accent2)" id="rotVigencia">—</div></div>
         <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px"><div class="stat-label">Temporada</div><div style="font-family:var(--mono);font-size:16px;color:var(--text)" id="rotTemporada">invierno</div></div>
         <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px"><div class="stat-label">En servicio hoy</div><div style="font-family:var(--mono);font-size:22px;color:var(--ok)" id="rotEnServicio">—</div></div>
-        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px"><div class="stat-label">De descanso hoy</div><div style="font-family:var(--mono);font-size:22px;color:var(--text3)" id="rotDescanso">—</div></div>
+        <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px"><div class="stat-label">De descanso hoy</div><div style="font-family:var(--mono);font-size:22px;color:var(--text2)" id="rotDescanso">—</div></div>
         <div class="stat-card" style="flex:1;min-width:160px;padding:14px 18px"><div class="stat-label">Pueden agregar</div><div style="font-family:var(--mono);font-size:22px;color:var(--warn)" id="rotAgregar">—</div></div>
       </div>
       <div class="filters">
@@ -382,7 +382,7 @@ window.routes = [
     <button class="btn-refresh" onclick="cargarConfiguracion()">↺ Actualizar</button>
   </div>
   <div style="max-width:600px">
-    <div style="font-size:13px;color:var(--text3);margin-bottom:20px;font-family:var(--mono)">
+    <div style="font-size:13px;color:var(--text2);margin-bottom:20px;font-family:var(--mono)">
       Valores del laudo vigente — Subgrupo 02 Grupo 13
     </div>
     <div id="configContainer"><div class="loading">Cargando...</div></div>
@@ -393,7 +393,7 @@ window.routes = [
 <div id="modalNuevoAdmin" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:2000;align-items:center;justify-content:center;">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;width:420px;max-width:90%;">
     <div style="font-size:16px;font-weight:600;margin-bottom:6px">➕ Nuevo Administrador</div>
-    <div style="font-size:12px;color:var(--text3);margin-bottom:20px">Se creará un usuario en Supabase Auth y se registrará en la tabla admins.</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:20px">Se creará un usuario en Supabase Auth y se registrará en la tabla admins.</div>
     <div style="display:flex;flex-direction:column;gap:12px;">
       <div>
         <label style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px">Nombre completo</label>
@@ -427,7 +427,7 @@ window.routes = [
     <div id="modalTaller" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:2000;align-items:center;justify-content:center;">
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;width:380px;max-width:90%;">
         <div style="font-size:16px;font-weight:600;margin-bottom:6px" id="modalTallerTitle">Coche 000</div>
-        <div style="font-size:12px;color:var(--text3);margin-bottom:20px">Anotá el estado o motivo de taller</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:20px">Anotá el estado o motivo de taller</div>
         <textarea id="tallerMotivo" rows="4" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-family:var(--sans);font-size:13px;resize:vertical;outline:none;" placeholder="Ej: Limpieza interior, revisión frenos..."></textarea>
         <div style="display:flex;gap:10px;margin-top:16px">
           <button onclick="guardarTaller()" style="flex:1;background:var(--accent);color:white;border:none;border-radius:8px;padding:11px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;">Marcar en taller</button>
@@ -441,36 +441,36 @@ window.routes = [
     <div class="tab-panel" id="tab-estadisticas">
       <div class="section-header"><div class="section-title">Estadísticas de rutas</div><button class="btn-refresh" onclick="cargarEstadisticas()">↺ Actualizar</button></div>
       <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:flex-end">
-        <div><div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Origen</div><select class="filter-input" id="statOrigen" onchange="cargarEstadisticas()"><option value="">Todos</option></select></div>
-        <div><div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Destino</div><select class="filter-input" id="statDestino" onchange="cargarEstadisticas()"><option value="">Todos</option></select></div>
-        <div><div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Franja horaria</div>
+        <div><div style="font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Origen</div><select class="filter-input" id="statOrigen" onchange="cargarEstadisticas()"><option value="">Todos</option></select></div>
+        <div><div style="font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Destino</div><select class="filter-input" id="statDestino" onchange="cargarEstadisticas()"><option value="">Todos</option></select></div>
+        <div><div style="font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Franja horaria</div>
           <select class="filter-input" id="statFranja" onchange="cargarEstadisticas()">
             <option value="">Cualquier hora</option><option value="0-6">00:00–06:00</option><option value="6-10">06:00–10:00</option><option value="10-14">10:00–14:00</option><option value="14-18">14:00–18:00</option><option value="18-22">18:00–22:00</option><option value="22-24">22:00–24:00</option>
           </select>
         </div>
-        <div><div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Día</div>
+        <div><div style="font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Día</div>
           <select class="filter-input" id="statDia" onchange="cargarEstadisticas()">
             <option value="">Todos</option><option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option><option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option><option value="0">Domingo</option>
           </select>
         </div>
-        <div><div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Temporada</div>
+        <div><div style="font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Temporada</div>
           <select class="filter-input" id="statTemporada" onchange="cargarEstadisticas()">
             <option value="">Todas</option><option value="invierno">Invierno (Apr–Oct)</option><option value="verano">Verano (Nov–Mar)</option>
           </select>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px">
-        <div class="stat-card" style="padding:14px"><div class="stat-label">Duración promedio</div><div style="font-family:var(--mono);font-size:24px;color:var(--text)" id="statPromedio">—</div><div style="font-size:11px;color:var(--text3);margin-top:4px" id="statVsDec"></div></div>
+        <div class="stat-card" style="padding:14px"><div class="stat-label">Duración promedio</div><div style="font-family:var(--mono);font-size:24px;color:var(--text)" id="statPromedio">—</div><div style="font-size:11px;color:var(--text2);margin-top:4px" id="statVsDec"></div></div>
         <div class="stat-card" style="padding:14px"><div class="stat-label">Rango real</div><div style="font-family:var(--mono);font-size:24px;color:var(--text)" id="statRango">—</div></div>
-        <div class="stat-card" style="padding:14px"><div class="stat-label">Velocidad promedio</div><div style="font-family:var(--mono);font-size:24px;color:var(--text)" id="statVelocidad">—</div><div style="font-size:11px;color:var(--text3);margin-top:4px">basada en km empresa</div></div>
+        <div class="stat-card" style="padding:14px"><div class="stat-label">Velocidad promedio</div><div style="font-family:var(--mono);font-size:24px;color:var(--text)" id="statVelocidad">—</div><div style="font-size:11px;color:var(--text2);margin-top:4px">basada en km empresa</div></div>
         <div class="stat-card" style="padding:14px"><div class="stat-label">Si sale a las</div><input type="time" id="statHoraSalida" value="18:00" onchange="recalcularLlegada()" style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-family:var(--mono);font-size:18px;margin-top:2px;outline:none;width:100%;"></div>
-        <div class="stat-card" style="padding:14px"><div class="stat-label">Llegada estimada</div><div style="font-family:var(--mono);font-size:24px;color:var(--ok)" id="statLlegada">—</div><div style="font-size:11px;color:var(--text3);margin-top:4px" id="statMuestra"></div></div>
+        <div class="stat-card" style="padding:14px"><div class="stat-label">Llegada estimada</div><div style="font-family:var(--mono);font-size:24px;color:var(--ok)" id="statLlegada">—</div><div style="font-size:11px;color:var(--text2);margin-top:4px" id="statMuestra"></div></div>
       </div>
       <div class="table-wrap"><table>
         <thead><tr><th>Fecha</th><th>Chofer</th><th>Origen</th><th>Destino</th><th>Salida</th><th>Llegada decl.</th><th>Duración real</th><th>vs declarado</th><th>Velocidad</th><th>Tipo</th><th>Coche</th></tr></thead>
         <tbody id="statBody"><tr><td colspan="11" class="loading">Seleccioná una ruta para ver estadísticas</td></tr></tbody>
       </table></div>
-      <div id="statAviso" style="margin-top:12px;background:var(--bg3);border-radius:8px;padding:10px 16px;font-size:12px;color:var(--text3);display:none;"></div>
+      <div id="statAviso" style="margin-top:12px;background:var(--bg3);border-radius:8px;padding:10px 16px;font-size:12px;color:var(--text2);display:none;"></div>
     </div>
  
     <!-- MENSAJES -->
@@ -485,13 +485,13 @@ window.routes = [
         <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px">✍️ Nuevo mensaje</div>
         <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
           <div style="flex:1;min-width:160px">
-            <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Para</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Para</div>
             <select class="filter-input" id="msgPara" style="width:100%">
               <option value="todos">📢 Todos los choferes</option>
             </select>
           </div>
           <div style="flex:1;min-width:120px">
-            <div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Tipo</div>
+            <div style="font-size:11px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Tipo</div>
             <select class="filter-input" id="msgTipo" style="width:100%" onchange="toggleCamposAsignacion()">
               <option value="mensaje">💬 Mensaje</option>
               <option value="asignacion">✅ Asignación de viaje</option>
@@ -551,8 +551,8 @@ window.routes = [
               <label>Km ruta</label>
               <div style="display:flex;align-items:center;gap:8px">
                 <input type="hidden" id="asigKm">
-                <span id="asigKmDisplay" style="font-family:var(--mono);font-size:16px;color:var(--text3)">—</span>
-                <span style="font-size:11px;color:var(--text3)">(del catálogo)</span>
+                <span id="asigKmDisplay" style="font-family:var(--mono);font-size:16px;color:var(--text2)">—</span>
+                <span style="font-size:11px;color:var(--text2)">(del catálogo)</span>
               </div>
             </div>
           </div>
@@ -967,7 +967,7 @@ function renderChoferes(choferes) {
     <td><strong style="color:var(--text)">${c.nombre||'—'}</strong></td>
     <td><span class="badge badge-blue">${c.tipo||'—'}</span></td>
     <td>${c.base||'—'}</td>
-    <td><span class="mono" style="font-size:10px;color:var(--text3)">${(c.device_id||'—').substring(0,20)}…</span></td>
+    <td><span class="mono" style="font-size:10px;color:var(--text2)">${(c.device_id||'—').substring(0,20)}…</span></td>
     <td style="font-size:12px">${c.registrado_at?new Date(c.registrado_at).toLocaleDateString('es-UY'):'—'}</td>
     <td><span class="badge ${c.device_id?'badge-ok':'badge-warn'}">${c.device_id?'● Activo':'○ Sin dispositivo'}</span></td>
       <td>${c.device_id?`<button class="btn-action" style="background:rgba(239,68,68,0.15);color:var(--danger);border:1px solid rgba(239,68,68,0.3)" onclick="enviarComandoLimpiar('${c.id}','${c.device_id}','${c.nombre}')">🗑 Limpiar jornadas</button>`:'—'}</td>
@@ -1248,9 +1248,9 @@ async function cargarRotacion() {
  
 function formatServicio(hora,destino,tipo) {
   if (!hora&&!destino) return null;
-  if (!hora&&destino) return `<span style="color:var(--text3);font-size:11px">${destino}</span>`;
+  if (!hora&&destino) return `<span style="color:var(--text2);font-size:11px">${destino}</span>`;
   const color=tipo==='DIRECTO'?'var(--accent2)':tipo==='TURNO'?'var(--text)':'var(--text2)';
-  return `<div style="line-height:1.6"><span style="font-family:var(--mono);font-size:12px;color:var(--ok)">${hora}</span><span style="font-size:12px;color:${color};margin-left:4px">${destino||''}</span>${tipo?`<span style="font-size:10px;color:var(--text3);margin-left:4px">${tipo}</span>`:''}</div>`;
+  return `<div style="line-height:1.6"><span style="font-family:var(--mono);font-size:12px;color:var(--ok)">${hora}</span><span style="font-size:12px;color:${color};margin-left:4px">${destino||''}</span>${tipo?`<span style="font-size:10px;color:var(--text2);margin-left:4px">${tipo}</span>`:''}</div>`;
 }
  
 function renderRotacion(rotacion) {
@@ -1262,13 +1262,13 @@ function renderRotacion(rotacion) {
     const srv2=s?formatServicio(s.servicio_2_hora,s.servicio_2_destino,s.servicio_2_tipo):null;
     const srv3=s?formatServicio(s.servicio_3_hora,s.servicio_3_destino,s.servicio_3_tipo):null;
     const srv4=s?formatServicio(s.servicio_4_hora,s.servicio_4_destino,s.servicio_4_tipo):null;
-    let estadoBadge=esDescanso?'<span class="badge" style="background:rgba(71,85,105,.3);color:var(--text3)">🟢 Descanso</span>':puedeAgregar?'<span class="badge badge-warn">+ Puede agregar</span>':'<span class="badge badge-ok">● En servicio</span>';
+    let estadoBadge=esDescanso?'<span class="badge" style="background:rgba(71,85,105,.3);color:var(--text2)">🟢 Descanso</span>':puedeAgregar?'<span class="badge badge-warn">+ Puede agregar</span>':'<span class="badge badge-ok">● En servicio</span>';
     if (r.es_suplente) estadoBadge+=`<br><span style="font-size:10px;color:var(--warn);font-family:var(--mono)">suplente de ${r.funcionario_titular}</span>`;
     return `<tr style="${esDescanso?'opacity:.5':''}">
       <td><span class="mono" style="color:var(--accent)">${r.posicion_actual}</span></td>
       <td><span class="mono">${r.nro_fun}</span></td>
       <td style="color:var(--text);font-size:13px">${r.apellidos_nombres}</td>
-      <td>${esDescanso?'<span style="color:var(--text3);font-size:12px">— DESCANSO —</span>':(srv1||'—')}</td>
+      <td>${esDescanso?'<span style="color:var(--text2);font-size:12px">— DESCANSO —</span>':(srv1||'—')}</td>
       <td>${srv2||'—'}</td><td>${srv3||'—'}</td><td>${srv4||'—'}</td>
       <td>${estadoBadge}</td>
     </tr>`;
@@ -1350,8 +1350,8 @@ function abrirDetalleJornada(orderNumber) {
       ${tiposOrdenados.map(t => `
         <div class="stat-card" style="padding:12px;border-left:3px solid ${COLORES_TIPO[t]||'var(--text3)'}">
           <div class="stat-label" style="font-size:10px">${t}</div>
-          <div style="font-family:var(--mono);font-size:18px;color:${COLORES_TIPO[t]||'var(--text)'}">${Number(kmPorTipo[t]).toFixed(1)}<span style="font-size:11px;color:var(--text3)"> km</span></div>
-          <div style="font-size:10px;color:var(--text3);margin-top:2px">${travels.filter(v=>(v.tipoServicio||v.turno||'SIN TIPO').toUpperCase()===t).length} viaje(s)</div>
+          <div style="font-family:var(--mono);font-size:18px;color:${COLORES_TIPO[t]||'var(--text)'}">${Number(kmPorTipo[t]).toFixed(1)}<span style="font-size:11px;color:var(--text2)"> km</span></div>
+          <div style="font-size:10px;color:var(--text2);margin-top:2px">${travels.filter(v=>(v.tipoServicio||v.turno||'SIN TIPO').toUpperCase()===t).length} viaje(s)</div>
         </div>`).join('')}
     </div>`;
 
@@ -1359,7 +1359,7 @@ function abrirDetalleJornada(orderNumber) {
     html+=`<div class="section-title" style="margin-bottom:12px">🚍 Viajes (${travels.length})</div><div class="table-wrap" style="margin-bottom:20px"><table><thead><tr><th>Origen</th><th>Destino</th><th>Salida</th><th>Llegada</th><th>Km</th><th>Tipo</th><th>Acoplado</th><th>Coche</th></tr></thead><tbody>`;
     travels.forEach(v=>{
       const km=Number(v.kmEmpresa||v.kmAuto||0).toFixed(1), acopKm=Number(v.acopladoKm||0).toFixed(1), tc=v.tomeCese?' <span style="font-size:10px;color:var(--accent2)">[T/C]</span>':'';
-      html+=`<tr><td>${v.origen||'—'}${tc}</td><td>${v.destino||'—'}</td><td><span class="mono">${v.departureTime||'—'}</span></td><td><span class="mono">${v.arrivalTime||'—'}</span></td><td><span class="mono">${km} km</span></td><td><span class="badge badge-blue" style="font-size:10px">${v.tipoServicio||v.turno||'—'}</span></td><td><span class="mono" style="color:${v.acoplado?'var(--warn)':'var(--text3)'}">${v.acoplado?acopKm+' km':'—'}</span></td><td>${v.coche||'—'}</td></tr>`;
+      html+=`<tr><td>${v.origen||'—'}${tc}</td><td>${v.destino||'—'}</td><td><span class="mono">${v.departureTime||'—'}</span></td><td><span class="mono">${v.arrivalTime||'—'}</span></td><td><span class="mono">${km} km</span></td><td><span class="badge badge-blue" style="font-size:10px">${v.tipoServicio||v.turno||'—'}</span></td><td><span class="mono" style="color:${v.acoplado?'var(--warn)':'var(--text2)'}">${v.acoplado?acopKm+' km':'—'}</span></td><td>${v.coche||'—'}</td></tr>`;
     });
     html+='</tbody></table></div>';
   }
@@ -1479,7 +1479,7 @@ function showFlotaTip(e,num) {
   if (c.estado==='servicio'&&viaje) html+=`<div style="color:var(--text2);line-height:1.9">Ruta: ${viaje.origen} → ${viaje.destino}<br>Salida: <span style="font-family:var(--mono)">${viaje.salida}</span> Llegada: <span style="font-family:var(--mono)">${viaje.llegada}</span><br>Chofer: ${viaje.chofer}</div>`;
   else if (c.estado==='libre') html+=`<div style="color:var(--ok)">Disponible — sin viaje activo</div>`;
   else if (c.estado==='taller'&&c.tallerInfo) html+=`<div style="color:var(--accent)">En taller</div><div style="color:var(--text2);margin-top:4px">${c.tallerInfo.motivo||'—'}</div>`;
-  else html+=`<div style="color:var(--text3)">Sin actividad hoy</div>`;
+  else html+=`<div style="color:var(--text2)">Sin actividad hoy</div>`;
   tip.innerHTML=html; tip.style.display='block'; tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY-10)+'px';
 }
 function hideFlotaTip(){document.getElementById('flotaTooltip').style.display='none';}
@@ -1554,8 +1554,8 @@ function renderEstadisticas(){
   const velProm=viajesConKm.length?Math.round(viajesConKm.reduce((s,v)=>s+(v.kmEmpresa/(v.durReal/60)),0)/viajesConKm.length):null;
   document.getElementById('statPromedio').innerHTML=promedio?`${promedio} <span style="font-size:14px;color:var(--text2)">min</span><div style="font-size:13px;color:var(--accent2);margin-top:2px">${formatMin(promedio)}</div>`:'—';
   document.getElementById('statVsDec').textContent=promedio&&promDecl?`Declarado: ${promDecl} min (${formatMin(promDecl)})`:'';
-  document.getElementById('statRango').innerHTML=minReal!==null?`${minReal}–${maxReal} <span style="font-size:14px;color:var(--text2)">min</span><div style="font-size:12px;color:var(--text3);margin-top:2px">${formatMin(minReal)} – ${formatMin(maxReal)}</div>`:'—';
-  document.getElementById('statVelocidad').innerHTML=velProm?`${velProm} <span style="font-size:14px;color:var(--text2)">km/h</span><div style="font-size:11px;color:var(--text3);margin-top:2px">${viajesConKm.length} viaje${viajesConKm.length===1?'':'s'} con km</div>`:'—';
+  document.getElementById('statRango').innerHTML=minReal!==null?`${minReal}–${maxReal} <span style="font-size:14px;color:var(--text2)">min</span><div style="font-size:12px;color:var(--text2);margin-top:2px">${formatMin(minReal)} – ${formatMin(maxReal)}</div>`:'—';
+  document.getElementById('statVelocidad').innerHTML=velProm?`${velProm} <span style="font-size:14px;color:var(--text2)">km/h</span><div style="font-size:11px;color:var(--text2);margin-top:2px">${viajesConKm.length} viaje${viajesConKm.length===1?'':'s'} con km</div>`:'—';
   document.getElementById('statMuestra').textContent=n?`${n} viaje${n===1?'':'s'} de muestra`:'Sin datos';
   if (n<3){document.getElementById('statAviso').style.display='block';document.getElementById('statAviso').textContent=n===0?'No hay viajes registrados para estos filtros.':`Muestra baja (${n} viaje${n===1?'':'s'}). Las estadísticas van a mejorar con el uso.`;}
   else document.getElementById('statAviso').style.display='none';
@@ -1578,7 +1578,7 @@ function renderTablaEstadisticas(){
     const diffStr=diff>=0?`+${diff} min`:`${diff} min`, diffColor=diff<=0?'#10b981':diff<=15?'#f59e0b':'#ef4444';
     const velViaje=v.kmEmpresa>0?Math.round(v.kmEmpresa/(v.durReal/60)):null;
     return `<tr><td><span class="mono" style="font-size:11px">${v.fecha||'—'}</span></td><td><span class="mono" style="font-size:11px">${v.chofer}</span></td><td>${v.origen}</td><td>${v.destino}</td><td><span class="mono">${v.salida}</span></td><td><span class="mono">${v.llegadaDecl}</span></td>
-    <td><div style="display:flex;align-items:center;gap:8px"><div style="width:50px;height:4px;border-radius:2px;background:var(--border);position:relative;overflow:hidden;flex-shrink:0"><div style="position:absolute;left:0;top:0;height:100%;width:${barra}%;background:${color};border-radius:2px"></div></div><div><span class="mono" style="font-size:11px">${v.durReal} min</span><span style="font-size:10px;color:var(--text3);margin-left:4px">${formatMin(v.durReal)}</span></div></div></td>
+    <td><div style="display:flex;align-items:center;gap:8px"><div style="width:50px;height:4px;border-radius:2px;background:var(--border);position:relative;overflow:hidden;flex-shrink:0"><div style="position:absolute;left:0;top:0;height:100%;width:${barra}%;background:${color};border-radius:2px"></div></div><div><span class="mono" style="font-size:11px">${v.durReal} min</span><span style="font-size:10px;color:var(--text2);margin-left:4px">${formatMin(v.durReal)}</span></div></div></td>
     <td><span class="mono" style="font-size:11px;color:${diffColor}">${diffStr}</span></td><td><span class="mono" style="font-size:11px;color:var(--text2)">${velViaje?velViaje+' km/h':'—'}</span></td><td><span class="badge badge-blue" style="font-size:10px">${v.tipo}</span></td><td><span class="mono" style="font-size:11px">${v.coche}</span></td></tr>`;
   }).join('');
 }
@@ -1669,7 +1669,7 @@ function renderMensajes() {
       ${anularHTML}
          ${sessionStorage.getItem('admin_rol') === 'superadmin' && !m.cerrado ? 
         `<button onclick="cerrarMensaje(${m.id})" style="
-          margin-top:10px;background:transparent;color:var(--text3);
+          margin-top:10px;background:transparent;color:var(--text2);
           border:1px solid var(--border);border-radius:6px;padding:4px 12px;
           font-size:11px;cursor:pointer;font-family:var(--sans);
         ">🗂 Cerrar mensaje</button>` : ''}
@@ -1796,7 +1796,7 @@ function actualizarKmRuta() {
   } else {
     kmInput.value = '';
     kmDisplay.textContent = origen && destino ? 'Ruta no en catálogo' : '—';
-    kmDisplay.style.color = 'var(--text3)';
+    kmDisplay.style.color = 'var(--text2)';
   }
 }
 
@@ -1955,7 +1955,7 @@ if (tipo === 'guardia') {
       document.getElementById('asigDestino').value        = '';
       document.getElementById('asigKm').value             = '';
       document.getElementById('asigKmDisplay').textContent = '—';
-      document.getElementById('asigKmDisplay').style.color = 'var(--text3)';
+      document.getElementById('asigKmDisplay').style.color = 'var(--text2)';
     }
     showToast(`✅ ${tipo === 'asignacion' ? 'Asignación enviada' : 'Mensaje enviado'} a ${para === 'todos' ? 'todos' : 'legajo ' + para}`);
     cargarMensajes();
@@ -2072,7 +2072,7 @@ function renderConfiguracion() {
           ${allConfig.map(cfg => `
             <tr>
               <td><strong style="color:var(--text)">${labels[cfg.clave] || cfg.clave}</strong><br>
-                <span style="font-size:10px;color:var(--text3);font-family:var(--mono)">${cfg.descripcion || ''}</span>
+                <span style="font-size:10px;color:var(--text2);font-family:var(--mono)">${cfg.descripcion || ''}</span>
               </td>
               <td>
                 <input id="val_${cfg.clave}" type="number" step="0.0001"
@@ -2081,7 +2081,7 @@ function renderConfiguracion() {
                     padding:6px 10px;color:var(--text);font-family:var(--mono);
                     font-size:13px;width:130px;outline:none;">
               </td>
-              <td><span class="mono" style="font-size:11px;color:var(--text3)">${cfg.vigencia || '—'}</span></td>
+              <td><span class="mono" style="font-size:11px;color:var(--text2)">${cfg.vigencia || '—'}</span></td>
               <td>
                 <button onclick="guardarConfig('${cfg.clave}')"
                   style="background:rgba(59,130,246,.15);border:1px solid var(--accent);
@@ -2094,7 +2094,7 @@ function renderConfiguracion() {
         </tbody>
       </table>
     </div>
-    <div style="margin-top:12px;font-size:11px;color:var(--text3);font-family:var(--mono)">
+    <div style="margin-top:12px;font-size:11px;color:var(--text2);font-family:var(--mono)">
       ⚠️ Los cambios se aplican inmediatamente en la app al reiniciar.
     </div>`;
 }
