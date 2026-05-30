@@ -164,7 +164,19 @@ class SupabaseService(private val context: Context) {
                             arrivalTime = t.optString("arrivalTime", ""),
                             status = status,
                             inicioProgramado = t.optLong("inicioProgramado", 0L),
-                            inicioReal = t.optLong("inicioReal", 0L).takeIf { it > 0L },
+                            inicioReal = try {
+                                val raw = t.opt("inicioReal")
+                                when (raw) {
+                                    is Long -> raw.takeIf { it > 0L }
+                                    is Int -> raw.toLong().takeIf { it > 0L }
+                                    is String -> java.text.SimpleDateFormat(
+                                        "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                                        java.util.Locale.getDefault()
+                                    ).also { it.timeZone = java.util.TimeZone.getTimeZone("UTC") }
+                                        .parse(raw)?.time
+                                    else -> null
+                                }
+                            } catch (e: Exception) { null },
                             kmEmpresa = t.optInt("kmEmpresa", 0),
                             turno = t.optString("turno", ""),
                             tipoServicio = t.optString("tipoServicio", ""),
