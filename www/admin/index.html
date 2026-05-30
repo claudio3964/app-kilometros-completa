@@ -654,19 +654,13 @@ async function crearNuevoAdmin() {
   btn.textContent = 'Creando...';
 
   try {
-    const res = await fetch(`${SB_URL}/rest/v1/rpc/crear_admin`, {
+    const res = await fetch(`${SB_URL}/functions/v1/crear-admin`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'apikey': SB_KEY,
         'Authorization': `Bearer ${sessionStorage.getItem('admin_token')}`
       },
-      body: JSON.stringify({
-        p_email:    email,
-        p_password: pass,
-        p_nombre:   nombre,
-        p_rol:      rol
-      })
+      body: JSON.stringify({ email, password: pass, nombre, rol })
     });
 
     const data = await res.json();
