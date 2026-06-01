@@ -49,7 +49,7 @@ class GeoTerminalService : Service() {
             val intent = Intent(context, GeoTerminalService::class.java).apply {
                 putExtra(EXTRA_VIAJE_ID, viaje.id)
                 putExtra(EXTRA_DESTINO, viaje.destino)
-                putExtra(EXTRA_INICIO_REAL, viaje.inicioProgramado)
+                putExtra(EXTRA_INICIO_REAL, viaje.inicioReal ?: viaje.inicioProgramado)
                 putExtra(EXTRA_MODO_PRUEBA, modoPrueba)
             }
             context.startForegroundService(intent)

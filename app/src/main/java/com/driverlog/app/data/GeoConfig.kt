@@ -3,7 +3,7 @@ package com.driverlog.app.data
 
 object GeoConfig {
     const val RADIO_METROS = 300.0
-    const val TIEMPO_QUIETO_MS = 2 * 60 * 1000L
+    const val TIEMPO_QUIETO_MS = 45 * 1000L
     const val MOVIMIENTO_MINIMO_M = 15.0
     const val COUNTDOWN_SEGUNDOS = 30
     const val TIEMPO_MINIMO_VIAJE_MS = 90 * 60 * 1000L

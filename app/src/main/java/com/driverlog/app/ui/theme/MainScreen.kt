@@ -26,6 +26,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import com.driverlog.app.data.LaudoCalculator
+import android.app.ActivityManager
+import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.core.content.FileProvider
@@ -73,6 +75,9 @@ fun MainScreen(
     LaunchedEffect(viajeEnCurso) {
         val viaje = viajeEnCurso
         if (viaje != null) {
+            if (viaje.status == "en_curso" && !isServiceRunning(context, GeoTerminalService::class.java)) {
+                GeoTerminalService.iniciar(context, viaje)
+            }
             val ruta = "${viaje.origen}→${viaje.destino}"
             val promedioMin = repository.getDuracionPromedio(ruta)
             val duracionMs = when {
@@ -611,6 +616,12 @@ private fun OperacionCard(
             )
         }
     }
+}
+
+private fun isServiceRunning(context: Context, serviceClass: Class<*>): Boolean {
+    val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+    return manager.getRunningServices(Int.MAX_VALUE)
+        .any { it.service.className == serviceClass.name }
 }
 
 private fun compartirPdf(context: android.content.Context, file: File) {
