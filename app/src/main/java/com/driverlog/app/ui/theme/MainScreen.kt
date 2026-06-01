@@ -76,7 +76,8 @@ fun MainScreen(
         val viaje = viajeEnCurso
         if (viaje != null) {
             if (viaje.status == "en_curso" && !isServiceRunning(context, GeoTerminalService::class.java)) {
-                GeoTerminalService.iniciar(context, viaje)
+                val prueba = viaje.origen == "Prueba" && viaje.destino == "Prueba"
+                GeoTerminalService.iniciar(context, viaje, modoPrueba = prueba)
             }
             val ruta = "${viaje.origen}→${viaje.destino}"
             val promedioMin = repository.getDuracionPromedio(ruta)
