@@ -1505,6 +1505,12 @@ async function quitarTaller(){
 document.addEventListener('click',e=>{if(e.target===document.getElementById('modalTaller'))cerrarModalTaller();});
  
 // ── ESTADÍSTICAS ──
+function parseTimestamp(val){
+  if(!val) return null;
+  if(typeof val==='number'&&val>0) return val;
+  if(typeof val==='string'){const ms=Date.parse(val);return isNaN(ms)?null:ms;}
+  return null;
+}
 let todosLosViajes=[],viajesFiltrados=[];
 async function cargarEstadisticas(){
   try {
@@ -1512,8 +1518,9 @@ async function cargarEstadisticas(){
     todosLosViajes=[];
     (Array.isArray(data)?data:[]).forEach(j=>{
       let d={};try{d=typeof j.data==='string'?JSON.parse(j.data):(j.data||{});}catch{}
-      (d.travels||[]).filter(t=>t.status==='finalizado'&&t.inicioReal&&t.finReal).forEach(t=>{
-        const durReal=Math.round((t.finReal-t.inicioReal)/60000);
+      (d.travels||[]).filter(t=>t.status==='finalizado'&&parseTimestamp(t.inicioReal)&&parseTimestamp(t.finReal)).forEach(t=>{
+        const ini=parseTimestamp(t.inicioReal),fin=parseTimestamp(t.finReal);
+        const durReal=Math.round((fin-ini)/60000);
         if (durReal<=0||durReal>600) return;
         const salida=t.departureTime||'', horaNum=salida?parseInt(salida.split(':')[0]):-1;
         const fecha=new Date(d.date||Date.now()), mes=fecha.getMonth()+1;
