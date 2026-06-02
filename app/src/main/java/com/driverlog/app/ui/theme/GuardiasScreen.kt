@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.driverlog.app.data.Guardia
 import com.driverlog.app.data.ViajeRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -26,6 +27,14 @@ fun GuardiasScreen(
 
     LaunchedEffect(legajo) {
         guardiaEnCurso = repository.getGuardiaEnCurso()
+    }
+
+    var tickMs by remember { mutableStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1000)
+            tickMs = System.currentTimeMillis()
+        }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -54,6 +63,7 @@ fun GuardiasScreen(
                 items(guardias) { guardia ->
                     GuardiaListCard(
                         guardia = guardia,
+                        tickMs = tickMs,
                         onFinalizar = if (guardia.status == "en_curso") {
                             {
                                 scope.launch {
@@ -78,10 +88,14 @@ fun GuardiasScreen(
 @Composable
 private fun GuardiaListCard(
     guardia: Guardia,
+    tickMs: Long = System.currentTimeMillis(),
     onFinalizar: (() -> Unit)?,
     onCambiarTipo: (descripcion: String?) -> Unit
 ) {
     val enCurso = guardia.status == "en_curso"
+    val elapsedMs = tickMs - guardia.createdAt
+    val horasTranscurridas = elapsedMs / 3600000.0
+    val kmActuales = horasTranscurridas * if (guardia.type == "especial") 40.0 else 30.0
     var mostrarDialogo by remember { mutableStateOf(false) }
     var descripcionInput by remember { mutableStateOf("") }
 
@@ -148,12 +162,35 @@ private fun GuardiaListCard(
                         fontSize = 12.sp,
                         color = if (enCurso) Color(0xFFBBBBBB) else Color.Gray
                     )
-                    Text(
-                        "Tipo: ${guardia.type.replaceFirstChar { it.uppercase() }}" +
-                                if (guardia.hours > 0) "  ·  %.1fh".format(guardia.hours) else "",
-                        fontSize = 12.sp,
-                        color = if (enCurso) Color(0xFFBBBBBB) else Color.Gray
-                    )
+                    if (enCurso) {
+                        val h = (elapsedMs / 3600000).toInt()
+                        val m = ((elapsedMs % 3600000) / 60000).toInt()
+                        val elapsedStr = if (h > 0) "${h}h ${m}m" else "${m}m"
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                "⏱ $elapsedStr",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF4CAF50)
+                            )
+                            Text(
+                                "📍 ${"%.1f".format(kmActuales)} km",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF4CAF50)
+                            )
+                        }
+                    } else if (guardia.hours > 0) {
+                        val tipo = if (guardia.type == "especial") "Especial" else "Común"
+                        Text(
+                            "$tipo · ${"%.1f".format(guardia.hours)}h · ${"%.1f".format(guardia.kmGuardia)} km",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                    }
                     if (enCurso && guardia.descripcion != null) {
                         Text(
                             guardia.descripcion,
