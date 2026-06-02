@@ -319,6 +319,7 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
                     put("coche", viaje.coche ?: "")
                     put("acoplado", viaje.acoplado)
                     put("acopladoKm", viaje.acopladoKm)
+                    put("origenCreacion", viaje.origenCreacion)
                 }
                 val json = JSONObject().apply {
                     put("p_order_number", orderNumber)
