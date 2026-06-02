@@ -254,6 +254,30 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
             false
         }
     }
+    suspend fun eliminarGuardiaDeJornada(guardia: Guardia): Boolean =
+        withContext(Dispatchers.IO) {
+            try {
+                val json = JSONObject().apply {
+                    put("p_guardia_id", guardia.id)
+                    put("p_order_number", guardia.orderNumber)
+                }
+                val body = json.toString().toRequestBody("application/json".toMediaType())
+                val request = Request.Builder()
+                    .url("$SUPABASE_URL/rest/v1/rpc/eliminar_guardia_de_jornada")
+                    .addHeader("apikey", SUPABASE_KEY)
+                    .addHeader("Authorization", "Bearer $SUPABASE_KEY")
+                    .addHeader("Content-Type", "application/json")
+                    .post(body)
+                    .build()
+                val response = client.newCall(request).execute()
+                Log.d("COT", "Eliminar guardia de jornada: ${response.code}")
+                response.isSuccessful
+            } catch (e: Exception) {
+                Log.e("COT", "Error eliminar guardia: ${e.message}")
+                false
+            }
+        }
+
     suspend fun sincronizarPerfil(legajo: String, nombre: String, base: String, tipo: String): Boolean =
         withContext(Dispatchers.IO) {
             try {

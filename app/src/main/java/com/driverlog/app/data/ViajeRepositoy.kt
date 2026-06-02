@@ -275,6 +275,12 @@ class ViajeRepository(private val context: Context) {
         val guardia = guardiaDao.getGuardiaById(guardiaId) ?: return
         if (guardia.status != "en_curso") return
         val ahora = System.currentTimeMillis()
+        val duracionMinutos = (ahora - guardia.createdAt) / 60000
+        if (duracionMinutos < 5) {
+            guardiaDao.eliminarGuardia(guardiaId)
+            try { supabase.eliminarGuardiaDeJornada(guardia) } catch (e: Exception) {}
+            return
+        }
         val cal = java.util.Calendar.getInstance()
         val fin = String.format("%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
         Log.d("COT", "Finalizando guardia $guardiaId tipo=${guardia.type} createdAt=${guardia.createdAt}")

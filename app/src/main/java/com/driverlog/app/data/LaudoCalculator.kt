@@ -120,12 +120,13 @@ object LaudoCalculator {
         }
 
         jornada.guards.forEach { g ->
-            if (g.inicio.isNotEmpty() && g.fin.isNotEmpty()) {
-                val ini = horaAMinutos(g.inicio)
-                var fin = horaAMinutos(g.fin)
-                if (fin < ini) fin += 24 * 60
-                totalMinutos += (fin - ini)
-            }
+            if (g.inicio.isEmpty() || g.fin.isEmpty()) return@forEach
+            val ini = horaAMinutos(g.inicio)
+            var fin = horaAMinutos(g.fin)
+            if (fin < ini) fin += 24 * 60
+            val duracion = fin - ini
+            if (duracion < 5) return@forEach
+            totalMinutos += duracion
         }
 
         return totalMinutos / 60.0
@@ -159,6 +160,8 @@ object LaudoCalculator {
                 ((ahora - fechaBase) / 60000).toInt()
             }
             if (finMin < ini) finMin += 24 * 60
+            val durMinutos = finMin - ini
+            if (durMinutos < 5) return@forEach
             val inicioMs = fechaBase + ini * 60000L
             val finMs = fechaBase + finMin * 60000L
             eventosInicio.add(Evento(inicioMs, false))

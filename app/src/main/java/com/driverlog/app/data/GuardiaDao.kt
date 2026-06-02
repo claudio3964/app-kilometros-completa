@@ -27,5 +27,7 @@ interface GuardiaDao {
     @Query("SELECT * FROM guardias WHERE orderNumber = :orderNumber ORDER BY createdAt ASC")
     suspend fun getGuardiasPorJornada(orderNumber: String): List<Guardia>
 
+    @Query("DELETE FROM guardias WHERE id = :id")
+    suspend fun eliminarGuardia(id: String)
 
 }
