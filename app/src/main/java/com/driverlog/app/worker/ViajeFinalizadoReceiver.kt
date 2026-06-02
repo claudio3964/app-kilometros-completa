@@ -24,10 +24,11 @@ class ViajeFinalizadoReceiver : BroadcastReceiver() {
                 dao.finalizarViaje(
                     id = viajeId,
                     status = "finalizado",
-                    finReal = finReal
+                    finReal = finReal,
+                    cierreAutomatico = true
                 )
 
-                SupabaseService(context).finalizarViajeEnSupabase(viajeId, finReal)
+                SupabaseService(context).finalizarViajeEnSupabase(viajeId, finReal, cierreAutomatico = true)
 
                 Log.d("COT", "ViajeFinalizadoReceiver — viaje $viajeId finalizado")
             } catch (e: Exception) {

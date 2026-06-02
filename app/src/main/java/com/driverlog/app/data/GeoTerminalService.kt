@@ -186,7 +186,7 @@ class GeoTerminalService : Service() {
     private fun dispararCierre() {
         scope.launch {
             val repo = ViajeRepository(applicationContext)
-            repo.finalizarViaje(viajeId)
+            repo.finalizarViaje(viajeId, cierreAutomatico = true)
             Log.d(TAG, "Viaje $viajeId finalizado automáticamente")
 
             // Notificar a la UI

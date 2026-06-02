@@ -192,13 +192,14 @@ class SupabaseService(private val context: Context) {
         return viajes
     }
 
-    suspend fun finalizarViajeEnSupabase(viajeId: String, finReal: Long): Boolean =
+    suspend fun finalizarViajeEnSupabase(viajeId: String, finReal: Long, cierreAutomatico: Boolean = false): Boolean =
         withContext(Dispatchers.IO) {
             try {
                 val json = JSONObject().apply {
                     put("p_viaje_id", viajeId)
                     put("p_status", "finalizado")
                     put("p_fin_real", finReal)
+                    put("p_cierre_automatico", cierreAutomatico)
                 }
                 val body = json.toString().toRequestBody("application/json".toMediaType())
                 val request = Request.Builder()

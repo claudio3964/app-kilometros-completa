@@ -71,7 +71,8 @@ class MensajesPollingWorker(
                         coche = viajeData.optString("coche", ""),
                         horaSalida = horaSalida,
                         horaLlegada = viajeData.optString("horaLlegada", ""),
-                        inicioProgramadoMs = inicioProgramadoMs
+                        inicioProgramadoMs = inicioProgramadoMs,
+                        origenCreacion = "panel"
                     )
                     Log.d("COT_POLLING", "Viaje creado desde asignacion id=$id")
                 }

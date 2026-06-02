@@ -103,11 +103,11 @@ class ViajeRepository(private val context: Context) {
         supabase.activarViajeEnSupabase(viaje.id, inicioReal)
     }
 
-    suspend fun finalizarViaje(viajeId: String) {
+    suspend fun finalizarViaje(viajeId: String, cierreAutomatico: Boolean = false) {
         val ahora = System.currentTimeMillis()
         val viaje = dao.getViajeById(viajeId)
-        dao.finalizarViaje(viajeId, "finalizado", ahora)
-        supabase.finalizarViajeEnSupabase(viajeId, ahora)
+        dao.finalizarViaje(viajeId, "finalizado", ahora, cierreAutomatico)
+        supabase.finalizarViajeEnSupabase(viajeId, ahora, cierreAutomatico)
         if (viaje?.inicioReal != null && viaje.inicioReal > 0) {
             val duracion = (ahora - viaje.inicioReal) / 60000
             if (duracion > 0) registrarDuracion("${viaje.origen}→${viaje.destino}", duracion)
@@ -128,7 +128,8 @@ class ViajeRepository(private val context: Context) {
         coche: String,
         horaSalida: String,
         horaLlegada: String,
-        inicioProgramadoMs: Long
+        inicioProgramadoMs: Long,
+        origenCreacion: String = "app"
     ): Viaje {
         val jornada = getOCrearJornada(legajo)
         val ahora = System.currentTimeMillis()
@@ -146,7 +147,8 @@ class ViajeRepository(private val context: Context) {
             kmEmpresa = km,
             tipoServicio = tipoServicio,
             coche = coche,
-            syncStatus = "local"
+            syncStatus = "local",
+            origenCreacion = origenCreacion
         )
         dao.insertarViaje(viaje)
         if (status == "programado") programarActivacion(viaje)

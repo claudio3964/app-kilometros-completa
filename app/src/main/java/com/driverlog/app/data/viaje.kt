@@ -29,4 +29,6 @@ data class Viaje(
     val notificado: Boolean = false,
     val duracionMinutos: Long? = null,
     val llegadaReal: Long? = null,
+    val origenCreacion: String = "app",
+    val cierreAutomatico: Boolean? = null,
 )
