@@ -439,6 +439,115 @@ No se requieren cambios en Room. El campo `descripcion: String?` de `Guardia` ya
 
 ---
 
+### 5.6 Seguridad de acceso
+
+#### PIN de 4 dígitos
+
+Configurado en el **primer login** (después de que el chofer guarda su perfil). Se almacena con `EncryptedSharedPreferences` (Jetpack Security):
+
+```kotlin
+val masterKey = MasterKey.Builder(context)
+    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+    .build()
+
+val securePrefs = EncryptedSharedPreferences.create(
+    context,
+    "secure_prefs",
+    masterKey,
+    EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+)
+// Guardar: securePrefs.edit().putString("pin", hashPin(pin)).apply()
+// El PIN se guarda hasheado con SHA-256 + salt del device_id
+```
+
+Dependencia a agregar en `build.gradle` (app):
+```kotlin
+implementation("androidx.security:security-crypto:1.1.0-alpha06")
+```
+
+#### BiometricPrompt — primera opción con fallback a PIN
+
+Al volver a primer plano (tras timeout o inicio en frío), mostrar `BiometricPrompt`. Si la huella/face falla o no está configurada, mostrar la pantalla de PIN:
+
+```kotlin
+val biometricManager = BiometricManager.from(context)
+val canAuthenticate = biometricManager.canAuthenticate(
+    BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+)
+
+if (canAuthenticate == BiometricManager.BIOMETRIC_SUCCESS) {
+    val promptInfo = BiometricPrompt.PromptInfo.Builder()
+        .setTitle("Verificar identidad")
+        .setSubtitle("Acceso a DriverLog COT")
+        .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+        .setNegativeButtonText("Usar PIN")
+        .build()
+
+    BiometricPrompt(activity, executor, object : BiometricPrompt.AuthenticationCallback() {
+        override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+            viewModel.unlockApp()
+        }
+        override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+            // Fallback al PIN
+            viewModel.showPinScreen()
+        }
+    }).authenticate(promptInfo)
+} else {
+    viewModel.showPinScreen()
+}
+```
+
+Dependencia a agregar:
+```kotlin
+implementation("androidx.biometric:biometric:1.2.0-alpha05")
+```
+
+#### Timeout de 5 minutos en background
+
+`MainActivity` registra el timestamp cada vez que la app pasa a background (`onPause`). Al volver a primer plano (`onResume`) compara con el tiempo actual:
+
+```kotlin
+// En MainActivity o Application
+override fun onPause() {
+    super.onPause()
+    prefs.edit().putLong("bg_since", System.currentTimeMillis()).apply()
+}
+
+override fun onResume() {
+    super.onResume()
+    val bgSince = prefs.getLong("bg_since", 0L)
+    val elapsed = System.currentTimeMillis() - bgSince
+    if (elapsed > 5 * 60 * 1000L && bgSince > 0L) {
+        // Forzar pantalla de autenticación
+        appLockViewModel.lock()
+    }
+    prefs.edit().remove("bg_since").apply()
+}
+```
+
+`appLockViewModel.lock()` pone un estado `isLocked = true` en un `ViewModel` de alcance global (`activityViewModels()`). El `NavHost` en `AppNavigation` observa ese estado y redirige a la ruta `auth_lock` antes de mostrar cualquier pantalla de datos.
+
+#### Pantalla `AuthLockScreen` (nueva)
+
+Mostrada como primera ruta cuando `isLocked == true`. No expone ningún dato del chofer hasta autenticar. Flujo:
+
+1. Intentar biometría → éxito → `isLocked = false` → navegar a destino original.
+2. Usuario elige PIN / biometría falla → mostrar 4 campos numéricos (o `BasicTextField` con `KeyboardType.NumberPassword`).
+3. PIN incorrecto 3 veces → cerrar sesión completa (`SharedPreferences.clear()` + `NavController.navigate("login")`).
+
+#### Registro en `AndroidManifest.xml`
+
+No se necesita permiso extra — `USE_BIOMETRIC` lo agrega automáticamente la librería `androidx.biometric`.
+
+#### Integración con el flujo de login existente
+
+- **Primer uso** (sin PIN guardado): `ProfileSetupScreen` → al guardar perfil, mostrar `PinSetupScreen` (nuevo) → solicitar PIN dos veces para confirmar → guardar en `EncryptedSharedPreferences` → continuar a `AppNavigation`.
+- **Login normal**: después de validar legajo y device_id, si `isLocked == false` y no expiró timeout → directo a `AppNavigation` sin pedir PIN.
+- **`LoginScreen`**: no muestra datos del chofer → no necesita auth previa.
+
+---
+
 ## Fase 6 — Mensajes del admin
 
 ### 6.1 `CotFirebaseMessagingService.kt` — rol aclarado
@@ -511,7 +620,7 @@ Sprint 4 (PDF):
   → Integrar en cerrarJornada() (30min)
   → Botón Ver PDF en HistorialScreen (30min)
 
-Sprint 5 (historial + mensajes + cancelación admin + mejoras guardia):
+Sprint 5 (historial + mensajes + cancelación admin + mejoras guardia + seguridad):
   → HistorialScreen con totales reales (1h post-LaudoCalculator)
   → JornadaDetalleScreen (2h)
   → MensajesPollingWorker (polling 30s: asignacion→crearViaje, guardia→iniciarGuardia, mensaje/urgente→notif local, marcar leido) (3h)
@@ -519,6 +628,7 @@ Sprint 5 (historial + mensajes + cancelación admin + mejoras guardia):
   → Flujo cancelación y reasignación de guardia desde panel admin (ver Fase 5.3)
   → Notificación 8h con botones ACTION_CERRAR_GUARDIA / ACTION_EXTENDER sin abrir app (ver Fase 5.4) (2h)
   → Botón "Cambiar tipo" en GuardiaListCard + cambiarTipoGuardia() en Repository (ver Fase 5.5) (1.5h)
+  → Seguridad de acceso: PIN encriptado + BiometricPrompt + timeout 5 min + AuthLockScreen (ver Fase 5.6) (3h)
 ```
 
 ---
@@ -569,3 +679,43 @@ kmTotal: 220.5, monto: 1766.69 ✅2
 - **Radio GPS aumentado a 300 m** — `GeoConfig.RADIO_METROS` pasó de `150.0` a `300.0` para reducir falsos negativos de llegada en terminales con variación de señal.
 - **Tiempo de quietud reducido a 2 minutos** — `GeoConfig.TIEMPO_QUIETO_MS` pasó de `5 * 60 * 1000` a `2 * 60 * 1000` para detectar parada más rápido.
 - **`inicioReal` incluido en JSON a Supabase** — `SupabaseService.agregarViajeAJornada()` ahora envía el campo `inicioReal` (`viaje.inicioReal ?: 0L`). Para viajes creados `en_curso`, `ViajeRepository.crearViaje()` ya asignaba `inicioReal = inicioProgramadoMs` correctamente; el dato ahora llega completo a Supabase.
+
+---
+
+## Estado al 02/06/2026
+
+### Sprints completados ✅
+- Sprint 1: JornadaCompleta, LaudoCalculator, bugs Room/Supabase
+- Sprint 2: NuevaGuardiaScreen, GuardiasScreen, cambiarTipoGuardia
+- Sprint 3: cerrarJornada, PDF, totalsSnapshot
+- Sprint 4: PdfGenerator completo
+- Sprint 5 (parcial):
+  - HistorialScreen con filtro mes, resumen período, badge tome guardia ✅
+  - MensajesPollingWorker con km desde catálogo e inicioProgramadoMs ✅
+  - GuardiaTimerWorker con botones acción ✅
+  - GuardiaActionReceiver ✅
+  - LaudoCalculator lee laudoKm y montoViatico desde Supabase ✅
+  - GeoTerminalService reinicio automático + tiempo quieto 45s ✅
+  - origenCreacion y cierreAutomatico en modelo Viaje ✅
+  - GuardiasScreen countdown y km en tiempo real ✅
+  - LoginScreen flujo registro nuevo chofer ✅
+
+### Pendiente Sprint 5
+- MensajesScreen — historial mensajes recibidos en app
+- PIN + BiometricPrompt + AuthLockScreen
+
+### Fixes aplicados
+- parsearViajes() inicioReal como ISO string o Long
+- LaudoCalculator acoplado automático por tipo/destino
+- finalizarGuardia usa hora inicio ingresada (no createdAt)
+- Guardias < 5 min se eliminan en lugar de finalizarse
+- GeoConfig.TIEMPO_QUIETO_MS = 45 segundos
+
+### Backlog
+- Supabase Auth por chofer (Fase 2 seguridad)
+- Keys en variables de entorno Netlify
+- Rotación y servicios_rotacion RLS
+- Nuevo viaje tipo CONTRATADO con campos libres
+- Limpieza referencias COT → genérico
+- APK por empresa con branding configurable
+- Modularizar HTML panel admin
