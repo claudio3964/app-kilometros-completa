@@ -277,7 +277,22 @@ class ViajeRepository(private val context: Context) {
         val guardia = guardiaDao.getGuardiaById(guardiaId) ?: return
         if (guardia.status != "en_curso") return
         val ahora = System.currentTimeMillis()
-        val duracionMinutos = (ahora - guardia.createdAt) / 60000
+        val hours = try {
+            val partes = guardia.inicio.split(":")
+            val cal = java.util.Calendar.getInstance()
+            cal.set(java.util.Calendar.HOUR_OF_DAY, partes[0].trim().toInt())
+            cal.set(java.util.Calendar.MINUTE, partes[1].trim().toInt())
+            cal.set(java.util.Calendar.SECOND, 0)
+            cal.set(java.util.Calendar.MILLISECOND, 0)
+            var inicioMs = cal.timeInMillis
+            // Si la hora de inicio es mayor que ahora → arrancó ayer
+            if (inicioMs > ahora) inicioMs -= 24 * 3600000L
+            (ahora - inicioMs) / 3600000.0
+        } catch (e: Exception) {
+            // Fallback a createdAt si el formato de inicio es inválido
+            (ahora - guardia.createdAt) / 3600000.0
+        }
+        val duracionMinutos = (hours * 60).toLong()
         if (duracionMinutos < 5) {
             guardiaDao.eliminarGuardia(guardiaId)
             try { supabase.eliminarGuardiaDeJornada(guardia) } catch (e: Exception) {}
@@ -285,8 +300,7 @@ class ViajeRepository(private val context: Context) {
         }
         val cal = java.util.Calendar.getInstance()
         val fin = String.format("%02d:%02d", cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
-        Log.d("COT", "Finalizando guardia $guardiaId tipo=${guardia.type} createdAt=${guardia.createdAt}")
-        val hours = (ahora - guardia.createdAt) / 3600000.0
+        Log.d("COT", "Finalizando guardia $guardiaId tipo=${guardia.type} inicio=${guardia.inicio}")
         val kmGuardia = hours * if (guardia.type == "especial") 40.0 else 30.0
         guardiaDao.finalizarGuardia(guardiaId, "finalizada", fin, hours, kmGuardia)
         try {
