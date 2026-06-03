@@ -1,4 +1,55 @@
 # CLAUDE.md
+Crear dos archivos CLAUDE.md — uno en cada repo.
+
+1. En C:\cot_dev\app_kilometros\app-kilometros-completa\CLAUDE.md:
+
+# DriverLog — Instrucciones para Claude Code
+
+## Leer siempre al iniciar sesión
+- RUTAUY_CONTEXT.md — contexto general del sistema
+- PLAN_DESARROLLO_KOTLIN.md — estado de sprints y pendientes
+
+## Rutas clave de este repo (JS/Panel Admin)
+- Panel admin: www/admin/index.html
+- Catálogo rutas: www/routes_catalog.js
+- Edge Functions: supabase/functions/
+- Branch activo: dev-rebuild-core
+
+## Stack
+Vanilla JS + Supabase + Capacitor Android + Firebase FCM
+
+2. En C:\cot_dev\app_kilometros\cot_devapp_kilometros-completa-android-koltin\CLAUDE.md:
+
+# DriverLog Kotlin — Instrucciones para Claude Code
+
+## Leer siempre al iniciar sesión
+- RUTAUY_CONTEXT.md (en repo JS: C:\cot_dev\app_kilometros\app-kilometros-completa\)
+- PLAN_DESARROLLO_KOTLIN.md (mismo directorio)
+- MULTIEMPRESA.md — plan de desarrollo multi-empresa (Fase 1)
+
+## Rutas clave de este repo (Android Kotlin)
+- Package: com.driverlog.app
+- ViajeRepository: app/src/main/java/com/driverlog/app/data/ViajeRepositoy.kt
+- SupabaseService: app/src/main/java/com/driverlog/app/data/SupabaseService.kt
+- LaudoCalculator: app/src/main/java/com/driverlog/app/data/LaudoCalculator.kt
+- GeoTerminalService: app/src/main/java/com/driverlog/app/service/GeoTerminalService.kt
+- MensajesPollingWorker: app/src/main/java/com/driverlog/app/worker/MensajesPollingWorker.kt
+- MainScreen: app/src/main/java/com/driverlog/app/ui/theme/MainScreen.kt
+- HistorialScreen: app/src/main/java/com/driverlog/app/ui/theme/HistorialScreen.kt
+- GuardiasScreen: app/src/main/java/com/driverlog/app/ui/theme/GuardiasScreen.kt
+- AppNavigation: app/src/main/java/com/driverlog/app/ui/theme/AppNavigation.kt
+- Branch activo: main
+
+## Stack
+Android Kotlin + Supabase + Firebase FCM
+Room para persistencia local
+
+## Reglas
+- Siempre leer el archivo antes de modificarlo
+- Compilar con gradlew assembleDebug antes de commit
+- No mezclar archivos de ambos repos en el mismo commit
+
+Commit ambos archivos en sus repos y push.
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
