@@ -30,7 +30,23 @@ class ViajeRepository(private val context: Context) {
     suspend fun sincronizarDesdeSupabase(legajo: String) {
         val viajes = supabase.sincronizarJornada(legajo)
         if (viajes.isNotEmpty()) {
-            dao.insertarViajes(viajes)
+            val viajesAInsertar = mutableListOf<Viaje>()
+            for (remoto in viajes) {
+                val local = dao.getViajeById(remoto.id)
+                if (local?.status == "finalizado" && remoto.status == "en_curso") {
+                    try {
+                        val finReal = local.finReal ?: System.currentTimeMillis()
+                        val cierreAuto = local.cierreAutomatico ?: false
+                        supabase.finalizarViajeEnSupabase(local.id, finReal, cierreAuto)
+                    } catch (e: Exception) {
+                        Log.w("COT", "Re-sync viaje finalizado falló: ${e.message}")
+                    }
+                }
+                if (local == null || !esEstadoMasAvanzado(local.status, remoto.status)) {
+                    viajesAInsertar.add(remoto)
+                }
+            }
+            dao.insertarViajes(viajesAInsertar)
             val ahora = System.currentTimeMillis()
             viajes.forEach { viaje ->
                 if (viaje.status == "programado" && viaje.inicioProgramado > ahora) {
@@ -647,5 +663,15 @@ suspend fun cerrarJornada(legajo: String): File? {
         val laudoKm = config["precio_km_conductor"] ?: 8.0122
         val montoViatico = config["viatico_comida"] ?: 455.26
         return LaudoCalculator.calcular(jornadaCompleta, laudoKm, montoViatico)
+    }
+
+    private fun esEstadoMasAvanzado(local: String, remoto: String): Boolean {
+        val jerarquia = mapOf(
+            "programado" to 0,
+            "en_curso" to 1,
+            "finalizado" to 2,
+            "cancelado" to 2
+        )
+        return (jerarquia[local] ?: 0) > (jerarquia[remoto] ?: 0)
     }
 }
