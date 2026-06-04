@@ -74,10 +74,11 @@ object LaudoCalculator {
             kmGuardias += g.hours * kmHora
         }
 
-        // Tome y cese — solo si hay viaje válido con tipo que lo permite
-        val kmTomeCese = if (viajesValidos.any {
-                TIPOS_CON_TOME_CESE.contains(it.tipoServicio.uppercase().trim())
-            }) TOME_CESE_KM else 0.0
+        // Tome y cese — solo si el PRIMER viaje válido tiene un tipo que lo permite
+        val primerViaje = viajesValidos.minByOrNull { it.inicioReal ?: it.inicioProgramado }
+        val kmTomeCese = if (primerViaje != null &&
+            TIPOS_CON_TOME_CESE.contains(primerViaje.tipoServicio.uppercase().trim())
+        ) TOME_CESE_KM else 0.0
 
         // Total km
         val kmTotal = kmViajes + kmAcoplados + kmGuardias + kmTomeCese
