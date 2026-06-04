@@ -356,6 +356,11 @@ fun MainScreen(
                     val cal = Calendar.getInstance().apply { timeInMillis = it }
                     "%02d:%02d".format(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
                 } ?: viaje.departureTime
+                val kmPorMinuto = viaje.kmEmpresa /
+                    (viaje.duracionMinutos?.takeIf { it > 0 } ?: 120).toDouble()
+                val minutosTranscurridos = (tickMs - (viaje.inicioReal ?: tickMs)) / 60000.0
+                val kmRecorridos = (kmPorMinuto * minutosTranscurridos)
+                    .coerceAtMost(viaje.kmEmpresa.toDouble())
 
                 Card(
                     modifier = Modifier
@@ -364,18 +369,29 @@ fun MainScreen(
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF0D1B2A))
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                "EN CURSO",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF4CAF50)
-                            )
-                            if (elapsedText.isNotEmpty()) {
-                                Text(elapsedText, fontSize = 12.sp, color = Color(0xFFBBBBBB))
+                        Text(
+                            "EN CURSO",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF4CAF50)
+                        )
+                        if (elapsedText.isNotEmpty()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    "⏱ $elapsedText",
+                                    fontSize = 13.sp,
+                                    color = Color(0xFF4CAF50),
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    "📍 ${"%.1f".format(kmRecorridos)} / ${viaje.kmEmpresa} km",
+                                    fontSize = 13.sp,
+                                    color = Color(0xFF4CAF50),
+                                    fontWeight = FontWeight.Bold
+                                )
                             }
                         }
                         Spacer(Modifier.height(4.dp))
