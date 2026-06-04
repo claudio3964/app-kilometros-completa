@@ -10,6 +10,8 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.driverlog.app.MainActivity
 import com.driverlog.app.data.CotDatabase
+import com.driverlog.app.data.GeoTerminalService
+import com.driverlog.app.data.SupabaseService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -42,6 +44,26 @@ class ActivarViajeWorker(
                 id = viajeId,
                 status = "en_curso",
                 inicioReal = inicioReal
+            )
+
+            // FIX 1 — Sincronizar a Supabase
+            try {
+                SupabaseService(applicationContext).activarViajeEnSupabase(viajeId, inicioReal)
+            } catch (e: Exception) {
+                android.util.Log.e("COT", "ActivarViajeWorker: error sync Supabase: ${e.message}")
+            }
+
+            // FIX 2 — Iniciar GPS
+            val viaje = dao.getViajeById(viajeId)
+            if (viaje != null) {
+                GeoTerminalService.iniciar(applicationContext, viaje)
+            }
+
+            // FIX 3 — Broadcast para refrescar UI
+            applicationContext.sendBroadcast(
+                Intent("com.driverlog.NUEVO_VIAJE_ASIGNADO")
+                    .setPackage(applicationContext.packageName)
+                    .putExtra("viajeId", viajeId)
             )
 
             // Mostrar notificación nativa
