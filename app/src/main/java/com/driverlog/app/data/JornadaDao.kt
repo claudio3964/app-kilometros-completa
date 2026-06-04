@@ -18,8 +18,8 @@ interface JornadaDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertarJornada(jornada: Jornada)
 
-    @Query("UPDATE jornadas_local SET status = 'cerrada', closedAt = :closedAt, syncStatus = 'pending' WHERE orderNumber = :orderNumber")
-    suspend fun cerrarJornada(orderNumber: String, closedAt: Long)
+    @Query("UPDATE jornadas_local SET status = 'cerrada', closedAt = :closedAt, kmTotal = :kmTotal, monto = :monto, syncStatus = 'pending' WHERE orderNumber = :orderNumber")
+    suspend fun cerrarJornada(orderNumber: String, closedAt: Long, kmTotal: Double, monto: Double)
 
     @Query("UPDATE jornadas_local SET syncStatus = 'synced' WHERE orderNumber = :orderNumber")
     suspend fun marcarSynced(orderNumber: String)

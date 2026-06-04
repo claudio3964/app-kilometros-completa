@@ -176,7 +176,14 @@ object LaudoCalculator {
         val finReal = eventosFin.max()
 
         // Aplicar tome y cese si corresponde
-        if (eventosInicio.first().tomeCese) {
+        val primerViaje = jornada.travels
+            .filter { it.status == "finalizado" && it.inicioReal != null }
+            .minByOrNull { it.inicioReal!! }
+
+        val primerTieneTC = primerViaje != null &&
+                TIPOS_CON_TOME_CESE.contains(primerViaje.tipoServicio.uppercase().trim())
+
+        if (primerTieneTC) {
             inicioReal -= 45 * 60 * 1000L
         }
 

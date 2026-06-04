@@ -19,6 +19,7 @@ import androidx.navigation.navArgument
 import com.driverlog.app.data.ViajeRepository
 import java.net.URLDecoder
 import java.net.URLEncoder
+import com.driverlog.app.ui.HistorialScreen
 
 private sealed class AppTab(val route: String, val label: String, val icon: ImageVector) {
     object Home : AppTab("home", "Inicio", Icons.Filled.Home)

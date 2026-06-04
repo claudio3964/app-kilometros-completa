@@ -8,7 +8,17 @@
       "Bash(git push *)",
       "Bash(gradlew.bat compileDebugKotlin)",
       "Bash(.\\\\gradlew.bat compileDebugKotlin)",
-      "Bash(Get-ChildItem -Recurse -Name)"
+      "Bash(Get-ChildItem -Recurse -Name)",
+      "Bash(.\\\\gradlew compileDebugKotlin)",
+      "Read(//c/cot_dev/**)",
+      "Bash(git commit -m 'fix: LaudoCalculator acoplado se calcula por tipo/destino sin depender del flag *)",
+      "Bash(./gradlew assembleDebug --info)",
+      "Bash(./gradlew compileDebugKotlin)",
+      "Bash(.\\\\gradlew assembleDebug)",
+      "Bash(supabase functions *)",
+      "Bash(dir /s /b \"C:\\\\cot_dev\\\\app_kilometros\\\\cot_devapp_kilometros-completa-android-koltin\\\\www\")",
+      "PowerShell(\\(Get-Content \"C:\\\\cot_dev\\\\app_kilometros\\\\app-kilometros-completa\\\\www\\\\admin\\\\index.html\"\\).Count)",
+      "Bash(git *)"
     ]
   }
 }

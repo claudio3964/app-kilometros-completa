@@ -110,3 +110,27 @@ Todo viaje debe cumplir:
 - Coherencia temporal dentro de la jornada.
 - Compatibilidad con reglas de solapamiento.
 - Consistencia con tome y cese cuando corresponda.
+- 
+# Transición de guardias
+
+Una jornada puede contener múltiples guardias consecutivas.
+
+Ejemplo:
+
+- Guardia común
+- Guardia especial
+
+Al cambiar el tipo de guardia:
+
+- la guardia actual debe finalizarse
+- una nueva guardia debe iniciarse
+- la jornada original debe mantenerse
+
+La transición no debe reiniciar:
+
+- jornada
+- tome
+- cese
+- acumulados de jornada
+
+Los workers y validaciones deben actuar únicamente sobre la guardia específica que originó la acción.

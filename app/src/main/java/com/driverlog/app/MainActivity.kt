@@ -57,8 +57,24 @@ class MainActivity : ComponentActivity() {
             COTDriverTheme {
                 var legajoActual by remember { mutableStateOf(repository.getLegajo()) }
                 var perfilCompleto by remember { mutableStateOf(repository.perfilCompleto()) }
+                var isChecking by remember { mutableStateOf(legajoActual.isEmpty()) }
+
+                if (isChecking) {
+                    LaunchedEffect(Unit) {
+                        val perfil = repository.buscarLegajoPorDeviceId()
+                        if (perfil != null && perfil.legajo.isNotEmpty()) {
+                            repository.guardarLegajo(perfil.legajo)
+                            repository.guardarPerfil(perfil.nombre, perfil.base, perfil.tipo)
+                            repository.saveDeviceId(repository.getCurrentDeviceId())
+                            legajoActual = perfil.legajo
+                            perfilCompleto = repository.perfilCompleto()
+                        }
+                        isChecking = false
+                    }
+                }
 
                 when {
+                    isChecking -> { /* esperando respuesta de Supabase, splash cubre la pantalla */ }
                     legajoActual.isEmpty() -> LoginScreen(
                         repository = repository,
                         onLoginSuccess = { legajo ->

@@ -12,5 +12,7 @@ data class Jornada(
     val syncStatus: String = "pending",
     val createdAt: Long = System.currentTimeMillis(),
     val closedAt: Long? = null,
-    val horaInicio: String = ""
+    val horaInicio: String = "",
+    val kmTotal: Double = 0.0,
+    val monto: Double = 0.0
 )

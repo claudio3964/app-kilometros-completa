@@ -182,6 +182,19 @@ class SupabaseService(private val context: Context) {
                             tipoServicio = t.optString("tipoServicio", ""),
                             acoplado = t.optBoolean("acoplado", false),
                             acopladoKm = t.optInt("acopladoKm", 0),
+                            finReal = try {
+                                val raw = t.opt("finReal")
+                                when (raw) {
+                                    is Long -> raw.takeIf { it > 0L }
+                                    is Int -> raw.toLong().takeIf { it > 0L }
+                                    is String -> java.text.SimpleDateFormat(
+                                        "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                                        java.util.Locale.getDefault()
+                                    ).also { it.timeZone = java.util.TimeZone.getTimeZone("UTC") }
+                                        .parse(raw)?.time
+                                    else -> null
+                                }
+                            } catch (e: Exception) { null },
                         )
                     )
                 }

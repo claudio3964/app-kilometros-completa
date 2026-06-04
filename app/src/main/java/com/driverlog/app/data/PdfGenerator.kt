@@ -114,6 +114,14 @@ object PdfGenerator {
             return
         }
 
+        // Determinar cuál viaje tiene T/C
+        val tiposConTC = setOf("TURNO","SEMIDIRECTO","DIRECTO","DIRECTISIMO","EXPRESO","CONTRATADO")
+        val viajesValidos = viajes.filter {
+            it.status == "finalizado" &&
+                    it.tipoServicio.uppercase().trim() in tiposConTC
+        }
+        val primerViajeConTC = viajesValidos.minByOrNull { it.inicioReal ?: it.inicioProgramado }
+
         ctx.ensure(22f)
         tableRow(ctx, VIAJE_COLS, null, isHeader = true)
 
@@ -125,6 +133,7 @@ object PdfGenerator {
                     val cal = Calendar.getInstance().apply { timeInMillis = ms }
                     "%02d:%02d".format(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
                 } ?: "—"
+            val tieneTC = primerViajeConTC?.id == v.id
             tableRow(ctx, VIAJE_COLS, listOf(
                 "${i + 1}",
                 v.origen.take(13),
@@ -134,7 +143,7 @@ object PdfGenerator {
                 v.departureTime,
                 llegada,
                 if (v.acoplado) "Sí" else "No",
-                if (v.tomeCese) "Sí" else "No"
+                if (tieneTC) "Sí" else "No"
             ), isHeader = false, stripe = i % 2 == 1)
         }
         ctx.y += 10f
