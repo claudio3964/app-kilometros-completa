@@ -45,11 +45,23 @@ class GeoTerminalService : Service() {
         const val EXTRA_INICIO_REAL = "inicio_real"
         const val EXTRA_MODO_PRUEBA = "modo_prueba"
 
+        // Versión con objeto Viaje — la que ya usabas, ahora delega
         fun iniciar(context: Context, viaje: Viaje, modoPrueba: Boolean = false) {
+            iniciar(
+                context,
+                viaje.id,
+                viaje.destino,
+                viaje.inicioReal ?: viaje.inicioProgramado,
+                modoPrueba
+            )
+        }
+
+        // Versión nueva con campos sueltos — la que usa el ActivarViajeWorker
+        fun iniciar(context: Context, viajeId: String, destino: String, inicioReal: Long, modoPrueba: Boolean = false) {
             val intent = Intent(context, GeoTerminalService::class.java).apply {
-                putExtra(EXTRA_VIAJE_ID, viaje.id)
-                putExtra(EXTRA_DESTINO, viaje.destino)
-                putExtra(EXTRA_INICIO_REAL, viaje.inicioReal ?: viaje.inicioProgramado)
+                putExtra(EXTRA_VIAJE_ID, viajeId)
+                putExtra(EXTRA_DESTINO, destino)
+                putExtra(EXTRA_INICIO_REAL, inicioReal)
                 putExtra(EXTRA_MODO_PRUEBA, modoPrueba)
             }
             context.startForegroundService(intent)
@@ -69,6 +81,10 @@ class GeoTerminalService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent == null) {
+            Log.w(TAG, "onStartCommand con intent null — sin datos de viaje")
+            return START_REDELIVER_INTENT
+        }
         viajeId    = intent?.getStringExtra(EXTRA_VIAJE_ID) ?: ""
         destino    = intent?.getStringExtra(EXTRA_DESTINO) ?: ""
         inicioReal = intent?.getLongExtra(EXTRA_INICIO_REAL, 0L) ?: 0L
@@ -95,6 +111,9 @@ class GeoTerminalService : Service() {
     }
     @SuppressLint("MissingPermission")
     private fun iniciarGPS() {
+        if (::locationCallback.isInitialized) {
+            fusedClient.removeLocationUpdates(locationCallback)
+        }
         val intervalo = if (modoPrueba) 5_000L else 30_000L
         val minDistancia = if (modoPrueba) 0f else 10f
         val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, intervalo)
@@ -111,6 +130,10 @@ class GeoTerminalService : Service() {
     }
 
     private fun procesarPosicion(loc: Location) {
+        if (loc.accuracy > GeoConfig.PRECISION_MINIMA_M) {
+            Log.d(TAG, "Lectura descartada — precisión ${loc.accuracy}m")
+            return
+        }
         val ahora = System.currentTimeMillis()
         val term = terminal ?: return
 
@@ -224,3 +247,4 @@ class GeoTerminalService : Service() {
         Log.d(TAG, "GeoTerminalService detenido")
     }
 }
+

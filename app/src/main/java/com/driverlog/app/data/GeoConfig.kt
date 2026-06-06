@@ -4,10 +4,11 @@ package com.driverlog.app.data
 object GeoConfig {
     const val RADIO_METROS = 300.0
     const val TIEMPO_QUIETO_MS = 20 * 1000L
-    const val MOVIMIENTO_MINIMO_M = 15.0
+    const val MOVIMIENTO_MINIMO_M = 25.0
     const val COUNTDOWN_SEGUNDOS = 30
     const val TIEMPO_MINIMO_VIAJE_MS = 90 * 60 * 1000L
     const val DISTANCIA_MINIMA_ORIGEN_M = 500.0
+    const val PRECISION_MINIMA_M  = 50.0
 
     // Modo prueba
     const val RADIO_PRUEBA = 50.0
@@ -39,9 +40,11 @@ object TerminalesGPS {
     )
 
     fun resolver(destino: String): Terminal? {
-        val d = destino.lowercase()
+        val d = destino.trim().lowercase()
+        if (d.isEmpty()) return null
         return catalogo.entries.find { (key, _) ->
-            d.contains(key.lowercase()) || key.lowercase().contains(d)
+            val k = key.lowercase()
+            d.contains(k) || k.contains(d)
         }?.value
     }
 }

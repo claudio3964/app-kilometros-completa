@@ -53,10 +53,11 @@ class ActivarViajeWorker(
                 android.util.Log.e("COT", "ActivarViajeWorker: error sync Supabase: ${e.message}")
             }
 
-            // FIX 2 — Iniciar GPS
-            val viaje = dao.getViajeById(viajeId)
-            if (viaje != null) {
-                GeoTerminalService.iniciar(applicationContext, viaje)
+            // FIX 2 — Iniciar GPS directo desde inputData, sin depender de Room
+            if (destino.isNotBlank()) {
+                GeoTerminalService.iniciar(applicationContext, viajeId, destino, inicioReal)
+            } else {
+                android.util.Log.w("COT", "ActivarViajeWorker: destino vacío, no inicio GPS para $viajeId")
             }
 
             // FIX 3 — Broadcast para refrescar UI

@@ -1,0 +1,102 @@
+# Módulo Panel de Despacho y Estadísticas — Roadmap
+
+> **Ubicación sugerida:** archivo propio (no dentro de "Fase 1 Multiempresa").
+> Es un módulo operativo independiente de la infraestructura multiempresa.
+> Si se usa un roadmap maestro único, anexar como "Fase X — Panel de Despacho".
+
+## Contexto
+
+Hoy en la oficina de tránsito el despacho se hace manual con el sistema MAGMA,
+incluido el cálculo de acoplados (buses controlados), que tiene errores. La app
+ya recoge los datos crudos que permiten automatizar despacho y estadísticas. El
+valor real aparece en temporada alta, cuando hay que mover coches y choferes con
+información en vivo.
+
+## Principio rector (no negociable)
+
+**El panel solo lee; nunca calcula de cero.**
+- Los números pesados (promedios, agregados) se calculan **al cerrar cada viaje** y se
+  guardan ya masticados en Supabase.
+- El panel muestra filas ya resumidas. Aunque se agreguen 20 vistas distintas,
+  ninguna le pega un cálculo grande a la base.
+- **No** se guarda lectura GPS cruda por coche para "reconstruir" después: eso explota
+  con 150 choferes. Se agrega al cerrar (promedio acumulativo), no se acumula crudo.
+
+## Dos tipos de dato (no mezclar)
+
+1. **Estado en vivo** — foto del momento: coches en ruta, libres, en taller, rutas
+   demoradas ahora. Liviano (≈150 jornadas abiertas por consulta).
+2. **Histórico agregado** — promedios por ruta, demanda por franja. Tabla `travel_stats`,
+   una fila por ruta. No crece con la cantidad de viajes.
+
+---
+
+## Prerequisito — Pendiente E (`llegadaEstimada`)
+
+Las Etapas 1 y 2 dependen de tener `llegadaEstimada` funcionando. E y este módulo
+son la misma pieza base.
+- Poblar `llegadaEstimada` al iniciar el viaje (`inicioReal + duración estimada`).
+- Duración estimada = promedio histórico de `travel_stats` si hay ≥3 muestras de la ruta;
+  si no, fallback a duración fija por ruta.
+- `travel_stats` vive en **Supabase** (la lee el celu, el cron y el panel). Room guarda
+  copia local solo como respaldo para estimar sin señal.
+- Registrar muestra solo de viajes con `cierreAutomatico: true` (llegada real por GPS),
+  para no ensuciar el promedio con cierres manuales tardíos.
+
+---
+
+## Etapa 1 — Tablero "coches en ruta ahora" + rutas demoradas
+
+**La de mayor valor en temporada. Cae casi sola al resolver E.**
+
+- **Coches en ruta ahora:** todos los viajes `en_curso` ordenados por tiempo restante
+  (`llegadaEstimada - ahora`). El despachador ve qué coches se liberan en los próximos
+  30/60 min y dónde.
+- **Rutas demoradas hoy:** compara duración en curso contra el promedio histórico de la
+  ruta. Si supera el promedio por un margen → se marca en rojo (posible accidente,
+  tráfico, coche varado).
+- **Datos que ya existen:** chofer, coche, ruta, `inicioReal`, `llegadaEstimada`,
+  promedio de `travel_stats`.
+- **Falta:** la `llegadaEstimada` (= Pendiente E).
+
+## Etapa 2 — Estado de flota
+
+- Grilla de la flota: en ruta / libre / en taller.
+- "En ruta" y "libre" se derivan de si el coche tiene un viaje `en_curso`.
+- **Falta:** campo de estado del coche para marcar "en taller" a mano desde el panel.
+- Semi-independiente de E (solo necesita el campo nuevo).
+
+## Etapa 3 — Estadística histórica por ruta
+
+- Ranking de rutas por duración promedio, por demanda (cantidad de viajes), velocidad
+  promedio.
+- Vista de análisis/planificación, no de operación en el momento.
+- **Datos:** `travel_stats` agregada. Se enriquece sola con el tiempo; conviene dejarla
+  madurar antes de exponerla.
+
+## Etapa 4 (futuro) — Acoplados / buses controlados
+
+- No es estadística: es el **cálculo de negocio** que ya existe en `core.js`
+  (`calcularAcopladoKm`: La Pedrera 37.5, Chuy con guarda, etc.).
+- Tránsito lo hace a mano con MAGMA y se equivoca. La app ya lo calcula correcto.
+- Exponerlo en el panel de forma que un despachador lo pueda ver y confiar.
+- Hilo aparte; alto valor pero distinto del resto del módulo.
+
+---
+
+## Orden de ataque sugerido
+
+1. **Etapas 1 + 2 juntas** — comparten base (E + promedios). Corazón del despacho en vivo.
+   (La 2 suma solo el campo "estado del coche".)
+2. **Etapa 3** — dejar madurar datos primero.
+3. **Etapa 4** — hilo independiente, cuando el resto esté estable.
+
+## Notas de escala (150 choferes)
+
+- 150 choferes × ~4 viajes/día ≈ 600 escrituras/día ≈ <1 por minuto. Supabase lo maneja
+  de sobra (incluso plan Free).
+- A optimizar cuando se llegue ahí: el cron que cada minuto lee todas las jornadas
+  abiertas (con 150 trae mucho `data` JSON). Filtrar para traer solo las que tienen
+  viajes en ventana. No es bloqueante.
+- `travel_stats` se mantiene diminuta: filas = rutas distintas (≈20-30), no cantidad de
+  viajes.
