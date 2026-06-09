@@ -1,44 +1,32 @@
 package com.driverlog.app
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.compose.runtime.*
+import com.driverlog.app.data.DialogoBackground
+import com.driverlog.app.data.PermisosManager
 import com.driverlog.app.data.ViajeRepository
 import com.driverlog.app.ui.theme.AppNavigation
 import com.driverlog.app.ui.theme.COTDriverTheme
 import com.driverlog.app.ui.theme.LoginScreen
 import com.driverlog.app.ui.theme.ProfileSetupScreen
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+
 class MainActivity : ComponentActivity() {
 
-    private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { }
+    private lateinit var permisosManager: PermisosManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val permisos = arrayOf(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION
-        )
-        val faltanPermisos = permisos.any {
-            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
-        }
-        if (faltanPermisos) requestPermissionLauncher.launch(permisos)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestPermissionLauncher.launch(arrayOf(Manifest.permission.POST_NOTIFICATIONS))
-        }
+        // Permisos (no bloqueante): pide ubicación básica + notificaciones, y si
+        // queda concedida la básica, encadena el diálogo de "todo el tiempo".
+        permisosManager = PermisosManager(this)
+        permisosManager.pedirBasicosSiFaltan()
 
         val repository = ViajeRepository(this)
 
@@ -55,6 +43,14 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             COTDriverTheme {
+                // Diálogo explicativo de "Permitir todo el tiempo" (paso 2 de permisos).
+                if (permisosManager.mostrarDialogoBackground) {
+                    DialogoBackground(
+                        onConfirmar = { permisosManager.confirmarBackground() },
+                        onCancelar  = { permisosManager.cancelarBackground() }
+                    )
+                }
+
                 var legajoActual by remember { mutableStateOf(repository.getLegajo()) }
                 var perfilCompleto by remember { mutableStateOf(repository.perfilCompleto()) }
                 var isChecking by remember { mutableStateOf(legajoActual.isEmpty()) }
