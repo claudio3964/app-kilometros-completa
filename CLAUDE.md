@@ -136,3 +136,5 @@ Add an entry to `TerminalesGPS.catalogo` in `data/GeoConfig.kt`. The `resolver()
 - `finalizar_guardia_en_jornada` — called by `finalizarGuardiaEnSupabase()`; expects `p_guardia_id`, `p_order_number`, `p_fin`, `p_hours`, `p_km_guardia`, `p_status`
 - `crear_jornada` — called by `crearJornadaEnSupabase()`
 - `cerrar_jornada` — called by `cerrarJornadaEnSupabase()`
+
+
