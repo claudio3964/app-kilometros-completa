@@ -24,6 +24,16 @@ object LaudoCalculator {
         val viaticos: Int = 0
     )
 
+    /**
+     * Único criterio para decidir si un tipo de servicio amerita tome/cese.
+     * Centralizado acá para que km (calcular) y viático (determinarViatico) usen
+     * EXACTAMENTE la misma regla y la misma normalización (uppercase + trim), y no
+     * se vuelvan a desincronizar. PASAJERO, RELEVO y cualquier tipo fuera de
+     * TIPOS_CON_TOME_CESE NO disparan tome/cese.
+     */
+    private fun ameritaTomeCese(tipoServicio: String): Boolean =
+        TIPOS_CON_TOME_CESE.contains(tipoServicio.uppercase().trim())
+
     fun calcular(
         jornada: JornadaCompleta,
         laudoKm: Double = LAUDO_KM,
@@ -43,9 +53,9 @@ object LaudoCalculator {
             )
         }
 
-        // Viajes válidos (no cancelados, no programados)
+        // Viajes válidos (no cancelados, no programados, no de prueba)
         val viajesValidos = jornada.travels.filter {
-            it.status != "cancelado" && it.status != "programado"
+            it.status != "cancelado" && it.status != "programado" && !it.id.endsWith("-PRU")
         }
 
         // Km viajes
@@ -74,11 +84,13 @@ object LaudoCalculator {
             kmGuardias += g.hours * kmHora
         }
 
-        // Tome y cese — solo si el PRIMER viaje válido tiene un tipo que lo permite
-        val primerViaje = viajesValidos.minByOrNull { it.inicioReal ?: it.inicioProgramado }
-        val kmTomeCese = if (primerViaje != null &&
-            TIPOS_CON_TOME_CESE.contains(primerViaje.tipoServicio.uppercase().trim())
-        ) TOME_CESE_KM else 0.0
+        // Tome y cese — UNA vez por jornada, sobre el PRIMER viaje (en orden) cuyo
+        // tipo lo amerite. Si el primero es PASAJERO/RELEVO/etc. se saltea y se mira
+        // el siguiente. -PRU/cancelado/programado ya quedaron fuera de viajesValidos.
+        val primerConTC = viajesValidos
+            .sortedBy { it.inicioReal ?: it.inicioProgramado }
+            .firstOrNull { ameritaTomeCese(it.tipoServicio) }
+        val kmTomeCese = if (primerConTC != null) TOME_CESE_KM else 0.0
 
         // Total km
         val kmTotal = kmViajes + kmAcoplados + kmGuardias + kmTomeCese
@@ -115,6 +127,7 @@ object LaudoCalculator {
         var totalMinutos = 0L
 
         jornada.travels.forEach { t ->
+            if (t.id.endsWith("-PRU")) return@forEach   // ignorar viajes de prueba
             if (t.status == "finalizado" && t.inicioReal != null && t.finReal != null) {
                 totalMinutos += (t.finReal - t.inicioReal) / 60000
             }
@@ -142,15 +155,19 @@ object LaudoCalculator {
             sdf.parse(jornada.fecha)?.time ?: return 0
         } catch (e: Exception) { return 0 }
 
-        // Eventos de inicio y fin
-        data class Evento(val timestamp: Long, val tomeCese: Boolean)
+        // Eventos. El INICIO de jornada se ancla en la hora CITADA (inicioProgramado),
+        // NUNCA en el GPS real: el chofer suele llegar antes y esa anticipación
+        // voluntaria no se paga. El FIN sí va por tiempo real (finReal de los viajes).
+        data class Evento(val timestamp: Long, val esViaje: Boolean)
         val eventosInicio = mutableListOf<Evento>()
         val eventosFin = mutableListOf<Long>()
 
-        jornada.travels.filter { it.status == "finalizado" && it.inicioReal != null && it.finReal != null }
+        jornada.travels.filter {
+            it.status == "finalizado" && it.finReal != null && !it.id.endsWith("-PRU")
+        }
             .forEach { v ->
-                eventosInicio.add(Evento(v.inicioReal!!, v.tomeCese))
-                eventosFin.add(v.finReal!!)
+                eventosInicio.add(Evento(v.inicioProgramado, esViaje = true))  // hora citada
+                eventosFin.add(v.finReal!!)                                    // hora real
             }
 
         jornada.guards.forEach { g ->
@@ -165,30 +182,33 @@ object LaudoCalculator {
             if (durMinutos < 5) return@forEach
             val inicioMs = fechaBase + ini * 60000L
             val finMs = fechaBase + finMin * 60000L
-            eventosInicio.add(Evento(inicioMs, false))
+            eventosInicio.add(Evento(inicioMs, esViaje = false))
             eventosFin.add(finMs)
         }
 
         if (eventosInicio.isEmpty()) return 0
 
-        eventosInicio.sortBy { it.timestamp }
-        var inicioReal = eventosInicio.first().timestamp
-        val finReal = eventosFin.max()
+        // ¿La jornada tiene tome/cese? Mismo criterio que en calcular(): primer viaje
+        // (por hora citada) cuyo tipo lo amerite, salteando PASAJERO/RELEVO/etc.
+        val primerConTC = jornada.travels
+            .filter { it.status == "finalizado" && !it.id.endsWith("-PRU") }
+            .sortedBy { it.inicioProgramado }
+            .firstOrNull { ameritaTomeCese(it.tipoServicio) }
+        val tieneTomeCese = primerConTC != null
 
-        // Aplicar tome y cese si corresponde
-        val primerViaje = jornada.travels
-            .filter { it.status == "finalizado" && it.inicioReal != null }
-            .minByOrNull { it.inicioReal!! }
-
-        val primerTieneTC = primerViaje != null &&
-                TIPOS_CON_TOME_CESE.contains(primerViaje.tipoServicio.uppercase().trim())
-
-        if (primerTieneTC) {
-            inicioReal -= 45 * 60 * 1000L
+        // Inicio de jornada = evento más temprano (por hora citada). Si hay tome/cese,
+        // el PRIMER viaje corre 45 min antes de SU cita (siempre sobre la cita del primer
+        // viaje, no sobre el que dispara el TC). Una guardia previa puede ser aún más
+        // temprana y mandar ella el inicio; por eso tomamos el mínimo entre ambos.
+        val inicioMasTemprano = eventosInicio.minOf { it.timestamp }
+        val citaPrimerViaje = eventosInicio.filter { it.esViaje }.minOfOrNull { it.timestamp }
+        val inicioReal = if (tieneTomeCese && citaPrimerViaje != null) {
+            minOf(inicioMasTemprano, citaPrimerViaje - 45 * 60 * 1000L)
+        } else {
+            inicioMasTemprano
         }
 
-        val cal = java.util.Calendar.getInstance()
-        cal.timeInMillis = inicioReal
+        val finReal = eventosFin.max()
 
         val franja14 = java.util.Calendar.getInstance().apply {
             timeInMillis = inicioReal

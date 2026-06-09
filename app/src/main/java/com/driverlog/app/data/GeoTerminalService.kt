@@ -19,9 +19,12 @@ class GeoTerminalService : Service() {
     private lateinit var locationCallback: LocationCallback
 
     private var viajeId: String = ""
+    private var origen: String = ""                 // NUEVO
     private var destino: String = ""
     private var inicioReal: Long = 0L
+    private var llegadaEstimada: Long = 0L          // NUEVO: ms epoch, 0 = sin estimada
     private var terminal: TerminalesGPS.Terminal? = null
+    private var puntoAprox: Location? = null        // NUEVO: checkpoint o terminal para escalar
 
     // Estado interno
     private var posicionOrigen: Location? = null
@@ -29,6 +32,10 @@ class GeoTerminalService : Service() {
     private var ultimaPosicion: Location? = null
     private var tiempoQuieto: Long? = null
     private var cierreEnCurso = false
+
+    // NUEVO: modo de potencia del GPS. false = bajo consumo (crucero),
+    // true = alta precisión (aproximación + cierre).
+    private var modoAlta = false
 
     // Modo prueba
     private var modoPrueba = false
@@ -41,8 +48,10 @@ class GeoTerminalService : Service() {
         const val TAG = "COT_GEO"
 
         const val EXTRA_VIAJE_ID = "viaje_id"
+        const val EXTRA_ORIGEN = "origen"                       // NUEVO
         const val EXTRA_DESTINO = "destino"
         const val EXTRA_INICIO_REAL = "inicio_real"
+        const val EXTRA_LLEGADA_ESTIMADA = "llegada_estimada"   // NUEVO
         const val EXTRA_MODO_PRUEBA = "modo_prueba"
 
         // Versión con objeto Viaje — la que ya usabas, ahora delega
@@ -50,18 +59,30 @@ class GeoTerminalService : Service() {
             iniciar(
                 context,
                 viaje.id,
+                viaje.origen,                          // NUEVO
                 viaje.destino,
                 viaje.inicioReal ?: viaje.inicioProgramado,
+                viaje.llegadaEstimada ?: 0L,           // NUEVO
                 modoPrueba
             )
         }
 
         // Versión nueva con campos sueltos — la que usa el ActivarViajeWorker
-        fun iniciar(context: Context, viajeId: String, destino: String, inicioReal: Long, modoPrueba: Boolean = false) {
+        fun iniciar(
+            context: Context,
+            viajeId: String,
+            origen: String,                            // NUEVO
+            destino: String,
+            inicioReal: Long,
+            llegadaEstimada: Long = 0L,                // NUEVO
+            modoPrueba: Boolean = false
+        ) {
             val intent = Intent(context, GeoTerminalService::class.java).apply {
                 putExtra(EXTRA_VIAJE_ID, viajeId)
+                putExtra(EXTRA_ORIGEN, origen)                      // NUEVO
                 putExtra(EXTRA_DESTINO, destino)
                 putExtra(EXTRA_INICIO_REAL, inicioReal)
+                putExtra(EXTRA_LLEGADA_ESTIMADA, llegadaEstimada)   // NUEVO
                 putExtra(EXTRA_MODO_PRUEBA, modoPrueba)
             }
             context.startForegroundService(intent)
@@ -78,6 +99,8 @@ class GeoTerminalService : Service() {
         crearCanalNotificacion()
         // Notificación inmediata en onCreate — antes de que Honor pueda matar el servicio
         startForeground(NOTIF_ID, crearNotificacion("COT Driver — GPS activo"))
+        // Marcador de versión: si ves esto en el logcat, el APK tiene los cambios.
+        Log.d(TAG, "GeoTerminalService build=${GeoConfig.GEO_BUILD}")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -85,10 +108,12 @@ class GeoTerminalService : Service() {
             Log.w(TAG, "onStartCommand con intent null — sin datos de viaje")
             return START_REDELIVER_INTENT
         }
-        viajeId    = intent?.getStringExtra(EXTRA_VIAJE_ID) ?: ""
-        destino    = intent?.getStringExtra(EXTRA_DESTINO) ?: ""
-        inicioReal = intent?.getLongExtra(EXTRA_INICIO_REAL, 0L) ?: 0L
-        modoPrueba = intent?.getBooleanExtra(EXTRA_MODO_PRUEBA, false) ?: false
+        viajeId         = intent?.getStringExtra(EXTRA_VIAJE_ID) ?: ""
+        origen          = intent?.getStringExtra(EXTRA_ORIGEN) ?: ""              // NUEVO
+        destino         = intent?.getStringExtra(EXTRA_DESTINO) ?: ""
+        inicioReal      = intent?.getLongExtra(EXTRA_INICIO_REAL, 0L) ?: 0L
+        llegadaEstimada = intent?.getLongExtra(EXTRA_LLEGADA_ESTIMADA, 0L) ?: 0L  // NUEVO
+        modoPrueba      = intent?.getBooleanExtra(EXTRA_MODO_PRUEBA, false) ?: false
 
         radioActivo        = if (modoPrueba) GeoConfig.RADIO_PRUEBA else GeoConfig.RADIO_METROS
         tiempoQuietoActivo = if (modoPrueba) GeoConfig.TIEMPO_QUIETO_PRUEBA_MS else GeoConfig.TIEMPO_QUIETO_MS
@@ -100,25 +125,53 @@ class GeoTerminalService : Service() {
             return START_NOT_STICKY
         }
 
-        Log.d(TAG, "Iniciando geo → ${terminal!!.nombre} | prueba=$modoPrueba")
+        // NUEVO: punto para la escalada por distancia.
+        // Checkpoint del corredor si existe; si no, la terminal de destino (como hoy).
+        val cp = TerminalesGPS.CheckpointsGPS.resolver(origen, destino)
+        puntoAprox = if (cp != null) {
+            Log.d(TAG, "Checkpoint de corredor: ${cp.nombre}")
+            Location("").apply { latitude = cp.lat; longitude = cp.lng }
+        } else {
+            Log.d(TAG, "Sin checkpoint — uso terminal ${terminal!!.nombre} para aproximación")
+            Location("").apply { latitude = terminal!!.lat; longitude = terminal!!.lng }
+        }
 
-        // Actualizar notificación con destino real
+        // NUEVO: modo inicial. Prueba o estimada inminente -> alta; si no, crucero.
+        modoAlta = modoPrueba ||
+                (llegadaEstimada > 0 &&
+                        System.currentTimeMillis() >= llegadaEstimada - GeoConfig.MARGEN_APROX_MS)
+
+        Log.d(TAG, "Iniciando geo -> ${terminal!!.nombre} | prueba=$modoPrueba | " +
+                "estimada=${if (llegadaEstimada > 0) llegadaEstimada.toString() else "-"} | " +
+                "modoInicial=${if (modoAlta) "ALTA" else "BAJO"}")
+
+        // Actualizar notificación con el estado real
         val notifManager = getSystemService(NotificationManager::class.java)
-        notifManager.notify(NOTIF_ID, crearNotificacion("Monitoreando llegada a ${terminal!!.nombre}"))
+        notifManager.notify(NOTIF_ID, crearNotificacion(textoNotif()))
 
-        iniciarGPS()
+        iniciarGPS(modoAlta)
         return START_STICKY
     }
+
     @SuppressLint("MissingPermission")
-    private fun iniciarGPS() {
+    private fun iniciarGPS(alta: Boolean) {
         if (::locationCallback.isInitialized) {
             fusedClient.removeLocationUpdates(locationCallback)
         }
-        val intervalo = if (modoPrueba) 5_000L else 30_000L
-        val minDistancia = if (modoPrueba) 0f else 10f
-        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, intervalo)
-            .setMinUpdateDistanceMeters(minDistancia)
-            .build()
+
+        val request = if (alta) {
+            // ALTA PRECISIÓN — para detectar el cierre (igual que antes)
+            val intervalo = if (modoPrueba) 5_000L else 30_000L
+            val minDistancia = if (modoPrueba) 0f else 10f
+            LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, intervalo)
+                .setMinUpdateDistanceMeters(minDistancia)
+                .build()
+        } else {
+            // BAJO CONSUMO — crucero. Barato, no prende el chip GPS a full.
+            LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, GeoConfig.INTERVALO_BAJO_MS)
+                .setMinUpdateDistanceMeters(0f)
+                .build()
+        }
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
@@ -127,15 +180,39 @@ class GeoTerminalService : Service() {
         }
 
         fusedClient.requestLocationUpdates(request, locationCallback, Looper.myLooper() ?: Looper.getMainLooper())
+        Log.d(TAG, "GPS en modo ${if (alta) "ALTA" else "BAJO"}")
     }
 
     private fun procesarPosicion(loc: Location) {
-        if (loc.accuracy > GeoConfig.PRECISION_MINIMA_M) {
-            Log.d(TAG, "Lectura descartada — precisión ${loc.accuracy}m")
-            return
-        }
         val ahora = System.currentTimeMillis()
         val term = terminal ?: return
+
+        // CAPA 1/2/3: ESCALADA (solo modo bajo, antes del filtro de precisión)
+        if (!modoAlta) {
+            val ancla = puntoAprox ?: Location("").apply { latitude = term.lat; longitude = term.lng }
+            val distAprox = loc.distanceTo(ancla).toDouble()
+
+            val cercaPorTiempo = llegadaEstimada > 0 &&
+                    ahora >= llegadaEstimada - GeoConfig.MARGEN_APROX_MS
+            val cercaPorDistancia = distAprox <= GeoConfig.APROX_DISTANCIA_M
+
+            if (cercaPorTiempo || cercaPorDistancia) {
+                Log.d(TAG, "Escalando a ALTA - tiempo=$cercaPorTiempo distancia=${distAprox.toInt()}m")
+                modoAlta = true
+                getSystemService(NotificationManager::class.java)
+                    .notify(NOTIF_ID, crearNotificacion(textoNotif()))
+                iniciarGPS(alta = true)
+            } else {
+                Log.d(TAG, "Crucero - aproximacion a ${distAprox.toInt()}m, sin escalar")
+            }
+            return  // en modo bajo NO se evalúa el cierre
+        }
+        // MODO ALTA: lógica de cierre original, intacta
+
+        if (loc.accuracy > GeoConfig.PRECISION_MINIMA_M) {
+            Log.d(TAG, "Lectura descartada - precisión ${loc.accuracy}m")
+            return
+        }
 
         // Registrar origen
         if (posicionOrigen == null) {
@@ -176,11 +253,11 @@ class GeoTerminalService : Service() {
             return
         }
 
-        // REGLA 4: quieto 5 minutos dentro del radio
+        // REGLA 4: quieto dentro del radio
         if (ultimaPosicion == null) {
             ultimaPosicion = loc
             tiempoQuieto = ahora
-            Log.d(TAG, "En radio — iniciando timer quieto")
+            Log.d(TAG, "En radio - iniciando timer quieto")
             return
         }
 
@@ -190,7 +267,7 @@ class GeoTerminalService : Service() {
         val umbralMovimiento = if (modoPrueba) GeoConfig.MOVIMIENTO_MINIMO_PRUEBA_M else GeoConfig.MOVIMIENTO_MINIMO_M
         if (movimiento > umbralMovimiento) {
             tiempoQuieto = ahora
-            Log.d(TAG, "Movimiento ${movimiento.toInt()}m — timer reseteado")
+            Log.d(TAG, "Movimiento ${movimiento.toInt()}m - timer reseteado")
             return
         }
 
@@ -201,7 +278,7 @@ class GeoTerminalService : Service() {
         // 4 REGLAS CUMPLIDAS
         if (quietoMs >= tiempoQuietoActivo && !cierreEnCurso) {
             cierreEnCurso = true
-            Log.d(TAG, "✅ 4/4 reglas — disparando cierre")
+            Log.d(TAG, "4/4 reglas - disparando cierre")
             dispararCierre()
         }
     }
@@ -222,6 +299,14 @@ class GeoTerminalService : Service() {
             stopSelf()
         }
     }
+
+    // NUEVO: texto de notificación según el modo (se ve sin ADB, sin logcat)
+    private fun textoNotif(): String {
+        val term = terminal?.nombre ?: destino
+        return if (modoAlta) "Monitoreando llegada a $term"
+        else "En ruta a $term - GPS en ahorro"
+    }
+
     private fun crearCanalNotificacion() {
         val channel = NotificationChannel(
             CHANNEL_ID, "GPS Monitoreo", NotificationManager.IMPORTANCE_LOW
@@ -242,9 +327,10 @@ class GeoTerminalService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        fusedClient.removeLocationUpdates(locationCallback)
+        if (::locationCallback.isInitialized) {
+            fusedClient.removeLocationUpdates(locationCallback)
+        }
         scope.cancel()
         Log.d(TAG, "GeoTerminalService detenido")
     }
 }
-

@@ -29,6 +29,7 @@ data class Viaje(
     val notificado: Boolean = false,
     val duracionMinutos: Long? = null,
     val llegadaReal: Long? = null,
+    val llegadaEstimada: Long? = null,  // NUEVO: ms epoch estimado (travel_stats); null = sin estimada
     val origenCreacion: String = "app",
     val cierreAutomatico: Boolean? = null,
 )

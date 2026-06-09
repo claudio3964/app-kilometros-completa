@@ -55,7 +55,7 @@ class ActivarViajeWorker(
 
             // FIX 2 — Iniciar GPS directo desde inputData, sin depender de Room
             if (destino.isNotBlank()) {
-                GeoTerminalService.iniciar(applicationContext, viajeId, destino, inicioReal)
+                GeoTerminalService.iniciar(applicationContext, viajeId, origen, destino, inicioReal, 0L)
             } else {
                 android.util.Log.w("COT", "ActivarViajeWorker: destino vacío, no inicio GPS para $viajeId")
             }

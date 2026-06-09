@@ -1,4 +1,3 @@
-
 package com.driverlog.app.data
 
 object GeoConfig {
@@ -9,7 +8,11 @@ object GeoConfig {
     const val TIEMPO_MINIMO_VIAJE_MS = 90 * 60 * 1000L
     const val DISTANCIA_MINIMA_ORIGEN_M = 500.0
     const val PRECISION_MINIMA_M  = 50.0
-
+    const val MARGEN_APROX_MS    = 20 * 60 * 1000L   // escala 20 min antes de la estimada
+    const val APROX_DISTANCIA_M  = 20_000.0          // o a 20 km de la terminal
+    const val INTERVALO_BAJO_MS  = 90_000L           // muestreo en crucero (90s)
+    const val CHECKPOINT_RADIO_M = 5_000.0           // radio por defecto de un checkpoint de corredor
+    const val GEO_BUILD = "bateria-v1-2026-06-08"
     // Modo prueba
     const val RADIO_PRUEBA = 50.0
     const val TIEMPO_QUIETO_PRUEBA_MS = 15 * 1000L
@@ -38,6 +41,51 @@ object TerminalesGPS {
         "Punta del Diablo"  to Terminal(-33.9167,    -53.5500,   "Parada Punta del Diablo"),
         "Prueba" to Terminal(-34.8089, -56.1331, "Terminal Prueba"),
     )
+
+    object CheckpointsGPS {
+
+        // Punto de APROXIMACIÓN por corredor (ruta × sentido). Solo DESPIERTA el GPS;
+        // el cierre lo sigue haciendo la terminal de destino (TerminalesGPS).
+        // radioM = cuán cerca del checkpoint hay que estar para escalar a alta precisión.
+        // OJO: el punto que elijas define cuánto "runway" de alta precisión queda hasta
+        // el destino. Un checkpoint lejos del destino (Juan Lacaze) despierta temprano
+        // (más seguro, menos ahorro); uno cerca (barrio El General, en Colonia) despierta
+        // tarde (más ahorro, menos margen). Es la perilla para tunear por corredor.
+        data class Checkpoint(
+            val lat: Double,
+            val lng: Double,
+            val nombre: String,
+            val radioM: Double = GeoConfig.CHECKPOINT_RADIO_M
+        )
+
+        // Clave = origen→destino normalizado a 3 letras MAYÚS (igual que el sufijo del id
+        // y que ts_cod_lugar en Supabase): "Montevideo"->MON, "Colonia"->COL, etc.
+        private val catalogo = mapOf(
+            // ── Corredor Colonia ────────────────────────────────────────────────
+            // TODO: poné las coords EXACTAS desde Google Maps (click derecho → copiar).
+            // Las de abajo son aproximadas, ajustalas antes de confiar en campo.
+            "MON-COL" to Checkpoint(-34.4300, -57.4500, "Radial Juan Lacaze"), // ida
+            "COL-MON" to Checkpoint(-34.8600, -56.2000, "Plaza Cuba"),         // vuelta
+
+            // ── Este (Punta y alrededores) ──────────────────────────────────────
+            // Sin checkpoint a propósito: caen a la terminal de destino, que en la
+            // práctica es el embudo de Maldonado. Funciona hoy, no hay que tocar.
+
+            // ── Para agregar más adelante (placeholders, NO activos) ────────────
+            // "MON-CHU" to Checkpoint(lat, lng, "Entrada Barra del Chuy"),
+            // "CHU-MON" to Checkpoint(lat, lng, "..."),
+            // "MON-PAL" to Checkpoint(lat, lng, "Terminal Rocha"),   // La Paloma
+            // "MON-PED" to Checkpoint(lat, lng, "Terminal Rocha"),   // La Pedrera
+            // "MON-AGU" to Checkpoint(lat, lng, "Cabo Polonio"),     // Aguas Dulces
+        )
+
+        private fun cod(s: String) = s.trim().uppercase().take(3)
+
+        fun resolver(origen: String, destino: String): Checkpoint? {
+            if (origen.isBlank() || destino.isBlank()) return null
+            return catalogo["${cod(origen)}-${cod(destino)}"]
+        }
+    }
 
     fun resolver(destino: String): Terminal? {
         val d = destino.trim().lowercase()
