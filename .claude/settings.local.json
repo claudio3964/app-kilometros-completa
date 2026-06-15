@@ -18,7 +18,9 @@
       "Bash(supabase functions *)",
       "Bash(dir /s /b \"C:\\\\cot_dev\\\\app_kilometros\\\\cot_devapp_kilometros-completa-android-koltin\\\\www\")",
       "PowerShell(\\(Get-Content \"C:\\\\cot_dev\\\\app_kilometros\\\\app-kilometros-completa\\\\www\\\\admin\\\\index.html\"\\).Count)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(powershell -Command \"Get-Item 'FASE1_MULTIEMPRESA.md','ESTRATEGIA_MULTIEMPRESA.md' | Select-Object Name, LastWriteTime\")",
+      "Bash(powershell *)"
     ]
   }
 }

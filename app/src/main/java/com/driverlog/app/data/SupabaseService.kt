@@ -759,6 +759,11 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
     }
 
     suspend fun getConfiguracion(): Map<String, Double> = withContext(Dispatchers.IO) {
+        val cached = configCache
+        if (cached != null && (System.currentTimeMillis() - configCacheTimestamp) < CONFIG_TTL_MS) {
+            Log.d("COT_CACHE", "config HIT (sin red)")
+            return@withContext cached
+        }
         try {
             val request = Request.Builder()
                 .url("$SUPABASE_URL/rest/v1/configuracion?select=clave,valor")
@@ -766,8 +771,9 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
                 .addHeader("Authorization", "Bearer $SUPABASE_KEY")
                 .get()
                 .build()
+            Log.d("COT_CACHE", "config MISS -> GET red")
             val body = client.newCall(request).execute().body?.string()
-                ?: return@withContext emptyMap()
+                ?: return@withContext (cached ?: emptyMap())
             val arr = JSONArray(body)
             val map = mutableMapOf<String, Double>()
             for (i in 0 until arr.length()) {
@@ -776,10 +782,28 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
                 val valor = obj.optDouble("valor", Double.NaN)
                 if (clave.isNotEmpty() && !valor.isNaN()) map[clave] = valor
             }
-            map
+            if (map.isNotEmpty()) {
+                configCache = map
+                configCacheTimestamp = System.currentTimeMillis()
+                map
+            } else {
+                cached ?: emptyMap()
+            }
         } catch (e: Exception) {
             Log.e("COT", "Error getConfiguracion: ${e.message}")
-            emptyMap()
+            cached ?: emptyMap()
+        }
+    }
+
+    companion object {
+        @Volatile
+        private var configCache: Map<String, Double>? = null
+        @Volatile
+        private var configCacheTimestamp: Long = 0L
+        const val CONFIG_TTL_MS = 5 * 60 * 1000L
+
+        fun invalidarConfigCache() {
+            configCache = null
         }
     }
 }
