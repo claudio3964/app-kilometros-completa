@@ -48,14 +48,31 @@ class ActivarViajeWorker(
 
             // FIX 1 — Sincronizar a Supabase
             try {
-                SupabaseService(applicationContext).activarViajeEnSupabase(viajeId, inicioReal)
+                val viajeCompleto = dao.getViajeById(viajeId)
+                val llegadaEstimada = viajeCompleto?.llegadaEstimada ?: (inicioReal + 180 * 60 * 1000)
+                SupabaseService(applicationContext).activarViajeEnSupabase(viajeId, inicioReal, llegadaEstimada)
             } catch (e: Exception) {
                 android.util.Log.e("COT", "ActivarViajeWorker: error sync Supabase: ${e.message}")
             }
 
             // FIX 2 — Iniciar GPS directo desde inputData, sin depender de Room
+            // FIX 2 — Iniciar GPS con llegadaEstimada desde Room o calcular fallback
             if (destino.isNotBlank()) {
-                GeoTerminalService.iniciar(applicationContext, viajeId, origen, destino, inicioReal, 0L)
+                val viajeCompleto = dao.getViajeById(viajeId)
+                val llegadaEstimada = if (viajeCompleto?.llegadaEstimada != null) {
+                    viajeCompleto.llegadaEstimada
+                } else {
+                    // Fallback: 3 horas desde inicioReal
+                    inicioReal + (180 * 60 * 1000)
+                }
+                GeoTerminalService.iniciar(
+                    applicationContext,
+                    viajeId,
+                    origen,
+                    destino,
+                    inicioReal,
+                    llegadaEstimada ?: (inicioReal + 180 * 60 * 1000)
+                )
             } else {
                 android.util.Log.w("COT", "ActivarViajeWorker: destino vacío, no inicio GPS para $viajeId")
             }

@@ -115,8 +115,9 @@ class ViajeRepository(private val context: Context) {
         } else {
             ahora
         }
-        dao.activarViaje(viaje.id, "en_curso", inicioReal)
-        supabase.activarViajeEnSupabase(viaje.id, inicioReal)
+        val llegadaEstimada = calcularLlegadaEstimada(viaje.origen, viaje.destino, inicioReal)
+        dao.activarViajeConEstimacion(viaje.id, "en_curso", inicioReal, llegadaEstimada)  // ✅ CORRECTO
+        supabase.activarViajeEnSupabase(viaje.id, inicioReal, llegadaEstimada)
     }
 
     suspend fun finalizarViaje(viajeId: String, cierreAutomatico: Boolean = false) {
@@ -466,8 +467,12 @@ class ViajeRepository(private val context: Context) {
     suspend fun calcularTotalesJornada(orderNumber: String): LaudoCalculator.Totales {
         val jornada = jornadaDao.getJornada(orderNumber)
 
-        // 1. Snapshot guardado en Room (de sync o cierre local)
-        if (jornada != null && jornada.kmTotal > 0.0) {
+        // 1. Snapshot plano de Room: SOLO si la jornada está cerrada.
+        //    Una jornada activa (incluye REABIERTA) nunca usa el plano viejo:
+        //    siempre cae al branch 2 y recalcula desde travels/guards.
+        val estaCerrada = jornada != null &&
+            (jornada.status == "cerrada" || jornada.status == "finalizada")
+        if (estaCerrada && jornada.kmTotal > 0.0) {
             return LaudoCalculator.Totales(kmTotal = jornada.kmTotal, monto = jornada.monto)
         }
 
@@ -674,4 +679,11 @@ suspend fun cerrarJornada(legajo: String): File? {
         )
         return (jerarquia[local] ?: 0) > (jerarquia[remoto] ?: 0)
     }
+
+private suspend fun calcularLlegadaEstimada(origen: String, destino: String, inicioReal: Long): Long {
+    val ruta = "${origen}→${destino}"
+    val duracionMin = getDuracionPromedio(ruta) ?: 180 // 3 horas fallback
+    return inicioReal + (duracionMin * 60 * 1000)
+}
+
 }

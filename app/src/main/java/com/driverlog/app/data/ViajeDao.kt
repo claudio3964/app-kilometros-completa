@@ -33,6 +33,8 @@ interface ViajeDao {
 
     @Query("UPDATE viajes SET status = :status, inicioReal = :inicioReal WHERE id = :id")
     suspend fun activarViaje(id: String, status: String, inicioReal: Long)
+    @Query("UPDATE viajes SET status = :status, inicioReal = :inicioReal, llegadaEstimada = :llegadaEstimada WHERE id = :id")
+    suspend fun activarViajeConEstimacion(id: String, status: String, inicioReal: Long, llegadaEstimada: Long)
 
     @Query("UPDATE viajes SET status = :status, finReal = :finReal, cierreAutomatico = :cierreAutomatico WHERE id = :id")
     suspend fun finalizarViaje(id: String, status: String, finReal: Long, cierreAutomatico: Boolean)

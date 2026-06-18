@@ -5,7 +5,7 @@
 > de jornada de trabajo (ver PROTOCOLO DE CIERRE al pie). Lo que deja de ser cierto, se
 > borra de "Estado" y queda preservado en el CHANGELOG.
 >
-> **Última actualización:** 10/06/2026
+> > **Última actualización:** 18/06/2026
 
 ---
 
@@ -24,45 +24,36 @@
 
 ## DÓNDE ESTOY PARADO HOY
 
-**Frente activo: bug de subfacturación del laudo (cierre de jornada).**
+**Frente activo: fix de raíz del laudo cliente (subfacturación). En progreso, 4 piezas.**
 
-Diagnóstico completo (10/06): el laudo tiene **dos fuentes de verdad que divergen**.
-- **Servidor (Supabase):** calcula desde el array `travels`. Correcto.
-- **App (Room):** guarda `kmTotal`/`monto` como campos PLANOS en la entidad `Jornada`,
-  escritos una sola vez al cerrar. `ViajeRepository.calcularTotalesJornada()` tiene un
-  cortocircuito: `if (jornada.kmTotal > 0.0) return planos` → devuelve el total congelado
-  SIN recalcular ni mirar Supabase. Por eso una jornada reabierta sigue mostrando el monto
-  viejo aunque el server esté correcto.
-- Además: una jornada `closed:false` que no es de hoy queda FUERA de las dos queries de
-  sync (`obtenerJornadaActiva` pide hoy + descarta closed; `obtenerJornadasCerradas` pide
-  closed=true). No vuelve a bajar a Room.
+El laudo tenía dos fuentes de verdad que divergían: Supabase calcula desde `travels`
+(correcto); la app servía `kmTotal`/`monto` planos de Room sin recalcular. Una jornada
+reabierta mostraba el monto viejo congelado → subfacturación.
 
-**Ya HECHO y validado hoy (server-side):**
-- Helper `_reabrir_jornada_si_corresponde(p_order_number)` — idempotente, sin gate de
-  fecha, sin RAISE. Si la jornada está cerrada: borra `totalsSnapshot`, pone `closed:false`
-  + `status:'activa'` + flag `reabierta:true`. Si está abierta o no existe: no hace nada.
-- `agregar_viaje_a_jornada` y `agregar_guardia_a_jornada`: llaman al helper con `PERFORM`
-  al inicio, antes del append. Probado en los dos caminos (reabre / no rompe si ya abierta).
-- De paso: `search_path` pineado en `agregar_viaje_a_jornada` (era DEFINER sin pinear);
-  `COALESCE(data->'guards', '[]')` defensivo en `agregar_guardia_a_jornada`.
-- **El reopen server sirve y queda en producción, pero NO alcanza solo** — el bug real
-  está del lado cliente (cortocircuito de Room). Eso es el frente #1 de mañana.
+**HECHO y validado:**
+- **Reopen server-side** (helper `_reabrir_jornada_si_corresponde` + integración en
+  `agregar_viaje_a_jornada`/`agregar_guardia_a_jornada`). En producción, confirmado en vivo.
+- **Pieza 1** — caché de `getConfiguracion` (companion object @Volatile + TTL 5min).
+  Aplicada y validada.
+- **Pieza 3** — criterio de `calcularTotalesJornada` por status (activa/reabierta →
+  recalcula; cerrada → snapshot). Aplicada y VALIDADA end-to-end en celu el 18/06.
+  **El bug de subfacturación está muerto para la jornada reabierta del día.**
 
-ESTADO DEL FIX DE RAÍZ DEL LAUDO (en progreso, 4 piezas):
-- Pieza 1 (caché de getConfiguracion con TTL 5min): HECHA y validada en celu. El caché
-  retiene entre llamadas (MISS la primera vez, HIT después).
-- Piezas 2-4: diseñadas, pendientes. Ver próximos pasos.
-- CONFIRMADO EN VIVO: el reopen server funciona en producción. La 4112-20260610 baja con
-  closed:false, status:activa, reabierta:true, totalsSnapshot=null. El cliente ve el null
-  y cae a calcularTotalesJornada — falta que recalcule bien (Pieza 3).
-- HALLAZGO: el cuello de red real del historial NO era config, es obtenerTotalesSnapshot
-  bajando el JSON completo de cada jornada cerrada por red, varias veces (período + card,
-  sin compartir). Lo resuelven Pieza 2 + Pieza 4.
+**PENDIENTE (próximos pasos):**
+- **Pieza 2** — en HistorialScreen, calcular Totales una vez por jornada (Map) y compartir
+  a las JornadaCard (hoy período y card lo piden por separado → doble red).
+- **Pieza 4** — persistir snapshot completo en Room + migrations reales (sacar
+  `fallbackToDestructiveMigration`, decidir ANTES del build) + bump schema + ajustar sync
+  para que una jornada reabierta de día anterior pueda volver a Room. (La Pieza 3 cubre la
+  reabierta DE HOY; la de días anteriores necesita esta pieza.)
+- Tarea UI: indicador de color (verde abierta / gris cerrada) debe volver a verde al reabrir.
+- Tarea: registro de auditoría de reaperturas (eventos en el JSON, visible en panel Next).
+  Base ya sembrada: el flag `reabierta:true` sobrevive al recierre.
 ---
 
 ## PRÓXIMOS PASOS (en orden)
 
-1. 1. [FRENTE #1] Fix cliente del laudo - continuar:
+1. **[FRENTE #1] Fix cliente del laudo - continuar:
     - Pieza 3: reescribir criterio de calcularTotalesJornada. Regla por estado:
       ABIERTA (incl. reabierta) -> recalcular desde travels/guards locales (presentes,
       porque abierta = de hoy por la regla del corte 23:59:59).
@@ -129,6 +120,21 @@ ESTADO DEL FIX DE RAÍZ DEL LAUDO (en progreso, 4 piezas):
 ---
 
 ## CHANGELOG (solo crece — NO reescribir, agregar arriba)
+### 18/06/2026
+- Pieza 3 (criterio de calcularTotalesJornada por status) APLICADA y VALIDADA end-to-end
+  en celu con jornada real del día. Prueba: cerrada con 2 viajes ($2.824,30 / 352,5 km) ->
+  agregado 3er viaje (Mvd-Colonia) -> reabrió sola (closed:false, status:activa, 3 travels,
+  confirmado en logcat) -> cerrada de nuevo -> recalculó correcto ($4.250,47 / 530,5 km,
+  KM viajes 280->458). Tome/Cese NO se duplicó (42,5). BUG DE SUBFACTURACIÓN MUERTO para
+  jornada reabierta del día.
+- Validado de paso: GPS "Escalando a ALTA" capturado (distancia 9950m) y checkpoint Colonia
+  (Radial Juan Lacaze) funcionando — pendientes desde el 10/06.
+- Nota: el historial NO muestra la jornada activa del día (filtro fecha!=hoy || cerrada);
+  por eso para ver la reabierta hay que cerrarla. Comportamiento esperado, no bug.
+- Detectada tarea UI: indicador de color (verde=abierta/gris=cerrada) del nº funcionario+
+  base+tipo en pantalla principal debe volver a verde al reabrir. Anotada como pieza aparte.
+- Detectada tarea: registro de auditoría de reaperturas (eventos timestamp+viaje+origen en
+  el JSON, visible en panel Next). Anotada como pieza aparte.
 ### 15/06/2026
 - Diseño completo del fix de raíz del laudo cliente (4 piezas), sobre código real mapeado
   con Claude Code. Decisión: atacar la raíz (dos fuentes de verdad Room-plano vs Supabase),

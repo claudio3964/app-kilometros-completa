@@ -54,13 +54,14 @@ class SupabaseService(private val context: Context) {
         }
     }
 
-    suspend fun activarViajeEnSupabase(viajeId: String, inicioReal: Long): Boolean =
+    suspend fun activarViajeEnSupabase(viajeId: String, inicioReal: Long,llegadaEstimada: Long): Boolean =
         withContext(Dispatchers.IO) {
             try {
                 val json = JSONObject().apply {
                     put("p_viaje_id", viajeId)
                     put("p_status", "en_curso")
                     put("p_inicio_real", inicioReal)
+                    put("p_llegada_estimada", llegadaEstimada)  // ← NUEVO
                 }
                 val body = json.toString().toRequestBody("application/json".toMediaType())
                 val request = Request.Builder()
@@ -174,6 +175,14 @@ class SupabaseService(private val context: Context) {
                                         java.util.Locale.getDefault()
                                     ).also { it.timeZone = java.util.TimeZone.getTimeZone("UTC") }
                                         .parse(raw)?.time
+                                    else -> null
+                                }
+                            } catch (e: Exception) { null },
+                            llegadaEstimada = try {
+                                val raw = t.opt("llegadaEstimada")
+                                when (raw) {
+                                    is Long -> raw.takeIf { it > 0L }
+                                    is Int -> raw.toLong().takeIf { it > 0L }
                                     else -> null
                                 }
                             } catch (e: Exception) { null },
@@ -327,6 +336,7 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
                     put("status", viaje.status)
                     put("inicioProgramado", viaje.inicioProgramado)
                     put("inicioReal", viaje.inicioReal ?: 0L)
+                    put("llegadaEstimada", viaje.llegadaEstimada ?: 0L)  // ← NUEVO
                     put("kmEmpresa", viaje.kmEmpresa)
                     put("tipoServicio", viaje.tipoServicio)
                     put("coche", viaje.coche ?: "")
@@ -761,7 +771,6 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
     suspend fun getConfiguracion(): Map<String, Double> = withContext(Dispatchers.IO) {
         val cached = configCache
         if (cached != null && (System.currentTimeMillis() - configCacheTimestamp) < CONFIG_TTL_MS) {
-            Log.d("COT_CACHE", "config HIT (sin red)")
             return@withContext cached
         }
         try {
@@ -771,7 +780,6 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
                 .addHeader("Authorization", "Bearer $SUPABASE_KEY")
                 .get()
                 .build()
-            Log.d("COT_CACHE", "config MISS -> GET red")
             val body = client.newCall(request).execute().body?.string()
                 ?: return@withContext (cached ?: emptyMap())
             val arr = JSONArray(body)
