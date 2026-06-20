@@ -13,3 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+.kotlin/
+supabase/.temp/
+.claude/settings.local.json
+*.log

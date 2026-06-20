@@ -14,5 +14,10 @@ data class Jornada(
     val closedAt: Long? = null,
     val horaInicio: String = "",
     val kmTotal: Double = 0.0,
-    val monto: Double = 0.0
+    val monto: Double = 0.0,
+    val kmViajes: Double = 0.0,
+    val kmAcoplados: Double = 0.0,
+    val kmGuardias: Double = 0.0,
+    val kmTomeCese: Double = 0.0,
+    val viaticos: Int = 0
 )

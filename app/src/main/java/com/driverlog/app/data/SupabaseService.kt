@@ -703,7 +703,12 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
                         closedAt = if (closedAt > 0L) closedAt else null,
                         horaInicio = dataObj.optString("horaInicio", ""),
                         kmTotal = snapshot?.optDouble("kmTotal", 0.0) ?: 0.0,
-                        monto = snapshot?.optDouble("monto", 0.0) ?: 0.0
+                        monto = snapshot?.optDouble("monto", 0.0) ?: 0.0,
+                        kmViajes = snapshot?.optDouble("kmViajes", 0.0) ?: 0.0,
+                        kmAcoplados = snapshot?.optDouble("kmAcoplados", 0.0) ?: 0.0,
+                        kmGuardias = snapshot?.optDouble("kmGuardias", 0.0) ?: 0.0,
+                        kmTomeCese = snapshot?.optDouble("kmTomeCese", 0.0) ?: 0.0,
+                        viaticos = snapshot?.optInt("viaticos", 0) ?: 0
                     )
                 )
             }
