@@ -70,8 +70,10 @@ fun HistorialScreen(
     }
 
     var totalesPeriodo by remember { mutableStateOf<LaudoCalculator.Totales?>(null) }
+    val totalesPorJornada = remember { mutableStateMapOf<String, LaudoCalculator.Totales>() }
 
     LaunchedEffect(mesFiltro, jornadasPasadas.size) {
+        totalesPorJornada.clear()
         if (jornadasFiltradas.isEmpty()) {
             totalesPeriodo = null
             return@LaunchedEffect
@@ -86,6 +88,7 @@ fun HistorialScreen(
                 repository.calcularTotalesJornada(j.orderNumber)
             }
             if (t != null) {
+                totalesPorJornada[j.orderNumber] = t
                 kmViajes += t.kmViajes; kmAcoplados += t.kmAcoplados
                 kmGuardias += t.kmGuardias; kmTomeCese += t.kmTomeCese
                 kmTotal += t.kmTotal; monto += t.monto; viaticos += t.viaticos
@@ -325,14 +328,22 @@ fun HistorialScreen(
 
         if (jornadasFiltradas.isNotEmpty()) {
             items(jornadasFiltradas) { jornada ->
-                JornadaCard(jornada = jornada, repository = repository)
+                JornadaCard(
+                    jornada = jornada,
+                    repository = repository,
+                    totalPrecalculado = totalesPorJornada[jornada.orderNumber]
+                )
             }
         }
     }
 }
 
 @Composable
-private fun JornadaCard(jornada: Jornada, repository: ViajeRepository) {
+private fun JornadaCard(
+    jornada: Jornada,
+    repository: ViajeRepository,
+    totalPrecalculado: LaudoCalculator.Totales? = null
+) {
     val cerrada = jornada.status == "cerrada" || jornada.status == "finalizada"
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -345,7 +356,11 @@ private fun JornadaCard(jornada: Jornada, repository: ViajeRepository) {
     var generandoPdf   by remember { mutableStateOf(false) }
 
     // Cargar totales al crear la card — aparecen en el encabezado sin expandir
-    LaunchedEffect(jornada.orderNumber) {
+    LaunchedEffect(jornada.orderNumber, totalPrecalculado) {
+        if (totalPrecalculado != null) {
+            totales = totalPrecalculado
+            return@LaunchedEffect
+        }
         totales = if (cerrada) {
             repository.obtenerTotalesSnapshot(jornada.orderNumber)
                 ?: repository.calcularTotalesJornada(jornada.orderNumber)

@@ -5,7 +5,7 @@
 > de jornada de trabajo (ver PROTOCOLO DE CIERRE al pie). Lo que deja de ser cierto, se
 > borra de "Estado" y queda preservado en el CHANGELOG.
 >
-> > **Última actualización:** 18/06/2026
+> > **Última actualización:** 20/06/2026
 
 ---
 
@@ -14,17 +14,19 @@
 - **Qué es:** app Android nativa (Kotlin, `com.driverlog.app`, branch `main`) para
   digitalizar jornadas de choferes de transporte en Uruguay.
 - **Backend:** Supabase (Postgres + RLS + RPCs) + FCM push. Lógica de laudo centralizada.
-- **Panel admin:** Vanilla JS en `cot-driver-admin.netlify.app`.
-- **Fase:** pre-producción. APK aún NO distribuido a choferes.
+- **Panel admin:** Vanilla JS en `cot-driver-admin.netlify.app`. (Migración a Next/React
+  ya hecha, sin desplegar — ver backlog.)
+- **Fase:** pre-producción. APK aún NO distribuido a choferes. Producción = solo entorno
+  de prueba propio (Claudio testea en campo y PC).
 - **Auth:** la app usa SOLO la anon key (no hay Supabase Auth por chofer). Login = legajo
-  + device_id contra tabla `choferes`. El filtrado por identidad de chofer queda diferido
-    hasta la migración a React/Next.
+    + device_id contra tabla `choferes`. El filtrado por identidad de chofer queda diferido
+      hasta la migración a React/Next.
 
 ---
 
 ## DÓNDE ESTOY PARADO HOY
 
-**Frente activo: fix de raíz del laudo cliente (subfacturación). En progreso, 4 piezas.**
+**Frente activo: fix de raíz del laudo cliente (subfacturación). 4 piezas, 3 hechas.**
 
 El laudo tenía dos fuentes de verdad que divergían: Supabase calcula desde `travels`
 (correcto); la app servía `kmTotal`/`monto` planos de Room sin recalcular. Una jornada
@@ -37,42 +39,56 @@ reabierta mostraba el monto viejo congelado → subfacturación.
   Aplicada y validada.
 - **Pieza 3** — criterio de `calcularTotalesJornada` por status (activa/reabierta →
   recalcula; cerrada → snapshot). Aplicada y VALIDADA end-to-end en celu el 18/06.
-  **El bug de subfacturación está muerto para la jornada reabierta del día.**
+  El bug de subfacturación está muerto para la jornada reabierta del día.
+- **Pieza 2** — en HistorialScreen, Totales se calculan una vez por jornada en el bucle de
+  período y se comparten a las JornadaCard vía un Map (`totalesPorJornada`). Aplicada y
+  validada el 20/06. NOTA: el dedup es parcial — las cards visibles en el primer frame
+  pierden la carrera contra el LaunchedEffect del período (mapa aún vacío) y caen al
+  fallback, así que siguen fetcheando. Las fuera de pantalla sí se benefician. El cierre
+  REAL de la doble red se completa en Pieza 4 leyendo el snapshot DESDE Room en vez de la
+  red (hoy cada lectura de snapshot es un round-trip a Supabase; ~25 fetches para 20
+  jornadas, ~6s secuenciales). Ver Pieza 4.
 
 **PENDIENTE (próximos pasos):**
-- **Pieza 2** — en HistorialScreen, calcular Totales una vez por jornada (Map) y compartir
-  a las JornadaCard (hoy período y card lo piden por separado → doble red).
 - **Pieza 4** — persistir snapshot completo en Room + migrations reales (sacar
   `fallbackToDestructiveMigration`, decidir ANTES del build) + bump schema + ajustar sync
   para que una jornada reabierta de día anterior pueda volver a Room. (La Pieza 3 cubre la
-  reabierta DE HOY; la de días anteriores necesita esta pieza.)
-- Tarea UI: indicador de color (verde abierta / gris cerrada) debe volver a verde al reabrir.
-- Tarea: registro de auditoría de reaperturas (eventos en el JSON, visible en panel Next).
-  Base ya sembrada: el flag `reabierta:true` sobrevive al recierre.
+  reabierta DE HOY; la de días anteriores necesita esta pieza.) **Incluye ahora:** leer el
+  `totalsSnapshot` desde Room en HistorialScreen para cerrar la doble red de Pieza 2 y
+  eliminar los ~6s de egress del historial.
+
 ---
 
 ## PRÓXIMOS PASOS (en orden)
 
-1. **[FRENTE #1] Fix cliente del laudo - continuar:
-    - Pieza 3: reescribir criterio de calcularTotalesJornada. Regla por estado:
-      ABIERTA (incl. reabierta) -> recalcular desde travels/guards locales (presentes,
-      porque abierta = de hoy por la regla del corte 23:59:59).
-      CERRADA -> usar snapshot. El kmTotal plano de Room deja de ser fuente de verdad.
-    - Pieza 2: en HistorialScreen, calcular Totales una vez por jornada (Map) y pasarlo a
-      las JornadaCard, en vez de que período y card lo pidan por separado.
-    - Pieza 4 (la más invasiva, bump de schema): persistir el desglose del snapshot en Room
-      (no solo kmTotal/monto). Enganchar migrations reales (sacar fallbackToDestructiveMigration)
-      para no perder datos locales en el bump. Decidir esto ANTES de instalar ese build.
-    - Pieza 4 tambien: ajustar las 2 queries de sync para que una jornada reabierta
-      (closed:false, no de hoy) pueda volver a Room.
+1. **[FRENTE #1] Fix cliente del laudo — Pieza 4 (la más invasiva, bump de schema):**
+    - Persistir el desglose del snapshot en Room (no solo kmTotal/monto).
+    - Enganchar migrations reales (sacar `fallbackToDestructiveMigration`) para no perder
+      datos locales en el bump. DECIDIR esto ANTES de instalar ese build. (Riesgo confirmado:
+      incidente 09/06, 8 crashes por mismatch de schema hash; ese es el modo de falla que van
+      a sufrir los choferes en un update de schema sin migrations.)
+    - Ajustar las 2 queries de sync para que una jornada reabierta (closed:false, no de hoy)
+      pueda volver a Room.
+    - Leer `totalsSnapshot` desde Room en HistorialScreen (cierra la doble red de Pieza 2).
 
 2. **[PARALELO] RLS Escalón 3.** Auditar y remover las ~60 políticas `{public}` legacy con
    `qual=true`/`check=true` que reexponen tablas a anon por el OR de RLS. Prioridad:
    `comandos_dispositivo`, `registro_alertas`, `mensajes`, `jornadas`, `configuracion`.
    Metodología establecida: inventario fresco primero, explicar-antes-de-ejecutar,
    comparación antes/después, validar contra app del chofer Y panel admin tras cada cambio.
+   (Prerequisito para distribuir el APK a compañeros, junto con Pieza 4.)
 
-3. **[BACKLOG] Tab de reconciliación en el panel admin.** Pantalla nueva con historial en
+3. **[BACKLOG — UI] Tareas de presentación en HistorialScreen (sueltas, no bloquean):**
+    - Indicador de color (verde abierta / gris cerrada) del nº funcionario+base+tipo en
+      pantalla principal debe volver a verde al reabrir.
+    - Hora de fin de viaje: la card pinta `arrivalTime`, que el flujo de cierre por GPS deja
+      vacío (`""`). El dato real está en `finReal` (timestamp). Fix: fallback
+      `arrivalTime` → derivar HH:mm de `finReal` cuando arrivalTime esté vacío.
+    - Número de coche: no se muestra en la fila de viaje del historial. En varios viajes el
+      dato existe (`coche:"941"`), en otros viene vacío en origen (`coche:""`). Decidir si es
+      solo mostrar-cuando-existe (UI) o si el flujo de carga debería exigir el coche (negocio).
+
+4. **[BACKLOG] Tab de reconciliación en el panel admin.** Pantalla nueva con historial en
    tiempo real de la actividad del chofer (viajes, guardias, contratos, horarios), con
    edición autorizada por el superadmin. Propósito: la fuente de verdad es lo que Tránsito
    asigna por mensaje; lo que aparezca sin asignación = "operación inválida" → notificación
@@ -82,10 +98,14 @@ reabierta mostraba el monto viejo congelado → subfacturación.
    cambio organizacional** (regla de demanda boletos→coches, rotación de efectivos) que
    define la empresa, no el código. Avanza la trazabilidad (infra) sin esperar eso.
 
-4. **[FUTURO] Migración a MVVM.** Ver bloque de arquitectura. Objetivo, no ahora — después
+5. **[BACKLOG] Auditoría de reaperturas.** Registro de eventos de reapertura (timestamp +
+   viaje que la causó + origen app/panel) en el JSON de la jornada, visible en panel Next.
+   Base ya sembrada: el flag `reabierta:true` sobrevive al recierre. Va después de Pieza 4.
+
+6. **[FUTURO] Migración a MVVM.** Ver bloque de arquitectura. Objetivo, no ahora — después
    de cerrar frente #1 y RLS Escalón 3. No abrir un tercer refactor en paralelo.
 
-5. **[FUTURO] Multi-empresa.** Objetivo del proyecto. Diseño en MULTIEMPRESA.md /
+7. **[FUTURO] Multi-empresa.** Objetivo del proyecto. Diseño en MULTIEMPRESA.md /
    ESTRATEGIA_MULTIEMPRESA.md (consulta). Va después de la migración a React/Next.
 
 ---
@@ -101,7 +121,8 @@ reabierta mostraba el monto viejo congelado → subfacturación.
   Introducir ViewModel SOLO en trabajo nuevo o en refactors explícitamente marcados como
   "migración MVVM". NO "corregir" código viejo a MVVM de oficio.
 - Room: `CotDatabase` en **version 13** (no v10 como decía el CLAUDE.md viejo). Todavía
-  con `fallbackToDestructiveMigration` — deuda de prod: migrations reales antes de publicar.
+  con `fallbackToDestructiveMigration` — deuda de prod: migrations reales antes de publicar
+  (es parte de Pieza 4).
 
 ---
 
@@ -120,6 +141,25 @@ reabierta mostraba el monto viejo congelado → subfacturación.
 ---
 
 ## CHANGELOG (solo crece — NO reescribir, agregar arriba)
+### 20/06/2026
+- Pieza 2 (Totales una vez por jornada en HistorialScreen, compartidos a JornadaCard vía
+  Map `totalesPorJornada`) APLICADA. Build OK, validada en celu contra 20 jornadas reales:
+  cada cerrada muestra su snapshot correcto, la reabierta 4112-20260618 (reabierta:true)
+  devuelve su snapshot $7.925,2011 / 875,5 km → Pieza 3 intacta, el Map no pisa valores.
+- Dedup CONFIRMADO PARCIAL: ~25 fetches para 20 jornadas (5 cards visibles en primer frame
+  pierden la carrera contra el LaunchedEffect del período y caen al fallback). Race visible
+  en logcat (dos obtenerTotalesSnapshot de 4112-20260607 a 1ms, ambos antes de poblarse el
+  Map). Decisión: NO perseguir el race con un gate (mostraría "cargando" hasta ~6s sobre un
+  loop de red secuencial que no debería existir). El cierre real se hace en Pieza 4 leyendo
+  el snapshot DESDE Room en vez de la red. El Map queda como infra correcta para eso.
+- Hallazgo: cada lectura de snapshot en el historial es un round-trip a Supabase
+  (`obtenerTotalesJornada`), ~6s secuenciales para 20 jornadas, pese a que las jornadas YA
+  están en Room (sync del arranque las guarda). Es el cuello de egress anotado el 15/06.
+  Se ataca en Pieza 4.
+- Detectadas 2 tareas UI nuevas (sueltas, anotadas en backlog, NO en este commit):
+  (a) hora de fin de viaje: la card lee `arrivalTime` que el cierre por GPS deja vacío; el
+  dato real está en `finReal`. (b) nº de coche no se muestra en la fila de viaje; en varios
+  viajes existe, en otros viene vacío en origen.
 ### 18/06/2026
 - Pieza 3 (criterio de calcularTotalesJornada por status) APLICADA y VALIDADA end-to-end
   en celu con jornada real del día. Prueba: cerrada con 2 viajes ($2.824,30 / 352,5 km) ->
@@ -160,10 +200,10 @@ reabierta mostraba el monto viejo congelado → subfacturación.
   recalcular por el cortocircuito de `calcularTotalesJornada`). El borrado de
   `totalsSnapshot` en Supabase NO mueve la app porque casi nunca lee el snapshot.
 - **Fix de reopen server-side (HECHO, validado):** helper `_reabrir_jornada_si_corresponde`
-  + integración en `agregar_viaje_a_jornada` y `agregar_guardia_a_jornada`. Idempotente,
-    sin gate de fecha (regla de negocio: regreso post-medianoche = order_number nuevo
-    siempre), sin RAISE (rechazar perdería viajes que la app no maneja). Probado con jornada
-    TEST en los dos caminos.
+    + integración en `agregar_viaje_a_jornada` y `agregar_guardia_a_jornada`. Idempotente,
+      sin gate de fecha (regla de negocio: regreso post-medianoche = order_number nuevo
+      siempre), sin RAISE (rechazar perdería viajes que la app no maneja). Probado con jornada
+      TEST en los dos caminos.
 - **Endurecimiento de paso:** `search_path` pineado en `agregar_viaje_a_jornada`; COALESCE
   defensivo en guards.
 - **Regla de negocio confirmada:** un viaje pertenece a la jornada del día en que SALIÓ
