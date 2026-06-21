@@ -498,8 +498,24 @@ class ViajeRepository(private val context: Context) {
 
     suspend fun obtenerTotalesSnapshot(orderNumber: String): LaudoCalculator.Totales? {
         Log.d("COT", "obtenerTotalesSnapshot: orderNumber=$orderNumber")
+        val jornada = jornadaDao.getJornada(orderNumber)
+        val estaCerrada = jornada?.status == "cerrada" || jornada?.status == "finalizada"
+        if (jornada != null && estaCerrada && jornada.closedAt != null) {
+            val totales = LaudoCalculator.Totales(
+                kmViajes = jornada.kmViajes,
+                kmAcoplados = jornada.kmAcoplados,
+                kmGuardias = jornada.kmGuardias,
+                kmTomeCese = jornada.kmTomeCese,
+                kmTotal = jornada.kmTotal,
+                monto = jornada.monto,
+                viaticos = jornada.viaticos
+            )
+            Log.d("COT", "obtenerTotalesSnapshot: desde Room=$totales")
+            return totales
+        }
+        Log.d("COT", "obtenerTotalesSnapshot: no en Room, fallback a red")
         val resultado = supabase.obtenerTotalesJornadaSupabase(orderNumber)
-        Log.d("COT", "obtenerTotalesSnapshot: resultado=$resultado")
+        Log.d("COT", "obtenerTotalesSnapshot: resultado red=$resultado")
         return resultado
     }
 
