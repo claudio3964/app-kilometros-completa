@@ -87,6 +87,37 @@ mostraba el monto viejo congelado (subfacturación). Atacado en la raíz, 4 piez
       viajes (`coche:"941"`), vacío en otros. Decidir mostrar-cuando-existe (UI) vs exigir
       el coche en la carga (negocio).
 
+## ESTADO DE SEGURIDAD RLS (revisado 20/06 noche)
+
+- **3 tablas UNRESTRICTED (RLS apagado) A PROPÓSITO durante desarrollo:**
+  `choferes`, `jornadas`, `travel_stats`. Se dejan abiertas para iterar libre sobre
+  Supabase + código sin pelear contra RLS en cada cambio de esquema. DEUDA CONSCIENTE.
+  Datos sensibles (legajos, montos, identidad) hoy legibles por cualquiera con la anon key
+  (que es pública). **Cerrar — encender RLS + escribir políticas en la MISMA operación —
+  es prerequisito duro antes de: (a) distribuir el APK a compañeros, (b) desplegar el panel
+  Next a producción real.** Las otras tablas ya tienen RLS activo.
+- **Reto de diseño al cerrarlas:** la app del chofer usa anon SIN login (identidad =
+  legajo+device_id, no Supabase Auth). Encender RLS sin la política correcta le corta el
+  acceso a la app instantáneamente. Las políticas deben permitir: anon (app) → solo sus
+  propios datos filtrados por legajo/device; authenticated (panel) → acceso amplio validado
+  contra tabla `admins`. Encender RLS y escribir política van JUNTOS, tabla por tabla, con
+  validación en celu + panel tras cada una.
+
+## PANEL WEB NEXT — estado de revisión (20/06 noche)
+
+- ✅ Token: usa anon key (pública, OK), NO service_role. Respeta RLS.
+- ✅ Auth admin: Supabase Auth real (email/password → access_token en sessionStorage).
+- ❌ El chequeo de rol contra tabla `admins` es COSMÉTICO (cliente): decide qué muestra la
+  UI pero NO protege datos — la protección real debe estar en RLS (ver arriba). Cualquier
+  token válido (o la anon key sola) accede a las tablas UNRESTRICTED igual.
+- ⚠️ Refresh token: se guarda pero NO se usa; el access_token expira (~1h) → los fetch
+  empezarán a dar 401 y el admin deberá re-loguearse. Implementar refresh (UX, no urgente).
+- ⚠️ Cliente Supabase no centralizado: cada page.tsx hardcodea URL+key y hace fetch directo.
+  Centralizar en lib/supabase (un punto de config) — prolijidad, importante para multi-empresa,
+  no urgente. (La key hardcodeada NO es problema: la anon key es pública por diseño.)
+- Deploy del panel: NO desplegar a producción real hasta cerrar RLS de las 3 tablas. En
+  preview/staging con datos de prueba, OK.
+
 4. **[BACKLOG — PANEL] Tab de reconciliación / validación de datos.** Pantalla en el panel
    Next con historial en tiempo real de la actividad del chofer (viajes, guardias,
    contratos, horarios), con edición autorizada por el superadmin. PROPÓSITO PRECISADO
