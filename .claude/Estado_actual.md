@@ -4,7 +4,7 @@
 > Se REESCRIBE en cada cierre de jornada de trabajo (ver PROTOCOLO al pie). Lo que deja de
 > ser cierto se borra de "Estado" y queda preservado en el CHANGELOG.
 >
-> > **Última actualización:** 23/06/2026 (mañana)
+> > **Última actualización:** 23/06/2026 (tarde)
 
 ---
 
@@ -28,9 +28,22 @@
 
 ## DÓNDE ESTOY PARADO HOY
 
-[FRENTE #1 - cerrado por reclasificación] Sync de reabiertas — NO era bug de cliente (23/06). Investigado a fondo. El bug descrito (forzar status="cerrada" → servir snapshot viejo) NO se reproduce: 4112-20260610 tiene 0 filas en Room (verificado en Database Inspector), llega closed:false/status:"activa" del servidor, sin closedAt ni totalsSnapshot en el data. No hay snapshot viejo que servir porque no hay fila. El 187,5/$1.502,29 del ESTADO venía de panel o de un celu pre-wipe, no de lo que la app sirve hoy. Confirmado además: reabierta:true convive con status:"activa" → reabierta NO sirve como discriminador (sobrevive al recierre). El escenario que generaría el bug (cargar viaje de día anterior cruzando medianoche desde la app) está bloqueado por diseño: la app no permite carga fuera de ventana; ese caso entra por panel web (admin). Conclusión: sin fix de cliente pendiente. Asignar el orderNumber correcto al viaje tardío (día de SALIDA, no "hoy"; cuidado con inicioReal:0 como fuente de fecha) es responsabilidad del panel → backlog de panel.
+**Sync de reabiertas — RECLASIFICADO (23/06 tarde): NO era bug de cliente.**
 
-**HECHO HOY (23/06) — regresión de Pieza 4 paso 2 cazada y arreglada + tarea UI:**
+Investigado a fondo. El bug descrito (que `obtenerJornadasCerradas` fuerce `status="cerrada"`
+→ servir snapshot viejo) NO se reproduce: 4112-20260610 tiene **0 filas en Room** (verificado
+en Database Inspector), llega `closed:false`/`status:"activa"` del servidor, sin `closedAt`
+ni `totalsSnapshot` en el `data`. No hay snapshot viejo que servir porque no hay fila. El
+187,5/$1.502,29 que figuraba en el ESTADO venía de panel o de un celu pre-wipe, no de lo que
+la app sirve hoy. Confirmado además: `reabierta:true` convive con `status:"activa"` →
+`reabierta` NO sirve como discriminador (sobrevive al recierre). El escenario que generaría el
+bug (cargar un viaje de día anterior cruzando medianoche desde la app) está **bloqueado por
+diseño**: la app no permite carga fuera de ventana; ese caso entra por **panel web** (admin).
+Conclusión: sin fix de cliente pendiente. Asignar el `orderNumber` correcto al viaje tardío
+(día de SALIDA, no "hoy"; cuidado con `inicioReal:0` como fuente de fecha) es responsabilidad
+del **panel** → backlog de panel.
+
+**HECHO HOY (23/06 mañana) — regresión de Pieza 4 paso 2 cazada y arreglada + tarea UI:**
 - **Bug de hidratación de viajes en historial (CERRADO, validado en campo).** Efecto colateral
   del Paso 2: al pasar a leer el snapshot rápido desde Room, `obtenerJornadasCerradas` dejó de
   hidratar los viajes individuales — parseaba solo `totalsSnapshot` y DESCARTABA `data.travels[]`.
@@ -56,32 +69,36 @@
   columna `llegadaEstimada` (INTEGER nullable), y `parsearViajes` tolera su ausencia. No rompe
   nada hoy, pero queda registrado por si reaparece al tocar `travel_stats`.
 
-**PENDIENTE CONOCIDO de Pieza 4 (no bloquea, anotado para otra sesión):**
-- **Sync de jornadas reabiertas de día anterior.** Hoy `obtenerJornadasCerradas` fuerza
-  `status="cerrada"` en Room a toda jornada que sincroniza, aunque en Supabase esté
-  `reabierta:true`/`activa`. Consecuencia: una reabierta de día anterior queda en Room como
-  cerrada con su `closedAt` y snapshot viejos, y el paso 2 le sirve ese snapshot viejo en
-  vez de recalcular. Caso testigo: 4112-20260610 (jornada de PRUEBA rota a propósito el
-  10/06; muestra 187,5 km / $1.502,29, que es su snapshot congelado de cuando tenía 1
-  viaje). NO afecta jornadas reales ni el total del mes. Se resuelve haciendo que el sync
-  respete el status reabierto y dispare recálculo. Encarar como pieza propia.
-  **NOTA (cruce con fix de hoy):** ahora que las cerradas hidratan viajes con REPLACE por `id`,
-  una reabierta de día anterior que en Supabase figure `closed:true` podría pisar con el snapshot
-  cerrado un viaje que esté vivo localmente con el mismo `id`. El fix de hoy asume `closed:true`
-  en Supabase = viajes definitivos (correcto para el uso actual). Tener presente al encarar el
-  sync de reabiertas — los dos temas se tocan.
-
-[FRENTE NUEVO - prevención, toca app + Supabase] Jornada activa huérfana de día anterior. El guard de createOrder() del JS vanilla (if getActiveOrder() throw YA_EXISTE_JORNADA_ACTIVA) NO se migró a Kotlin. getOCrearJornada solo chequea getJornadaPorFecha(hoy); si hay una jornada status="activa" de día anterior sin cerrar, crea una segunda activa en paralelo sin avisar. CC mapeó 6 callers. OJO con el diseño del guard: getJornadaActiva() es WHERE status='activa' LIMIT 1 SIN filtro de fecha → trataría igual a la huérfana de ayer y a la reabierta-de-hoy (legítima, vuelve a Room como activa). El discriminador correcto es activa de día ANTERIOR a hoy (status='activa' AND fecha != :hoy), NO "cualquier activa". Alcance sugerido 1ª pasada: getOCrearJornada con filtro de fecha + los 2 callers que ya tienen catch/UI (#2 worker-guardia, #4 NuevaGuardia). Diferir: 3 callers sin catch (#3, #5, #6 = crash risk) y decisión del worker #1 (viaje asignado por panel a chofer con jornada de ayer trabada → hoy loop de reintento silencioso de 30s, un viaje que se evapora sin rastro — decidir si el panel fuerza cierre o no). Sesión con Claude Code, código en mano. Sin caso testigo vivo aún.
-
 ---
 
 ## PRÓXIMOS PASOS (en orden)
-[FRENTE NUEVO - app + Supabase, sesión propia con CC] Ciclo de vida del estado "activa". Nudo raíz que encadena varios ítems hoy dispersos. La sesión arranca por mapear el ciclo completo (quién abre/cierra status="activa", qué se permite mientras está abierto, bordes: medianoche / día anterior / reapertura) ANTES de tocar código. De ese mapa caen como piezas: (1) guard de jornada activa huérfana de día anterior — getOCrearJornada sin chequeo de activa de otro día; discriminador correcto = activa AND fecha != hoy, NO "cualquier activa" (rompería la reabierta legítima del día); guard de createOrder del JS vanilla no migrado a Kotlin; CC ya mapeó 6 callers (#2/#4 ya con catch, #3/#5/#6 crash risk, #1 worker = loop silencioso si panel asigna a chofer con jornada de ayer trabada). (2) Lógica de 8h del botón "finalizar jornada" (mostrar solo sin viaje/guardia/contrato en curso). (3) Bugs de guardia A (viaje programado + guardia + corte 15min) y B (guardia finalizada recibe finalizar/extender 8h después) — requieren reproducción antes de tocar. (4) Indicador color verde/gris que no vuelve a verde al reabrir. Empezar probablemente por (1) (más acotado, regla más clara), pero decidir secuencia CON el mapa, no antes. Sin abrir refactor gigante de un saque — pieza por pieza, validación en campo entre cada una.
-1. **[FRENTE #1 - cola] Sync de reabiertas (pendiente conocido de Pieza 4).** Que
-   `obtenerJornadasCerradas` no fuerce "cerrada" a una jornada que en Supabase está
-   reabierta/activa, para que el cliente recalcule en vez de servir snapshot viejo. Caso de
-   prueba listo: 4112-20260610. Bajo riesgo, bien acotado. (Ver nota de cruce con el fix de
-   hidratación del 23/06 arriba.)
+
+1. **[FRENTE NUEVO — app + Supabase, sesión propia con CC] Ciclo de vida del estado "activa".**
+   Nudo raíz que encadena varios ítems hoy dispersos. La sesión arranca por **mapear el ciclo
+   completo** (quién abre/cierra `status="activa"`, qué se permite mientras está abierto, bordes:
+   medianoche / día anterior / reapertura) ANTES de tocar código. De ese mapa caen como piezas:
+    - **(1) Guard de jornada activa huérfana de día anterior.** `getOCrearJornada` solo chequea
+      `getJornadaPorFecha(hoy)`; si hay una jornada `status="activa"` de día anterior sin cerrar,
+      crea una segunda activa en paralelo sin avisar. El guard de `createOrder()` del JS vanilla
+      (`if getActiveOrder() throw YA_EXISTE_JORNADA_ACTIVA`) NO se migró a Kotlin. **OJO con el
+      diseño del guard:** `getJornadaActiva()` es `WHERE status='activa' LIMIT 1` SIN filtro de
+      fecha → trataría igual a la huérfana de ayer y a la reabierta-de-hoy (legítima, vuelve a
+      Room como activa). El discriminador correcto es **activa de día ANTERIOR a hoy**
+      (`status='activa' AND fecha != :hoy`), NO "cualquier activa". CC mapeó 6 callers (#2/#4 ya
+      con catch, #3/#5/#6 crash risk, #1 worker = loop silencioso de 30s si el panel asigna a un
+      chofer con jornada de ayer trabada → un viaje que se evapora sin rastro; decidir si el panel
+      fuerza cierre o no). Alcance sugerido 1ª pasada: `getOCrearJornada` con filtro de fecha +
+      los 2 callers que ya tienen catch/UI (#2, #4). Diferir #3/#5/#6 y la decisión del worker #1.
+    - **(2) Lógica de 8h del botón "finalizar jornada"** (mostrar solo sin viaje/guardia/contrato
+      en curso, como el JS vanilla). Detalle en bugs 21/06 abajo.
+    - **(3) Bugs de guardia A y B** (detalle en bugs 21/06 abajo) — requieren reproducción antes
+      de tocar.
+    - **(4) Indicador color verde/gris** que no vuelve a verde al reabrir (detalle en backlog UI).
+      Empezar probablemente por (1) (más acotado, regla más clara), pero decidir secuencia CON el
+      mapa, no antes. Sin abrir refactor gigante de un saque — pieza por pieza, validación en campo
+      entre cada una. **Pendiente para esa sesión:** bajar a `REGLAS_NEGOCIO.md` la regla de cuándo
+      una jornada puede reabrirse y qué define que un viaje pertenece a un día (incluida la condición
+      de borde de medianoche clarificada el 23/06), hoy implícita.
 
 2. **[FRENTE #2] RLS Escalón 3.** Auditar y remover las ~60 políticas `{public}` legacy con
    `qual=true`/`check=true` que reexponen tablas a anon por el OR de RLS. Prioridad:
@@ -97,19 +114,23 @@
       Sospecha: bug de lectura/filtro de la pantalla, posiblemente relacionado al campo
       `llegadaEstimada` ausente en el JSON del 21 vs presente (como `0`) en JSONs previos.
       Atacar con el código de la pantalla + Claude Code. Síntoma distinto al de historial:
-      este es jornada ACTIVA y bug de LECTURA, no de sync/hidratación.
-    - **Dos bugs de guardias.** Bug A — interacción entre viaje programado, guardia abierta y
-      la lógica de corte automático de 15 min se comporta mal. Bug B — una guardia ya finalizada
-      recibe ~8h después un mensaje de finalizar/extender (posible trigger FCM/cron/WorkManager
-      que no chequea si la guardia ya está cerrada). Requiere sesión enfocada con el código de
-      apertura/cierre de guardia + identificar el trigger de 8h + JSON del bug.
-    - **(Relacionado, idea nueva 23/06) Lógica de 8h para botón "finalizar jornada".** Para
-      evitar cierre accidental de jornada, mostrar el botón de finalizar SOLO mientras no haya
-      viaje, guardia o contrato en curso — como se hacía en el JS vanilla. Encarar JUNTO con los
-      bugs de guardias (tocan la misma lógica de cierre); NO parchar a ciegas sin diagnosticar A y B primero.
+      este es jornada ACTIVA y bug de LECTURA, no de sync/hidratación. (NO es parte del frente
+      ciclo de vida — es bug de lectura independiente.)
+    - **Dos bugs de guardias (parte del frente ciclo de vida #1, pieza 3).** Bug A — interacción
+      entre viaje programado, guardia abierta y la lógica de corte automático de 15 min se
+      comporta mal. Bug B — una guardia ya finalizada recibe ~8h después un mensaje de
+      finalizar/extender (posible trigger FCM/cron/WorkManager que no chequea si la guardia ya
+      está cerrada). Requiere sesión enfocada con el código de apertura/cierre de guardia +
+      identificar el trigger de 8h + JSON del bug.
+    - **Lógica de 8h para botón "finalizar jornada" (parte del frente ciclo de vida #1, pieza 2).**
+      Para evitar cierre accidental de jornada, mostrar el botón de finalizar SOLO mientras no
+      haya viaje, guardia o contrato en curso — como se hacía en el JS vanilla. Encarar JUNTO con
+      los bugs de guardias (tocan la misma lógica de cierre); NO parchar a ciegas sin diagnosticar
+      A y B primero.
 
 4. **[BACKLOG — UI] Tareas de presentación en HistorialScreen (sueltas, no bloquean):**
     - Indicador de color (verde abierta / gris cerrada) debe volver a verde al reabrir.
+      (Parte del frente ciclo de vida #1, pieza 4 — depende de detectar bien el cambio de estado.)
     - Número de coche: no se muestra en la fila de viaje del historial; existe en varios
       viajes (`coche:"941"`/`"959"`/`"927"`), vacío en otros. Decidir mostrar-cuando-existe (UI)
       vs exigir el coche en la carga (negocio).
@@ -161,6 +182,8 @@
    esto NO es una "alerta de formato en Supabase" — el formato de las jornadas inconsistentes
    es válido; lo que se detecta es inconsistencia semántica/humana, y se resuelve con
    edición autorizada desde el panel, no frenando el guardado en la base.
+   **Nota de cruce (23/06):** la asignación correcta del `orderNumber` al viaje tardío cargado
+   por panel (día de SALIDA, no "hoy"; `inicioReal:0` no sirve como fuente de fecha) vive acá.
 
 6. **[BACKLOG] Auditoría de reaperturas.** Registro de eventos de reapertura (timestamp +
    viaje + origen app/panel) en el JSON de la jornada, visible en panel Next. Base sembrada:
@@ -211,11 +234,24 @@
 ---
 
 ## CHANGELOG (solo crece — NO reescribir, agregar arriba)
-### 23/06/2026 
-23/06/2026 (tarde)
-
-Sync de reabiertas reclasificado: NO era bug de cliente. Verificado en Database Inspector: 4112-20260610 con 0 filas en Room. Llega closed:false/activa, sin closedAt/totalsSnapshot. El "snapshot viejo servido" no existe — no hay fila. reabierta:true confirmado inútil como discriminador (convive con activa). Flujo causante (carga cruzando medianoche) bloqueado por diseño en app → entra por panel. Sin fix de cliente. orderNumber del viaje tardío = responsabilidad de panel (usar día de salida, no "hoy"; inicioReal:0 no sirve como fuente).
-Detectado hueco real (raíz distinta): jornada activa huérfana de día anterior. Guard createOrder del JS vanilla no migrado a Kotlin. getOCrearJornada no bloquea segunda jornada activa de fecha distinta. CC mapeó 6 callers + propuso fix. Corrección de diseño pendiente: guard debe filtrar por fecha (activa AND fecha != hoy), no "cualquier activa", para no romper la reabierta legítima del día. Movido a frente propio app+Supabase, sesión con CC.
+### 23/06/2026 (tarde)
+- **Sync de reabiertas reclasificado: NO era bug de cliente.** Verificado en Database Inspector:
+  4112-20260610 con 0 filas en Room. Llega `closed:false`/`activa`, sin `closedAt`/`totalsSnapshot`.
+  El "snapshot viejo servido" no existe — no hay fila. `reabierta:true` confirmado inútil como
+  discriminador (convive con `activa`). Flujo causante (carga cruzando medianoche) bloqueado por
+  diseño en app → entra por panel. Sin fix de cliente. orderNumber del viaje tardío =
+  responsabilidad de panel (usar día de salida, no "hoy"; `inicioReal:0` no sirve como fuente).
+  El punto #1 viejo de "Próximos pasos" ("sync de reabiertas, bajo riesgo, caso listo") y el
+  bloque "PENDIENTE CONOCIDO de Pieza 4" quedaron eliminados por esta reclasificación.
+- **Detectado hueco real (raíz distinta): jornada activa huérfana de día anterior.** Guard
+  `createOrder` del JS vanilla no migrado a Kotlin. `getOCrearJornada` no bloquea segunda jornada
+  activa de fecha distinta. CC mapeó 6 callers + propuso fix. Corrección de diseño pendiente: el
+  guard debe filtrar por fecha (`activa AND fecha != hoy`), no "cualquier activa", para no romper
+  la reabierta legítima del día. Agrupado como cabeza del nuevo frente "ciclo de vida del estado
+  activa" (junto con lógica de 8h, bugs de guardia y indicador de color), con metodología
+  "mapear primero, después tocar". Sesión propia con CC. Sesión de hoy fue solo diagnóstico:
+  no se tocó código, viaja solo el ESTADO.
+### 23/06/2026 (mañana)
 - **Bug de hidratación de viajes en historial CERRADO (validado en campo).** Era regresión de
   Pieza 4 paso 2: `obtenerJornadasCerradas` leía solo `totalsSnapshot` y descartaba
   `data.travels[]`, así que las jornadas cerradas sincronizadas nunca poblaban la tabla `viajes`
@@ -251,6 +287,7 @@ Detectado hueco real (raíz distinta): jornada activa huérfana de día anterior
   status="cerrada" forzado por el sync → paso 2 sirve snapshot viejo. Testigo: 4112-20260610
   (jornada de prueba rota a propósito, muestra 187,5/$1.502,29). NO afecta jornadas reales.
   Se resuelve en sub-tarea de sync de reabiertas (anotada en próximos pasos #1).
+  [NOTA 23/06: este pendiente quedó RECLASIFICADO — ver entrada 23/06 tarde, no era bug de cliente.]
 - Decisión de alcance: app del chofer = mes corriente; historial profundo/impresión = panel
   web. limit=30 del sync confirmado como límite de diseño, no bug.
 - Idea de validación en panel precisada: objetivo es cazar error HUMANO de tipeo en carga
