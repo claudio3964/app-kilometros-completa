@@ -476,7 +476,10 @@ private fun JornadaCard(
                                     }
                                 }
                                 // Fila 2: tipoServicio · salida → llegada
-                                val llegada = v.arrivalTime.takeIf { it.isNotEmpty() } ?: "—"
+                                val llegada = v.arrivalTime.takeIf { it.isNotEmpty() } ?: v.finReal?.let {
+                                    val cal = java.util.Calendar.getInstance().apply { timeInMillis = it }
+                                    "%02d:%02d".format(cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
+                                } ?: "—"
                                 val salida  = v.departureTime.takeIf { it.isNotEmpty() } ?: "—"
                                 val tipo    = v.tipoServicio.takeIf { it.isNotEmpty() } ?: "—"
                                 Text(

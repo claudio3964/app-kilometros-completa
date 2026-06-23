@@ -26,6 +26,11 @@ data class PerfilChofer(
     val tipo: String
 )
 
+data class JornadasCerradasResult(
+    val jornadas: List<Jornada>,
+    val viajes: List<Viaje>
+)
+
 class SupabaseService(private val context: Context) {
 
     private val client = OkHttpClient()
@@ -47,7 +52,7 @@ class SupabaseService(private val context: Context) {
             val response = client.newCall(request).execute()
             val body = response.body?.string() ?: ""
             Log.d("COT", "Respuesta Supabase: ${body.take(200)}")
-            parsearViajes(body)
+            parsearViajes(JSONArray(body))
         } catch (e: Exception) {
             Log.e("COT", "Error sync: ${e.message}")
             emptyList()
@@ -138,10 +143,9 @@ class SupabaseService(private val context: Context) {
                 false
             }
         }
-    private fun parsearViajes(json: String): List<Viaje> {
+    private fun parsearViajes(jornadas: JSONArray): List<Viaje> {
         val viajes = mutableListOf<Viaje>()
         try {
-            val jornadas = JSONArray(json)
             for (i in 0 until jornadas.length()) {
                 val jornada = jornadas.getJSONObject(i)
                 val orderNumber = jornada.optString("order_number", "")
@@ -673,7 +677,7 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
         }
     }
 
-    suspend fun obtenerJornadasCerradas(legajo: String): List<Jornada> = withContext(Dispatchers.IO) {
+    suspend fun obtenerJornadasCerradas(legajo: String): JornadasCerradasResult = withContext(Dispatchers.IO) {
         try {
             val request = Request.Builder()
                 .url("$SUPABASE_URL/rest/v1/jornadas?legajo=eq.$legajo&order=fecha.desc&limit=30&select=order_number,fecha,legajo,data")
@@ -681,9 +685,11 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
                 .addHeader("Authorization", "Bearer $SUPABASE_KEY")
                 .get()
                 .build()
-            val body = client.newCall(request).execute().body?.string() ?: return@withContext emptyList()
+            val body = client.newCall(request).execute().body?.string()
+                ?: return@withContext JornadasCerradasResult(emptyList(), emptyList())
             val arr = JSONArray(body)
             val result = mutableListOf<Jornada>()
+            val closedArr = JSONArray()
             for (i in 0 until arr.length()) {
                 val obj = arr.getJSONObject(i)
                 val dataObj = obj.optJSONObject("data") ?: continue
@@ -711,12 +717,14 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
                         viaticos = snapshot?.optInt("viaticos", 0) ?: 0
                     )
                 )
+                closedArr.put(obj)
             }
-            Log.d("COT", "Jornadas cerradas sincronizadas: ${result.size}")
-            result
+            val viajes = parsearViajes(closedArr)
+            Log.d("COT", "Jornadas cerradas sincronizadas: ${result.size}, viajes: ${viajes.size}")
+            JornadasCerradasResult(result, viajes)
         } catch (e: Exception) {
             Log.e("COT", "Error obtener jornadas cerradas: ${e.message}")
-            emptyList()
+            JornadasCerradasResult(emptyList(), emptyList())
         }
     }
 

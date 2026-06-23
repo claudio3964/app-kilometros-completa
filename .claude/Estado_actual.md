@@ -4,7 +4,7 @@
 > Se REESCRIBE en cada cierre de jornada de trabajo (ver PROTOCOLO al pie). Lo que deja de
 > ser cierto se borra de "Estado" y queda preservado en el CHANGELOG.
 >
-> > **Última actualización:** 20/06/2026 (noche)
+> > **Última actualización:** 23/06/2026 (mañana)
 
 ---
 
@@ -52,6 +52,32 @@ mostraba el monto viejo congelado (subfacturación). Atacado en la raíz, 4 piez
       cae a recálculo). Historial pasó de ~7s a ~0,3s con 23 jornadas. Doble red de Pieza 2
       cerrada de verdad.
 
+**HECHO HOY (23/06) — regresión de Pieza 4 paso 2 cazada y arreglada + tarea UI:**
+- **Bug de hidratación de viajes en historial (CERRADO, validado en campo).** Efecto colateral
+  del Paso 2: al pasar a leer el snapshot rápido desde Room, `obtenerJornadasCerradas` dejó de
+  hidratar los viajes individuales — parseaba solo `totalsSnapshot` y DESCARTABA `data.travels[]`.
+  Consecuencia: la tabla `viajes` de Room solo retenía los viajes de la jornada activa (insertados
+  en vivo); toda jornada cerrada que venía por sync quedaba sin viajes → detalle de jornada vacío
+  y PDF en 0 (el PDF recomputa desde Room en vivo, no lee snapshot). Confirmado en Database
+  Inspector: la tabla `viajes` solo tenía las filas de la última jornada activa. **Fix:**
+  `obtenerJornadasCerradas` ahora acumula los objetos de jornadas `closed:true` en un `closedArr`
+  y reutiliza `parsearViajes()` sobre él; devuelve `JornadasCerradasResult(jornadas, viajes)`; el
+  caller en `ViajeRepositoy` inserta los viajes con `dao.insertarViajes(...)` (REPLACE por `id`).
+  Solo se hidratan viajes de jornadas cerradas (ids únicos → no pisa viajes en vivo). Validado:
+  jornadas anteriores que estaban vacías ahora traen detalle completo y PDF con liquidación
+  correcta (snapshot del 20: $3.479,61 / 377,47 km).
+- **Hora de fin de viaje en historial (CERRADO, sale del backlog UI).** La card pintaba
+  `arrivalTime`, que viene vacío (`""`) en TODOS los viajes (cierre manual y automático por
+  igual). El dato real está en `finReal` (epoch). **Fix:** en HistorialScreen.kt (fila 2 del
+  viaje) fallback `arrivalTime` → `finReal` formateado a HH:mm con el patrón `Calendar` inline
+  existente (zona local del dispositivo = UTC-3 en Uruguay), `"—"` si ambos vacíos/null. NO se
+  usa `llegadaEstimada` (eso es el pronóstico del motor de promedios apagado, no la hora real).
+  Validado en celu.
+- **Dato de modelo detectado:** el campo `llegadaEstimada` cambió entre el 20 y el 21. JSON del
+  20 lo trae en `0`; JSON del 21 NO lo trae. La entidad/tabla `viajes` de Room sigue teniendo la
+  columna `llegadaEstimada` (INTEGER nullable), y `parsearViajes` tolera su ausencia. No rompe
+  nada hoy, pero queda registrado por si reaparece al tocar `travel_stats`.
+
 **PENDIENTE CONOCIDO de Pieza 4 (no bloquea, anotado para otra sesión):**
 - **Sync de jornadas reabiertas de día anterior.** Hoy `obtenerJornadasCerradas` fuerza
   `status="cerrada"` en Room a toda jornada que sincroniza, aunque en Supabase esté
@@ -61,6 +87,11 @@ mostraba el monto viejo congelado (subfacturación). Atacado en la raíz, 4 piez
   10/06; muestra 187,5 km / $1.502,29, que es su snapshot congelado de cuando tenía 1
   viaje). NO afecta jornadas reales ni el total del mes. Se resuelve haciendo que el sync
   respete el status reabierto y dispare recálculo. Encarar como pieza propia.
+  **NOTA (cruce con fix de hoy):** ahora que las cerradas hidratan viajes con REPLACE por `id`,
+  una reabierta de día anterior que en Supabase figure `closed:true` podría pisar con el snapshot
+  cerrado un viaje que esté vivo localmente con el mismo `id`. El fix de hoy asume `closed:true`
+  en Supabase = viajes definitivos (correcto para el uso actual). Tener presente al encarar el
+  sync de reabiertas — los dos temas se tocan.
 
 ---
 
@@ -69,7 +100,8 @@ mostraba el monto viejo congelado (subfacturación). Atacado en la raíz, 4 piez
 1. **[FRENTE #1 - cola] Sync de reabiertas (pendiente conocido de Pieza 4).** Que
    `obtenerJornadasCerradas` no fuerce "cerrada" a una jornada que en Supabase está
    reabierta/activa, para que el cliente recalcule en vez de servir snapshot viejo. Caso de
-   prueba listo: 4112-20260610. Bajo riesgo, bien acotado.
+   prueba listo: 4112-20260610. Bajo riesgo, bien acotado. (Ver nota de cruce con el fix de
+   hidratación del 23/06 arriba.)
 
 2. **[FRENTE #2] RLS Escalón 3.** Auditar y remover las ~60 políticas `{public}` legacy con
    `qual=true`/`check=true` que reexponen tablas a anon por el OR de RLS. Prioridad:
@@ -78,14 +110,29 @@ mostraba el monto viejo congelado (subfacturación). Atacado en la raíz, 4 piez
    antes/después, validar contra app del chofer Y panel tras cada cambio. (Prerequisito
    para distribuir el APK a compañeros.)
 
-3. **[BACKLOG — UI] Tareas de presentación en HistorialScreen (sueltas, no bloquean):**
+3. **[BUGS — 21/06, sin diagnosticar] Sesión propia, NO mezclar con otros frentes:**
+    - **"Viajes del día" vacío con jornada activa.** La tab mostró "0 viajes" teniendo la
+      jornada activa 4112-20260621 tres viajes finalizados y sincronizados en Supabase
+      (`syncStatus:synced`). Regresión confirmada (la pantalla antes mostraba los finalizados).
+      Sospecha: bug de lectura/filtro de la pantalla, posiblemente relacionado al campo
+      `llegadaEstimada` ausente en el JSON del 21 vs presente (como `0`) en JSONs previos.
+      Atacar con el código de la pantalla + Claude Code. Síntoma distinto al de historial:
+      este es jornada ACTIVA y bug de LECTURA, no de sync/hidratación.
+    - **Dos bugs de guardias.** Bug A — interacción entre viaje programado, guardia abierta y
+      la lógica de corte automático de 15 min se comporta mal. Bug B — una guardia ya finalizada
+      recibe ~8h después un mensaje de finalizar/extender (posible trigger FCM/cron/WorkManager
+      que no chequea si la guardia ya está cerrada). Requiere sesión enfocada con el código de
+      apertura/cierre de guardia + identificar el trigger de 8h + JSON del bug.
+    - **(Relacionado, idea nueva 23/06) Lógica de 8h para botón "finalizar jornada".** Para
+      evitar cierre accidental de jornada, mostrar el botón de finalizar SOLO mientras no haya
+      viaje, guardia o contrato en curso — como se hacía en el JS vanilla. Encarar JUNTO con los
+      bugs de guardias (tocan la misma lógica de cierre); NO parchar a ciegas sin diagnosticar A y B primero.
+
+4. **[BACKLOG — UI] Tareas de presentación en HistorialScreen (sueltas, no bloquean):**
     - Indicador de color (verde abierta / gris cerrada) debe volver a verde al reabrir.
-    - Hora de fin de viaje: la card pinta `arrivalTime`, que el cierre por GPS deja vacío
-      (`""`); el dato real está en `finReal`. Fix: fallback `arrivalTime` → derivar HH:mm de
-      `finReal` cuando esté vacío.
     - Número de coche: no se muestra en la fila de viaje del historial; existe en varios
-      viajes (`coche:"941"`), vacío en otros. Decidir mostrar-cuando-existe (UI) vs exigir
-      el coche en la carga (negocio).
+      viajes (`coche:"941"`/`"959"`/`"927"`), vacío en otros. Decidir mostrar-cuando-existe (UI)
+      vs exigir el coche en la carga (negocio).
 
 ## ESTADO DE SEGURIDAD RLS (revisado 20/06 noche)
 
@@ -118,7 +165,7 @@ mostraba el monto viejo congelado (subfacturación). Atacado en la raíz, 4 piez
 - Deploy del panel: NO desplegar a producción real hasta cerrar RLS de las 3 tablas. En
   preview/staging con datos de prueba, OK.
 
-4. **[BACKLOG — PANEL] Tab de reconciliación / validación de datos.** Pantalla en el panel
+5. **[BACKLOG — PANEL] Tab de reconciliación / validación de datos.** Pantalla en el panel
    Next con historial en tiempo real de la actividad del chofer (viajes, guardias,
    contratos, horarios), con edición autorizada por el superadmin. PROPÓSITO PRECISADO
    (20/06): el sistema busca MÍNIMA intervención humana — viajes/guardias/contratos salen
@@ -135,17 +182,17 @@ mostraba el monto viejo congelado (subfacturación). Atacado en la raíz, 4 piez
    es válido; lo que se detecta es inconsistencia semántica/humana, y se resuelve con
    edición autorizada desde el panel, no frenando el guardado en la base.
 
-5. **[BACKLOG] Auditoría de reaperturas.** Registro de eventos de reapertura (timestamp +
+6. **[BACKLOG] Auditoría de reaperturas.** Registro de eventos de reapertura (timestamp +
    viaje + origen app/panel) en el JSON de la jornada, visible en panel Next. Base sembrada:
    `reabierta:true` sobrevive al recierre.
 
-6. **[FUTURO] Migración a MVVM.** Después de RLS Escalón 3. No abrir tercer refactor en
+7. **[FUTURO] Migración a MVVM.** Después de RLS Escalón 3. No abrir tercer refactor en
    paralelo.
 
-7. **[FUTURO] Multi-empresa.** Diseño en MULTIEMPRESA.md / ESTRATEGIA_MULTIEMPRESA.md. Va
+8. **[FUTURO] Multi-empresa.** Diseño en MULTIEMPRESA.md / ESTRATEGIA_MULTIEMPRESA.md. Va
    después de React/Next.
 
-8. **[FUTURO - sin urgencia] Archivado trimestral.** NO es problema de almacenamiento
+9. **[FUTURO - sin urgencia] Archivado trimestral.** NO es problema de almacenamiento
    (Supabase free 500MB alcanza años; confirmado 24 jornadas reales). Justificación REAL:
    optimización de egress y claridad cuando el volumen sea grande, para alimentar la consulta
    de meses históricos del PANEL (no la app). Dirección correcta: desde Supabase (durable),
@@ -166,7 +213,8 @@ mostraba el monto viejo congelado (subfacturación). Atacado en la raíz, 4 piez
   El `fallbackToDestructiveMigration` FUE ELIMINADO (Pieza 4 paso 1) — ya no es deuda de prod.
   La entidad `Jornada` persiste el snapshot completo (7 campos del desglose). El sync de
   arranque corre incondicional en MainScreen/HomeScreen, así que Room es caché reconstruible
-  desde Supabase (fuente de verdad durable).
+  desde Supabase (fuente de verdad durable). Las jornadas cerradas que vienen por sync ahora
+  hidratan TAMBIÉN sus viajes en la tabla `viajes` (fix 23/06), no solo el snapshot.
 
 ---
 
@@ -183,6 +231,28 @@ mostraba el monto viejo congelado (subfacturación). Atacado en la raíz, 4 piez
 ---
 
 ## CHANGELOG (solo crece — NO reescribir, agregar arriba)
+### 23/06/2026 (mañana)
+- **Bug de hidratación de viajes en historial CERRADO (validado en campo).** Era regresión de
+  Pieza 4 paso 2: `obtenerJornadasCerradas` leía solo `totalsSnapshot` y descartaba
+  `data.travels[]`, así que las jornadas cerradas sincronizadas nunca poblaban la tabla `viajes`
+  de Room → detalle de jornada vacío y PDF en 0 (el PDF recomputa desde Room en vivo). Confirmado
+  con Database Inspector (la tabla `viajes` solo tenía las filas de la jornada activa más reciente).
+  Fix: `parsearViajes` cambia firma `String`→`JSONArray` (único otro caller `sincronizarJornada`
+  adaptado); `obtenerJornadasCerradas` acumula jornadas `closed:true` en `closedArr`, las parsea
+  con `parsearViajes(closedArr)` y devuelve `JornadasCerradasResult(jornadas, viajes)`; caller en
+  `ViajeRepositoy` inserta con `dao.insertarViajes(...)` (REPLACE por `id`). `parsearViajes` setea
+  `orderNumber` desde el objeto jornada padre (verificado) → coincide con `getViajesPorJornada`.
+  BUILD SUCCESSFUL. Validado en celu: jornadas vacías ahora con detalle + PDF correcto
+  (snapshot 20/06: $3.479,61 / 377,47 km).
+- **Hora de fin de viaje en historial CERRADO (sale del backlog UI).** La card pintaba
+  `arrivalTime` (vacío en TODOS los viajes, manual y automático). Fix en HistorialScreen.kt:
+  fallback `arrivalTime` → `finReal` (epoch) formateado a HH:mm con patrón `Calendar` inline
+  existente (zona local = UTC-3 en UY), `"—"` si ambos null/vacío. NO se usa `llegadaEstimada`
+  (es pronóstico del motor apagado, no hora real). Validado en celu.
+- Dato de modelo registrado: `llegadaEstimada` cambió entre 20 (viene `0`) y 21 (ausente). La
+  columna sigue en Room (INTEGER nullable); `parsearViajes` tolera su ausencia. Posible relación
+  con el bug "Viajes del día vacío" del 21 → anotado en próximos pasos #3.
+- Archivos tocados: `SupabaseService.kt`, `ViajeRepositoy.kt`, `HistorialScreen.kt`.
 ### 20/06/2026 (noche)
 - **Pieza 4 COMPLETA (cierra Frente #1 entero).** Dos pasos:
     - Paso 1: migration real 13→14 (ADD COLUMN aditivo) reemplaza fallbackToDestructiveMigration;
@@ -201,7 +271,7 @@ mostraba el monto viejo congelado (subfacturación). Atacado en la raíz, 4 piez
   web. limit=30 del sync confirmado como límite de diseño, no bug.
 - Idea de validación en panel precisada: objetivo es cazar error HUMANO de tipeo en carga
   manual (excepción por falta de señal), no error de cálculo. Requiere trazabilidad de origen
-  primero. Anotada bien en backlog #4.
+  primero. Anotada bien en backlog #5.
 ### 20/06/2026 (día)
 - Pieza 2 (Totales una vez por jornada vía Map) aplicada y validada. Dedup parcial (cards
   visibles del primer frame pierden carrera con el efecto del período); cierre real diferido

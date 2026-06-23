@@ -101,10 +101,13 @@ class ViajeRepository(private val context: Context) {
         }
 
         // Sincronizar las últimas 30 jornadas cerradas para poblar el historial.
-        val jornadasCerradas = supabase.obtenerJornadasCerradas(legajo)
-        jornadasCerradas.forEach { jornadaDao.insertarJornada(it) }
-        if (jornadasCerradas.isNotEmpty()) {
-            Log.d("COT", "Jornadas cerradas guardadas en Room: ${jornadasCerradas.size}")
+        val resultadoCerradas = supabase.obtenerJornadasCerradas(legajo)
+        resultadoCerradas.jornadas.forEach { jornadaDao.insertarJornada(it) }
+        if (resultadoCerradas.viajes.isNotEmpty()) {
+            dao.insertarViajes(resultadoCerradas.viajes)
+        }
+        if (resultadoCerradas.jornadas.isNotEmpty()) {
+            Log.d("COT", "Jornadas cerradas guardadas en Room: ${resultadoCerradas.jornadas.size}, viajes: ${resultadoCerradas.viajes.size}")
         }
     }
 
