@@ -375,7 +375,9 @@ suspend fun agregarGuardiaAJornada(orderNumber: String, guardia: Guardia): Boole
                 val json = JSONObject().apply {
                     put("p_viaje_id", viajeId)
                     put("p_status", "cancelado")
-                    put("p_inicio_real", 0L)
+                    put("p_inicio_real", JSONObject.NULL)
+                    put("p_fin_real", JSONObject.NULL)
+                    put("p_cierre_automatico", JSONObject.NULL)
                 }
                 val body = json.toString().toRequestBody("application/json".toMediaType())
                 val request = Request.Builder()

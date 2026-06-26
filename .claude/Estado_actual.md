@@ -4,7 +4,7 @@
 > Se REESCRIBE en cada cierre de jornada de trabajo (ver PROTOCOLO al pie). Lo que deja de
 > ser cierto se borra de "Estado" y queda preservado en el CHANGELOG.
 >
-> **Última actualización:** 23/06/2026 (noche)
+> **Última actualización:** 26/06/2026
 
 ---
 
@@ -32,75 +32,65 @@
 Pieza 1 (caché getConfiguracion), Pieza 2 (Totales una vez por jornada vía Map + display de
 hora de fin), Pieza 3 (criterio calcularTotalesJornada por status), Pieza 4 (migrations
 reales Room v14 + snapshot completo persistido + lectura desde Room). Subfacturación muerta.
-Detalle en CHANGELOG (15→23/06).
 
-**NUEVO bug de laudo en dirección OPUESTA — sobrefacturación por viaje cancelado (23/06 noche).**
-Detectado y confirmado en operación real (no tocado aún — ver Próximos pasos #1). Un viaje
-cancelado por el chofer queda en Supabase como `status:"finalizado"` (con `finReal` escrito)
-en vez de cancelado, y CUENTA en el laudo. Confirmado en 4112-20260623: `kmViajes` 285
-(=145 cancelado + 140 real), debió ser 140 → ~$1.700 de más. Bug espejo del de subfacturación.
+**Sobrefacturación por viaje fantasma: CERRADA y VALIDADA EN CAMPO (26/06).** El diagnóstico
+del ESTADO viejo era INCORRECTO. NO era "el flujo de cancelación marca finalizado en vez de
+cancelado". La raíz real, confirmada empíricamente: existían DOS RPCs `actualizar_viaje_en_jornada`
+con el mismo nombre y distinta aridad (overload):
+- A) `(text, text, bigint, bigint)` — vieja, sin cierre_automatico.
+- B) `(text, text, bigint, bigint, boolean)` — nueva, + cierre_automatico + fold travel_stats.
+  El cliente cancelaba llamando con 3 args (`p_viaje_id`, `p_status`, `p_inicio_real=0`). Con 3 args
+  Postgres NO podía elegir entre A y B (ambas matchean el prefijo `(text,text,bigint)` + DEFAULTs)
+  → `ERROR 42725 "function ... is not unique"`. **La cancelación fallaba SIEMPRE, determinística,
+  NO era red.** La excepción se tragaba en 3 capas del cliente (catch→false, caller ignora false,
+  syncStatus no se toca, sin retry) → Room quedaba `cancelado`, Supabase seguía `finalizado` → el
+  laudo lo contaba. El viaje fantasma del 23/06 nunca recibió la cancelación (su `inicioReal` siguió
+  siendo el string ISO original, jamás pasó por la RPC).
 
-**Sync de reabiertas — RECLASIFICADO (23/06 tarde): NO era bug de cliente.**
-Investigado a fondo. El bug descrito (que `obtenerJornadasCerradas` fuerce `status="cerrada"`
-→ servir snapshot viejo) NO se reproduce: 4112-20260610 tiene **0 filas en Room** (verificado
-en Database Inspector), llega `closed:false`/`status:"activa"` del servidor, sin `closedAt`
-ni `totalsSnapshot` en el `data`. No hay snapshot viejo que servir porque no hay fila. El
-187,5/$1.502,29 que figuraba en el ESTADO venía de panel o de un celu pre-wipe, no de lo que
-la app sirve hoy. Confirmado además: `reabierta:true` convive con `status:"activa"` →
-`reabierta` NO sirve como discriminador (sobrevive al recierre). El escenario que generaría el
-bug (cargar un viaje de día anterior cruzando medianoche desde la app) está **bloqueado por
-diseño**: la app no permite carga fuera de ventana; ese caso entra por **panel web** (admin).
-Conclusión: sin fix de cliente pendiente. Asignar el `orderNumber` correcto al viaje tardío
-(día de SALIDA, no "hoy"; cuidado con `inicioReal:0` como fuente de fecha) es responsabilidad
-del **panel** → backlog de panel.
+**Fix aplicado (dos capas, ambas validadas):**
+- **Servidor:** RPC versionada en `supabase/functions/actualizar_viaje_en_jornada.sql` (commit
+  f109f8a) ANTES de tocar nada. Luego `DROP FUNCTION ...(text,text,bigint,bigint)` — eliminada
+  la función A. Queda UNA sola firma (la de 5 params). Verificado: ningún caller interno la
+  menciona (pg_proc 0 filas); la finalización ya usaba B. La llamada de cancelación ya NO da
+  `is not unique`.
+- **Cliente:** `cancelarViajeEnSupabase` (SupabaseService.kt) ahora llama con 5 args:
+  `p_status="cancelado"` y `p_inicio_real`/`p_fin_real`/`p_cierre_automatico` como
+  `JSONObject.NULL` explícito (sacado el `0L` espurio). La RPC solo escribe campos
+  `IS NOT NULL` → solo cambia el status, preserva el resto. BUILD SUCCESSFUL.
+- **Validación en campo (26/06):** viaje programado 4112-20260626 (VJL-1782501425820-PUN)
+  cancelado desde el botón "Cancelar" del Inicio → en Supabase quedó `status:"cancelado"`,
+  SIN `finReal`, SIN `cierreAutomatico`, resto intacto. (Nota: `inicioReal:0` ya venía de la
+  creación del programado, NO lo mete la cancelación.) Cancelación se propaga de punta a punta.
 
-**HECHO (23/06 mañana) — regresión de Pieza 4 paso 2 cazada y arreglada + tarea UI:**
-- **Bug de hidratación de viajes en historial (CERRADO, validado en campo).** Efecto colateral
-  del Paso 2: al pasar a leer el snapshot rápido desde Room, `obtenerJornadasCerradas` dejó de
-  hidratar los viajes individuales — parseaba solo `totalsSnapshot` y DESCARTABA `data.travels[]`.
-  Consecuencia: la tabla `viajes` de Room solo retenía los viajes de la jornada activa (insertados
-  en vivo); toda jornada cerrada que venía por sync quedaba sin viajes → detalle de jornada vacío
-  y PDF en 0 (el PDF recomputa desde Room en vivo, no lee snapshot). Confirmado en Database
-  Inspector: la tabla `viajes` solo tenía las filas de la última jornada activa. **Fix:**
-  `obtenerJornadasCerradas` ahora acumula los objetos de jornadas `closed:true` en un `closedArr`
-  y reutiliza `parsearViajes()` sobre él; devuelve `JornadasCerradasResult(jornadas, viajes)`; el
-  caller en `ViajeRepositoy` inserta los viajes con `dao.insertarViajes(...)` (REPLACE por `id`).
-  Solo se hidratan viajes de jornadas cerradas (ids únicos → no pisa viajes en vivo). Validado:
-  jornadas anteriores que estaban vacías ahora traen detalle completo y PDF con liquidación
-  correcta (snapshot del 20: $3.479,61 / 377,47 km).
-- **Hora de fin de viaje en historial (CERRADO, sale del backlog UI).** La card pintaba
-  `arrivalTime`, que viene vacío (`""`) en TODOS los viajes (cierre manual y automático por
-  igual). El dato real está en `finReal` (epoch). **Fix:** en HistorialScreen.kt (fila 2 del
-  viaje) fallback `arrivalTime` → `finReal` formateado a HH:mm con el patrón `Calendar` inline
-  existente (zona local del dispositivo = UTC-3 en Uruguay), `"—"` si ambos vacíos/null. NO se
-  usa `llegadaEstimada` (eso es el pronóstico del motor de promedios apagado, no la hora real).
-  Validado en celu.
-- **Dato de modelo detectado:** el campo `llegadaEstimada` cambió entre el 20 y el 21. JSON del
-  20 lo trae en `0`; JSON del 21 NO lo trae. La entidad/tabla `viajes` de Room sigue teniendo la
-  columna `llegadaEstimada` (INTEGER nullable), y `parsearViajes` tolera su ausencia. No rompe
-  nada hoy, pero queda registrado por si reaparece al tocar `travel_stats`.
+**NO hizo falta la defensa (B) en LaudoCalculator** que figuraba en el plan viejo: como ahora el
+viaje queda correctamente `cancelado` (no `finalizado`), la UI del historial (que ya filtra
+`status != "cancelado"`) y el cálculo lo descartan solos. Se atacó la raíz, no el síntoma.
+
+**Hallazgo estructural de paso (DEUDA CONSCIENTE, NO atacar hoy): el syncStatus es teatro.**
+El campo `syncStatus` se escribe (`"local"` al crear) pero NUNCA se lee para hacer push. No hay
+sync de SALIDA en la app — es pull-only (`sincronizarDesdeSupabase`). `getViajesPendientesSync()`
+existe pero se usa para re-encolar workers tras reboot, no para pushear. `actualizarSyncStatus()`
+es dead code (0 callers). Implicación: este bug NO dependía de eso (la raíz era el overload), pero
+si mañana una escritura a Supabase falla por señal de verdad (sin overload de por medio), se pierde
+igual sin huella. Grieta estructural real. Va en su propia sesión (frente "dónde vive la lógica" /
+sync robusto), NO abrir ahora.
 
 ---
 
 ## PRÓXIMOS PASOS (en orden)
 
-1. **[BUG DE PLATA — sesión propia con CC] Viaje cancelado que cuenta en el laudo
-   (sobrefacturación).** Confirmado el 23/06 con JSON de jornada cerrada 4112-20260623. Caso:
-   viaje programado a "Punta del Este x Piriápolis" (TURNO, 145km, id VJL-1782247807264-MON)
-   cancelado en la app (allá quedó cancelado) por cambio de último momento; se agregó el
-   reemplazo "Punta del Este" DIRECTO 140km (id VJL-1782248545261-MON). El cancelado quedó en
-   Supabase con `status:"finalizado"`, `cierreAutomatico:false` PERO `finReal` puesto
-   (~3min posterior al real pese a "salir" antes) → el flujo de cancelación lo FINALIZA en vez
-   de marcarlo cancelado. El snapshot dio `kmViajes:285` (=145+140) → sobrefacturación de ~$1.700.
-   **Dos arreglos (complementarios):**
-    - **(A) Cliente:** el flujo de cancelación debe marcar `status:"cancelado"` (sin escribir
-      `finReal`) o sacar el viaje del array — NO finalizarlo.
-    - **(B) Defensa en el cálculo:** `LaudoCalculator.calcular()` debe IGNORAR viajes con status
-      cancelado al sumar km. Conviene igual aunque se arregle (A), porque ya hay jornadas en
-      Supabase con cancelados mal marcados que recalcularían mal.
-    - **NOTA:** la UI del historial YA filtra `status != "cancelado"` para mostrar, pero no sirve
-      en este caso porque el viaje quedó como `"finalizado"`, no `"cancelado"`. Refuerza que la
-      raíz es (A). Mismo tipo de fix que el de subfacturación (criterio en LaudoCalculator).
+1. **[PREVENCIÓN — portar del JS vanilla a Kotlin] Sistema anti-solapamiento de viajes y guardias.**
+   Atado directo al fix recién cerrado: el viaje fantasma del 23/06 coexistió con el real (dos
+   viajes con `inicioReal` a 77ms de diferencia) porque la app permitió crear un viaje encima de
+   otro. La cancelación robusta ya cierra el lado "la cancelación se propaga"; el anti-solapamiento
+   es la red de fondo que impide que dos viajes pisados coexistan en primer lugar. En la app JS
+   vieja funcionaba: no permitía crear guardia encima de viaje ni viaje encima de guardia (ni
+   solapamientos en general). Es PREVENCIÓN: corta el dato malo en el origen. Conecta con el Bug A
+   de guardias (lógica de 15min con viaje programado). Al portar: revisar la validación del JS y
+   replicarla en el flujo de creación de viajes/guardias en Kotlin. Conviene atacarlo JUNTO con
+   los bugs de guardia (misma zona de código). Complementa (no reemplaza) el botón de
+   edición/corrección del panel (backlog): anti-solapamiento = prevención en la app; edición en
+   panel = corrección de lo que ya entró mal.
 
 2. **[FRENTE — app + Supabase, sesión propia con CC] Ciclo de vida del estado "activa".**
    Nudo raíz que encadena varios ítems hoy dispersos. La sesión arranca por **mapear el ciclo
@@ -129,25 +119,14 @@ del **panel** → backlog de panel.
       una jornada puede reabrirse y qué define que un viaje pertenece a un día (incluida la condición
       de borde de medianoche clarificada el 23/06), hoy implícita.
 
-3. **[PREVENCIÓN — portar del JS vanilla a Kotlin] Sistema anti-solapamiento de viajes y guardias.**
-   En la app JS vieja funcionaba bien: no permitía crear una guardia encima de un viaje ni un
-   viaje encima de una guardia (ni solapamientos en general). Es PREVENCIÓN: corta el dato malo
-   en el origen, antes de que se cree. Conecta directo con bugs reales: el Bug A de guardias
-   (lógica de 15min con viaje programado) y el viaje cancelado del 23/06 que se solapó con el real
-   (dos viajes con 77ms de diferencia) — un anti-solapamiento robusto probablemente los frenaría.
-   Al portar: revisar la validación del JS y replicarla en el flujo de creación de viajes/guardias
-   en Kotlin. Conviene atacarlo JUNTO con los bugs de guardia (misma zona de código). Complementa
-   (no reemplaza) el botón de edición/corrección del panel (backlog): anti-solapamiento =
-   prevención en la app; edición en panel = corrección de lo que ya entró mal.
-
-4. **[FRENTE] RLS Escalón 3.** Auditar y remover las ~60 políticas `{public}` legacy con
+3. **[FRENTE] RLS Escalón 3.** Auditar y remover las ~60 políticas `{public}` legacy con
    `qual=true`/`check=true` que reexponen tablas a anon por el OR de RLS. Prioridad:
    `comandos_dispositivo`, `registro_alertas`, `mensajes`, `jornadas`, `configuracion`.
    Metodología: inventario fresco primero, explicar-antes-de-ejecutar, comparación
    antes/después, validar contra app del chofer Y panel tras cada cambio. (Prerequisito
    para distribuir el APK a compañeros. Ver bloque "Estado de seguridad RLS" abajo.)
 
-5. **[BUG — 21/06, sin diagnosticar] "Viajes del día" vacío con jornada activa.** Sesión propia,
+4. **[BUG — 21/06, sin diagnosticar] "Viajes del día" vacío con jornada activa.** Sesión propia,
    NO mezclar. La tab mostró "0 viajes" teniendo la jornada activa 4112-20260621 tres viajes
    finalizados y sincronizados en Supabase (`syncStatus:synced`). Regresión confirmada (la
    pantalla antes mostraba los finalizados). Sospecha: bug de lectura/filtro de la pantalla,
@@ -156,7 +135,7 @@ del **panel** → backlog de panel.
    distinto al de historial: este es jornada ACTIVA y bug de LECTURA, no de sync/hidratación.
    (NO es parte del frente ciclo de vida — es bug de lectura independiente.)
 
-6. **[BACKLOG — UI] Tareas de presentación en HistorialScreen (sueltas, no bloquean):**
+5. **[BACKLOG — UI] Tareas de presentación en HistorialScreen (sueltas, no bloquean):**
     - Indicador de color (verde abierta / gris cerrada) debe volver a verde al reabrir.
       (Parte del frente ciclo de vida #2, pieza 4 — depende de detectar bien el cambio de estado.)
     - Número de coche: no se muestra en la fila de viaje del historial; existe en varios
@@ -166,7 +145,7 @@ del **panel** → backlog de panel.
       del desglose del período; el cálculo real sale de LaudoCalculator). Debería venir de config.
       Conecta con el frente "dónde vive la lógica".
 
-7. **[BACKLOG — PANEL] Tab de reconciliación / validación de datos.** Pantalla en el panel
+6. **[BACKLOG — PANEL] Tab de reconciliación / validación de datos.** Pantalla en el panel
    Next con historial en tiempo real de la actividad del chofer (viajes, guardias,
    contratos, horarios), con edición autorizada por el superadmin. PROPÓSITO PRECISADO
    (20/06): el sistema busca MÍNIMA intervención humana — viajes/guardias/contratos salen
@@ -182,31 +161,39 @@ del **panel** → backlog de panel.
    esto NO es una "alerta de formato en Supabase" — el formato de las jornadas inconsistentes
    es válido; lo que se detecta es inconsistencia semántica/humana, y se resuelve con
    edición autorizada desde el panel, no frenando el guardado en la base.
+   **Falta UI de edición de viajes en curso / finalizados** (detectado 26/06: el panel hoy NO
+   tiene botón para finalizar/editar/cancelar un viaje ya cargado; solo enviar uno nuevo). Va acá.
    **Nota de cruce (23/06):** la asignación correcta del `orderNumber` al viaje tardío cargado
    por panel (día de SALIDA, no "hoy"; `inicioReal:0` no sirve como fuente de fecha) vive acá.
 
-8. **[BACKLOG] Auditoría de reaperturas.** Registro de eventos de reapertura (timestamp +
+7. **[BACKLOG] Auditoría de reaperturas.** Registro de eventos de reapertura (timestamp +
    viaje + origen app/panel) en el JSON de la jornada, visible en panel Next. Base sembrada:
    `reabierta:true` sobrevive al recierre.
 
-9. **[FUTURO] Migración a MVVM.** Después de RLS Escalón 3. No abrir tercer refactor en
+8. **[FUTURO] Migración a MVVM.** Después de RLS Escalón 3. No abrir tercer refactor en
    paralelo.
 
-10. **[FUTURO] Dónde vive la lógica de negocio.** Frente de diseño grande (NO empezar hasta
-    cerrar laudo + bugs en cola). Problema de fondo: lógica duplicada en app (Kotlin/Room) y
-    Supabase que a veces diverge (subfacturación, travel_stats triplicado, viaje cancelado con
-    criterio distinto UI vs cálculo). Marco: NO mudar todo a Supabase (la app DEBE funcionar
-    offline — el chofer maneja sin señal, razón por la que se migró de PWA a Kotlin). Solución no
-    es "una sola ubicación" sino "una sola REGLA aunque se ejecute en dos lados": laudo
-    oficial/estadísticas/validación de autoridad en Supabase; laudo preliminar offline +
-    anti-solapamiento + cierre GPS en la app; MISMA fórmula a ambos lados + test que verifique
-    que dan el mismo resultado (`REGLAS_NEGOCIO.md` es el ancla). Conecta con multi-empresa.
+9. **[FUTURO] Dónde vive la lógica de negocio.** Frente de diseño grande (NO empezar hasta
+   cerrar laudo + bugs en cola). Problema de fondo: lógica duplicada en app (Kotlin/Room) y
+   Supabase que a veces diverge (subfacturación, travel_stats triplicado). **Hoy se sumó un
+   caso nuevo a este frente: el sync es pull-only y el `syncStatus` es teatro** (escrito, nunca
+   leído para push; sin sync de salida; `actualizarSyncStatus` dead code). Esto significa que
+   cualquier escritura a Supabase que falle por red se pierde sin huella. El bug de cancelación
+   recién cerrado NO dependía de esto (raíz = overload), pero la grieta queda. Marco: NO mudar
+   todo a Supabase (la app DEBE funcionar offline — el chofer maneja sin señal, razón por la que
+   se migró de PWA a Kotlin). Solución no es "una sola ubicación" sino "una sola REGLA aunque se
+   ejecute en dos lados": laudo oficial/estadísticas/validación de autoridad en Supabase; laudo
+   preliminar offline + anti-solapamiento + cierre GPS en la app; MISMA fórmula a ambos lados +
+   test que verifique que dan el mismo resultado (`REGLAS_NEGOCIO.md` es el ancla). Sub-tarea
+   concreta que cae acá: diseñar un sync de SALIDA real (cola de deuda persistida + reintento)
+   que cubra cancelación, finalización y cualquier escritura, en vez de fire-and-forget.
+   Conecta con multi-empresa.
 
-11. **[FUTURO] Multi-empresa.** Diseño en MULTIEMPRESA.md / ESTRATEGIA_MULTIEMPRESA.md. Va
+10. **[FUTURO] Multi-empresa.** Diseño en MULTIEMPRESA.md / ESTRATEGIA_MULTIEMPRESA.md. Va
     después de React/Next. La config de negocio de cada empresa debe vivir en un solo lugar
     inyectable.
 
-12. **[FUTURO — sin urgencia] Archivado trimestral.** NO es problema de almacenamiento
+11. **[FUTURO — sin urgencia] Archivado trimestral.** NO es problema de almacenamiento
     (Supabase free 500MB alcanza años; confirmado 24 jornadas reales). Justificación REAL:
     optimización de egress y claridad cuando el volumen sea grande, para alimentar la consulta
     de meses históricos del PANEL (no la app). Dirección correcta: desde Supabase (durable),
@@ -244,6 +231,8 @@ del **panel** → backlog de panel.
 - ⚠️ Cliente Supabase no centralizado: cada page.tsx hardcodea URL+key y hace fetch directo.
   Centralizar en lib/supabase (un punto de config) — prolijidad, importante para multi-empresa,
   no urgente. (La key hardcodeada NO es problema: la anon key es pública por diseño.)
+- ❌ Falta UI de edición/finalización/cancelación de viajes ya cargados (in curso o finalizados).
+  Hoy el panel solo permite enviar viajes nuevos. → backlog #6.
 - Deploy del panel: NO desplegar a producción real hasta cerrar RLS de las 3 tablas. En
   preview/staging con datos de prueba, OK.
 
@@ -263,7 +252,12 @@ del **panel** → backlog de panel.
   La entidad `Jornada` persiste el snapshot completo (7 campos del desglose). El sync de
   arranque corre incondicional en MainScreen/HomeScreen, así que Room es caché reconstruible
   desde Supabase (fuente de verdad durable). Las jornadas cerradas que vienen por sync ahora
-  hidratan TAMBIÉN sus viajes en la tabla `viajes` (fix 23/06), no solo el snapshot.
+  hidratan TAMBIÉN sus viajes en la tabla `viajes` de Room (fix 23/06), no solo el snapshot.
+- **Sync direccional: PULL-ONLY.** `sincronizarDesdeSupabase` trae datos; NO hay push de
+  salida. `syncStatus` se escribe pero no se lee para empujar. Deuda registrada en #9.
+- **OJO — tabla `viajes` de Supabase está MUERTA.** Solo 3 filas de mayo, nadie escribe ahí
+  hoy. NO confundir con la tabla `viajes` de Room (esa sí se usa). La verdad del laudo en
+  Supabase vive en `jornadas.data.travels` (JSONB), no en la tabla `viajes`.
 
 ---
 
@@ -275,35 +269,68 @@ del **panel** → backlog de panel.
   implementado).
 - **Esquema de tablas Supabase** → RUTAUY_CONTEXT.md (SOLO como mapa de esquema; valores de
   cálculo obsoletos).
-- **Funciones travel_stats (Supabase)** → existen en remoto (`ts_cod_lugar`, `ts_a_ms`,
-  `ts_franja`, `registrar_en_travel_stats`, `estimar_llegada`) pero NO versionadas en el repo.
-  Pendiente: guardarlas en `supabase/functions/travel_stats.sql`. Estimación APAGADA a propósito
+- **RPC actualizar_viaje_en_jornada** → AHORA VERSIONADA en
+  `supabase/functions/actualizar_viaje_en_jornada.sql` (una sola firma de 5 params; la de 4
+  fue dropeada el 26/06). Las funciones de `travel_stats` (`ts_cod_lugar`, `ts_a_ms`,
+  `ts_franja`, `registrar_en_travel_stats`, `estimar_llegada`) siguen SIN versionar — pendiente
+  guardarlas en `supabase/functions/travel_stats.sql`. Estimación APAGADA a propósito
   (9 buckets / 9 muestras al 18/06, lejos del umbral c_min=5).
 - **Historial sprints 1-5 (port JS→Kotlin)** → PLAN_DESARROLLO_KOTLIN.md (histórico, cerrado).
 
 ---
 
 ## CHANGELOG (solo crece — NO reescribir, agregar arriba)
+### 26/06/2026
+- **Sobrefacturación por viaje fantasma: CERRADA y VALIDADA EN CAMPO.** Diagnóstico del ESTADO
+  viejo era INCORRECTO ("la cancelación marca finalizado") — el JSON real del 23/06 lo desmintió:
+  el viaje fantasma nunca recibió cancelación (`inicioReal` siguió siendo el string ISO original,
+  jamás pasó por la RPC). **Raíz real (confirmada empíricamente con SELECT en Supabase):** overload
+  ambiguo de la RPC `actualizar_viaje_en_jornada` — existían DOS funciones, una de 4 params y otra
+  de 5. El cliente cancelaba con 3 args → `ERROR 42725 "function is not unique"` → la cancelación
+  fallaba SIEMPRE, determinística, NO era red. Excepción tragada en 3 capas del cliente → Room
+  cancelado / Supabase finalizado → laudo lo contaba.
+  **Fix en dos capas:**
+    - Servidor: versionada la RPC en `supabase/functions/actualizar_viaje_en_jornada.sql`
+      (commit f109f8a, respaldo ANTES de tocar). Luego `DROP FUNCTION ...(text,text,bigint,bigint)`.
+      Queda 1 sola firma (5 params). Verificado: pg_proc 0 callers internos; finalización ya usaba
+      la de 5; la cancelación ya no da `is not unique`.
+    - Cliente: `cancelarViajeEnSupabase` ahora llama con 5 args, `p_status="cancelado"` y los 3
+      timestamps/bool como `JSONObject.NULL` explícito (sacado el `p_inicio_real=0L`). La RPC solo
+      escribe campos `IS NOT NULL` → solo cambia status, preserva el resto. BUILD SUCCESSFUL.
+    - Validación en campo: jornada 4112-20260626, viaje programado VJL-1782501425820-PUN cancelado
+      desde el Inicio → en Supabase quedó `status:"cancelado"` SIN `finReal` SIN `cierreAutomatico`,
+      resto intacto. Propagación de punta a punta confirmada.
+    - NO hizo falta la defensa (B) en LaudoCalculator: como el viaje queda correctamente `cancelado`,
+      la UI (que ya filtra `!= cancelado`) y el cálculo lo descartan solos. Raíz atacada, no síntoma.
+    - **Aprendizaje de método:** la solución obvia del primer pase (PATCH a `/rest/v1/viajes`) habría
+      escrito en una tabla MUERTA (3 filas de mayo, nadie la lee). El diagnóstico empírico antes de
+      codear lo evitó. La hipótesis de "fallo de red + retry" también habría sido errónea (el fallo era
+      100% determinístico; reintentar un request roto no lo arregla).
+- **Hallazgo estructural registrado (deuda, no atacada): syncStatus es teatro / sync pull-only.**
+  El campo `syncStatus` se escribe pero nunca se lee para push; no hay sync de salida;
+  `actualizarSyncStatus` es dead code. Este bug NO dependía de eso (raíz = overload), pero si una
+  escritura a Supabase falla por señal real, se pierde sin huella. → Próximos pasos #9 (frente
+  "dónde vive la lógica" / sync de salida robusto).
+- **Confirmado: tabla `viajes` de Supabase está muerta** (3 filas de mayo, nadie escribe). La verdad
+  del laudo vive en `jornadas.data.travels`. Anotado en Arquitectura para no volver a confundir.
+- **Sumado a próximos pasos: anti-solapamiento (#1) queda como cabeza de cola** — atado a este fix:
+  el fantasma del 23/06 coexistió con el real (77ms) porque la app permite crear viaje encima de
+  viaje. La cancelación robusta cierra "la cancelación se propaga"; el anti-solapamiento es la red
+  de fondo que impide el solapamiento en origen. Sesión propia (junto con bugs de guardia).
 ### 23/06/2026 (noche)
 - **BUG de plata detectado y confirmado: viaje cancelado cuenta en el laudo (sobrefacturación).**
   Un viaje cancelado por el chofer queda en Supabase con `status:"finalizado"` (con `finReal`
   escrito) en vez de cancelado → CUENTA en el laudo. Confirmado con JSON de jornada cerrada
   4112-20260623: `kmViajes:285` (=145 cancelado + 140 real), debió ser 140 → ~$1.700 de más.
-  Pista del mecanismo: el viaje cancelado tiene `cierreAutomatico:false` pero `status:"finalizado"`
-    + `finReal` puesto (~3min posterior al real pese a "salir" antes) → el flujo de cancelación lo
-      FINALIZA en vez de marcarlo cancelado. Bug espejo del de subfacturación. Dos arreglos: (A)
-      cancelación debe marcar `status:"cancelado"` sin `finReal`; (B) LaudoCalculator debe ignorar
-      cancelados al sumar km (conviene igual aunque se arregle A, por las jornadas ya mal marcadas).
-      NOTA: la UI del historial ya filtra `status != "cancelado"` pero no sirve acá porque quedó como
-      "finalizado". Jornada 4112-20260623 quedó sobrefacturada (es de prueba, no importa la liquidación).
-      No se tocó código — solo diagnóstico, viaja solo el ESTADO. → Próximos pasos #1.
+  [NOTA 26/06: este diagnóstico resultó INCORRECTO en su mecanismo — ver entrada 26/06. La raíz
+  no era "la cancelación marca finalizado" sino un overload ambiguo de la RPC que hacía fallar la
+  cancelación SIEMPRE. El síntoma observado (viaje en finalizado) era correcto; la causa, no.]
 - **Confirmado que Pieza 2 está bien hecha en el repo** (revisión de HistorialScreen.kt): el
   `totalesPorJornada` (mutableStateMapOf) precalcula una vez en el efecto del período y reparte a
   las JornadaCard vía `totalPrecalculado`, con fallback defensivo si no vino en el mapa. Mata la
   doble invocación. Incluye el fix de hora de fin (arrivalTime → finReal). Detectada deuda menor:
   viático $455.26 hardcodeado en la UI del desglose (display, no cálculo) → backlog UI.
-- **Sumada tarea de prevención: anti-solapamiento de viajes/guardias** (portar del JS vanilla) →
-  Próximos pasos #3.
+- **Sumada tarea de prevención: anti-solapamiento de viajes/guardias** (portar del JS vanilla).
 ### 23/06/2026 (tarde)
 - **Sync de reabiertas reclasificado: NO era bug de cliente.** Verificado en Database Inspector:
   4112-20260610 con 0 filas en Room. Llega `closed:false`/`activa`, sin `closedAt`/`totalsSnapshot`.
@@ -311,79 +338,51 @@ del **panel** → backlog de panel.
   discriminador (convive con `activa`). Flujo causante (carga cruzando medianoche) bloqueado por
   diseño en app → entra por panel. Sin fix de cliente. orderNumber del viaje tardío =
   responsabilidad de panel (usar día de salida, no "hoy"; `inicioReal:0` no sirve como fuente).
-  El punto #1 viejo de "Próximos pasos" ("sync de reabiertas, bajo riesgo, caso listo") y el
-  bloque "PENDIENTE CONOCIDO de Pieza 4" quedaron eliminados por esta reclasificación.
 - **Detectado hueco real (raíz distinta): jornada activa huérfana de día anterior.** Guard
   `createOrder` del JS vanilla no migrado a Kotlin. `getOCrearJornada` no bloquea segunda jornada
   activa de fecha distinta. CC mapeó 6 callers + propuso fix. Corrección de diseño pendiente: el
   guard debe filtrar por fecha (`activa AND fecha != hoy`), no "cualquier activa", para no romper
   la reabierta legítima del día. Agrupado como cabeza del frente "ciclo de vida del estado
-  activa" (junto con lógica de 8h, bugs de guardia y indicador de color), con metodología
-  "mapear primero, después tocar". Sesión propia con CC. Sesión fue solo diagnóstico:
-  no se tocó código, viaja solo el ESTADO.
+  activa". Sesión fue solo diagnóstico: no se tocó código.
 ### 23/06/2026 (mañana)
 - **Bug de hidratación de viajes en historial CERRADO (validado en campo).** Era regresión de
   Pieza 4 paso 2: `obtenerJornadasCerradas` leía solo `totalsSnapshot` y descartaba
   `data.travels[]`, así que las jornadas cerradas sincronizadas nunca poblaban la tabla `viajes`
-  de Room → detalle de jornada vacío y PDF en 0 (el PDF recomputa desde Room en vivo). Confirmado
-  con Database Inspector (la tabla `viajes` solo tenía las filas de la jornada activa más reciente).
-  Fix: `parsearViajes` cambia firma `String`→`JSONArray` (único otro caller `sincronizarJornada`
-  adaptado); `obtenerJornadasCerradas` acumula jornadas `closed:true` en `closedArr`, las parsea
-  con `parsearViajes(closedArr)` y devuelve `JornadasCerradasResult(jornadas, viajes)`; caller en
-  `ViajeRepositoy` inserta con `dao.insertarViajes(...)` (REPLACE por `id`). `parsearViajes` setea
-  `orderNumber` desde el objeto jornada padre (verificado) → coincide con `getViajesPorJornada`.
-  BUILD SUCCESSFUL. Validado en celu: jornadas vacías ahora con detalle + PDF correcto
-  (snapshot 20/06: $3.479,61 / 377,47 km).
-- **Hora de fin de viaje en historial CERRADO (sale del backlog UI).** La card pintaba
-  `arrivalTime` (vacío en TODOS los viajes, manual y automático). Fix en HistorialScreen.kt:
-  fallback `arrivalTime` → `finReal` (epoch) formateado a HH:mm con patrón `Calendar` inline
-  existente (zona local = UTC-3 en UY), `"—"` si ambos null/vacío. NO se usa `llegadaEstimada`
-  (es pronóstico del motor apagado, no hora real). Validado en celu.
+  de Room → detalle de jornada vacío y PDF en 0. Fix: `parsearViajes` cambia firma `String`→
+  `JSONArray`; `obtenerJornadasCerradas` acumula jornadas `closed:true` en `closedArr`, las parsea
+  y devuelve `JornadasCerradasResult(jornadas, viajes)`; caller en `ViajeRepositoy` inserta con
+  `dao.insertarViajes(...)`. BUILD SUCCESSFUL. Validado en celu (snapshot 20/06: $3.479,61 / 377,47 km).
+- **Hora de fin de viaje en historial CERRADO (sale del backlog UI).** Fix en HistorialScreen.kt:
+  fallback `arrivalTime` → `finReal` (epoch) formateado a HH:mm. Validado en celu.
 - Dato de modelo registrado: `llegadaEstimada` cambió entre 20 (viene `0`) y 21 (ausente). La
   columna sigue en Room (INTEGER nullable); `parsearViajes` tolera su ausencia. Posible relación
-  con el bug "Viajes del día vacío" del 21 → anotado en próximos pasos #5.
+  con el bug "Viajes del día vacío" del 21.
 - Archivos tocados: `SupabaseService.kt`, `ViajeRepositoy.kt`, `HistorialScreen.kt`.
 ### 20/06/2026 (noche)
-- **Pieza 4 COMPLETA (cierra Frente #1 entero).** Dos pasos:
-    - Paso 1: migration real 13→14 (ADD COLUMN aditivo) reemplaza fallbackToDestructiveMigration;
-      5 columnas de desglose en entidad Jornada; obtenerJornadasCerradas puebla snapshot
-      completo. Validado: instala sobre app existente sin wipe ni crash (eliminado el modo de
-      falla del incidente 09/06). Commit limpiado de basura temporal; creado .gitignore.
-    - Paso 2: obtenerTotalesSnapshot lee snapshot desde Room (discriminador status
-      cerrada/finalizada + closedAt) en vez de round-trip a Supabase. Historial ~7s → ~0,3s,
-      validado en campo: 23 jornadas reales correctas (idénticas a corrida previa), lectura
-      "desde Room" confirmada en logcat. Doble red de Pieza 2 cerrada de verdad.
-- Pendiente conocido detectado: jornada reabierta de día anterior queda en Room con
-  status="cerrada" forzado por el sync → paso 2 sirve snapshot viejo. Testigo: 4112-20260610
-  (jornada de prueba rota a propósito, muestra 187,5/$1.502,29). NO afecta jornadas reales.
-  Se resuelve en sub-tarea de sync de reabiertas (anotada en próximos pasos #1).
-  [NOTA 23/06: este pendiente quedó RECLASIFICADO — ver entrada 23/06 tarde, no era bug de cliente.]
+- **Pieza 4 COMPLETA (cierra Frente #1 entero).** Paso 1: migration real 13→14 (ADD COLUMN
+  aditivo) reemplaza fallbackToDestructiveMigration; 5 columnas de desglose en entidad Jornada.
+  Validado: instala sobre app existente sin wipe ni crash. Paso 2: obtenerTotalesSnapshot lee
+  snapshot desde Room en vez de round-trip a Supabase. Historial ~7s → ~0,3s, validado en campo:
+  23 jornadas reales correctas.
 - Decisión de alcance: app del chofer = mes corriente; historial profundo/impresión = panel
   web. limit=30 del sync confirmado como límite de diseño, no bug.
 - Idea de validación en panel precisada: objetivo es cazar error HUMANO de tipeo en carga
-  manual (excepción por falta de señal), no error de cálculo. Requiere trazabilidad de origen
-  primero. Anotada bien en backlog #7.
+  manual, no error de cálculo. Requiere trazabilidad de origen primero.
 ### 20/06/2026 (día)
-- Pieza 2 (Totales una vez por jornada vía Map) aplicada y validada. Dedup parcial (cards
-  visibles del primer frame pierden carrera con el efecto del período); cierre real diferido
-  a Pieza 4 leyendo de Room (ya hecho). Detectadas 2 tareas UI (hora fin / coche) → backlog.
+- Pieza 2 (Totales una vez por jornada vía Map) aplicada y validada. Detectadas 2 tareas UI
+  (hora fin / coche) → backlog.
 ### 18/06/2026
 - Pieza 3 (criterio de calcularTotalesJornada por status) APLICADA y VALIDADA end-to-end con
-  jornada real. Cerrada 2 viajes ($2.824,30/352,5) → 3er viaje → reabrió sola → cerrada →
-  recalculó correcto ($4.250,47/530,5). Tome/Cese no se duplicó. Subfacturación muerta para
-  reabierta del día. GPS "Escalando a ALTA" y checkpoint Colonia validados de paso.
+  jornada real. Subfacturación muerta para reabierta del día. GPS "Escalando a ALTA" y checkpoint
+  Colonia validados de paso.
 ### 15/06/2026
 - Diseño completo del fix (4 piezas) sobre código real. Decisión: atacar la raíz (dos fuentes
-  de verdad), no parchar. Regla ABIERTA→recalcula / CERRADA→snapshot (apoyada en regla
-  temporal: jornada vive en su día, reopen no cruza 23:59:59). Pieza 1 aplicada. Reopen
-  server-side confirmado en producción. Storage Supabase despejado (cuello es egress, no
-  espacio). Consolidación de docs (13 mds), creados ESTADO/REGLAS/LIMPIEZA.
+  de verdad), no parchar. Pieza 1 aplicada. Reopen server-side confirmado en producción.
+  Consolidación de docs (13 mds), creados ESTADO/REGLAS/LIMPIEZA.
 ### 10/06/2026
-- Diagnóstico raíz de subfacturación (dos fuentes de verdad). Reopen server-side HECHO/validado
-  (idempotente, sin gate de fecha, sin RAISE). search_path pineado, COALESCE defensivo. Regla:
-  viaje pertenece a la jornada del día en que SALIÓ. Jornadas-testigo (ej. 4112-20260610) se
-  dejan rotas a propósito como casos de estudio. Status activa = "activa"; solo "activa" y
-  "finalizada". Creados ESTADO/REGLAS/LIMPIEZA, inventariados 13 mds.
+- Diagnóstico raíz de subfacturación (dos fuentes de verdad). Reopen server-side HECHO/validado.
+  Regla: viaje pertenece a la jornada del día en que SALIÓ. Jornadas-testigo se dejan rotas a
+  propósito como casos de estudio. Creados ESTADO/REGLAS/LIMPIEZA, inventariados 13 mds.
 
 ---
 
