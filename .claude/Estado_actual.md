@@ -4,7 +4,7 @@
 > Se REESCRIBE en cada cierre de jornada de trabajo (ver PROTOCOLO al pie). Lo que deja de
 > ser cierto se borra de "Estado" y queda preservado en el CHANGELOG.
 >
-> **Última actualización:** 27/06/2026
+> **Última actualización:** 28/06/2026
 
 ---
 
@@ -18,7 +18,11 @@
 - **Fase:** pre-producción. APK aún NO distribuido a choferes. "Producción" = solo entorno
   de prueba propio (Claudio testea en campo y PC).
 - **Auth:** la app usa SOLO la anon key (no hay Supabase Auth por chofer). Login = legajo
-    + device_id contra tabla `choferes`. Filtrado por identidad diferido hasta React/Next.
+    + device_id contra tabla `choferes`. **Confirmado 28/06 leyendo `SupabaseService.kt`:**
+      la app manda la anon key como `Authorization: Bearer` SIN JWT de sesión → PostgREST
+      asigna rol **`anon`** con certeza total, `auth.uid()` siempre null. Cualquier policy
+      con `auth.uid()` o `auth.role()='authenticated'` BLOQUEA la app. El filtrado por
+      identidad de chofer queda diferido (requiere Auth por chofer o claims firmados).
 - **Alcance app del chofer:** muestra el MES CALENDARIO corriente (sync trae últimas 30
   jornadas cerradas). El historial profundo / consulta de meses específicos / impresión es
   responsabilidad del PANEL WEB (Tránsito), no de la app. El `limit=30` del sync es un
@@ -28,211 +32,202 @@
 
 ## DÓNDE ESTOY PARADO HOY
 
-**Anti-solapamiento de viajes (pieza 1 — creación manual): CÓDIGO COMPLETO Y COMPILADO.
-PENDIENTE VALIDACIÓN EN CAMPO.** Implementado el guard que impide crear un viaje cuya
-ventana temporal se pisa con otro viaje de la misma jornada. Hallazgo clave del diseño: esto
-NO fue un port del JS vanilla — el JS NO tenía este motor. El JS solo tenía `existeViajeEnCurso()`
-(bloquea un segundo en_curso si ya hay uno en_curso, ignora programados) y auto-corte de guardia.
-El caso real (programado 22:30 creado mientras corre un en_curso de 22:10, ambos pisándose) era
-DISEÑO NUEVO. Atado directo al fix del viaje fantasma del 23/06 (dos viajes a 77ms): el
-anti-solapamiento es la red que impide que dos viajes pisados coexistan en origen.
+**RLS Escalón 3 — CAPÍTULO MAYOR CERRADO (28/06): las 3 tablas UNRESTRICTED encendidas y
+validadas en campo + `comandos_dispositivo` consolidada.** Se saldó la deuda estructural que
+bloqueaba la distribución del APK por el lado de seguridad. Metodología seguida al pie:
+inventario fresco primero, confirmar el rol real de la app (no asumir), explicar-antes-de-
+ejecutar, validar en celu tras cada encendido, rollback listo en cada paso.
 
-**Qué se entregó (5 archivos de producción + 1 de test, BUILD SUCCESSFUL, 6 tests verdes):**
-- **`data/SolapamientoValidator.kt` (nuevo):** objeto puro (sin Room/Supabase, patrón
-  `PermisosManager`). `encontrarConflicto(nuevaInicio, nuevaFin, existentes)` devuelve el primer
-  viaje que solapa o null. Cada viaje proyecta a un intervalo `[inicio, fin]` en epoch ms:
-  inicio = `inicioReal ?: inicioProgramado`; fin = `finReal` si está finalizado (fallback
-  `inicio + DURACION`), si no `inicio + DURACION`. Cancelado se excluye. Solapamiento ESTRICTO
-  (`a.inicio < b.fin && b.inicio < a.fin`): tocarse en el borde NO solapa (viajes consecutivos
-  legítimos). Constante `DURACION_VIAJE_DEFAULT_MS = 3h`. También define `sealed class
-  CrearViajeResult { Exito(viaje) | Solapamiento(enConflicto) }`.
-- **`data/ViajeRepositoy.kt`:** `crearViaje` ahora devuelve `CrearViajeResult` (no `Viaje`).
-  Guard corre tras `getOCrearJornada`, ANTES de `dao.insertarViaje`: arma el candidato
-  (`inicioProgramadoMs`, `+DURACION`), lee `getViajesPorJornada` (sin filtro, trae todos los
-  status), y si hay conflicto retorna `Solapamiento` SIN insertar. Happy path retorna
-  `Exito(viaje)`. El `180` mágico de `calcularLlegadaEstimada` reemplazado por
-  `DURACION_VIAJE_DEFAULT_MS / 60_000`. **OJO: el `2h` de `activarViaje` NO se tocó** — es una
-  tolerancia de activación (concepto distinto), no una duración de viaje.
-- **`ui/theme/NuevoViajeScreen.kt`:** `when(resultado)` — `Exito` arranca GPS con
-  `resultado.viaje` + navega/genera vuelta; `Solapamiento` setea estado de un AlertDialog que
-  muestra el viaje en conflicto. **El GPS vive DENTRO del brazo Exito; el viaje en conflicto
-  NUNCA toca `GeoTerminalService`.** Toda la lógica de vuelta también quedó dentro de Exito (un
-  solapamiento no dispara vuelta fantasma).
-- **`ui/theme/MainScreen.kt`:** mismo `when` para el botón de viaje de prueba. `Exito` arranca
-  GPS modo prueba + `getViajeEnCurso()` (ambos DENTRO del brazo); `Solapamiento` solo `Log.w`.
-- **`worker/MensajesPollingWorker.kt`:** asignación de admin. `Exito` loguea `Log.d`;
-  `Solapamiento` loguea `Log.w` con id de asignación + datos de ambos viajes (nuevo y conflicto).
-  Trazabilidad para cuando llegue el bloque del día siguiente.
-- **`test/.../SolapamientoValidatorTest.kt` (nuevo, PRIMEROS TESTS DEL PROYECTO):** 5 casos —
-  22:10/22:30 choca, 22:10/01:30 no choca, borde exacto no choca, cancelado ignorado, finalizado
-  usa finReal (caso astuto: choca con la regla de +3h pero no con finReal real). Lógica pura,
-  corre en JVM sin emulador.
+**Qué se hizo (4 tablas tocadas, todo validado):**
 
-**Cobertura y límites de la pieza 1 (a propósito):** El guard local cubre la CARGA MANUAL del
-chofer (`crearViaje`), leyendo Room — offline-safe, no toca red. La ASIGNACIÓN DE ADMIN
-(`MensajesPollingWorker`) hoy solo LOGUEA el solapamiento, NO lo bloquea — el bloqueo de
-asignaciones va en el guard del servidor (RPC), pendiente. Los viajes que entran por
-`sincronizarDesdeSupabase` esquivan el guard intencionalmente (son datos remotos ya existentes).
+- **`travel_stats` → CERRADA AL 100%, sin deuda residual.** La app NUNCA toca esta tabla por
+  REST (confirmado por CC: solo existe como entidad Room local; cero `/rest/v1/travel_stats`
+  en Kotlin). En Supabase la escriben/leen solo las RPC. Se convirtieron `estimar_llegada` y
+  `registrar_en_travel_stats` a **`SECURITY DEFINER`** con `search_path = public, pg_catalog`
+  pineado (anti-hijack). Las helper `ts_cod_lugar`/`ts_a_ms`/`ts_franja` se dejaron INVOKER a
+  propósito (son puras, no tocan la tabla; corren dentro del contexto DEFINER del caller).
+  Owner de las funciones = `postgres` (superuser, escritura plena). Luego
+  `ALTER TABLE travel_stats ENABLE ROW LEVEL SECURITY` SIN políticas = **deny-all** para REST
+  directo; las RPC DEFINER saltean RLS. Validado: `select registrar_en_travel_stats('{"id":
+  "TEST-PRU"}')` corrió sin error de permisos (el `-PRU` lo descarta el filtro interno, no
+  ensucia data). Funciones VERSIONADAS en `supabase/functions/travel_stats.sql` (cierra otro
+  pendiente de cola).
+- **`choferes` → RLS ENCENDIDO, validado.** Sus 4 políticas ya servían para anon
+  (`select`/`insert`/`update` con `empresa_id='cot'` sin exigir authenticated; `delete` solo
+  authenticated). Solo `ALTER TABLE ... ENABLE ROW LEVEL SECURITY`. Validado en celu: login del
+  chofer entra y sincroniza perfecto.
+- **`jornadas` → RLS ENCENDIDO, validado (la más delicada — fuente de verdad del laudo).**
+  Mismas 4 políticas válidas para anon. Encendido + validación COMPLETA en celu: viaje de prueba
+  activado y cerrado automático; JSON de la jornada confirmó insert + update de cierre +
+  `syncStatus:"synced"`. Todo el ciclo de escritura pasó con RLS puesto. (Viaje con id `-PRU`,
+  no ensucia laudo ni travel_stats.)
+- **`comandos_dispositivo` → CONSOLIDADA, de 10 políticas a 4.** No era una tabla UNRESTRICTED
+  (ya tenía RLS), pero tenía 10 políticas, la mayoría duplicadas con `qual=true` (puerta
+  abierta). CC mapeó el uso real: la app (lado **JS**, no Kotlin) lee por REST
+  `?device_id=eq.X&ejecutado=eq.false` como anon; el panel inserta como authenticated; cero
+  RPC. **La tabla está VACÍA** (`count=0`). Consolidación a 4 políticas: SELECT `{public}`
+  `true`, UPDATE `{public}` `(ejecutado=false)` (garantiza idempotencia en la propia policy),
+  INSERT `{authenticated}` (**hueco cerrado**: antes cualquier anon inyectaba comandos), ALL
+  `{authenticated}` (reemplaza admin_full+comandos_panel). Validación del INSERT desde panel:
+  PENDIENTE (mandar comando de prueba y ver que entra en la app). No bloqueante: tabla vacía y
+  a medio integrar en la app nativa.
+
+**DEUDA CONSCIENTE que NO se cerró hoy (a propósito, documentada honestamente):** las políticas
+de `jornadas`/`choferes`/`comandos_dispositivo` filtran a nivel EMPRESA (`empresa_id='cot'`) o
+con `true`, NO a nivel CHOFER. Cualquiera con la anon key (que es PÚBLICA) puede leer toda la
+data de cot. RLS hoy protege contra OTRAS empresas (futuro multi-tenant) pero no contra
+extracción de la anon key. El filtro fino por chofer (`device_id`/legajo) **no se puede hacer
+con RLS** porque la app entra anon sin identidad firmada — el `device_id` viaja como query param,
+no como claim. La solución real es **Supabase Auth por chofer o un esquema de claims/JWT
+firmado**, que es trabajo en la APP, no parches tabla por tabla. Es OTRO capítulo, sin urgencia
+nueva creada por lo de hoy. Un header `x-device-id` sin firmar daría SENSACIÓN de seguridad sin
+darla → se descartó a propósito.
 
 ---
 
 ## PRÓXIMOS PASOS (en orden)
 
-1. **[VALIDAR EN CAMPO — cierra pieza 1] Anti-solapamiento en el celu.** Casos:
+1. **[VALIDAR EN CAMPO — lunes en la calle] Anti-solapamiento en el celu (cierra pieza 1).**
+   Código completo, compilado, 6 tests verdes desde el 27/06; falta el apretón real. Casos:
    (a) jornada activa → en_curso 22:10 (arranca) → programado 22:30 debe REBOTAR con el diálogo
    "Viaje en conflicto", SIN arrancar GPS. (b) 22:10 → viaje 01:30 (fuera de la ventana de 3h)
    debe PERMITIR y arrancar GPS normal. (c) chequeo negativo: un solapamiento bloqueado NO deja
    GPS corriendo ni dispara vuelta fantasma. Si pasa → cerrar en changelog y bajar la regla a
-   REGLAS_NEGOCIO.md (ver protocolo).
+   REGLAS_NEGOCIO.md.
 
-2. **[SIGUIENTE PIEZA — UI] Botones de cancelar viaje en las pantallas.** Complementa el
+2. **[VALIDAR — suelto] INSERT de `comandos_dispositivo` desde el panel.** Mandar un comando de
+   prueba (`tipo:'limpiar_jornadas'`) desde el panel admin y confirmar que entra (prueba el
+   INSERT `authenticated`) y que la app JS lo recibe/marca ejecutado (prueba SELECT+UPDATE anon).
+   No bloqueante: la tabla está vacía. Cierra el círculo de la consolidación de hoy.
+
+3. **[SIGUIENTE PIEZA — UI] Botones de cancelar viaje en las pantallas.** Complementa el
    anti-solapamiento (prevención) con la corrección de lo que ya entró. Hoy: viaje programado
    tiene botón "Cancelar"; viaje en_curso SOLO tiene "Finalizar", no "Cancelar". Falta botón de
    cancelar en en_curso. **La lógica de cancelar YA funciona** (fix del 26/06:
    `cancelarViajeEnSupabase` con 5 args + `JSONObject.NULL`, validado en campo) — esto es UI, no
    lógica. **Diseño dura: cancelar un en_curso es DESTRUCTIVO** (descarta km, plata). Requiere
-   CONFIRMACIÓN explícita ("¿Cancelar viaje X→Y? Se descarta del laudo") para que el chofer no
-   apriete cancelar queriendo finalizar. El cancelar de programado es menos grave (el viaje aún
-   no pasó). Sirve también para no guardar viajes mal cargados.
+   CONFIRMACIÓN explícita ("¿Cancelar viaje X→Y? Se descarta del laudo"). El cancelar de
+   programado es menos grave. Sirve también para no guardar viajes mal cargados.
 
-3. **[FRENTE — extiende anti-solapamiento, NO ahora] Solapamiento en el servidor + activación.**
-   Dos sub-piezas que cierran las puntas que la pieza 1 dejó abiertas a propósito:
+4. **[FRENTE — extiende anti-solapamiento, NO ahora] Solapamiento en el servidor + activación.**
     - **Guard del servidor (RPC):** rechazar en la escritura un viaje/bloque solapado. Robusto
-      (atómico, sin race). Es el que protege la ASIGNACIÓN DE ADMIN (el celu puede estar apagado).
-      `SolapamientoValidator` (lógica pura) es la MISMA regla que va a correr ahí — una sola regla,
-      dos lados (Próximos Pasos #10). Atado al diseño del bloque del día siguiente (definir con la
-      empresa).
+      (atómico, sin race). Protege la ASIGNACIÓN DE ADMIN (el celu puede estar apagado).
+      `SolapamientoValidator` (lógica pura) es la MISMA regla que va a correr ahí — una sola
+      regla, dos lados (#10). Atado al diseño del bloque del día siguiente (definir con la empresa).
     - **Re-chequeo en `ActivarViajeWorker`:** antes de flipear programado→en_curso, re-verificar
       solapamiento. Última red si por la vía de admin (offline) entró un programado que el guard
       local no vio. Barato.
 
-4. **[FRENTE — app + Supabase, sesión propia con CC] Ciclo de vida del estado "activa".**
-   Nudo raíz que encadena varios ítems. La sesión arranca por **mapear el ciclo completo**
-   (quién abre/cierra `status="activa"`, qué se permite mientras está abierto, bordes:
-   medianoche / día anterior / reapertura) ANTES de tocar código. De ese mapa caen:
+5. **[FRENTE — app + Supabase, sesión propia con CC] Ciclo de vida del estado "activa".**
+   Nudo raíz. Arranca por **mapear el ciclo completo** (quién abre/cierra `status="activa"`, qué
+   se permite mientras está abierto, bordes: medianoche / día anterior / reapertura) ANTES de
+   tocar código. De ese mapa caen:
     - **(1) Guard de jornada activa huérfana de día anterior.** `getOCrearJornada` solo chequea
-      `getJornadaPorFecha(hoy)`; si hay una jornada `status="activa"` de día anterior sin cerrar
-      (ej. pernocta/quedada — el chofer durmió en destino y no cerró), crea una segunda activa en
-      paralelo sin avisar. El guard de `createOrder()` del JS vanilla (`if getActiveOrder() throw
-      YA_EXISTE_JORNADA_ACTIVA`) NO se migró a Kotlin. **OJO con el diseño:** el discriminador
-      correcto es **activa de día ANTERIOR a hoy** (`status='activa' AND fecha != :hoy`), NO
-      "cualquier activa" — porque una jornada de día anterior puede ser LEGÍTIMA (viaje que cruzó
-      medianoche), no siempre es error. Preferir BLOQUEAR + AVISAR, no auto-cerrar en silencio
-      (auto-cerrar obliga a inventar un timestamp de cierre y si se pega mal corrompe el laudo).
-      CC mapeó 6 callers (#2/#4 ya con catch, #3/#5/#6 crash risk, #1 worker = loop silencioso).
-      Alcance 1ª pasada: `getOCrearJornada` con filtro de fecha + los 2 callers con catch/UI.
+      `getJornadaPorFecha(hoy)`; si hay una `status="activa"` de día anterior sin cerrar, crea una
+      segunda activa en paralelo sin avisar. El guard de `createOrder()` del JS vanilla NO se migró
+      a Kotlin. **Discriminador correcto:** `status='activa' AND fecha != :hoy`, NO "cualquier
+      activa" (una jornada de día anterior puede ser LEGÍTIMA: viaje que cruzó medianoche).
+      Preferir BLOQUEAR + AVISAR, no auto-cerrar en silencio. CC mapeó 6 callers. Alcance 1ª
+      pasada: `getOCrearJornada` con filtro de fecha + los 2 callers con catch/UI.
     - **(2) Lógica de 8h del botón "finalizar jornada"** (mostrar solo sin viaje/guardia/contrato
-      en curso, como el JS vanilla). Detalle en bugs 21/06 abajo.
-    - **(3) Bugs de guardia A y B** (detalle en bugs 21/06 abajo) — requieren reproducción antes
-      de tocar.
-    - **(4) Indicador color verde/gris** que no vuelve a verde al reabrir (detalle en backlog UI).
-      Empezar probablemente por (1). **Pendiente:** bajar a `REGLAS_NEGOCIO.md` la regla de cuándo
-      una jornada puede reabrirse y qué define que un viaje pertenece a un día (incluida la
-      condición de borde de medianoche clarificada el 23/06), hoy implícita.
+      en curso, como el JS vanilla). Detalle en bugs 21/06.
+    - **(3) Bugs de guardia A y B** (bugs 21/06) — requieren reproducción antes de tocar.
+    - **(4) Indicador color verde/gris** que no vuelve a verde al reabrir.
+      Empezar por (1). **Pendiente:** bajar a `REGLAS_NEGOCIO.md` la regla de cuándo una jornada
+      puede reabrirse y qué define que un viaje pertenece a un día (borde de medianoche del 23/06).
 
-5. **[FRENTE] RLS Escalón 3.** Auditar y remover las ~60 políticas `{public}` legacy con
-   `qual=true`/`check=true` que reexponen tablas a anon por el OR de RLS. Prioridad:
-   `comandos_dispositivo`, `registro_alertas`, `mensajes`, `jornadas`, `configuracion`.
-   Metodología: inventario fresco primero, explicar-antes-de-ejecutar, comparación
-   antes/después, validar contra app del chofer Y panel tras cada cambio. (Prerequisito
-   para distribuir el APK a compañeros. Ver bloque "Estado de seguridad RLS" abajo.)
-
-6. **[BUG — 21/06, sin diagnosticar] "Viajes del día" vacío con jornada activa.** Sesión propia,
-   NO mezclar. La tab mostró "0 viajes" teniendo la jornada activa 4112-20260621 tres viajes
-   finalizados y sincronizados en Supabase (`syncStatus:synced`). Regresión confirmada (la
-   pantalla antes mostraba los finalizados). Sospecha: bug de lectura/filtro de la pantalla,
+6. **[BUG — 21/06, sin diagnosticar] "Viajes del día" vacío con jornada activa.** Sesión propia.
+   La tab mostró "0 viajes" teniendo la jornada activa 4112-20260621 tres viajes finalizados y
+   sincronizados (`syncStatus:synced`). Sospecha: bug de lectura/filtro de la pantalla,
    posiblemente relacionado al campo `llegadaEstimada` ausente en el JSON del 21 vs presente
-   (como `0`) en JSONs previos. Atacar con el código de la pantalla + Claude Code. Síntoma
-   distinto al de historial: este es jornada ACTIVA y bug de LECTURA, no de sync/hidratación.
-   (NO es parte del frente ciclo de vida — es bug de lectura independiente.)
+   (como `0`) en previos. Atacar con el código de la pantalla + Claude Code. Bug de LECTURA de
+   jornada ACTIVA, independiente del frente ciclo de vida.
 
 7. **[BACKLOG — UI] Tareas de presentación en HistorialScreen (sueltas, no bloquean):**
     - Indicador de color (verde abierta / gris cerrada) debe volver a verde al reabrir.
-      (Parte del frente ciclo de vida #4, pieza 4 — depende de detectar bien el cambio de estado.)
-    - Número de coche: no se muestra en la fila de viaje del historial; existe en varios
-      viajes (`coche:"941"`/`"959"`/`"927"`), vacío en otros. Decidir mostrar-cuando-existe (UI)
-      vs exigir el coche en la carga (negocio).
-    - Deuda menor: el viático `$455.26` está hardcodeado en HistorialScreen (solo para el display
-      del desglose del período; el cálculo real sale de LaudoCalculator). Debería venir de config.
-      Conecta con el frente "dónde vive la lógica".
+    - Número de coche: no se muestra en la fila de viaje del historial; existe en varios viajes
+      (`coche:"941"`/`"959"`/`"927"`), vacío en otros. Decidir mostrar-cuando-existe vs exigir.
+    - Deuda menor: viático `$455.26` hardcodeado en HistorialScreen (solo display del desglose;
+      el cálculo real sale de LaudoCalculator). Debería venir de config. Conecta con "dónde vive
+      la lógica".
     - Texto del diálogo de solapamiento muestra `(${status})` crudo (ej. "(en_curso)"). Jerga
-      interna asomando en UI. Pulir: mapear `en_curso`→"en curso", etc. No urgente.
+      interna en UI. Pulir: mapear `en_curso`→"en curso", etc. No urgente.
 
-8. **[BACKLOG — PANEL] Tab de reconciliación / validación de datos.** Pantalla en el panel
-   Next con historial en tiempo real de la actividad del chofer (viajes, guardias,
-   contratos, horarios), con edición autorizada por el superadmin. PROPÓSITO PRECISADO
-   (20/06): el sistema busca MÍNIMA intervención humana — viajes/guardias/contratos salen
-   del panel por asignación automática vía mensajes. La carga manual del chofer es la
-   EXCEPCIÓN (chofer sin señal, viaje pasado por teléfono). Lo que se valida es el ERROR
-   HUMANO DE TIPEO en esa carga manual (un km, un destino, una hora mal), NO error de
-   cálculo de la app (el laudo calcula bien). **Prerequisito: trazabilidad de origen
-   confiable** (sellar quién creó cada viaje). **Bloqueado además por cambio
-   organizacional** (regla demanda boletos→coches, rotación) que define la empresa — falta el
-   detalle de CÓMO el admin agrega coches a un viaje (es por venta de boletos pero sin detalle).
-   NO diseñar adivinando. **Falta UI de edición de viajes en curso / finalizados** (el panel hoy
-   NO tiene botón para finalizar/editar/cancelar un viaje ya cargado; solo enviar uno nuevo).
+8. **[BACKLOG — PANEL] Tab de reconciliación / validación de datos.** Pantalla en panel Next con
+   historial en tiempo real de actividad del chofer, edición autorizada por superadmin. Objetivo:
+   cazar ERROR HUMANO DE TIPEO en la carga manual (excepción), NO error de cálculo. Prerequisito:
+   trazabilidad de origen confiable. Bloqueado además por cambio organizacional (boletos→coches,
+   rotación) que define la empresa. Falta UI de edición de viajes en curso/finalizados en el panel.
 
-9. **[BACKLOG] Auditoría de reaperturas.** Registro de eventos de reapertura (timestamp +
-   viaje + origen app/panel) en el JSON de la jornada, visible en panel Next. Base sembrada:
+9. **[BACKLOG] Auditoría de reaperturas.** Registro de eventos de reapertura (timestamp + viaje +
+   origen app/panel) en el JSON de la jornada, visible en panel Next. Base sembrada:
    `reabierta:true` sobrevive al recierre.
 
 10. **[FUTURO] Dónde vive la lógica de negocio.** Frente de diseño grande (NO empezar hasta
-    cerrar laudo + bugs en cola). Lógica duplicada en app (Kotlin/Room) y Supabase que a veces
-    diverge. **El anti-solapamiento es el PRIMER caso concreto del principio "una sola REGLA
-    aunque se ejecute en dos lados":** `SolapamientoValidator` puro corre en el celu (guard local)
-    y va a correr en la RPC (guard servidor) — misma regla, dos lados. **Sigue abierto: el sync es
-    pull-only y `syncStatus` es teatro** (escrito, nunca leído para push; `actualizarSyncStatus`
-    dead code; sin sync de salida). Cualquier escritura a Supabase que falle por red se pierde sin
-    huella. Marco: NO mudar todo a Supabase (la app DEBE funcionar offline). Sub-tarea: diseñar un
-    sync de SALIDA real (cola de deuda persistida + reintento). Conecta con multi-empresa.
+    cerrar laudo + bugs en cola). El anti-solapamiento es el PRIMER caso concreto de "una sola
+    REGLA aunque se ejecute en dos lados". Sigue abierto: el sync es pull-only y `syncStatus` es
+    teatro (escrito, nunca leído para push; `actualizarSyncStatus` dead code). Sub-tarea: sync de
+    SALIDA real (cola persistida + reintento). Conecta con multi-empresa.
 
-11. **[FUTURO] Migración a MVVM.** Después de RLS Escalón 3. No abrir tercer refactor en paralelo.
+11. **[FUTURO] Identidad firmada del chofer (NUEVO frente, salido de RLS 28/06).** Para que RLS
+    pueda filtrar a nivel CHOFER (no solo empresa) hace falta que la app lleve identidad firmada:
+    Supabase Auth por chofer, o un esquema de claims/JWT. Es trabajo en la APP (no en el panel —
+    el panel ya tiene Auth de admin). Habilita cerrar la deuda consciente de RLS (data de cot hoy
+    legible por cualquiera con la anon key). NO empezar hasta estabilizar lo en curso; es un
+    capítulo en sí mismo. Conecta con multi-empresa (claims de `empresa_id`).
 
-12. **[FUTURO] Multi-empresa.** Diseño en MULTIEMPRESA.md / ESTRATEGIA_MULTIEMPRESA.md. Va
+12. **[FUTURO] Migración a MVVM.** Después de identidad/RLS fino. No abrir tercer refactor en
+    paralelo.
+
+13. **[FUTURO] Multi-empresa.** Diseño en MULTIEMPRESA.md / ESTRATEGIA_MULTIEMPRESA.md. Va
     después de React/Next. La config de negocio de cada empresa debe vivir en un solo lugar
     inyectable.
 
-13. **[FUTURO — sin urgencia] Archivado trimestral.** NO es problema de almacenamiento
-    (Supabase free 500MB alcanza años). Justificación REAL: optimización de egress y claridad
-    cuando el volumen sea grande, para alimentar la consulta de meses históricos del PANEL (no la
-    app). Dirección correcta: desde Supabase (durable), nunca desde Room.
+14. **[FUTURO — sin urgencia] Archivado trimestral.** NO es problema de almacenamiento. Justif.
+    real: optimización de egress y claridad cuando el volumen sea grande, para alimentar la
+    consulta de meses históricos del PANEL. Dirección: desde Supabase (durable), nunca desde Room.
 
 ---
 
-## ESTADO DE SEGURIDAD RLS (revisado 20/06 noche)
+## ESTADO DE SEGURIDAD RLS (revisado 28/06 — Escalón 3 mayormente cerrado)
 
-- **3 tablas UNRESTRICTED (RLS apagado) A PROPÓSITO durante desarrollo:**
-  `choferes`, `jornadas`, `travel_stats`. Se dejan abiertas para iterar libre sobre
-  Supabase + código sin pelear contra RLS en cada cambio de esquema. DEUDA CONSCIENTE.
-  Datos sensibles (legajos, montos, identidad) hoy legibles por cualquiera con la anon key
-  (que es pública). **Cerrar — encender RLS + escribir políticas en la MISMA operación —
-  es prerequisito duro antes de: (a) distribuir el APK a compañeros, (b) desplegar el panel
-  Next a producción real.** Las otras tablas ya tienen RLS activo.
-- **Reto de diseño al cerrarlas:** la app del chofer usa anon SIN login (identidad =
-  legajo+device_id, no Supabase Auth). Encender RLS sin la política correcta le corta el
-  acceso a la app instantáneamente. Las políticas deben permitir: anon (app) → solo sus
-  propios datos filtrados por legajo/device; authenticated (panel) → acceso amplio validado
-  contra tabla `admins`. Encender RLS y escribir política van JUNTOS, tabla por tabla, con
-  validación en celu + panel tras cada una.
+- **Rol real de la app CONFIRMADO: `anon`.** La app manda la anon key como Bearer sin JWT de
+  sesión → PostgREST = rol `anon`, `auth.uid()` null. Toda policy de la app debe diseñarse para
+  anon; `auth.role()='authenticated'` la bloquea. Cimiento de todo el diseño RLS.
+- **Las 3 tablas que estaban UNRESTRICTED ya tienen RLS ENCENDIDO (28/06):**
+  `choferes` (login validado), `jornadas` (escritura validada con viaje de prueba),
+  `travel_stats` (deny-all + RPC DEFINER). Ya NO hay tablas UNRESTRICTED.
+- **DEUDA CONSCIENTE que persiste (NO es bug, es límite de diseño con anon sin login):** las
+  policies de `jornadas`/`choferes` filtran por `empresa_id='cot'`, no por chofer. La anon key es
+  pública → cualquiera que la extraiga lee toda la data de cot. Cierre real = identidad firmada
+  del chofer (Próximos Pasos #11), no más policies. RLS hoy ya protege a nivel empresa (base del
+  futuro multi-tenant).
+- **`comandos_dispositivo` consolidada** (10→4 policies, INSERT cerrado a authenticated). Tabla
+  vacía. Validación del flujo desde panel: pendiente (Próximos Pasos #2).
+- **Pendiente de Escalón 3 (no atacado hoy):** auditar el resto de las ~42 policies `{public}`
+  legacy en otras tablas (`registro_alertas`, `mensajes`, `configuracion`, `coches_taller`,
+  `rotacion`, etc.) — varias con `qual=true`/`check=true`. Metodología: inventario fresco,
+  explicar-antes-de-ejecutar, validar app+panel. (El CSV de 42 policies del 28/06 sirve de mapa.)
+  Sigue siendo prerequisito completar esto antes de distribuir el APK a compañeros.
 
 ---
 
-## PANEL WEB NEXT — estado de revisión (20/06 noche)
+## PANEL WEB NEXT — estado de revisión (sin cambios desde 20/06)
 
 - ✅ Token: usa anon key (pública, OK), NO service_role. Respeta RLS.
 - ✅ Auth admin: Supabase Auth real (email/password → access_token en sessionStorage).
-- ❌ El chequeo de rol contra tabla `admins` es COSMÉTICO (cliente): decide qué muestra la
-  UI pero NO protege datos — la protección real debe estar en RLS (ver arriba). Cualquier
-  token válido (o la anon key sola) accede a las tablas UNRESTRICTED igual.
-- ⚠️ Refresh token: se guarda pero NO se usa; el access_token expira (~1h) → los fetch
-  empezarán a dar 401 y el admin deberá re-loguearse. Implementar refresh (UX, no urgente).
-- ⚠️ Cliente Supabase no centralizado: cada page.tsx hardcodea URL+key y hace fetch directo.
-  Centralizar en lib/supabase (un punto de config) — prolijidad, importante para multi-empresa,
-  no urgente. (La key hardcodeada NO es problema: la anon key es pública por diseño.)
-- ❌ Falta UI de edición/finalización/cancelación de viajes ya cargados (en curso o finalizados).
-  Hoy el panel solo permite enviar viajes nuevos. → backlog #8.
-- Deploy del panel: NO desplegar a producción real hasta cerrar RLS de las 3 tablas. En
-  preview/staging con datos de prueba, OK.
+- ❌ El chequeo de rol contra tabla `admins` es COSMÉTICO (cliente): decide qué muestra la UI
+  pero NO protege datos — la protección real está en RLS.
+- ⚠️ Refresh token: se guarda pero NO se usa; el access_token expira (~1h) → 401, re-login.
+  Implementar refresh (UX, no urgente).
+- ⚠️ Cliente Supabase no centralizado: cada page.tsx hardcodea URL+key. Centralizar en
+  lib/supabase (importante para multi-empresa, no urgente).
+- ❌ Falta UI de edición/finalización/cancelación de viajes ya cargados. → backlog #8.
+- Deploy del panel: **el bloqueo por RLS de las 3 tablas UNRESTRICTED quedó LEVANTADO el 28/06.**
+  Lo que mantenía el deploy en pausa era cerrar ese RLS — ya hecho. Falta completar el resto del
+  Escalón 3 (otras tablas legacy) y decidir el momento del switch de dominio. En preview/staging
+  con datos de prueba, OK. (Nota: migrar a Next NO acelera ni requiere la identidad del chofer —
+  son ejes independientes; el panel ya tiene su auth.)
 
 ---
 
@@ -240,50 +235,85 @@ asignaciones va en el guard del servidor (RPC), pendiente. Los viajes que entran
 
 - **Estado actual (hecho):** UI (Compose) → `ViajeRepository` → DAO → Room. **No hay capa
   ViewModel.** Los composables reciben el repository como parámetro y lo llaman directo.
-- **Objetivo:** migrar a MVVM (UI → ViewModel → Repository → DAO → Room). Incremental, NO
-  hecha aún.
-- **Regla para Claude Code:** respetar el patrón ACTUAL al tocar código existente. ViewModel
-  SOLO en trabajo nuevo o refactors explícitamente marcados "migración MVVM". NO corregir
-  código viejo a MVVM de oficio.
-- **Capa de lógica pura (patrón establecido):** `PermisosManager` y ahora
-  `SolapamientoValidator` son objetos/clases puras sin dependencias de Room/Supabase/Android,
-  testeables en JVM. Patrón a seguir para reglas de negocio que deben correr en más de un lado
-  (cliente + servidor) o espejarse a Swift (iOS futuro).
+- **Objetivo:** migrar a MVVM (UI → ViewModel → Repository → DAO → Room). Incremental, NO hecha.
+- **Regla para Claude Code:** respetar el patrón ACTUAL al tocar código existente. ViewModel SOLO
+  en trabajo nuevo o refactors explícitamente marcados "migración MVVM". NO corregir código viejo
+  a MVVM de oficio.
+- **Capa de lógica pura (patrón establecido):** `PermisosManager` y `SolapamientoValidator` son
+  objetos/clases puras sin dependencias de Room/Supabase/Android, testeables en JVM. Patrón a
+  seguir para reglas de negocio que deben correr en más de un lado (cliente + servidor) o
+  espejarse a Swift (iOS futuro).
+- **RPCs SECURITY DEFINER (patrón de seguridad establecido):** las RPC que deben escribir tablas
+  con RLS deny-all van DEFINER con `search_path` pineado (`public, pg_catalog`). Owner = postgres.
+  Aplicado a `actualizar_viaje_en_jornada` (Escalón 2), `estimar_llegada` y
+  `registrar_en_travel_stats` (28/06). Las helper puras quedan INVOKER.
 - **Room: `CotDatabase` en version 14.** Con MIGRATIONS REALES (`addMigrations(MIGRATION_13_14)`).
-  El `fallbackToDestructiveMigration` FUE ELIMINADO (Pieza 4 paso 1) — ya no es deuda de prod.
-  La entidad `Jornada` persiste el snapshot completo (7 campos del desglose). El sync de
-  arranque corre incondicional, así que Room es caché reconstruible desde Supabase.
-- **Sync direccional: PULL-ONLY.** `sincronizarDesdeSupabase` trae datos; NO hay push de
-  salida. `syncStatus` se escribe pero no se lee para empujar. Deuda registrada en #10.
-- **OJO — tabla `viajes` de Supabase está MUERTA.** Solo 3 filas de mayo, nadie escribe ahí
-  hoy. NO confundir con la tabla `viajes` de Room (esa sí se usa). La verdad del laudo en
-  Supabase vive en `jornadas.data.travels` (JSONB), no en la tabla `viajes`.
+  `fallbackToDestructiveMigration` ELIMINADO. La entidad `Jornada` persiste el snapshot completo.
+  Room es caché reconstruible desde Supabase.
+- **Sync direccional: PULL-ONLY.** `sincronizarDesdeSupabase` trae datos; NO hay push de salida.
+  `syncStatus` se escribe pero no se lee para empujar. Deuda en #10.
+- **OJO — tabla `viajes` de Supabase está MUERTA.** Solo 3 filas de mayo, nadie escribe. NO
+  confundir con la tabla `viajes` de Room (esa sí se usa). La verdad del laudo en Supabase vive en
+  `jornadas.data.travels` (JSONB).
 
 ---
 
 ## PUNTEROS (no mezclar con este archivo)
 
-- **Reglas de negocio y constantes** → `REGLAS_NEGOCIO.md`. (Autoritativos: laudo
-  $8.0122/km, viático $455.26. **Nuevo: regla de solapamiento de viajes** —
-  `DURACION_VIAJE_DEFAULT_MS=3h`, intervalo `[inicioReal ?: inicioProgramado, +DURACION]`,
-  finalizado usa `finReal`, cancelado excluido, borde no solapa. Los $7.637/$455 de
-  RUTAUY_CONTEXT están OBSOLETOS.)
-- **Diseño multi-empresa** → `MULTIEMPRESA.md` + `ESTRATEGIA_MULTIEMPRESA.md` (diseño, no
-  implementado).
-- **Esquema de tablas Supabase** → RUTAUY_CONTEXT.md (SOLO como mapa de esquema; valores de
-  cálculo obsoletos).
-- **RPC actualizar_viaje_en_jornada** → VERSIONADA en
-  `supabase/functions/actualizar_viaje_en_jornada.sql` (una sola firma de 5 params; la de 4
-  fue dropeada el 26/06). Las funciones de `travel_stats` siguen SIN versionar — pendiente
-  guardarlas en `supabase/functions/travel_stats.sql`. Estimación APAGADA a propósito
-  (9 buckets / 9 muestras al 18/06, lejos del umbral c_min=5). Mientras esté apagada, el
-  anti-solapamiento usa la constante defensiva de 3h; cuando despierte, pasa a leer estimación
-  por ruta.
+- **Reglas de negocio y constantes** → `REGLAS_NEGOCIO.md`. (Autoritativos: laudo $8.0122/km,
+  viático $455.26. Regla de solapamiento: `DURACION_VIAJE_DEFAULT_MS=3h`, intervalo
+  `[inicioReal ?: inicioProgramado, +DURACION]`, finalizado usa `finReal`, cancelado excluido,
+  borde no solapa. Los $7.637/$455 de RUTAUY_CONTEXT están OBSOLETOS.)
+- **Diseño multi-empresa** → `MULTIEMPRESA.md` + `ESTRATEGIA_MULTIEMPRESA.md` (diseño, no impl.).
+- **Esquema de tablas Supabase** → RUTAUY_CONTEXT.md (SOLO como mapa de esquema; valores
+  obsoletos).
+- **RPCs versionadas en `supabase/functions/`:**
+    - `actualizar_viaje_en_jornada.sql` (una sola firma de 5 params; la de 4 dropeada el 26/06).
+    - `travel_stats.sql` (NUEVO 28/06: `estimar_llegada` + `registrar_en_travel_stats` ya en
+      DEFINER + las helper + el ENABLE RLS de la tabla). Estimación APAGADA a propósito
+      (9 buckets / 9 muestras al 18/06, lejos de c_min=5). Mientras esté apagada, el
+      anti-solapamiento usa la constante defensiva de 3h.
 - **Historial sprints 1-5 (port JS→Kotlin)** → PLAN_DESARROLLO_KOTLIN.md (histórico, cerrado).
 
 ---
 
 ## CHANGELOG (solo crece — NO reescribir, agregar arriba)
+### 28/06/2026
+- **RLS Escalón 3 — CAPÍTULO MAYOR: las 3 tablas UNRESTRICTED encendidas y validadas en campo +
+  `comandos_dispositivo` consolidada.** Saldada la deuda de seguridad que bloqueaba el APK por
+  este lado. Ya NO hay tablas UNRESTRICTED.
+  **Cimiento confirmado (no asumido):** se leyó `SupabaseService.kt` — la app manda la anon key
+  como Bearer SIN JWT → rol `anon`, `auth.uid()` null, CERTEZA TOTAL. Toda policy de la app se
+  diseña para anon. El `auth.role()=null` que dio el editor al "simular" fue descartado como
+  artefacto del editor (fuera de una request real auth.role() es null), no como el rol de la app.
+  **`travel_stats` — cerrada al 100%, sin deuda:** CC confirmó que la app no la toca por REST
+  (solo Room local). `estimar_llegada` + `registrar_en_travel_stats` → `SECURITY DEFINER` con
+  `search_path=public,pg_catalog` (vía `ALTER FUNCTION`, menos invasivo que recrear). Owner=
+  postgres. Helper `ts_*` quedaron INVOKER (puras). `ENABLE RLS` sin políticas = deny-all; las
+  RPC DEFINER saltean. Validado: `registrar_en_travel_stats('{"id":"TEST-PRU"}')` corrió sin
+  error de permisos. Funciones versionadas en `supabase/functions/travel_stats.sql`.
+  **`choferes` — RLS encendido, login validado en celu.** Policies ya servían para anon.
+  **`jornadas` — RLS encendido, validado en celu (la más delicada).** Viaje de prueba activado +
+  cerrado automático; JSON confirmó insert+update+`syncStatus:synced`. Ciclo de escritura completo
+  con RLS puesto. Id `-PRU` → no ensucia laudo ni travel_stats.
+  **`comandos_dispositivo` — consolidada 10→4 policies.** CC mapeó el uso real: app JS lee anon
+  (`?device_id=eq.X&ejecutado=eq.false`), panel inserta authenticated, cero RPC, tabla VACÍA
+  (count=0). Nuevas: SELECT `{public}` true; UPDATE `{public}` `(ejecutado=false)` (idempotencia
+  en la policy); INSERT `{authenticated}` (HUECO CERRADO: antes cualquier anon inyectaba comandos);
+  ALL `{authenticated}`. Validación del INSERT desde panel: pendiente (Próximos Pasos #2).
+  **Decisión de diseño clave (atacar raíz, no síntoma):** NO se intentó filtrar `comandos`/
+  `jornadas`/`choferes` por chofer vía RLS. Con anon sin login el `device_id` viaja como query
+  param, no como claim firmado → RLS no puede verificarlo. Un header `x-device-id` sin firmar da
+  SENSACIÓN de seguridad sin darla → descartado. El cierre real es identidad firmada del chofer
+  (Auth/claims), nuevo frente #11. RLS hoy protege a nivel EMPRESA (base del multi-tenant), no
+  chofer. Deuda documentada honestamente, no parcheada.
+  **Aprendizaje de método:** confirmar el rol real leyendo el cliente (no simular en el editor) y
+  preguntar a CC el uso real de cada tabla ANTES de escribir policies evitó dos trampas: (1) poner
+  `empresa_id='cot'` en comandos hubiera sido decorativo (la app filtra por device_id, no empresa);
+  (2) encender RLS en travel_stats sin convertir las RPC a DEFINER las habría bloqueado (eran
+  INVOKER). Validación en celu tras CADA encendido, rollback (`DISABLE ROW LEVEL SECURITY`) listo.
+  **Bloqueo de deploy de Next levantado por este lado** (cerrar RLS de las 3 tablas era el
+  prerequisito). Falta el resto del Escalón 3 (otras tablas legacy) para distribuir el APK.
 ### 27/06/2026
 - **Anti-solapamiento de viajes — pieza 1 (creación manual): CÓDIGO COMPLETO, COMPILADO, CON
   TESTS. Pendiente validación en campo.** 5 archivos de producción + 1 de test, BUILD SUCCESSFUL,
@@ -316,7 +346,7 @@ asignaciones va en el guard del servidor (RPC), pendiente. Los viajes que entran
   — el GPS vive dentro del brazo `Exito`. Riesgo evitado: GPS rastreando el viaje equivocado
   habría corrompido `inicioReal`/laudo (bug peor que el solapamiento original).
   **Cobertura:** guard local cubre carga manual (offline, lee Room). Asignación de admin solo
-  LOGUEA (no bloquea) — el bloqueo va en el guard del servidor (pendiente, próximos pasos #3).
+  LOGUEA (no bloquea) — el bloqueo va en el guard del servidor (pendiente, próximos pasos #4).
   **Aprendizaje de método:** revisión edit-por-edit (sin "allow all") cazó los 2 bugs antes de
   compilar. Los primeros tests del proyecto blindan la regla de plata como documentación
   ejecutable.
