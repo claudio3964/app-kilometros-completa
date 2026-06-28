@@ -18,7 +18,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.driverlog.app.data.CrearViajeResult
 import com.driverlog.app.data.GeoTerminalService
+import com.driverlog.app.data.Viaje
 import com.driverlog.app.data.ViajeRepository
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -125,6 +127,7 @@ fun NuevoViajeScreen(
     var coche by remember { mutableStateOf("") }
     var generarVuelta by remember { mutableStateOf(false) }
     var guardando by remember { mutableStateOf(false) }
+    var conflictoViaje by remember { mutableStateOf<Viaje?>(null) }
 
     val cal = remember { Calendar.getInstance() }
     var horaSalidaH by remember { mutableStateOf(cal.get(Calendar.HOUR_OF_DAY)) }
@@ -181,6 +184,23 @@ fun NuevoViajeScreen(
                 horaLlegadaM = m
                 tieneHoraLlegada = true
                 showPickerLlegada = false
+            }
+        )
+    }
+
+    conflictoViaje?.let { conflicto ->
+        AlertDialog(
+            onDismissRequest = { conflictoViaje = null },
+            title = { Text("Viaje en conflicto") },
+            text = {
+                Text(
+                    "Ya existe un viaje ${conflicto.origen} → ${conflicto.destino} " +
+                    "a las ${conflicto.departureTime} (${conflicto.status}) " +
+                    "que se superpone con este horario."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { conflictoViaje = null }) { Text("Entendido") }
             }
         )
     }
@@ -427,7 +447,7 @@ fun NuevoViajeScreen(
                                     "%02d:%02d".format(horaLlegadaH, horaLlegadaM) else ""
                                 val inicioProgramadoMs = calcularInicioMs(horaSalidaH, horaSalidaM)
 
-                                val viaje = repository.crearViaje(
+                                when (val resultado = repository.crearViaje(
                                     legajo = legajo,
                                     origen = origenSeleccionado,
                                     destino = destinoFinal,
@@ -437,21 +457,26 @@ fun NuevoViajeScreen(
                                     horaSalida = horaSalidaStr,
                                     horaLlegada = horaLlegadaStr,
                                     inicioProgramadoMs = inicioProgramadoMs
-                                )
-
-                                if (viaje.status == "en_curso") {
-                                    GeoTerminalService.iniciar(context, viaje)
-                                }
-
-                                if (generarVuelta) {
-                                    val origenVuelta = destinoFinal.split(" x ")[0]
-                                    val destinoVuelta = origenSeleccionado
-                                    val kmVuelta = CATALOGO_RUTAS
-                                        .find { it.origen == origenVuelta && it.destino == destinoVuelta }
-                                        ?.km ?: kmFinal
-                                    onSavedConVuelta(origenVuelta, destinoVuelta, kmVuelta, tipoServicio)
-                                } else {
-                                    onSaved()
+                                )) {
+                                    is CrearViajeResult.Exito -> {
+                                        val viaje = resultado.viaje
+                                        if (viaje.status == "en_curso") {
+                                            GeoTerminalService.iniciar(context, viaje)
+                                        }
+                                        if (generarVuelta) {
+                                            val origenVuelta = destinoFinal.split(" x ")[0]
+                                            val destinoVuelta = origenSeleccionado
+                                            val kmVuelta = CATALOGO_RUTAS
+                                                .find { it.origen == origenVuelta && it.destino == destinoVuelta }
+                                                ?.km ?: kmFinal
+                                            onSavedConVuelta(origenVuelta, destinoVuelta, kmVuelta, tipoServicio)
+                                        } else {
+                                            onSaved()
+                                        }
+                                    }
+                                    is CrearViajeResult.Solapamiento -> {
+                                        conflictoViaje = resultado.enConflicto
+                                    }
                                 }
                             } finally {
                                 guardando = false

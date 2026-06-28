@@ -9,6 +9,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.*
 import com.driverlog.app.MainActivity
+import com.driverlog.app.data.CrearViajeResult
 import com.driverlog.app.data.ViajeRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -62,7 +63,7 @@ class MensajesPollingWorker(
                         ?: calcularInicioProgramado(horaSalida)
                     val km = viajeData.optInt("km", 0).takeIf { it > 0 }
                         ?: repo.getKmDesdeRuta(origen = origen, destino = destino)
-                    repo.crearViaje(
+                    when (val resultado = repo.crearViaje(
                         legajo = legajo,
                         origen = origen,
                         destino = destino,
@@ -73,8 +74,18 @@ class MensajesPollingWorker(
                         horaLlegada = viajeData.optString("horaLlegada", ""),
                         inicioProgramadoMs = inicioProgramadoMs,
                         origenCreacion = "panel"
-                    )
-                    Log.d("COT_POLLING", "Viaje creado desde asignacion id=$id")
+                    )) {
+                        is CrearViajeResult.Exito ->
+                            Log.d("COT_POLLING", "Viaje creado desde asignacion id=$id")
+                        is CrearViajeResult.Solapamiento ->
+                            Log.w("COT_POLLING",
+                                "Solapamiento asignacion id=$id " +
+                                "nuevo=$origen→$destino@$horaSalida " +
+                                "conflicto=${resultado.enConflicto.id} " +
+                                "${resultado.enConflicto.origen}→${resultado.enConflicto.destino}" +
+                                "@${resultado.enConflicto.departureTime}"
+                            )
+                    }
                 }
                 "guardia" -> {
                     val jornada = repo.getJornadaActiva() ?: repo.getOCrearJornada(legajo)

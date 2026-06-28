@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.driverlog.app.data.CrearViajeResult
 import com.driverlog.app.data.GeoTerminalService
 import com.driverlog.app.data.Jornada
 import com.driverlog.app.data.Viaje
@@ -502,7 +503,7 @@ fun MainScreen(
                     onClick = {
                         scope.launch {
                             val ahora = System.currentTimeMillis()
-                            val viaje = repository.crearViaje(
+                            when (val resultado = repository.crearViaje(
                                 legajo = legajo,
                                 origen = "Prueba",
                                 destino = "Prueba",
@@ -515,9 +516,14 @@ fun MainScreen(
                                 ),
                                 horaLlegada = "",
                                 inicioProgramadoMs = ahora
-                            )
-                            viajeEnCurso = repository.getViajeEnCurso()
-                            GeoTerminalService.iniciar(context, viaje, modoPrueba = true)
+                            )) {
+                                is CrearViajeResult.Exito -> {
+                                    viajeEnCurso = repository.getViajeEnCurso()
+                                    GeoTerminalService.iniciar(context, resultado.viaje, modoPrueba = true)
+                                }
+                                is CrearViajeResult.Solapamiento ->
+                                    Log.w("COT", "Modo prueba: solapamiento con ${resultado.enConflicto.id}")
+                            }
                         }
                     },
                     modifier = Modifier

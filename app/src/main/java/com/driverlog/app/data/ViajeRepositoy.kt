@@ -150,8 +150,12 @@ class ViajeRepository(private val context: Context) {
         horaLlegada: String,
         inicioProgramadoMs: Long,
         origenCreacion: String = "app"
-    ): Viaje {
+    ): CrearViajeResult {
         val jornada = getOCrearJornada(legajo)
+        val nuevaFin = inicioProgramadoMs + SolapamientoValidator.DURACION_VIAJE_DEFAULT_MS
+        val viajesTodos = dao.getViajesPorJornada(jornada.orderNumber)
+        val conflicto = SolapamientoValidator.encontrarConflicto(inicioProgramadoMs, nuevaFin, viajesTodos)
+        if (conflicto != null) return CrearViajeResult.Solapamiento(conflicto)
         val ahora = System.currentTimeMillis()
         val status = if (inicioProgramadoMs <= ahora) "en_curso" else "programado"
         val viaje = Viaje(
@@ -177,7 +181,7 @@ class ViajeRepository(private val context: Context) {
         } catch (e: Exception) {
             Log.e("COT", "Error sync nuevo viaje: ${e.message}")
         }
-        return viaje
+        return CrearViajeResult.Exito(viaje)
     }
 
     private suspend fun registrarDuracion(ruta: String, duracionMinutos: Long) {
@@ -701,7 +705,7 @@ suspend fun cerrarJornada(legajo: String): File? {
 
 private suspend fun calcularLlegadaEstimada(origen: String, destino: String, inicioReal: Long): Long {
     val ruta = "${origen}→${destino}"
-    val duracionMin = getDuracionPromedio(ruta) ?: 180 // 3 horas fallback
+    val duracionMin = getDuracionPromedio(ruta) ?: (SolapamientoValidator.DURACION_VIAJE_DEFAULT_MS / 60_000)
     return inicioReal + (duracionMin * 60 * 1000)
 }
 
