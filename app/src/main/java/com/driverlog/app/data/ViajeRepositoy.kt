@@ -151,9 +151,11 @@ class ViajeRepository(private val context: Context) {
         inicioProgramadoMs: Long,
         origenCreacion: String = "app"
     ): CrearViajeResult {
+        Log.d("COT_GUARD", "crearViaje LLAMADO origen=$origen destino=$destino inicioProgramadoMs=$inicioProgramadoMs origenCreacion=$origenCreacion")
         val jornada = getOCrearJornada(legajo)
         val nuevaFin = inicioProgramadoMs + SolapamientoValidator.DURACION_VIAJE_DEFAULT_MS
         val viajesTodos = dao.getViajesPorJornada(jornada.orderNumber)
+        Log.d("COT_GUARD", "viajesTodos.size=${viajesTodos.size} ids=${viajesTodos.map { "${it.id}(${it.status},ir=${it.inicioReal},ip=${it.inicioProgramado})" }}")
         val conflicto = SolapamientoValidator.encontrarConflicto(inicioProgramadoMs, nuevaFin, viajesTodos)
         if (conflicto != null) return CrearViajeResult.Solapamiento(conflicto)
         val ahora = System.currentTimeMillis()
